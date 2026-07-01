@@ -1,0 +1,278 @@
+// MARES — Schema Prisma
+// Modelo de dados conforme docs/BANCO_DE_DADOS.md e docs/PROJETO_COMPLETO.md
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ─────────────────────────────────────────────────────────────
+// Enums
+// ─────────────────────────────────────────────────────────────
+
+enum MembershipRole {
+  ORG_ADMIN
+  RESEARCHER
+}
+
+enum UserStatus {
+  INVITED
+  ACTIVE
+  DELETION_REQUESTED
+}
+
+enum JoinRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum Result {
+  POSITIVO
+  NEGATIVO
+  INCONCLUSIVO
+}
+
+enum SampleStatus {
+  STORED // em estoque
+  IN_USE // em análise no momento
+  DEPLETED // totalmente consumida
+  DEGRADED // degradada / inutilizável
+}
+
+// ─────────────────────────────────────────────────────────────
+// Organização e usuários
+// ─────────────────────────────────────────────────────────────
+
+model Organization {
+  id          String       @id @default(uuid())
+  name        String
+  // Localização (opcional) — usada em relatórios geográficos e no mapa de encalhes.
+  city        String?
+  state       String? // UF / província
+  country     String?
+  memberships Membership[]
+  researches  Research[]
+  createdAt   DateTime     @default(now())
+}
+
+model User {
+  // id corresponde ao id do usuário no Supabase Auth (auth.users.id)
+  id            String       @id
+  email         String       @unique
+  name          String?
+  isSystemAdmin Boolean      @default(false)
+  status        UserStatus   @default(INVITED)
+  // Aceite dos Termos de Uso (registrado ao solicitar acesso e ao aceitar convite).
+  termsVersion    String?
+  termsAcceptedAt DateTime?
+  memberships   Membership[]
+  createdAt     DateTime     @default(now())
+}
+
+// Vínculo N:N entre usuário e organização, com o papel do usuário naquela org.
+model Membership {
+  id           String         @id @default(uuid())
+  userId       String
+  user         User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  orgId        String
+  organization Organization   @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  role         MembershipRole @default(RESEARCHER)
+  createdAt    DateTime       @default(now())
+
+  @@unique([userId, orgId])
+  @@index([orgId])
+}
+
+// Solicitação de acesso de um novo admin de organização (aprovada pelo admin global).
+model JoinRequest {
+  id               String            @id @default(uuid())
+  email            String
+  requesterName    String
+  organizationName String
+  status           JoinRequestStatus @default(PENDING)
+  reviewedById     String?
+  reviewedAt       DateTime?
+  createdAt        DateTime          @default(now())
+
+  @@index([status])
+}
+
+// ─────────────────────────────────────────────────────────────
+// Pesquisas e protocolos
+// ─────────────────────────────────────────────────────────────
+
+model Research {
+  id           String             @id @default(uuid())
+  name         String
+  description  String?
+  isPublic     Boolean            @default(false)
+  orgId        String
+  organization Organization       @relation(fields: [orgId], references: [id])
+  protocols    ResearchProtocol[]
+  animals      Animal[]
+  createdAt    DateTime           @default(now())
+
+  @@index([orgId])
+}
+
+// Define quais exames/patógenos/órgãos compõem uma pesquisa
+model ResearchProtocol {
+  id         String   @id @default(uuid())
+  researchId String
+  research   Research @relation(fields: [researchId], references: [id], onDelete: Cascade)
+  organId    String
+  organ      Organ    @relation(fields: [organId], references: [id])
+  pathogenId String
+  pathogen   Pathogen @relation(fields: [pathogenId], references: [id])
+  examTypeId String
+  examType   ExamType @relation(fields: [examTypeId], references: [id])
+
+  @@unique([researchId, organId, pathogenId, examTypeId])
+  @@index([researchId])
+}
+
+// ─────────────────────────────────────────────────────────────
+// Catálogos globais (reutilizáveis entre pesquisas)
+// ─────────────────────────────────────────────────────────────
+
+// Catálogos internacionalizados: cada rótulo tem colunas por idioma (name_pt/name_en,
+// group_pt/group_en). O `key` é um slug estável usado como identidade (referências e seed
+// idempotente), independente do idioma. Ver docs/I18N.md §catálogos.
+model Organ {
+  id        String             @id @default(uuid())
+  key       String             @unique // ex: "encefalo"
+  namePt    String             @map("name_pt") // ex: "Encéfalo"
+  nameEn    String             @map("name_en") // ex: "Brain"
+  groupPt   String?            @map("group_pt")
+  groupEn   String?            @map("group_en")
+  protocols ResearchProtocol[]
+  samples   Sample[]
+}
+
+model Pathogen {
+  id        String             @id @default(uuid())
+  key       String             @unique // ex: "toxoplasma_gondii"
+  namePt    String             @map("name_pt") // ex: "Toxoplasma gondii"
+  nameEn    String             @map("name_en")
+  groupPt   String?            @map("group_pt") // ex: "Protozoário Sarcocistídeo"
+  groupEn   String?            @map("group_en") // ex: "Sarcocystid protozoan"
+  protocols ResearchProtocol[]
+  analyses  Analysis[]
+}
+
+model ExamType {
+  id        String             @id @default(uuid())
+  key       String             @unique // ex: "npcr"
+  namePt    String             @map("name_pt") // ex: "nPCR", "Histologia"
+  nameEn    String             @map("name_en")
+  groupPt   String?            @map("group_pt")
+  groupEn   String?            @map("group_en")
+  protocols ResearchProtocol[]
+  analyses  Analysis[]
+}
+
+// ─────────────────────────────────────────────────────────────
+// Animais, amostras e análises
+// ─────────────────────────────────────────────────────────────
+
+model Animal {
+  id                 String        @id @default(uuid())
+  controlId          String?       @unique
+  simbaRecordNumber  String?       @unique
+  species            String
+  // Campos preenchidos via WoRMS após validação taxonômica
+  wormsAphiaId       Int?
+  taxonFamily        String?
+  taxonOrder         String?
+  sex                String?
+  lifeStage          String?
+  bodyCondition      String?
+  decompositionStage String?
+  // lat/lon como Float; em produção, considerar PostGIS geography
+  strandingLat       Float?
+  strandingLon       Float?
+  strandingBeach     String?
+  municipality       String?
+  state              String?
+  eventDate          DateTime?
+  macroscopicNotes   String?
+  source             String        @default("manual")
+  isPublic           Boolean       @default(false)
+  researchId         String
+  research           Research      @relation(fields: [researchId], references: [id])
+  samples            Sample[]
+  media              AnimalMedia[]
+  createdAt          DateTime      @default(now())
+
+  @@index([researchId])
+  @@index([species])
+}
+
+// Amostra física coletada durante a necrópsia
+model Sample {
+  id              String       @id @default(uuid())
+  animalId        String
+  animal          Animal       @relation(fields: [animalId], references: [id], onDelete: Cascade)
+  organId         String
+  organ           Organ        @relation(fields: [organId], references: [id])
+  sampleType      String // "tecido fresco", "DNA extraído", "lâmina", "parafina", "soro"
+  collectionDate  DateTime?
+  storageLocation String? // ex: "Freezer A, caixa 3, posição B2"
+  storageTemp     Float? // temperatura em °C: -80, -20, 4, 25
+  status          SampleStatus @default(STORED)
+  notes           String?
+  analyses        Analysis[]
+  createdAt       DateTime     @default(now())
+
+  @@index([animalId])
+}
+
+model Analysis {
+  id         String   @id @default(uuid())
+  sampleId   String
+  sample     Sample   @relation(fields: [sampleId], references: [id], onDelete: Cascade)
+  pathogenId String
+  pathogen   Pathogen @relation(fields: [pathogenId], references: [id])
+  examTypeId String
+  examType   ExamType @relation(fields: [examTypeId], references: [id])
+  result     Result? // NULL = ainda não testado
+  ctValue    Float? // valor Ct do PCR (NULL quando não aplicável)
+  notes      String?
+  createdAt  DateTime @default(now())
+
+  @@unique([sampleId, pathogenId, examTypeId])
+  @@index([sampleId])
+}
+
+// Arquivos anexados a um animal (fotos de campo, microscopia, laudos PDF)
+model AnimalMedia {
+  id        String   @id @default(uuid())
+  animalId  String
+  animal    Animal   @relation(fields: [animalId], references: [id], onDelete: Cascade)
+  url       String // URL no Supabase Storage
+  mimeType  String // "image/jpeg", "application/pdf" etc.
+  label     String? // descrição livre
+  createdAt DateTime @default(now())
+
+  @@index([animalId])
+}
+
+// Rastreabilidade de alterações em dados científicos
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String
+  entity    String // "Animal", "Analysis", "Sample"
+  entityId  String
+  field     String // campo alterado
+  oldValue  String?
+  newValue  String?
+  changedAt DateTime @default(now())
+
+  @@index([entity, entityId])
+}
