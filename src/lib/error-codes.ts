@@ -25,6 +25,15 @@ export const ERROR_CODES = {
   systemAdminNoOrg: "systemAdminNoOrg",
   alreadyMember: "alreadyMember",
   nameRequired: "nameRequired",
+  // Fase 2 — pesquisas, protocolos e catálogos
+  researchNotFound: "researchNotFound",
+  researchHasAnimals: "researchHasAnimals",
+  protocolNotFound: "protocolNotFound",
+  protocolDuplicate: "protocolDuplicate",
+  protocolInUse: "protocolInUse",
+  catalogNotFound: "catalogNotFound",
+  catalogDuplicate: "catalogDuplicate",
+  catalogInUse: "catalogInUse",
 } as const
 
 export type ErrorCode = (typeof ERROR_CODES)[keyof typeof ERROR_CODES]

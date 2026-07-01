@@ -66,6 +66,16 @@ export function requireSystemAdmin(user: AuthUser) {
   if (!user.isSystemAdmin) throw new ForbiddenError()
 }
 
+// É admin de alguma organização (ou admin global). Usado para ADICIONAR itens de catálogo
+// global — editar/remover fica restrito ao admin global (ver requireSystemAdmin).
+export function isAnyOrgAdmin(user: AuthUser): boolean {
+  return user.isSystemAdmin || user.memberships.some((m) => m.role === "ORG_ADMIN")
+}
+
+export function requireAnyOrgAdmin(user: AuthUser) {
+  if (!isAnyOrgAdmin(user)) throw new ForbiddenError()
+}
+
 // Exige um papel mínimo na organização. O admin global NÃO participa de organizações e,
 // portanto, NÃO satisfaz verificações de papel de org (ele usa as rotas /api/admin/*).
 export function requireOrgRole(user: AuthUser, orgId: string, minRole: MembershipRole) {
