@@ -35,6 +35,10 @@ export const ERROR_CODES = {
   catalogDuplicate: "catalogDuplicate",
   catalogInUse: "catalogInUse",
   catalogNameRequired: "catalogNameRequired",
+  // Fase 3 — animais, amostras e análises
+  animalNotFound: "animalNotFound",
+  animalDuplicate: "animalDuplicate",
+  animalHasSamples: "animalHasSamples",
 } as const
 
 export type ErrorCode = (typeof ERROR_CODES)[keyof typeof ERROR_CODES]
