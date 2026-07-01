@@ -72,6 +72,7 @@ model User {
   termsVersion    String?
   termsAcceptedAt DateTime?
   memberships   Membership[]
+  researchesCreated Research[] @relation("ResearchCreator")
   createdAt     DateTime     @default(now())
 }
 
@@ -114,11 +115,15 @@ model Research {
   isPublic     Boolean            @default(false)
   orgId        String
   organization Organization       @relation(fields: [orgId], references: [id])
+  // Autor (para a regra "pesquisador edita a própria criação"); SetNull se o usuário for removido.
+  createdById  String?
+  createdBy    User?              @relation("ResearchCreator", fields: [createdById], references: [id], onDelete: SetNull)
   protocols    ResearchProtocol[]
   animals      Animal[]
   createdAt    DateTime           @default(now())
 
   @@index([orgId])
+  @@index([createdById])
 }
 
 // Define quais exames/patógenos/órgãos compõem uma pesquisa
