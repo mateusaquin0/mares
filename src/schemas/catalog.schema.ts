@@ -15,11 +15,13 @@ export const nameI18nSchema = z.object({
   nameEn: z.string().min(1, "required").max(255),
 })
 
-// Patógeno — nome científico + grupo (pt/en) opcional.
+// Patógeno — grupo (FK) + nome científico OU nome comum (pt/en). O servidor valida quais
+// campos são obrigatórios conforme o grupo (usesScientificName).
 export const pathogenSchema = z.object({
-  name: z.string().min(1, "required").max(255),
-  groupPt: z.string().max(255).optional().or(z.literal("")),
-  groupEn: z.string().max(255).optional().or(z.literal("")),
+  groupId: z.string().min(1, "required"),
+  scientificName: z.string().max(255).optional().or(z.literal("")),
+  namePt: z.string().max(255).optional().or(z.literal("")),
+  nameEn: z.string().max(255).optional().or(z.literal("")),
 })
 
 export function catalogBodySchema(type: CatalogType) {

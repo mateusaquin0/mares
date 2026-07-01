@@ -4,24 +4,17 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getAuthUser, requireSystemAdmin } from "@/lib/auth"
 import { apiError, unauthorized } from "@/lib/api"
-import { isCatalogType, nameI18nSchema, pathogenSchema } from "@/schemas/catalog.schema"
+import { isCatalogType, nameI18nSchema } from "@/schemas/catalog.schema"
 import {
-  findCatalog,
+  catalogExists,
   updateNamed,
-  updatePathogen,
+  updatePathogenEntry,
+  resolvePathogen,
   deleteCatalog,
   catalogUsage,
-  type I18n,
 } from "@/lib/catalog"
 import { NotFoundError, ConflictError } from "@/lib/errors"
 import { ERROR_CODES } from "@/lib/error-codes"
-
-function buildGroup(groupPt?: string, groupEn?: string): I18n | null {
-  const pt = groupPt?.trim() ?? ""
-  const en = groupEn?.trim() ?? ""
-  if (!pt && !en) return null
-  return { pt: pt || en, en: en || pt }
-}
 
 export async function PUT(
   req: NextRequest,
@@ -34,14 +27,18 @@ export async function PUT(
 
     const { type, id } = await params
     if (!isCatalogType(type)) throw new NotFoundError("Catálogo inválido", ERROR_CODES.catalogNotFound)
-    if (!(await findCatalog(type, id)))
+    if (!(await catalogExists(type, id)))
       throw new NotFoundError("Entrada não encontrada", ERROR_CODES.catalogNotFound)
 
     const body = await req.json().catch(() => null)
 
     if (type === "pathogens") {
-      const data = pathogenSchema.parse(body)
-      const updated = await updatePathogen(id, data.name.trim(), buildGroup(data.groupPt, data.groupEn))
+      const p = await resolvePathogen(body)
+      const updated = await updatePathogenEntry(id, {
+        groupId: p.groupId,
+        scientificName: p.scientificName,
+        name: p.name,
+      })
       return NextResponse.json(updated)
     }
 
@@ -64,7 +61,7 @@ export async function DELETE(
 
     const { type, id } = await params
     if (!isCatalogType(type)) throw new NotFoundError("Catálogo inválido", ERROR_CODES.catalogNotFound)
-    if (!(await findCatalog(type, id)))
+    if (!(await catalogExists(type, id)))
       throw new NotFoundError("Entrada não encontrada", ERROR_CODES.catalogNotFound)
 
     if ((await catalogUsage(type, id)) > 0) {

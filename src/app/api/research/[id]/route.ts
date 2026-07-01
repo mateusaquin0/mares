@@ -46,7 +46,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
           select: {
             id: true,
             organ: { select: { id: true, name: true } },
-            pathogen: { select: { id: true, name: true } },
+            pathogen: { select: { id: true, scientificName: true, name: true } },
             examType: { select: { id: true, name: true } },
           },
         },

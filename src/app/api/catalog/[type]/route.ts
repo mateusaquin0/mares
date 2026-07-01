@@ -5,24 +5,17 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getAuthUser, requireAnyOrgAdmin } from "@/lib/auth"
 import { apiError, unauthorized } from "@/lib/api"
-import { isCatalogType, nameI18nSchema, pathogenSchema } from "@/schemas/catalog.schema"
+import { isCatalogType, nameI18nSchema } from "@/schemas/catalog.schema"
 import {
-  listCatalog,
+  listNamed,
+  listPathogens,
   createNamed,
-  createPathogen,
+  createPathogenEntry,
+  resolvePathogen,
   uniqueKey,
-  type I18n,
 } from "@/lib/catalog"
 import { NotFoundError } from "@/lib/errors"
 import { ERROR_CODES } from "@/lib/error-codes"
-
-// Monta o grupo { pt, en } (ou null quando ambos vazios).
-function buildGroup(groupPt?: string, groupEn?: string): I18n | null {
-  const pt = groupPt?.trim() ?? ""
-  const en = groupEn?.trim() ?? ""
-  if (!pt && !en) return null
-  return { pt: pt || en, en: en || pt }
-}
 
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ type: string }> }) {
   try {
@@ -31,7 +24,8 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ typ
     const { type } = await params
     if (!isCatalogType(type)) throw new NotFoundError("Catálogo inválido", ERROR_CODES.catalogNotFound)
 
-    return NextResponse.json(await listCatalog(type))
+    const rows = type === "pathogens" ? await listPathogens() : await listNamed(type)
+    return NextResponse.json(rows)
   } catch (err) {
     return apiError(err)
   }
@@ -49,12 +43,13 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ typ
     const body = await req.json().catch(() => null)
 
     if (type === "pathogens") {
-      const data = pathogenSchema.parse(body)
-      const created = await createPathogen(
-        await uniqueKey(type, data.name),
-        data.name.trim(),
-        buildGroup(data.groupPt, data.groupEn)
-      )
+      const p = await resolvePathogen(body)
+      const created = await createPathogenEntry({
+        key: await uniqueKey(type, p.keySource),
+        groupId: p.groupId,
+        scientificName: p.scientificName,
+        name: p.name,
+      })
       return NextResponse.json(created, { status: 201 })
     }
 

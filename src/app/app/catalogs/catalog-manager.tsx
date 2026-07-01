@@ -8,13 +8,20 @@ import { toast } from "sonner"
 import { Plus } from "lucide-react"
 
 import type { CatalogType } from "@/schemas/catalog.schema"
-import { txt, type I18nText } from "@/lib/catalog-i18n"
+import { txt, pathogenName, type I18nText } from "@/lib/catalog-i18n"
 import { useErrorMessage } from "@/lib/use-error-message"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { ConfirmDialog } from "@/components/confirm-dialog"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import {
   Table,
   TableBody,
@@ -32,20 +39,18 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 
-type Row = {
+type NamedRow = { id: string; key: string; name: string | I18nText }
+type GroupLite = { id: string; key: string; name: string | I18nText; usesScientificName: boolean }
+type PathogenRow = {
   id: string
   key: string
-  name: string | I18nText // string (patógeno) | { pt, en } (órgão/exame)
-  group: I18nText | null
+  scientificName: string | null
+  name: string | I18nText | null
+  group: GroupLite
 }
+type Row = NamedRow | PathogenRow
 
-type FormShape = {
-  namePt?: string
-  nameEn?: string
-  name?: string
-  groupPt?: string
-  groupEn?: string
-}
+type FormShape = { namePt?: string; nameEn?: string; sci?: string; groupId?: string }
 
 async function getJson<T>(url: string): Promise<T> {
   const res = await fetch(url)
@@ -53,8 +58,10 @@ async function getJson<T>(url: string): Promise<T> {
   return res.json()
 }
 
-const i18nPt = (v: string | I18nText) => (typeof v === "string" ? v : v.pt ?? "")
-const i18nEn = (v: string | I18nText) => (typeof v === "string" ? v : v.en ?? "")
+const i18nPt = (v: string | I18nText | null | undefined) =>
+  v == null ? "" : typeof v === "string" ? v : v.pt ?? ""
+const i18nEn = (v: string | I18nText | null | undefined) =>
+  v == null ? "" : typeof v === "string" ? v : v.en ?? ""
 
 export function CatalogManager({ canEdit }: { canEdit: boolean }) {
   const t = useTranslations("catalogs")
@@ -73,31 +80,56 @@ export function CatalogManager({ canEdit }: { canEdit: boolean }) {
     queryFn: () => getJson<Row[]>(`/api/catalog/${type}`),
     staleTime: 60_000,
   })
+  const groupsQ = useQuery({
+    queryKey: ["pathogen-groups"],
+    queryFn: () => getJson<GroupLite[]>("/api/catalog/pathogen-groups"),
+    staleTime: Infinity,
+    enabled: isPathogen,
+  })
+  const groups = groupsQ.data ?? []
 
   const form = useForm<FormShape>({
-    defaultValues: { namePt: "", nameEn: "", name: "", groupPt: "", groupEn: "" },
+    // shouldUnregister: campos ocultos (condicionais por grupo) saem da validação.
+    shouldUnregister: true,
+    defaultValues: { namePt: "", nameEn: "", sci: "", groupId: "" },
   })
+  const selectedGroup = groups.find((g) => g.id === form.watch("groupId"))
+  const groupUsesSci = selectedGroup?.usesScientificName ?? true
 
   function openCreate() {
-    form.reset({ namePt: "", nameEn: "", name: "", groupPt: "", groupEn: "" })
+    form.reset({ namePt: "", nameEn: "", sci: "", groupId: "" })
     setDialog({ mode: "create" })
   }
   function openEdit(row: Row) {
-    form.reset({
-      namePt: i18nPt(row.name),
-      nameEn: i18nEn(row.name),
-      name: typeof row.name === "string" ? row.name : "",
-      groupPt: row.group?.pt ?? "",
-      groupEn: row.group?.en ?? "",
-    })
+    if (isPathogen) {
+      const p = row as PathogenRow
+      form.reset({
+        groupId: p.group.id,
+        sci: p.scientificName ?? "",
+        namePt: i18nPt(p.name),
+        nameEn: i18nEn(p.name),
+      })
+    } else {
+      const n = row as NamedRow
+      form.reset({ namePt: i18nPt(n.name), nameEn: i18nEn(n.name) })
+    }
     setDialog({ mode: "edit", row })
   }
 
   async function onSubmit(data: FormShape) {
+    if (isPathogen && !data.groupId) {
+      form.setError("groupId", { message: tval("required") })
+      return
+    }
     const isEdit = dialog?.mode === "edit"
     const url = isEdit ? `/api/catalog/${type}/${dialog!.row!.id}` : `/api/catalog/${type}`
     const body = isPathogen
-      ? { name: data.name, groupPt: data.groupPt, groupEn: data.groupEn }
+      ? {
+          groupId: data.groupId,
+          scientificName: data.sci,
+          namePt: data.namePt,
+          nameEn: data.nameEn,
+        }
       : { namePt: data.namePt, nameEn: data.nameEn }
     const res = await fetch(url, {
       method: isEdit ? "PUT" : "POST",
@@ -125,9 +157,11 @@ export function CatalogManager({ canEdit }: { canEdit: boolean }) {
     qc.invalidateQueries({ queryKey: ["catalog", type] })
   }
 
-  // Ordena pela exibição no idioma ativo.
+  const display = (r: Row) =>
+    isPathogen ? pathogenName(locale, r as PathogenRow) : i18nPt((r as NamedRow).name)
+
   const rows = [...(listQ.data ?? [])].sort((a, b) =>
-    txt(locale, a.name).localeCompare(txt(locale, b.name), locale)
+    display(a).localeCompare(display(b), locale)
   )
 
   return (
@@ -163,8 +197,7 @@ export function CatalogManager({ canEdit }: { canEdit: boolean }) {
                 {isPathogen ? (
                   <>
                     <TableHead>{t("colName")}</TableHead>
-                    <TableHead>{t("colGroupPt")}</TableHead>
-                    <TableHead>{t("colGroupEn")}</TableHead>
+                    <TableHead>{t("colGroup")}</TableHead>
                   </>
                 ) : (
                   <>
@@ -180,14 +213,15 @@ export function CatalogManager({ canEdit }: { canEdit: boolean }) {
                 <TableRow key={r.id}>
                   {isPathogen ? (
                     <>
-                      <TableCell className="font-medium">{i18nPt(r.name)}</TableCell>
-                      <TableCell className="text-muted-foreground">{r.group?.pt ?? "—"}</TableCell>
-                      <TableCell className="text-muted-foreground">{r.group?.en ?? "—"}</TableCell>
+                      <TableCell className="font-medium">{display(r)}</TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {txt(locale, (r as PathogenRow).group.name)}
+                      </TableCell>
                     </>
                   ) : (
                     <>
-                      <TableCell className="font-medium">{i18nPt(r.name)}</TableCell>
-                      <TableCell>{i18nEn(r.name)}</TableCell>
+                      <TableCell className="font-medium">{i18nPt((r as NamedRow).name)}</TableCell>
+                      <TableCell>{i18nEn((r as NamedRow).name)}</TableCell>
                     </>
                   )}
                   {canEdit && (
@@ -198,7 +232,7 @@ export function CatalogManager({ canEdit }: { canEdit: boolean }) {
                         </Button>
                         <ConfirmDialog
                           title={t("deleteTitle")}
-                          description={t("deleteDesc", { name: i18nPt(r.name) })}
+                          description={t("deleteDesc", { name: display(r) })}
                           confirmLabel={tc("delete")}
                           destructive
                           onConfirm={() => remove(r)}
@@ -225,28 +259,40 @@ export function CatalogManager({ canEdit }: { canEdit: boolean }) {
             <DialogDescription>{isPathogen ? t("addDescPathogen") : t("addDesc")}</DialogDescription>
           </DialogHeader>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            {isPathogen ? (
-              <>
-                <div className="space-y-1">
-                  <Label htmlFor="name">{t("nameSci")}</Label>
-                  <Input id="name" {...form.register("name", { required: tval("required") })} />
-                  {form.formState.errors.name && (
-                    <p className="text-xs text-destructive">
-                      {form.formState.errors.name.message}
-                    </p>
-                  )}
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1">
-                    <Label htmlFor="groupPt">{t("groupPt")}</Label>
-                    <Input id="groupPt" {...form.register("groupPt")} />
-                  </div>
-                  <div className="space-y-1">
-                    <Label htmlFor="groupEn">{t("groupEn")}</Label>
-                    <Input id="groupEn" {...form.register("groupEn")} />
-                  </div>
-                </div>
-              </>
+            {isPathogen && (
+              <div className="space-y-1">
+                <Label>{t("group")}</Label>
+                <Select
+                  value={form.watch("groupId")}
+                  onValueChange={(v) => form.setValue("groupId", v, { shouldValidate: true })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder={t("groupPlaceholder")} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {groups.map((g) => (
+                      <SelectItem key={g.id} value={g.id}>
+                        {txt(locale, g.name)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {form.formState.errors.groupId && (
+                  <p className="text-xs text-destructive">
+                    {form.formState.errors.groupId.message}
+                  </p>
+                )}
+              </div>
+            )}
+
+            {isPathogen && groupUsesSci ? (
+              <div className="space-y-1">
+                <Label htmlFor="sci">{t("nameSci")}</Label>
+                <Input id="sci" {...form.register("sci", { required: tval("required") })} />
+                {form.formState.errors.sci && (
+                  <p className="text-xs text-destructive">{form.formState.errors.sci.message}</p>
+                )}
+              </div>
             ) : (
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">
@@ -269,6 +315,7 @@ export function CatalogManager({ canEdit }: { canEdit: boolean }) {
                 </div>
               </div>
             )}
+
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setDialog(null)}>
                 {tc("cancel")}

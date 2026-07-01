@@ -283,7 +283,8 @@
     "protocolInUse": "Há análises vinculadas a esta entrada",
     "catalogNotFound": "Item de catálogo não encontrado",
     "catalogDuplicate": "Já existe um item com este nome",
-    "catalogInUse": "Item em uso; não pode ser removido"
+    "catalogInUse": "Item em uso; não pode ser removido",
+    "catalogNameRequired": "Informe o nome"
   },
   "location": {
     "country": "País",
@@ -352,11 +353,14 @@
     "tabPathogens": "Patógenos",
     "tabExamTypes": "Tipos de exame",
     "colName": "Nome",
+    "colGroup": "Grupo",
     "colNamePt": "Nome (PT)",
     "colNameEn": "Nome (EN)",
     "colGroupPt": "Grupo (PT)",
     "colGroupEn": "Grupo (EN)",
     "nameSci": "Nome científico",
+    "group": "Grupo",
+    "groupPlaceholder": "Selecione o grupo",
     "namePt": "Nome (português)",
     "nameEn": "Nome (inglês)",
     "groupPt": "Grupo (português)",

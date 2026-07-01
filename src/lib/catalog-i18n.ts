@@ -12,3 +12,12 @@ export function txt(
   if (typeof value === "string") return value
   return (locale === "en" ? value.en || value.pt : value.pt || value.en) ?? ""
 }
+
+// Exibição de um patógeno: nome científico (universal) tem prioridade; senão, nome comum
+// traduzido. Ver docs/I18N.md §catálogos.
+export function pathogenName(
+  locale: string,
+  p: { scientificName?: string | null; name?: string | I18nText | null }
+): string {
+  return p.scientificName || txt(locale, p.name)
+}

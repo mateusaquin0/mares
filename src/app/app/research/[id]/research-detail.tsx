@@ -10,7 +10,7 @@ import { toast } from "sonner"
 import { ArrowLeft, Pencil, Plus, Trash2 } from "lucide-react"
 
 import { updateResearchSchema, type UpdateResearchData } from "@/schemas/research.schema"
-import { txt, type I18nText } from "@/lib/catalog-i18n"
+import { txt, pathogenName, type I18nText } from "@/lib/catalog-i18n"
 import { useErrorMessage } from "@/lib/use-error-message"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -37,10 +37,11 @@ import {
 } from "@/components/ui/dialog"
 
 type CatalogItem = { id: string; name: string | I18nText }
+type PathogenItem = { id: string; scientificName: string | null; name: string | I18nText | null }
 type ProtocolEntry = {
   id: string
   organ: CatalogItem
-  pathogen: CatalogItem
+  pathogen: PathogenItem
   examType: CatalogItem
 }
 type Research = {
@@ -88,7 +89,7 @@ export function ResearchDetail({
   })
   const pathogensQ = useQuery({
     queryKey: ["catalog", "pathogens"],
-    queryFn: () => getJson<CatalogItem[]>("/api/catalog/pathogens"),
+    queryFn: () => getJson<PathogenItem[]>("/api/catalog/pathogens"),
     staleTime: Infinity,
     enabled: isOrgAdmin,
   })
@@ -228,7 +229,10 @@ export function ResearchDetail({
               loading={organsQ.isLoading}
             />
             <Combobox
-              options={opts(pathogensQ.data)}
+              options={(pathogensQ.data ?? []).map((c) => ({
+                value: c.id,
+                label: pathogenName(locale, c),
+              }))}
               value={pathogenId}
               onChange={setPathogenId}
               placeholder={tp("pathogen")}
@@ -273,7 +277,7 @@ export function ResearchDetail({
                 {research.protocols.map((p) => (
                   <TableRow key={p.id}>
                     <TableCell>{txt(locale, p.organ.name)}</TableCell>
-                    <TableCell>{txt(locale, p.pathogen.name)}</TableCell>
+                    <TableCell>{pathogenName(locale, p.pathogen)}</TableCell>
                     <TableCell>{txt(locale, p.examType.name)}</TableCell>
                     {isOrgAdmin && (
                       <TableCell className="text-right">
