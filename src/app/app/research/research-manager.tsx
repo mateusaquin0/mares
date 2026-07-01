@@ -50,7 +50,7 @@ type Research = {
   _count: { animals: number; protocols: number }
 }
 
-export function ResearchManager({ isOrgAdmin }: { isOrgAdmin: boolean; selfId: string }) {
+export function ResearchManager({ isOrgAdmin, selfId }: { isOrgAdmin: boolean; selfId: string }) {
   const t = useTranslations("research")
   const tc = useTranslations("common")
   const tval = useTranslations("validation")
@@ -58,6 +58,7 @@ export function ResearchManager({ isOrgAdmin }: { isOrgAdmin: boolean; selfId: s
   const [items, setItems] = useState<Research[]>([])
   const [loading, setLoading] = useState(true)
   const [open, setOpen] = useState(false)
+  const [editing, setEditing] = useState<Research | null>(null)
   const [confirm, setConfirm] = useState<Research | null>(null)
 
   const form = useForm<CreateResearchData>({
@@ -76,19 +77,34 @@ export function ResearchManager({ isOrgAdmin }: { isOrgAdmin: boolean; selfId: s
     load()
   }, [load])
 
-  async function onCreate(data: CreateResearchData) {
-    const res = await fetch("/api/research", {
-      method: "POST",
+  function openCreate() {
+    setEditing(null)
+    form.reset({ name: "", description: "", isPublic: false })
+    setOpen(true)
+  }
+
+  function openEdit(r: Research) {
+    setEditing(r)
+    form.reset({ name: r.name, description: r.description ?? "", isPublic: r.isPublic })
+    setOpen(true)
+  }
+
+  async function onSubmit(data: CreateResearchData) {
+    const res = await fetch(editing ? `/api/research/${editing.id}` : "/api/research", {
+      method: editing ? "PUT" : "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
     })
     if (!res.ok) {
-      toast.error(t("createError"), { description: em(await res.json().catch(() => ({}))) })
+      toast.error(editing ? t("editError") : t("createError"), {
+        description: em(await res.json().catch(() => ({}))),
+      })
       return
     }
-    toast.success(t("created"))
+    toast.success(editing ? t("edited") : t("created"))
     form.reset({ name: "", description: "", isPublic: false })
     setOpen(false)
+    setEditing(null)
     load()
   }
 
@@ -109,7 +125,7 @@ export function ResearchManager({ isOrgAdmin }: { isOrgAdmin: boolean; selfId: s
           <h1 className="text-2xl font-bold">{t("title")}</h1>
           <p className="mt-1 text-sm text-muted-foreground">{t("subtitle")}</p>
         </div>
-        <Button onClick={() => setOpen(true)}>
+        <Button onClick={openCreate}>
           <Plus className="size-4" />
           {t("new")}
         </Button>
@@ -147,31 +163,32 @@ export function ResearchManager({ isOrgAdmin }: { isOrgAdmin: boolean; selfId: s
                   <TableCell className="text-right">{r._count.protocols}</TableCell>
                   <TableCell className="text-right">{r._count.animals}</TableCell>
                   <TableCell className="text-right">
-                    {isOrgAdmin ? (
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="size-8">
-                            <MoreHorizontal className="size-4" />
-                            <span className="sr-only">{t("colActions")}</span>
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem asChild>
-                            <Link href={`/app/research/${r.id}`}>{t("open")}</Link>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="size-8">
+                          <MoreHorizontal className="size-4" />
+                          <span className="sr-only">{t("colActions")}</span>
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem asChild>
+                          <Link href={`/app/research/${r.id}`}>{t("view")}</Link>
+                        </DropdownMenuItem>
+                        {(isOrgAdmin || r.createdById === selfId) && (
+                          <DropdownMenuItem onSelect={() => openEdit(r)}>
+                            {tc("edit")}
                           </DropdownMenuItem>
+                        )}
+                        {isOrgAdmin && (
                           <DropdownMenuItem
                             className="text-destructive focus:text-destructive"
                             onSelect={() => setConfirm(r)}
                           >
                             {tc("delete")}
                           </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    ) : (
-                      <Button asChild variant="outline" size="sm">
-                        <Link href={`/app/research/${r.id}`}>{t("open")}</Link>
-                      </Button>
-                    )}
+                        )}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </TableCell>
                 </TableRow>
               ))}
@@ -192,13 +209,19 @@ export function ResearchManager({ isOrgAdmin }: { isOrgAdmin: boolean; selfId: s
         />
       )}
 
-      <Dialog open={open} onOpenChange={setOpen}>
+      <Dialog
+        open={open}
+        onOpenChange={(o) => {
+          setOpen(o)
+          if (!o) setEditing(null)
+        }}
+      >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{t("createTitle")}</DialogTitle>
+            <DialogTitle>{editing ? t("editTitle") : t("createTitle")}</DialogTitle>
             <DialogDescription>{t("createDesc")}</DialogDescription>
           </DialogHeader>
-          <form onSubmit={form.handleSubmit(onCreate)} className="space-y-4">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <div className="space-y-1">
               <Label htmlFor="name">{t("nameLabel")}</Label>
               <Input id="name" {...form.register("name")} />
@@ -226,11 +249,18 @@ export function ResearchManager({ isOrgAdmin }: { isOrgAdmin: boolean; selfId: s
               </div>
             )}
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setOpen(false)
+                  setEditing(null)
+                }}
+              >
                 {tc("cancel")}
               </Button>
               <Button type="submit" loading={form.formState.isSubmitting}>
-                {t("create")}
+                {editing ? tc("save") : t("create")}
               </Button>
             </DialogFooter>
           </form>

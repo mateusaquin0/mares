@@ -363,7 +363,7 @@ export function AnimalsManager({ isOrgAdmin }: { isOrgAdmin: boolean }) {
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             <DropdownMenuItem asChild>
-                              <Link href={`/app/animals/${a.id}`}>{t("open")}</Link>
+                              <Link href={`/app/animals/${a.id}`}>{t("view")}</Link>
                             </DropdownMenuItem>
                             <DropdownMenuItem onSelect={() => openEdit(a)}>
                               {tc("edit")}
