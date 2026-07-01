@@ -11,6 +11,7 @@ import {
   Users,
   Building2,
   ShieldCheck,
+  Library,
 } from "lucide-react"
 
 import { cn } from "@/lib/utils"
@@ -50,12 +51,13 @@ export function Sidebar({
 
   const navItems: NavItem[] = [
     { href: "/app/dashboard", label: t("dashboard"), icon: LayoutDashboard },
+    { href: "/app/research", label: t("research"), icon: FlaskConical },
     { href: "/app/map", label: t("map"), icon: Map, disabled: true },
-    { href: "/app/research", label: t("research"), icon: FlaskConical, disabled: true },
     { href: "/app/animals", label: t("animals"), icon: Fish, disabled: true },
   ]
   if (activeOrg?.role === "ORG_ADMIN") {
     navItems.push({ href: "/app/members", label: t("members"), icon: Users })
+    navItems.push({ href: "/app/catalogs", label: t("catalogs"), icon: Library })
   }
   if (activeOrg) {
     navItems.push({ href: "/app/organizations", label: t("myOrgs"), icon: Building2 })
@@ -152,6 +154,7 @@ export function Sidebar({
               { href: "/app/admin/access-requests", label: t("adminRequests") },
               { href: "/app/admin/organizations", label: t("adminOrgs") },
               { href: "/app/admin/users", label: t("adminUsers") },
+              { href: "/app/catalogs", label: t("catalogs") },
             ].map((item) => {
               const active = pathname.startsWith(item.href)
               return (

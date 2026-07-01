@@ -1,0 +1,345 @@
+"use client"
+
+import { useState } from "react"
+import Link from "next/link"
+import { useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { useLocale, useTranslations } from "next-intl"
+import { useQuery, useQueryClient } from "@tanstack/react-query"
+import { toast } from "sonner"
+import { ArrowLeft, Pencil, Plus, Trash2 } from "lucide-react"
+
+import { updateResearchSchema, type UpdateResearchData } from "@/schemas/research.schema"
+import { byLocale } from "@/lib/catalog-i18n"
+import { useErrorMessage } from "@/lib/use-error-message"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
+import { Checkbox } from "@/components/ui/checkbox"
+import { Badge } from "@/components/ui/badge"
+import { Combobox, type ComboboxOption } from "@/components/ui/combobox"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+
+type CatalogItem = { id: string; namePt: string; nameEn: string }
+type ProtocolEntry = {
+  id: string
+  organ: CatalogItem
+  pathogen: CatalogItem
+  examType: CatalogItem
+}
+type Research = {
+  id: string
+  name: string
+  description: string | null
+  isPublic: boolean
+  createdById: string | null
+  _count: { animals: number }
+  protocols: ProtocolEntry[]
+}
+
+async function getJson<T>(url: string): Promise<T> {
+  const res = await fetch(url)
+  if (!res.ok) throw new Error(`GET ${url} ${res.status}`)
+  return res.json()
+}
+
+export function ResearchDetail({
+  id,
+  isOrgAdmin,
+  selfId,
+}: {
+  id: string
+  isOrgAdmin: boolean
+  selfId: string
+}) {
+  const t = useTranslations("research")
+  const tp = useTranslations("protocol")
+  const tc = useTranslations("common")
+  const tval = useTranslations("validation")
+  const locale = useLocale()
+  const em = useErrorMessage()
+  const qc = useQueryClient()
+
+  const researchQ = useQuery({
+    queryKey: ["research", id],
+    queryFn: () => getJson<Research>(`/api/research/${id}`),
+  })
+  const organsQ = useQuery({
+    queryKey: ["catalog", "organs"],
+    queryFn: () => getJson<CatalogItem[]>("/api/catalog/organs"),
+    staleTime: Infinity,
+    enabled: isOrgAdmin,
+  })
+  const pathogensQ = useQuery({
+    queryKey: ["catalog", "pathogens"],
+    queryFn: () => getJson<CatalogItem[]>("/api/catalog/pathogens"),
+    staleTime: Infinity,
+    enabled: isOrgAdmin,
+  })
+  const examTypesQ = useQuery({
+    queryKey: ["catalog", "exam-types"],
+    queryFn: () => getJson<CatalogItem[]>("/api/catalog/exam-types"),
+    staleTime: Infinity,
+    enabled: isOrgAdmin,
+  })
+
+  const [organId, setOrganId] = useState<string>()
+  const [pathogenId, setPathogenId] = useState<string>()
+  const [examTypeId, setExamTypeId] = useState<string>()
+  const [adding, setAdding] = useState(false)
+  const [editOpen, setEditOpen] = useState(false)
+
+  const research = researchQ.data
+  const canEditContent = isOrgAdmin || (research?.createdById === selfId)
+
+  const opts = (list: CatalogItem[] | undefined): ComboboxOption[] =>
+    (list ?? []).map((c) => ({ value: c.id, label: byLocale(locale, c.namePt, c.nameEn) }))
+
+  const editForm = useForm<UpdateResearchData>({
+    resolver: zodResolver(updateResearchSchema),
+  })
+
+  function openEdit() {
+    if (!research) return
+    editForm.reset({
+      name: research.name,
+      description: research.description ?? "",
+      isPublic: research.isPublic,
+    })
+    setEditOpen(true)
+  }
+
+  async function onEdit(data: UpdateResearchData) {
+    const res = await fetch(`/api/research/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    })
+    if (!res.ok) {
+      toast.error(t("editError"), { description: em(await res.json().catch(() => ({}))) })
+      return
+    }
+    toast.success(t("edited"))
+    setEditOpen(false)
+    qc.invalidateQueries({ queryKey: ["research", id] })
+  }
+
+  async function addEntry() {
+    if (!organId || !pathogenId || !examTypeId) return
+    setAdding(true)
+    const res = await fetch(`/api/research/${id}/protocol`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ entries: [{ organId, pathogenId, examTypeId }] }),
+    })
+    setAdding(false)
+    if (!res.ok) {
+      toast.error(tp("addError"), { description: em(await res.json().catch(() => ({}))) })
+      return
+    }
+    toast.success(tp("added"))
+    setOrganId(undefined)
+    setPathogenId(undefined)
+    setExamTypeId(undefined)
+    qc.invalidateQueries({ queryKey: ["research", id] })
+  }
+
+  async function removeEntry(entryId: string) {
+    const res = await fetch(`/api/research/${id}/protocol/${entryId}`, { method: "DELETE" })
+    if (!res.ok) {
+      toast.error(tp("removeError"), { description: em(await res.json().catch(() => ({}))) })
+      return
+    }
+    toast.success(tp("removed"))
+    qc.invalidateQueries({ queryKey: ["research", id] })
+  }
+
+  if (researchQ.isLoading) {
+    return <p className="p-8 text-sm text-muted-foreground">{tc("loading")}</p>
+  }
+  if (!research) {
+    return <p className="p-8 text-sm text-muted-foreground">{t("notFound")}</p>
+  }
+
+  return (
+    <div className="space-y-6 p-8">
+      <Link
+        href="/app/research"
+        className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
+      >
+        <ArrowLeft className="size-4" />
+        {t("back")}
+      </Link>
+
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl font-bold">{research.name}</h1>
+            <Badge variant={research.isPublic ? "default" : "secondary"}>
+              {research.isPublic ? t("public") : t("private")}
+            </Badge>
+          </div>
+          {research.description && (
+            <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
+              {research.description}
+            </p>
+          )}
+          <p className="mt-1 text-xs text-muted-foreground">
+            {t("animalsCount", { count: research._count.animals })}
+          </p>
+        </div>
+        {canEditContent && (
+          <Button variant="outline" onClick={openEdit}>
+            <Pencil className="size-4" />
+            {tc("edit")}
+          </Button>
+        )}
+      </div>
+
+      <div className="space-y-3">
+        <h2 className="text-lg font-semibold">{tp("title")}</h2>
+        <p className="text-sm text-muted-foreground">{tp("subtitle")}</p>
+
+        {isOrgAdmin && (
+          <div className="grid gap-2 rounded-md border p-3 sm:grid-cols-[1fr_1fr_1fr_auto]">
+            <Combobox
+              options={opts(organsQ.data)}
+              value={organId}
+              onChange={setOrganId}
+              placeholder={tp("organ")}
+              searchPlaceholder={tc("loading")}
+              emptyText={tc("loading")}
+              loading={organsQ.isLoading}
+            />
+            <Combobox
+              options={opts(pathogensQ.data)}
+              value={pathogenId}
+              onChange={setPathogenId}
+              placeholder={tp("pathogen")}
+              searchPlaceholder={tc("loading")}
+              emptyText={tc("loading")}
+              loading={pathogensQ.isLoading}
+            />
+            <Combobox
+              options={opts(examTypesQ.data)}
+              value={examTypeId}
+              onChange={setExamTypeId}
+              placeholder={tp("examType")}
+              searchPlaceholder={tc("loading")}
+              emptyText={tc("loading")}
+              loading={examTypesQ.isLoading}
+            />
+            <Button
+              onClick={addEntry}
+              disabled={!organId || !pathogenId || !examTypeId}
+              loading={adding}
+            >
+              <Plus className="size-4" />
+              {tc("add")}
+            </Button>
+          </div>
+        )}
+
+        {research.protocols.length === 0 ? (
+          <p className="text-sm text-muted-foreground">{tp("empty")}</p>
+        ) : (
+          <div className="rounded-md border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>{tp("organ")}</TableHead>
+                  <TableHead>{tp("pathogen")}</TableHead>
+                  <TableHead>{tp("examType")}</TableHead>
+                  {isOrgAdmin && <TableHead className="w-16 text-right">{tc("actions")}</TableHead>}
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {research.protocols.map((p) => (
+                  <TableRow key={p.id}>
+                    <TableCell>{byLocale(locale, p.organ.namePt, p.organ.nameEn)}</TableCell>
+                    <TableCell>{byLocale(locale, p.pathogen.namePt, p.pathogen.nameEn)}</TableCell>
+                    <TableCell>{byLocale(locale, p.examType.namePt, p.examType.nameEn)}</TableCell>
+                    {isOrgAdmin && (
+                      <TableCell className="text-right">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="size-8 text-destructive"
+                          onClick={() => removeEntry(p.id)}
+                          aria-label={tc("remove")}
+                        >
+                          <Trash2 className="size-4" />
+                        </Button>
+                      </TableCell>
+                    )}
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        )}
+      </div>
+
+      <Dialog open={editOpen} onOpenChange={setEditOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t("editTitle")}</DialogTitle>
+            <DialogDescription>{t("createDesc")}</DialogDescription>
+          </DialogHeader>
+          <form onSubmit={editForm.handleSubmit(onEdit)} className="space-y-4">
+            <div className="space-y-1">
+              <Label htmlFor="ename">{t("nameLabel")}</Label>
+              <Input id="ename" {...editForm.register("name")} />
+              {editForm.formState.errors.name && (
+                <p className="text-xs text-destructive">
+                  {tval(editForm.formState.errors.name.message!)}
+                </p>
+              )}
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="edesc">{t("descriptionLabel")}</Label>
+              <Textarea id="edesc" rows={3} {...editForm.register("description")} />
+            </div>
+            {isOrgAdmin && (
+              <div className="flex items-start gap-2">
+                <Checkbox
+                  id="eisPublic"
+                  checked={editForm.watch("isPublic")}
+                  onCheckedChange={(v) => editForm.setValue("isPublic", v === true)}
+                  className="mt-0.5"
+                />
+                <Label htmlFor="eisPublic" className="text-sm font-normal text-muted-foreground">
+                  {t("isPublicHint")}
+                </Label>
+              </div>
+            )}
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setEditOpen(false)}>
+                {tc("cancel")}
+              </Button>
+              <Button type="submit" loading={editForm.formState.isSubmitting}>
+                {tc("save")}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+    </div>
+  )
+}
