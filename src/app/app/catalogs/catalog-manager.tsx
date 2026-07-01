@@ -50,7 +50,7 @@ type PathogenRow = {
 }
 type Row = NamedRow | PathogenRow
 
-type FormShape = { namePt?: string; nameEn?: string; sci?: string; groupId?: string }
+type FormShape = { namePt?: string; nameEn?: string; sci?: string }
 
 async function getJson<T>(url: string): Promise<T> {
   const res = await fetch(url)
@@ -91,25 +91,29 @@ export function CatalogManager({ canEdit }: { canEdit: boolean }) {
   const form = useForm<FormShape>({
     // shouldUnregister: campos ocultos (condicionais por grupo) saem da validação.
     shouldUnregister: true,
-    defaultValues: { namePt: "", nameEn: "", sci: "", groupId: "" },
+    defaultValues: { namePt: "", nameEn: "", sci: "" },
   })
-  const selectedGroup = groups.find((g) => g.id === form.watch("groupId"))
+  // groupId fica fora do react-hook-form (Select controlado) para pré-seleção confiável ao editar
+  // (com shouldUnregister, o reset() não restaura campos não-registrados).
+  const [groupId, setGroupId] = useState("")
+  const [groupError, setGroupError] = useState(false)
+  const selectedGroup = groups.find((g) => g.id === groupId)
   const groupUsesSci = selectedGroup?.usesScientificName ?? true
 
   function openCreate() {
-    form.reset({ namePt: "", nameEn: "", sci: "", groupId: "" })
+    setGroupId("")
+    setGroupError(false)
+    form.reset({ namePt: "", nameEn: "", sci: "" })
     setDialog({ mode: "create" })
   }
   function openEdit(row: Row) {
+    setGroupError(false)
     if (isPathogen) {
       const p = row as PathogenRow
-      form.reset({
-        groupId: p.group.id,
-        sci: p.scientificName ?? "",
-        namePt: i18nPt(p.name),
-        nameEn: i18nEn(p.name),
-      })
+      setGroupId(p.group.id)
+      form.reset({ sci: p.scientificName ?? "", namePt: i18nPt(p.name), nameEn: i18nEn(p.name) })
     } else {
+      setGroupId("")
       const n = row as NamedRow
       form.reset({ namePt: i18nPt(n.name), nameEn: i18nEn(n.name) })
     }
@@ -117,19 +121,14 @@ export function CatalogManager({ canEdit }: { canEdit: boolean }) {
   }
 
   async function onSubmit(data: FormShape) {
-    if (isPathogen && !data.groupId) {
-      form.setError("groupId", { message: tval("required") })
+    if (isPathogen && !groupId) {
+      setGroupError(true)
       return
     }
     const isEdit = dialog?.mode === "edit"
     const url = isEdit ? `/api/catalog/${type}/${dialog!.row!.id}` : `/api/catalog/${type}`
     const body = isPathogen
-      ? {
-          groupId: data.groupId,
-          scientificName: data.sci,
-          namePt: data.namePt,
-          nameEn: data.nameEn,
-        }
+      ? { groupId, scientificName: data.sci, namePt: data.namePt, nameEn: data.nameEn }
       : { namePt: data.namePt, nameEn: data.nameEn }
     const res = await fetch(url, {
       method: isEdit ? "PUT" : "POST",
@@ -263,8 +262,11 @@ export function CatalogManager({ canEdit }: { canEdit: boolean }) {
               <div className="space-y-1">
                 <Label>{t("group")}</Label>
                 <Select
-                  value={form.watch("groupId")}
-                  onValueChange={(v) => form.setValue("groupId", v, { shouldValidate: true })}
+                  value={groupId}
+                  onValueChange={(v) => {
+                    setGroupId(v)
+                    setGroupError(false)
+                  }}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder={t("groupPlaceholder")} />
@@ -277,11 +279,7 @@ export function CatalogManager({ canEdit }: { canEdit: boolean }) {
                     ))}
                   </SelectContent>
                 </Select>
-                {form.formState.errors.groupId && (
-                  <p className="text-xs text-destructive">
-                    {form.formState.errors.groupId.message}
-                  </p>
-                )}
+                {groupError && <p className="text-xs text-destructive">{tval("required")}</p>}
               </div>
             )}
 
