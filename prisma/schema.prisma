@@ -158,13 +158,31 @@ model Organ {
   samples   Sample[]
 }
 
+// Grupo de patógeno (vocabulário controlado): bactérias, fungos, protozoários, vírus,
+// helmintos, ações antrópicas. `usesScientificName` decide se o item usa nome científico
+// (latim, universal) ou nome comum traduzível. Ver docs/I18N.md §catálogos.
+model PathogenGroup {
+  id                 String     @id @default(uuid())
+  key                String     @unique // ex: "bacteria", "anthropogenic"
+  name               Json // { pt, en }
+  usesScientificName Boolean    @default(true) @map("uses_scientific_name")
+  pathogens          Pathogen[]
+}
+
 model Pathogen {
-  id        String             @id @default(uuid())
-  key       String             @unique // ex: "toxoplasma_gondii"
-  name      String // nome científico (latim), universal — sem tradução
-  group     Json? // { pt: "Protozoário Sarcocistídeo", en: "Sarcocystid Protozoan" }
-  protocols ResearchProtocol[]
-  analyses  Analysis[]
+  id             String             @id @default(uuid())
+  key            String             @unique // ex: "toxoplasma_gondii"
+  groupId        String             @map("group_id")
+  group          PathogenGroup      @relation(fields: [groupId], references: [id])
+  // Grupos científicos: scientificName preenchido (name nulo). Grupos comuns (ações
+  // antrópicas): name { pt, en } preenchido (scientificName nulo). Exibição:
+  // scientificName ?? name[locale].
+  scientificName String?            @map("scientific_name")
+  name           Json?
+  protocols      ResearchProtocol[]
+  analyses       Analysis[]
+
+  @@index([groupId])
 }
 
 model ExamType {

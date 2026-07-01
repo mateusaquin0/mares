@@ -1,7 +1,7 @@
 // MARES — Seed dos catálogos globais (Organ, Pathogen, ExamType) + bootstrap do admin global.
 // Conforme docs/SEED.md. Idempotente via upsert.
 
-import { PrismaClient } from '@prisma/client'
+import { Prisma, PrismaClient } from '@prisma/client'
 import { createClient } from '@supabase/supabase-js'
 
 const prisma = new PrismaClient()
@@ -38,37 +38,45 @@ const organs = [
   { key: 'placenta', namePt: 'Placenta', nameEn: 'Placenta' },
 ]
 
-const GROUP = {
-  sarcocystid: { pt: 'Protozoário Sarcocistídeo', en: 'Sarcocystid Protozoan' },
-  bacteria: { pt: 'Bactéria', en: 'Bacterium' },
-  virus: { pt: 'Vírus', en: 'Virus' },
-  fungus: { pt: 'Fungo', en: 'Fungus' },
-  helminth: { pt: 'Helminto', en: 'Helminth' },
-  anthropogenic: { pt: 'Antropogênico', en: 'Anthropogenic' },
-} as const
+// Grupos de patógeno (vocabulário controlado). usesScientificName = usa nome científico.
+const pathogenGroups = [
+  { key: 'bacteria', namePt: 'Bactérias', nameEn: 'Bacteria', usesScientificName: true },
+  { key: 'fungi', namePt: 'Fungos', nameEn: 'Fungi', usesScientificName: true },
+  { key: 'protozoa', namePt: 'Protozoários', nameEn: 'Protozoa', usesScientificName: true },
+  { key: 'viruses', namePt: 'Vírus', nameEn: 'Viruses', usesScientificName: true },
+  { key: 'helminths', namePt: 'Helmintos', nameEn: 'Helminths', usesScientificName: true },
+  { key: 'anthropogenic', namePt: 'Ações antrópicas', nameEn: 'Anthropogenic actions', usesScientificName: false },
+]
 
-const pathogens = [
-  { key: 'toxoplasma_gondii', namePt: 'Toxoplasma gondii', nameEn: 'Toxoplasma gondii', group: GROUP.sarcocystid },
-  { key: 'sarcocystis_sp', namePt: 'Sarcocystis sp.', nameEn: 'Sarcocystis sp.', group: GROUP.sarcocystid },
-  { key: 'neospora_caninum', namePt: 'Neospora caninum', nameEn: 'Neospora caninum', group: GROUP.sarcocystid },
-  { key: 'besnoitia_sp', namePt: 'Besnoitia sp.', nameEn: 'Besnoitia sp.', group: GROUP.sarcocystid },
-  { key: 'brucella_sp', namePt: 'Brucella sp.', nameEn: 'Brucella sp.', group: GROUP.bacteria },
-  { key: 'brucella_ceti', namePt: 'Brucella ceti', nameEn: 'Brucella ceti', group: GROUP.bacteria },
-  { key: 'erysipelothrix_rhusiopathiae', namePt: 'Erysipelothrix rhusiopathiae', nameEn: 'Erysipelothrix rhusiopathiae', group: GROUP.bacteria },
-  { key: 'leptospira_sp', namePt: 'Leptospira sp.', nameEn: 'Leptospira sp.', group: GROUP.bacteria },
-  { key: 'mycobacterium_sp', namePt: 'Mycobacterium sp.', nameEn: 'Mycobacterium sp.', group: GROUP.bacteria },
-  { key: 'clostridium_sp', namePt: 'Clostridium sp.', nameEn: 'Clostridium sp.', group: GROUP.bacteria },
-  { key: 'cetacean_morbillivirus', namePt: 'Cetacean Morbillivirus (CeMV)', nameEn: 'Cetacean Morbillivirus (CeMV)', group: GROUP.virus },
-  { key: 'herpesvirus_alhv1', namePt: 'Herpesvirus (AlHV-1)', nameEn: 'Herpesvirus (AlHV-1)', group: GROUP.virus },
-  { key: 'influenza_a', namePt: 'Influenza A', nameEn: 'Influenza A', group: GROUP.virus },
-  { key: 'coronavirus', namePt: 'Coronavirus', nameEn: 'Coronavirus', group: GROUP.virus },
-  { key: 'candida_sp', namePt: 'Candida sp.', nameEn: 'Candida sp.', group: GROUP.fungus },
-  { key: 'aspergillus_sp', namePt: 'Aspergillus sp.', nameEn: 'Aspergillus sp.', group: GROUP.fungus },
-  { key: 'cryptococcus_sp', namePt: 'Cryptococcus sp.', nameEn: 'Cryptococcus sp.', group: GROUP.fungus },
-  { key: 'anisakis_sp', namePt: 'Anisakis sp.', nameEn: 'Anisakis sp.', group: GROUP.helminth },
-  { key: 'crassicauda_sp', namePt: 'Crassicauda sp.', nameEn: 'Crassicauda sp.', group: GROUP.helminth },
-  { key: 'contaminacao_plastico', namePt: 'Contaminação ambiental (plástico)', nameEn: 'Environmental contamination (plastic)', group: GROUP.anthropogenic },
-  { key: 'rede_pesca', namePt: 'Rede de pesca (captura acidental)', nameEn: 'Fishing net (bycatch)', group: GROUP.anthropogenic },
+// Grupos científicos: `sci` (nome científico). Ações antrópicas: `namePt`/`nameEn`.
+const pathogens: Array<{
+  key: string
+  groupKey: string
+  sci?: string
+  namePt?: string
+  nameEn?: string
+}> = [
+  { key: 'toxoplasma_gondii', groupKey: 'protozoa', sci: 'Toxoplasma gondii' },
+  { key: 'sarcocystis_sp', groupKey: 'protozoa', sci: 'Sarcocystis sp.' },
+  { key: 'neospora_caninum', groupKey: 'protozoa', sci: 'Neospora caninum' },
+  { key: 'besnoitia_sp', groupKey: 'protozoa', sci: 'Besnoitia sp.' },
+  { key: 'brucella_sp', groupKey: 'bacteria', sci: 'Brucella sp.' },
+  { key: 'brucella_ceti', groupKey: 'bacteria', sci: 'Brucella ceti' },
+  { key: 'erysipelothrix_rhusiopathiae', groupKey: 'bacteria', sci: 'Erysipelothrix rhusiopathiae' },
+  { key: 'leptospira_sp', groupKey: 'bacteria', sci: 'Leptospira sp.' },
+  { key: 'mycobacterium_sp', groupKey: 'bacteria', sci: 'Mycobacterium sp.' },
+  { key: 'clostridium_sp', groupKey: 'bacteria', sci: 'Clostridium sp.' },
+  { key: 'cetacean_morbillivirus', groupKey: 'viruses', sci: 'Cetacean Morbillivirus (CeMV)' },
+  { key: 'herpesvirus_alhv1', groupKey: 'viruses', sci: 'Herpesvirus (AlHV-1)' },
+  { key: 'influenza_a', groupKey: 'viruses', sci: 'Influenza A' },
+  { key: 'coronavirus', groupKey: 'viruses', sci: 'Coronavirus' },
+  { key: 'candida_sp', groupKey: 'fungi', sci: 'Candida sp.' },
+  { key: 'aspergillus_sp', groupKey: 'fungi', sci: 'Aspergillus sp.' },
+  { key: 'cryptococcus_sp', groupKey: 'fungi', sci: 'Cryptococcus sp.' },
+  { key: 'anisakis_sp', groupKey: 'helminths', sci: 'Anisakis sp.' },
+  { key: 'crassicauda_sp', groupKey: 'helminths', sci: 'Crassicauda sp.' },
+  { key: 'contaminacao_plastico', groupKey: 'anthropogenic', namePt: 'Contaminação ambiental (plástico)', nameEn: 'Environmental contamination (plastic)' },
+  { key: 'rede_pesca', groupKey: 'anthropogenic', namePt: 'Rede de pesca (captura acidental)', nameEn: 'Fishing net (bycatch)' },
 ]
 
 const examTypes = [
@@ -142,12 +150,27 @@ async function main() {
     const data = { key: organ.key, name: { pt: organ.namePt, en: organ.nameEn } }
     await prisma.organ.upsert({ where: { key: organ.key }, update: data, create: data })
   }
+  const groupIdByKey: Record<string, string> = {}
+  for (const g of pathogenGroups) {
+    const data = {
+      key: g.key,
+      name: { pt: g.namePt, en: g.nameEn },
+      usesScientificName: g.usesScientificName,
+    }
+    const row = await prisma.pathogenGroup.upsert({
+      where: { key: g.key },
+      update: data,
+      create: data,
+    })
+    groupIdByKey[g.key] = row.id
+  }
   for (const p of pathogens) {
-    // Patógeno: nome científico (latim, universal) — namePt == nameEn no seed. Só o grupo traduz.
+    // Grupos científicos: scientificName (name nulo). Ações antrópicas: name { pt, en }.
     const data = {
       key: p.key,
-      name: p.namePt,
-      group: { pt: p.group.pt, en: p.group.en },
+      groupId: groupIdByKey[p.groupKey],
+      scientificName: p.sci ?? null,
+      name: p.sci ? Prisma.DbNull : { pt: p.namePt!, en: p.nameEn! },
     }
     await prisma.pathogen.upsert({ where: { key: p.key }, update: data, create: data })
   }
