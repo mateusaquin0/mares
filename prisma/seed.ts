@@ -139,21 +139,20 @@ async function seedAdmin() {
 
 async function main() {
   for (const organ of organs) {
-    const data = { key: organ.key, namePt: organ.namePt, nameEn: organ.nameEn }
+    const data = { key: organ.key, name: { pt: organ.namePt, en: organ.nameEn } }
     await prisma.organ.upsert({ where: { key: organ.key }, update: data, create: data })
   }
   for (const p of pathogens) {
+    // Patógeno: nome científico (latim, universal) — namePt == nameEn no seed. Só o grupo traduz.
     const data = {
       key: p.key,
-      namePt: p.namePt,
-      nameEn: p.nameEn,
-      groupPt: p.group.pt,
-      groupEn: p.group.en,
+      name: p.namePt,
+      group: { pt: p.group.pt, en: p.group.en },
     }
     await prisma.pathogen.upsert({ where: { key: p.key }, update: data, create: data })
   }
   for (const e of examTypes) {
-    const data = { key: e.key, namePt: e.namePt, nameEn: e.nameEn }
+    const data = { key: e.key, name: { pt: e.namePt, en: e.nameEn } }
     await prisma.examType.upsert({ where: { key: e.key }, update: data, create: data })
   }
   console.log(`Seed concluído: ${organs.length} órgãos, ${pathogens.length} patógenos, ${examTypes.length} tipos de exame.`)

@@ -146,16 +146,14 @@ model ResearchProtocol {
 // Catálogos globais (reutilizáveis entre pesquisas)
 // ─────────────────────────────────────────────────────────────
 
-// Catálogos internacionalizados: cada rótulo tem colunas por idioma (name_pt/name_en,
-// group_pt/group_en). O `key` é um slug estável usado como identidade (referências e seed
-// idempotente), independente do idioma. Ver docs/I18N.md §catálogos.
+// Catálogos: `key` é um slug estável (identidade, independente do idioma).
+// Rótulos traduzíveis usam JSON `{ "pt": ..., "en": ... }` — um campo por rótulo, extensível a
+// novos idiomas sem migration. Patógeno é nome científico (latim, universal) → `name` texto
+// simples; só o `group` é traduzível. Ver docs/I18N.md §catálogos.
 model Organ {
   id        String             @id @default(uuid())
   key       String             @unique // ex: "encefalo"
-  namePt    String             @map("name_pt") // ex: "Encéfalo"
-  nameEn    String             @map("name_en") // ex: "Brain"
-  groupPt   String?            @map("group_pt")
-  groupEn   String?            @map("group_en")
+  name      Json // { pt: "Encéfalo", en: "Brain" }
   protocols ResearchProtocol[]
   samples   Sample[]
 }
@@ -163,10 +161,8 @@ model Organ {
 model Pathogen {
   id        String             @id @default(uuid())
   key       String             @unique // ex: "toxoplasma_gondii"
-  namePt    String             @map("name_pt") // ex: "Toxoplasma gondii"
-  nameEn    String             @map("name_en")
-  groupPt   String?            @map("group_pt") // ex: "Protozoário Sarcocistídeo"
-  groupEn   String?            @map("group_en") // ex: "Sarcocystid protozoan"
+  name      String // nome científico (latim), universal — sem tradução
+  group     Json? // { pt: "Protozoário Sarcocistídeo", en: "Sarcocystid Protozoan" }
   protocols ResearchProtocol[]
   analyses  Analysis[]
 }
@@ -174,10 +170,7 @@ model Pathogen {
 model ExamType {
   id        String             @id @default(uuid())
   key       String             @unique // ex: "npcr"
-  namePt    String             @map("name_pt") // ex: "nPCR", "Histologia"
-  nameEn    String             @map("name_en")
-  groupPt   String?            @map("group_pt")
-  groupEn   String?            @map("group_en")
+  name      Json // { pt: "nPCR", en: "nested PCR (nPCR)" }
   protocols ResearchProtocol[]
   analyses  Analysis[]
 }
