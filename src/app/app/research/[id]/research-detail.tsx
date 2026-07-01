@@ -10,7 +10,7 @@ import { toast } from "sonner"
 import { ArrowLeft, Pencil, Plus, Trash2 } from "lucide-react"
 
 import { updateResearchSchema, type UpdateResearchData } from "@/schemas/research.schema"
-import { byLocale } from "@/lib/catalog-i18n"
+import { txt, type I18nText } from "@/lib/catalog-i18n"
 import { useErrorMessage } from "@/lib/use-error-message"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -36,7 +36,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 
-type CatalogItem = { id: string; namePt: string; nameEn: string }
+type CatalogItem = { id: string; name: string | I18nText }
 type ProtocolEntry = {
   id: string
   organ: CatalogItem
@@ -109,7 +109,7 @@ export function ResearchDetail({
   const canEditContent = isOrgAdmin || (research?.createdById === selfId)
 
   const opts = (list: CatalogItem[] | undefined): ComboboxOption[] =>
-    (list ?? []).map((c) => ({ value: c.id, label: byLocale(locale, c.namePt, c.nameEn) }))
+    (list ?? []).map((c) => ({ value: c.id, label: txt(locale, c.name) }))
 
   const editForm = useForm<UpdateResearchData>({
     resolver: zodResolver(updateResearchSchema),
@@ -272,9 +272,9 @@ export function ResearchDetail({
               <TableBody>
                 {research.protocols.map((p) => (
                   <TableRow key={p.id}>
-                    <TableCell>{byLocale(locale, p.organ.namePt, p.organ.nameEn)}</TableCell>
-                    <TableCell>{byLocale(locale, p.pathogen.namePt, p.pathogen.nameEn)}</TableCell>
-                    <TableCell>{byLocale(locale, p.examType.namePt, p.examType.nameEn)}</TableCell>
+                    <TableCell>{txt(locale, p.organ.name)}</TableCell>
+                    <TableCell>{txt(locale, p.pathogen.name)}</TableCell>
+                    <TableCell>{txt(locale, p.examType.name)}</TableCell>
                     {isOrgAdmin && (
                       <TableCell className="text-right">
                         <Button

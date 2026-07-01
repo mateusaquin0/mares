@@ -28,9 +28,9 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
       orderBy: { id: "asc" },
       select: {
         id: true,
-        organ: { select: { id: true, namePt: true, nameEn: true } },
-        pathogen: { select: { id: true, namePt: true, nameEn: true } },
-        examType: { select: { id: true, namePt: true, nameEn: true } },
+        organ: { select: { id: true, name: true } },
+        pathogen: { select: { id: true, name: true } },
+        examType: { select: { id: true, name: true } },
       },
     })
 

@@ -4,10 +4,24 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getAuthUser, requireSystemAdmin } from "@/lib/auth"
 import { apiError, unauthorized } from "@/lib/api"
-import { catalogUpdateSchema, isCatalogType } from "@/schemas/catalog.schema"
-import { findCatalog, updateCatalog, deleteCatalog, catalogUsage } from "@/lib/catalog"
+import { isCatalogType, nameI18nSchema, pathogenSchema } from "@/schemas/catalog.schema"
+import {
+  findCatalog,
+  updateNamed,
+  updatePathogen,
+  deleteCatalog,
+  catalogUsage,
+  type I18n,
+} from "@/lib/catalog"
 import { NotFoundError, ConflictError } from "@/lib/errors"
 import { ERROR_CODES } from "@/lib/error-codes"
+
+function buildGroup(groupPt?: string, groupEn?: string): I18n | null {
+  const pt = groupPt?.trim() ?? ""
+  const en = groupEn?.trim() ?? ""
+  if (!pt && !en) return null
+  return { pt: pt || en, en: en || pt }
+}
 
 export async function PUT(
   req: NextRequest,
@@ -24,16 +38,15 @@ export async function PUT(
       throw new NotFoundError("Entrada não encontrada", ERROR_CODES.catalogNotFound)
 
     const body = await req.json().catch(() => null)
-    const data = catalogUpdateSchema.parse(body)
 
-    const norm = (v?: string) => (v && v.trim() ? v.trim() : null)
-    const updated = await updateCatalog(type, id, {
-      namePt: data.namePt?.trim(),
-      nameEn: data.nameEn?.trim(),
-      groupPt: data.groupPt === undefined ? undefined : norm(data.groupPt),
-      groupEn: data.groupEn === undefined ? undefined : norm(data.groupEn),
-    })
+    if (type === "pathogens") {
+      const data = pathogenSchema.parse(body)
+      const updated = await updatePathogen(id, data.name.trim(), buildGroup(data.groupPt, data.groupEn))
+      return NextResponse.json(updated)
+    }
 
+    const data = nameI18nSchema.parse(body)
+    const updated = await updateNamed(type, id, { pt: data.namePt.trim(), en: data.nameEn.trim() })
     return NextResponse.json(updated)
   } catch (err) {
     return apiError(err)

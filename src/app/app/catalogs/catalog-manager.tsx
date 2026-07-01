@@ -2,17 +2,13 @@
 
 import { useState } from "react"
 import { useForm } from "react-hook-form"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { useTranslations } from "next-intl"
+import { useLocale, useTranslations } from "next-intl"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
 import { Plus } from "lucide-react"
 
-import {
-  catalogCreateSchema,
-  type CatalogCreateData,
-  type CatalogType,
-} from "@/schemas/catalog.schema"
+import type { CatalogType } from "@/schemas/catalog.schema"
+import { txt, type I18nText } from "@/lib/catalog-i18n"
 import { useErrorMessage } from "@/lib/use-error-message"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -36,13 +32,19 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 
-type CatalogRow = {
+type Row = {
   id: string
   key: string
-  namePt: string
-  nameEn: string
-  groupPt: string | null
-  groupEn: string | null
+  name: string | I18nText // string (patógeno) | { pt, en } (órgão/exame)
+  group: I18nText | null
+}
+
+type FormShape = {
+  namePt?: string
+  nameEn?: string
+  name?: string
+  groupPt?: string
+  groupEn?: string
 }
 
 async function getJson<T>(url: string): Promise<T> {
@@ -51,49 +53,56 @@ async function getJson<T>(url: string): Promise<T> {
   return res.json()
 }
 
+const i18nPt = (v: string | I18nText) => (typeof v === "string" ? v : v.pt ?? "")
+const i18nEn = (v: string | I18nText) => (typeof v === "string" ? v : v.en ?? "")
+
 export function CatalogManager({ canEdit }: { canEdit: boolean }) {
   const t = useTranslations("catalogs")
   const tc = useTranslations("common")
   const tval = useTranslations("validation")
+  const locale = useLocale()
   const em = useErrorMessage()
   const qc = useQueryClient()
 
   const [type, setType] = useState<CatalogType>("organs")
-  const [dialog, setDialog] = useState<{ mode: "create" | "edit"; row?: CatalogRow } | null>(null)
-  const hasGroup = type === "pathogens"
+  const [dialog, setDialog] = useState<{ mode: "create" | "edit"; row?: Row } | null>(null)
+  const isPathogen = type === "pathogens"
 
   const listQ = useQuery({
     queryKey: ["catalog", type],
-    queryFn: () => getJson<CatalogRow[]>(`/api/catalog/${type}`),
+    queryFn: () => getJson<Row[]>(`/api/catalog/${type}`),
     staleTime: 60_000,
   })
 
-  const form = useForm<CatalogCreateData>({
-    resolver: zodResolver(catalogCreateSchema),
-    defaultValues: { namePt: "", nameEn: "", groupPt: "", groupEn: "" },
+  const form = useForm<FormShape>({
+    defaultValues: { namePt: "", nameEn: "", name: "", groupPt: "", groupEn: "" },
   })
 
   function openCreate() {
-    form.reset({ namePt: "", nameEn: "", groupPt: "", groupEn: "" })
+    form.reset({ namePt: "", nameEn: "", name: "", groupPt: "", groupEn: "" })
     setDialog({ mode: "create" })
   }
-  function openEdit(row: CatalogRow) {
+  function openEdit(row: Row) {
     form.reset({
-      namePt: row.namePt,
-      nameEn: row.nameEn,
-      groupPt: row.groupPt ?? "",
-      groupEn: row.groupEn ?? "",
+      namePt: i18nPt(row.name),
+      nameEn: i18nEn(row.name),
+      name: typeof row.name === "string" ? row.name : "",
+      groupPt: row.group?.pt ?? "",
+      groupEn: row.group?.en ?? "",
     })
     setDialog({ mode: "edit", row })
   }
 
-  async function onSubmit(data: CatalogCreateData) {
+  async function onSubmit(data: FormShape) {
     const isEdit = dialog?.mode === "edit"
     const url = isEdit ? `/api/catalog/${type}/${dialog!.row!.id}` : `/api/catalog/${type}`
+    const body = isPathogen
+      ? { name: data.name, groupPt: data.groupPt, groupEn: data.groupEn }
+      : { namePt: data.namePt, nameEn: data.nameEn }
     const res = await fetch(url, {
       method: isEdit ? "PUT" : "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
+      body: JSON.stringify(body),
     })
     if (!res.ok) {
       toast.error(isEdit ? t("updateError") : t("createError"), {
@@ -106,7 +115,7 @@ export function CatalogManager({ canEdit }: { canEdit: boolean }) {
     qc.invalidateQueries({ queryKey: ["catalog", type] })
   }
 
-  async function remove(row: CatalogRow) {
+  async function remove(row: Row) {
     const res = await fetch(`/api/catalog/${type}/${row.id}`, { method: "DELETE" })
     if (!res.ok) {
       toast.error(t("deleteError"), { description: em(await res.json().catch(() => ({}))) })
@@ -116,7 +125,10 @@ export function CatalogManager({ canEdit }: { canEdit: boolean }) {
     qc.invalidateQueries({ queryKey: ["catalog", type] })
   }
 
-  const rows = listQ.data ?? []
+  // Ordena pela exibição no idioma ativo.
+  const rows = [...(listQ.data ?? [])].sort((a, b) =>
+    txt(locale, a.name).localeCompare(txt(locale, b.name), locale)
+  )
 
   return (
     <div className="space-y-6 p-8">
@@ -148,23 +160,35 @@ export function CatalogManager({ canEdit }: { canEdit: boolean }) {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>{t("colNamePt")}</TableHead>
-                <TableHead>{t("colNameEn")}</TableHead>
-                {hasGroup && <TableHead>{t("colGroupPt")}</TableHead>}
-                {hasGroup && <TableHead>{t("colGroupEn")}</TableHead>}
+                {isPathogen ? (
+                  <>
+                    <TableHead>{t("colName")}</TableHead>
+                    <TableHead>{t("colGroupPt")}</TableHead>
+                    <TableHead>{t("colGroupEn")}</TableHead>
+                  </>
+                ) : (
+                  <>
+                    <TableHead>{t("colNamePt")}</TableHead>
+                    <TableHead>{t("colNameEn")}</TableHead>
+                  </>
+                )}
                 {canEdit && <TableHead className="w-32 text-right">{tc("actions")}</TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody>
               {rows.map((r) => (
                 <TableRow key={r.id}>
-                  <TableCell className="font-medium">{r.namePt}</TableCell>
-                  <TableCell>{r.nameEn}</TableCell>
-                  {hasGroup && (
-                    <TableCell className="text-muted-foreground">{r.groupPt ?? "—"}</TableCell>
-                  )}
-                  {hasGroup && (
-                    <TableCell className="text-muted-foreground">{r.groupEn ?? "—"}</TableCell>
+                  {isPathogen ? (
+                    <>
+                      <TableCell className="font-medium">{i18nPt(r.name)}</TableCell>
+                      <TableCell className="text-muted-foreground">{r.group?.pt ?? "—"}</TableCell>
+                      <TableCell className="text-muted-foreground">{r.group?.en ?? "—"}</TableCell>
+                    </>
+                  ) : (
+                    <>
+                      <TableCell className="font-medium">{i18nPt(r.name)}</TableCell>
+                      <TableCell>{i18nEn(r.name)}</TableCell>
+                    </>
                   )}
                   {canEdit && (
                     <TableCell className="text-right">
@@ -174,7 +198,7 @@ export function CatalogManager({ canEdit }: { canEdit: boolean }) {
                         </Button>
                         <ConfirmDialog
                           title={t("deleteTitle")}
-                          description={t("deleteDesc", { name: r.namePt })}
+                          description={t("deleteDesc", { name: i18nPt(r.name) })}
                           confirmLabel={tc("delete")}
                           destructive
                           onConfirm={() => remove(r)}
@@ -198,38 +222,50 @@ export function CatalogManager({ canEdit }: { canEdit: boolean }) {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{dialog?.mode === "edit" ? t("editTitle") : t("addTitle")}</DialogTitle>
-            <DialogDescription>{t("addDesc")}</DialogDescription>
+            <DialogDescription>{isPathogen ? t("addDescPathogen") : t("addDesc")}</DialogDescription>
           </DialogHeader>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1">
-                <Label htmlFor="namePt">{t("namePt")}</Label>
-                <Input id="namePt" {...form.register("namePt")} />
-                {form.formState.errors.namePt && (
-                  <p className="text-xs text-destructive">
-                    {tval(form.formState.errors.namePt.message!)}
-                  </p>
-                )}
-              </div>
-              <div className="space-y-1">
-                <Label htmlFor="nameEn">{t("nameEn")}</Label>
-                <Input id="nameEn" {...form.register("nameEn")} />
-                {form.formState.errors.nameEn && (
-                  <p className="text-xs text-destructive">
-                    {tval(form.formState.errors.nameEn.message!)}
-                  </p>
-                )}
-              </div>
-            </div>
-            {hasGroup && (
+            {isPathogen ? (
+              <>
+                <div className="space-y-1">
+                  <Label htmlFor="name">{t("nameSci")}</Label>
+                  <Input id="name" {...form.register("name", { required: tval("required") })} />
+                  {form.formState.errors.name && (
+                    <p className="text-xs text-destructive">
+                      {form.formState.errors.name.message}
+                    </p>
+                  )}
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <Label htmlFor="groupPt">{t("groupPt")}</Label>
+                    <Input id="groupPt" {...form.register("groupPt")} />
+                  </div>
+                  <div className="space-y-1">
+                    <Label htmlFor="groupEn">{t("groupEn")}</Label>
+                    <Input id="groupEn" {...form.register("groupEn")} />
+                  </div>
+                </div>
+              </>
+            ) : (
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">
-                  <Label htmlFor="groupPt">{t("groupPt")}</Label>
-                  <Input id="groupPt" {...form.register("groupPt")} />
+                  <Label htmlFor="namePt">{t("namePt")}</Label>
+                  <Input id="namePt" {...form.register("namePt", { required: tval("required") })} />
+                  {form.formState.errors.namePt && (
+                    <p className="text-xs text-destructive">
+                      {form.formState.errors.namePt.message}
+                    </p>
+                  )}
                 </div>
                 <div className="space-y-1">
-                  <Label htmlFor="groupEn">{t("groupEn")}</Label>
-                  <Input id="groupEn" {...form.register("groupEn")} />
+                  <Label htmlFor="nameEn">{t("nameEn")}</Label>
+                  <Input id="nameEn" {...form.register("nameEn", { required: tval("required") })} />
+                  {form.formState.errors.nameEn && (
+                    <p className="text-xs text-destructive">
+                      {form.formState.errors.nameEn.message}
+                    </p>
+                  )}
                 </div>
               </div>
             )}

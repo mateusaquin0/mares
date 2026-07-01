@@ -1,37 +1,20 @@
-// MARES — Acesso genérico aos catálogos globais (Organ / Pathogen / ExamType).
-// As três tabelas têm o mesmo formato (key + name_pt/en + group_pt/en), então centralizamos
-// aqui as operações, mantendo chamadas concretas por tabela (type-safe).
+// MARES — Acesso aos catálogos globais (Organ / Pathogen / ExamType).
+// Órgão/Exame: `name` é JSON { pt, en }. Patógeno: `name` é texto (científico) + `group` JSON.
+// A leitura é unificada em CatalogRow; a escrita é específica por formato.
 
+import { Prisma } from "@prisma/client"
 import { prisma } from "@/lib/prisma"
 import type { CatalogType } from "@/schemas/catalog.schema"
+
+export type I18n = { pt: string; en: string }
 
 export type CatalogRow = {
   id: string
   key: string
-  namePt: string
-  nameEn: string
-  groupPt: string | null
-  groupEn: string | null
+  name: Prisma.JsonValue // { pt, en } (órgão/exame) ou string (patógeno)
+  group: Prisma.JsonValue | null
 }
 
-export type CatalogData = {
-  key: string
-  namePt: string
-  nameEn: string
-  groupPt: string | null
-  groupEn: string | null
-}
-
-const SELECT = {
-  id: true,
-  key: true,
-  namePt: true,
-  nameEn: true,
-  groupPt: true,
-  groupEn: true,
-} as const
-
-// Gera um slug estável a partir do nome (usado como `key`).
 export function slugify(s: string): string {
   return s
     .normalize("NFD")
@@ -43,17 +26,35 @@ export function slugify(s: string): string {
 }
 
 export async function listCatalog(type: CatalogType): Promise<CatalogRow[]> {
-  const args = { orderBy: { namePt: "asc" as const }, select: SELECT }
-  if (type === "organs") return prisma.organ.findMany(args)
-  if (type === "pathogens") return prisma.pathogen.findMany(args)
-  return prisma.examType.findMany(args)
+  if (type === "pathogens") {
+    const rows = await prisma.pathogen.findMany({
+      orderBy: { name: "asc" },
+      select: { id: true, key: true, name: true, group: true },
+    })
+    return rows.map((r) => ({ id: r.id, key: r.key, name: r.name, group: r.group }))
+  }
+  const select = { id: true, key: true, name: true }
+  const rows =
+    type === "organs"
+      ? await prisma.organ.findMany({ orderBy: { key: "asc" }, select })
+      : await prisma.examType.findMany({ orderBy: { key: "asc" }, select })
+  return rows.map((r) => ({ id: r.id, key: r.key, name: r.name, group: null }))
 }
 
 export async function findCatalog(type: CatalogType, id: string): Promise<CatalogRow | null> {
-  const args = { where: { id }, select: SELECT }
-  if (type === "organs") return prisma.organ.findUnique(args)
-  if (type === "pathogens") return prisma.pathogen.findUnique(args)
-  return prisma.examType.findUnique(args)
+  if (type === "pathogens") {
+    const r = await prisma.pathogen.findUnique({
+      where: { id },
+      select: { id: true, key: true, name: true, group: true },
+    })
+    return r ? { id: r.id, key: r.key, name: r.name, group: r.group } : null
+  }
+  const select = { id: true, key: true, name: true }
+  const r =
+    type === "organs"
+      ? await prisma.organ.findUnique({ where: { id }, select })
+      : await prisma.examType.findUnique({ where: { id }, select })
+  return r ? { id: r.id, key: r.key, name: r.name, group: null } : null
 }
 
 export async function keyExists(type: CatalogType, key: string): Promise<boolean> {
@@ -63,7 +64,6 @@ export async function keyExists(type: CatalogType, key: string): Promise<boolean
   return !!(await prisma.examType.findUnique(args))
 }
 
-// Gera um key único a partir do nome (sufixo numérico em caso de colisão).
 export async function uniqueKey(type: CatalogType, name: string): Promise<string> {
   const base = slugify(name) || "item"
   let key = base
@@ -74,21 +74,57 @@ export async function uniqueKey(type: CatalogType, name: string): Promise<string
   return key
 }
 
-export async function createCatalog(type: CatalogType, data: CatalogData): Promise<CatalogRow> {
-  if (type === "organs") return prisma.organ.create({ data, select: SELECT })
-  if (type === "pathogens") return prisma.pathogen.create({ data, select: SELECT })
-  return prisma.examType.create({ data, select: SELECT })
+// ── Escrita ────────────────────────────────────────────────────────────────
+
+export async function createNamed(
+  type: "organs" | "exam-types",
+  key: string,
+  name: I18n
+): Promise<CatalogRow> {
+  const data = { key, name }
+  const select = { id: true, key: true, name: true }
+  const r =
+    type === "organs"
+      ? await prisma.organ.create({ data, select })
+      : await prisma.examType.create({ data, select })
+  return { id: r.id, key: r.key, name: r.name, group: null }
 }
 
-export async function updateCatalog(
-  type: CatalogType,
+export async function updateNamed(
+  type: "organs" | "exam-types",
   id: string,
-  data: Partial<Omit<CatalogData, "key">>
+  name: I18n
 ): Promise<CatalogRow> {
-  const args = { where: { id }, data, select: SELECT }
-  if (type === "organs") return prisma.organ.update(args)
-  if (type === "pathogens") return prisma.pathogen.update(args)
-  return prisma.examType.update(args)
+  const data = { name }
+  const select = { id: true, key: true, name: true }
+  const r =
+    type === "organs"
+      ? await prisma.organ.update({ where: { id }, data, select })
+      : await prisma.examType.update({ where: { id }, data, select })
+  return { id: r.id, key: r.key, name: r.name, group: null }
+}
+
+export async function createPathogen(
+  key: string,
+  name: string,
+  group: I18n | null
+): Promise<CatalogRow> {
+  return prisma.pathogen.create({
+    data: { key, name, group: group ?? undefined },
+    select: { id: true, key: true, name: true, group: true },
+  })
+}
+
+export async function updatePathogen(
+  id: string,
+  name: string,
+  group: I18n | null
+): Promise<CatalogRow> {
+  return prisma.pathogen.update({
+    where: { id },
+    data: { name, group: group ?? Prisma.DbNull },
+    select: { id: true, key: true, name: true, group: true },
+  })
 }
 
 export async function deleteCatalog(type: CatalogType, id: string): Promise<void> {

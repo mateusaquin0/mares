@@ -5,10 +5,24 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getAuthUser, requireAnyOrgAdmin } from "@/lib/auth"
 import { apiError, unauthorized } from "@/lib/api"
-import { catalogCreateSchema, isCatalogType } from "@/schemas/catalog.schema"
-import { listCatalog, createCatalog, uniqueKey } from "@/lib/catalog"
+import { isCatalogType, nameI18nSchema, pathogenSchema } from "@/schemas/catalog.schema"
+import {
+  listCatalog,
+  createNamed,
+  createPathogen,
+  uniqueKey,
+  type I18n,
+} from "@/lib/catalog"
 import { NotFoundError } from "@/lib/errors"
 import { ERROR_CODES } from "@/lib/error-codes"
+
+// Monta o grupo { pt, en } (ou null quando ambos vazios).
+function buildGroup(groupPt?: string, groupEn?: string): I18n | null {
+  const pt = groupPt?.trim() ?? ""
+  const en = groupEn?.trim() ?? ""
+  if (!pt && !en) return null
+  return { pt: pt || en, en: en || pt }
+}
 
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ type: string }> }) {
   try {
@@ -33,16 +47,22 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ typ
     if (!isCatalogType(type)) throw new NotFoundError("Catálogo inválido", ERROR_CODES.catalogNotFound)
 
     const body = await req.json().catch(() => null)
-    const data = catalogCreateSchema.parse(body)
 
-    const created = await createCatalog(type, {
-      key: await uniqueKey(type, data.namePt),
-      namePt: data.namePt.trim(),
-      nameEn: data.nameEn.trim(),
-      groupPt: data.groupPt?.trim() || null,
-      groupEn: data.groupEn?.trim() || null,
+    if (type === "pathogens") {
+      const data = pathogenSchema.parse(body)
+      const created = await createPathogen(
+        await uniqueKey(type, data.name),
+        data.name.trim(),
+        buildGroup(data.groupPt, data.groupEn)
+      )
+      return NextResponse.json(created, { status: 201 })
+    }
+
+    const data = nameI18nSchema.parse(body)
+    const created = await createNamed(type, await uniqueKey(type, data.namePt), {
+      pt: data.namePt.trim(),
+      en: data.nameEn.trim(),
     })
-
     return NextResponse.json(created, { status: 201 })
   } catch (err) {
     return apiError(err)
