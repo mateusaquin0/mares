@@ -39,6 +39,10 @@ export const ERROR_CODES = {
   animalNotFound: "animalNotFound",
   animalDuplicate: "animalDuplicate",
   animalHasSamples: "animalHasSamples",
+  sampleNotFound: "sampleNotFound",
+  sampleHasAnalyses: "sampleHasAnalyses",
+  organNotFound: "organNotFound",
+  analysisInvalidCombo: "analysisInvalidCombo",
 } as const
 
 export type ErrorCode = (typeof ERROR_CODES)[keyof typeof ERROR_CODES]

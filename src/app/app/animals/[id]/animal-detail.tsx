@@ -7,6 +7,8 @@ import { ArrowLeft } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { SamplesTab } from "./samples-tab"
+import { AnalysesTab } from "./analyses-tab"
 
 type Animal = {
   id: string
@@ -29,12 +31,13 @@ type Animal = {
   _count: { samples: number; media: number }
 }
 
-export function AnimalDetail({ id }: { id: string; isOrgAdmin: boolean }) {
+export function AnimalDetail({ id, isOrgAdmin }: { id: string; isOrgAdmin: boolean }) {
   const t = useTranslations("animals")
   const tc = useTranslations("common")
   const locale = useLocale()
   const [animal, setAnimal] = useState<Animal | null>(null)
   const [loading, setLoading] = useState(true)
+  const [gridReload, setGridReload] = useState(0)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -136,10 +139,14 @@ export function AnimalDetail({ id }: { id: string; isOrgAdmin: boolean }) {
         </TabsContent>
 
         <TabsContent value="samples" className="mt-4">
-          <p className="text-sm text-muted-foreground">{t("comingSoon")}</p>
+          <SamplesTab
+            animalId={id}
+            isOrgAdmin={isOrgAdmin}
+            onChanged={() => setGridReload((k) => k + 1)}
+          />
         </TabsContent>
         <TabsContent value="analyses" className="mt-4">
-          <p className="text-sm text-muted-foreground">{t("comingSoon")}</p>
+          <AnalysesTab animalId={id} reloadKey={gridReload} />
         </TabsContent>
         <TabsContent value="media" className="mt-4">
           <p className="text-sm text-muted-foreground">{t("comingSoon")}</p>
