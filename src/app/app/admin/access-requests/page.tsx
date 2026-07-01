@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from "react"
 import { useTranslations } from "next-intl"
 import { toast } from "sonner"
+import { MoreHorizontal } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { useErrorMessage } from "@/lib/use-error-message"
@@ -14,6 +15,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 
 type JoinRequest = {
   id: string
@@ -85,25 +92,33 @@ export default function AccessRequestsPage() {
                   <TableCell>{r.requesterName}</TableCell>
                   <TableCell className="text-muted-foreground">{r.email}</TableCell>
                   <TableCell className="text-right">
-                    <div className="flex justify-end gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        disabled={busy?.startsWith(r.id + ":")}
-                        loading={busy === `${r.id}:reject`}
-                        onClick={() => act(r.id, "reject")}
-                      >
-                        {t("reject")}
-                      </Button>
-                      <Button
-                        size="sm"
-                        disabled={busy?.startsWith(r.id + ":")}
-                        loading={busy === `${r.id}:approve`}
-                        onClick={() => act(r.id, "approve")}
-                      >
-                        {t("approve")}
-                      </Button>
-                    </div>
+                    {(() => {
+                      const isBusy = !!busy?.startsWith(r.id + ":")
+                      return (
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="size-8"
+                              disabled={isBusy}
+                              loading={isBusy}
+                            >
+                              {!isBusy && <MoreHorizontal className="size-4" />}
+                              <span className="sr-only">{t("colActions")}</span>
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onSelect={() => act(r.id, "approve")}>
+                              {t("approve")}
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onSelect={() => act(r.id, "reject")}>
+                              {t("reject")}
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      )
+                    })()}
                   </TableCell>
                 </TableRow>
               ))}

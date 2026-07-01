@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form"
 import { useLocale, useTranslations } from "next-intl"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
-import { Plus } from "lucide-react"
+import { MoreHorizontal, Plus } from "lucide-react"
 
 import type { CatalogType } from "@/schemas/catalog.schema"
 import { txt, pathogenName, type I18nText } from "@/lib/catalog-i18n"
@@ -38,6 +38,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 
 type NamedRow = { id: string; key: string; name: string | I18nText }
 type GroupLite = { id: string; key: string; name: string | I18nText; usesScientificName: boolean }
@@ -73,6 +79,7 @@ export function CatalogManager({ canEdit }: { canEdit: boolean }) {
 
   const [type, setType] = useState<CatalogType>("organs")
   const [dialog, setDialog] = useState<{ mode: "create" | "edit"; row?: Row } | null>(null)
+  const [confirmRow, setConfirmRow] = useState<Row | null>(null)
   const isPathogen = type === "pathogens"
 
   const listQ = useQuery({
@@ -225,23 +232,25 @@ export function CatalogManager({ canEdit }: { canEdit: boolean }) {
                   )}
                   {canEdit && (
                     <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        <Button variant="outline" size="sm" onClick={() => openEdit(r)}>
-                          {tc("edit")}
-                        </Button>
-                        <ConfirmDialog
-                          title={t("deleteTitle")}
-                          description={t("deleteDesc", { name: display(r) })}
-                          confirmLabel={tc("delete")}
-                          destructive
-                          onConfirm={() => remove(r)}
-                          trigger={
-                            <Button variant="outline" size="sm">
-                              {tc("delete")}
-                            </Button>
-                          }
-                        />
-                      </div>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="size-8">
+                            <MoreHorizontal className="size-4" />
+                            <span className="sr-only">{tc("actions")}</span>
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onSelect={() => openEdit(r)}>
+                            {tc("edit")}
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            className="text-destructive focus:text-destructive"
+                            onSelect={() => setConfirmRow(r)}
+                          >
+                            {tc("delete")}
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </TableCell>
                   )}
                 </TableRow>
@@ -249,6 +258,18 @@ export function CatalogManager({ canEdit }: { canEdit: boolean }) {
             </TableBody>
           </Table>
         </div>
+      )}
+
+      {confirmRow && (
+        <ConfirmDialog
+          open={!!confirmRow}
+          onOpenChange={(o) => !o && setConfirmRow(null)}
+          title={t("deleteTitle")}
+          description={t("deleteDesc", { name: display(confirmRow) })}
+          confirmLabel={tc("delete")}
+          destructive
+          onConfirm={() => remove(confirmRow)}
+        />
       )}
 
       <Dialog open={!!dialog} onOpenChange={(o) => !o && setDialog(null)}>

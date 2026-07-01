@@ -6,7 +6,7 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useTranslations } from "next-intl"
 import { toast } from "sonner"
-import { Plus } from "lucide-react"
+import { MoreHorizontal, Plus } from "lucide-react"
 
 import { createResearchSchema, type CreateResearchData } from "@/schemas/research.schema"
 import { useErrorMessage } from "@/lib/use-error-message"
@@ -33,6 +33,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 
 type Research = {
   id: string
@@ -52,6 +58,7 @@ export function ResearchManager({ isOrgAdmin }: { isOrgAdmin: boolean; selfId: s
   const [items, setItems] = useState<Research[]>([])
   const [loading, setLoading] = useState(true)
   const [open, setOpen] = useState(false)
+  const [confirm, setConfirm] = useState<Research | null>(null)
 
   const form = useForm<CreateResearchData>({
     resolver: zodResolver(createResearchSchema),
@@ -140,31 +147,49 @@ export function ResearchManager({ isOrgAdmin }: { isOrgAdmin: boolean; selfId: s
                   <TableCell className="text-right">{r._count.protocols}</TableCell>
                   <TableCell className="text-right">{r._count.animals}</TableCell>
                   <TableCell className="text-right">
-                    <div className="flex justify-end gap-2">
+                    {isOrgAdmin ? (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="size-8">
+                            <MoreHorizontal className="size-4" />
+                            <span className="sr-only">{t("colActions")}</span>
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem asChild>
+                            <Link href={`/app/research/${r.id}`}>{t("open")}</Link>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            className="text-destructive focus:text-destructive"
+                            onSelect={() => setConfirm(r)}
+                          >
+                            {tc("delete")}
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    ) : (
                       <Button asChild variant="outline" size="sm">
                         <Link href={`/app/research/${r.id}`}>{t("open")}</Link>
                       </Button>
-                      {isOrgAdmin && (
-                        <ConfirmDialog
-                          title={t("deleteTitle")}
-                          description={t("deleteDesc", { name: r.name })}
-                          confirmLabel={tc("delete")}
-                          destructive
-                          onConfirm={() => remove(r)}
-                          trigger={
-                            <Button variant="outline" size="sm">
-                              {tc("delete")}
-                            </Button>
-                          }
-                        />
-                      )}
-                    </div>
+                    )}
                   </TableCell>
                 </TableRow>
               ))}
             </TableBody>
           </Table>
         </div>
+      )}
+
+      {confirm && (
+        <ConfirmDialog
+          open={!!confirm}
+          onOpenChange={(o) => !o && setConfirm(null)}
+          title={t("deleteTitle")}
+          description={t("deleteDesc", { name: confirm.name })}
+          confirmLabel={tc("delete")}
+          destructive
+          onConfirm={() => remove(confirm)}
+        />
       )}
 
       <Dialog open={open} onOpenChange={setOpen}>
