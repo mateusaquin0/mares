@@ -10,11 +10,13 @@ import { MoreHorizontal, Plus } from "lucide-react"
 import type { CatalogType } from "@/schemas/catalog.schema"
 import { txt, pathogenName, type I18nText } from "@/lib/catalog-i18n"
 import { useErrorMessage } from "@/lib/use-error-message"
+import { useTable } from "@/lib/use-table"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { ConfirmDialog } from "@/components/confirm-dialog"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { SortableHead } from "@/components/ui/sortable-head"
 import {
   Select,
   SelectContent,
@@ -166,9 +168,30 @@ export function CatalogManager({ canEdit }: { canEdit: boolean }) {
   const display = (r: Row) =>
     isPathogen ? pathogenName(locale, r as PathogenRow) : i18nPt((r as NamedRow).name)
 
-  const rows = [...(listQ.data ?? [])].sort((a, b) =>
-    display(a).localeCompare(display(b), locale)
-  )
+  const table = useTable(listQ.data ?? [], {
+    locale,
+    resetKey: type,
+    initialSort: { key: isPathogen ? "name" : "namePt" },
+    columns: isPathogen
+      ? {
+          name: (r) => pathogenName(locale, r as PathogenRow),
+          group: (r) => txt(locale, (r as PathogenRow).group.name),
+        }
+      : {
+          namePt: (r) => i18nPt((r as NamedRow).name),
+          nameEn: (r) => i18nEn((r as NamedRow).name),
+        },
+    search: (r) =>
+      isPathogen
+        ? [
+            pathogenName(locale, r as PathogenRow),
+            (r as PathogenRow).scientificName ?? "",
+            i18nPt((r as PathogenRow).name),
+            i18nEn((r as PathogenRow).name),
+            txt(locale, (r as PathogenRow).group.name),
+          ].join(" ")
+        : [i18nPt((r as NamedRow).name), i18nEn((r as NamedRow).name)].join(" "),
+  })
 
   return (
     <div className="space-y-6 p-8">
@@ -193,29 +216,54 @@ export function CatalogManager({ canEdit }: { canEdit: boolean }) {
 
       {listQ.isLoading ? (
         <p className="text-sm text-muted-foreground">{tc("loading")}</p>
-      ) : rows.length === 0 ? (
+      ) : (listQ.data?.length ?? 0) === 0 ? (
         <p className="text-sm text-muted-foreground">{t("empty")}</p>
       ) : (
-        <div className="rounded-md border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                {isPathogen ? (
-                  <>
-                    <TableHead>{t("colName")}</TableHead>
-                    <TableHead>{t("colGroup")}</TableHead>
-                  </>
+        <div className="space-y-3">
+          <Input
+            value={table.query}
+            onChange={(e) => table.setQuery(e.target.value)}
+            placeholder={tc("search")}
+            className="max-w-sm"
+          />
+          <div className="rounded-md border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  {isPathogen ? (
+                    <>
+                      <SortableHead sortKey="name" sort={table.sort} onToggle={table.toggleSort}>
+                        {t("colName")}
+                      </SortableHead>
+                      <SortableHead sortKey="group" sort={table.sort} onToggle={table.toggleSort}>
+                        {t("colGroup")}
+                      </SortableHead>
+                    </>
+                  ) : (
+                    <>
+                      <SortableHead sortKey="namePt" sort={table.sort} onToggle={table.toggleSort}>
+                        {t("colNamePt")}
+                      </SortableHead>
+                      <SortableHead sortKey="nameEn" sort={table.sort} onToggle={table.toggleSort}>
+                        {t("colNameEn")}
+                      </SortableHead>
+                    </>
+                  )}
+                  {canEdit && <TableHead className="w-32 text-right">{tc("actions")}</TableHead>}
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {table.rows.length === 0 ? (
+                  <TableRow>
+                    <TableCell
+                      colSpan={canEdit ? 3 : 2}
+                      className="text-center text-sm text-muted-foreground"
+                    >
+                      {tc("noResults")}
+                    </TableCell>
+                  </TableRow>
                 ) : (
-                  <>
-                    <TableHead>{t("colNamePt")}</TableHead>
-                    <TableHead>{t("colNameEn")}</TableHead>
-                  </>
-                )}
-                {canEdit && <TableHead className="w-32 text-right">{tc("actions")}</TableHead>}
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {rows.map((r) => (
+                  table.rows.map((r) => (
                 <TableRow key={r.id}>
                   {isPathogen ? (
                     <>
@@ -254,9 +302,11 @@ export function CatalogManager({ canEdit }: { canEdit: boolean }) {
                     </TableCell>
                   )}
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
         </div>
       )}
 

@@ -1,13 +1,15 @@
 "use client"
 
 import { useEffect, useState, useCallback } from "react"
-import { useTranslations } from "next-intl"
+import { useLocale, useTranslations } from "next-intl"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { ConfirmDialog } from "@/components/confirm-dialog"
 import { useErrorMessage } from "@/lib/use-error-message"
+import { useTable } from "@/lib/use-table"
 import {
   Table,
   TableBody,
@@ -16,6 +18,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { SortableHead } from "@/components/ui/sortable-head"
 
 type AdminUser = {
   id: string
@@ -29,10 +32,38 @@ type AdminUser = {
 export default function AdminUsersPage() {
   const t = useTranslations("adminUsers")
   const tc = useTranslations("common")
+  const locale = useLocale()
   const em = useErrorMessage()
   const [users, setUsers] = useState<AdminUser[]>([])
   const [loading, setLoading] = useState(true)
   const [busy, setBusy] = useState<string | null>(null)
+
+  const orgsText = useCallback(
+    (u: AdminUser) =>
+      u.memberships.length === 0
+        ? t("noOrg")
+        : u.memberships
+            .map(
+              (m) =>
+                `${m.orgName} (${
+                  m.role === "ORG_ADMIN" ? tc("roleAdmin") : tc("roleResearcher")
+                })`
+            )
+            .join(" · "),
+    [t, tc]
+  )
+
+  const table = useTable(users, {
+    locale,
+    initialSort: { key: "name" },
+    columns: {
+      name: (u) => u.name ?? "",
+      email: (u) => u.email,
+      orgs: (u) => orgsText(u),
+      status: (u) => u.status,
+    },
+    search: (u) => [u.name ?? "", u.email, orgsText(u), u.status].join(" "),
+  })
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -70,19 +101,41 @@ export default function AdminUsersPage() {
       ) : users.length === 0 ? (
         <p className="text-sm text-muted-foreground">{t("empty")}</p>
       ) : (
-        <div className="rounded-md border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>{t("colName")}</TableHead>
-                <TableHead>{t("colEmail")}</TableHead>
-                <TableHead>{t("colOrgs")}</TableHead>
-                <TableHead>{t("colStatus")}</TableHead>
-                <TableHead className="w-24 text-right">{t("colActions")}</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {users.map((u) => (
+        <div className="space-y-3">
+          <Input
+            value={table.query}
+            onChange={(e) => table.setQuery(e.target.value)}
+            placeholder={tc("search")}
+            className="max-w-sm"
+          />
+          <div className="rounded-md border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <SortableHead sortKey="name" sort={table.sort} onToggle={table.toggleSort}>
+                    {t("colName")}
+                  </SortableHead>
+                  <SortableHead sortKey="email" sort={table.sort} onToggle={table.toggleSort}>
+                    {t("colEmail")}
+                  </SortableHead>
+                  <SortableHead sortKey="orgs" sort={table.sort} onToggle={table.toggleSort}>
+                    {t("colOrgs")}
+                  </SortableHead>
+                  <SortableHead sortKey="status" sort={table.sort} onToggle={table.toggleSort}>
+                    {t("colStatus")}
+                  </SortableHead>
+                  <TableHead className="w-24 text-right">{t("colActions")}</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {table.rows.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-center text-sm text-muted-foreground">
+                      {tc("noResults")}
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  table.rows.map((u) => (
                 <TableRow key={u.id}>
                   <TableCell className="font-medium">
                     <span className="flex items-center gap-2">
@@ -95,18 +148,7 @@ export default function AdminUsersPage() {
                     </span>
                   </TableCell>
                   <TableCell className="text-muted-foreground">{u.email}</TableCell>
-                  <TableCell className="text-sm text-muted-foreground">
-                    {u.memberships.length === 0
-                      ? t("noOrg")
-                      : u.memberships
-                          .map(
-                            (m) =>
-                              `${m.orgName} (${
-                                m.role === "ORG_ADMIN" ? tc("roleAdmin") : tc("roleResearcher")
-                              })`
-                          )
-                          .join(" · ")}
-                  </TableCell>
+                  <TableCell className="text-sm text-muted-foreground">{orgsText(u)}</TableCell>
                   <TableCell>
                     <Badge variant="secondary">{u.status}</Badge>
                   </TableCell>
@@ -129,9 +171,11 @@ export default function AdminUsersPage() {
                     />
                   </TableCell>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
         </div>
       )}
     </div>

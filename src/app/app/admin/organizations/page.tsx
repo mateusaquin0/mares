@@ -4,8 +4,10 @@ import { useEffect, useState, useCallback } from "react"
 import { useLocale, useTranslations } from "next-intl"
 
 import { getCountryName } from "@/lib/countries"
+import { useTable } from "@/lib/use-table"
 import { CountryFlag } from "@/components/country-flag"
 import { Badge } from "@/components/ui/badge"
+import { Input } from "@/components/ui/input"
 import {
   Table,
   TableBody,
@@ -14,6 +16,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { SortableHead } from "@/components/ui/sortable-head"
 import {
   Dialog,
   DialogContent,
@@ -46,20 +49,31 @@ export default function AdminOrganizationsPage() {
   const tc = useTranslations("common")
   const locale = useLocale()
 
-  // Renderiza a localização com bandeira + nome do país (traduzido a partir do ISO2).
-  function renderLocation(o: Pick<Org, "city" | "state" | "country">) {
-    const parts = [o.city, o.state, getCountryName(o.country, locale)].filter(Boolean)
-    if (parts.length === 0) return <span className="text-muted-foreground">{t("noLocation")}</span>
-    return (
-      <span className="flex items-center gap-1.5">
-        <CountryFlag iso2={o.country} />
-        {parts.join(", ")}
-      </span>
-    )
-  }
   const [orgs, setOrgs] = useState<Org[]>([])
   const [loading, setLoading] = useState(true)
   const [selected, setSelected] = useState<Org | null>(null)
+
+  // Texto puro da localização (cidade, estado, país traduzido), usado em busca/ordenação.
+  const locationText = useCallback(
+    (o: Pick<Org, "city" | "state" | "country">) =>
+      [o.city, o.state, getCountryName(o.country, locale)].filter(Boolean).join(", "),
+    [locale]
+  )
+
+  // Renderiza a localização com bandeira + nome do país (traduzido a partir do ISO2).
+  const renderLocation = useCallback(
+    (o: Pick<Org, "city" | "state" | "country">) => {
+      const text = locationText(o)
+      if (!text) return <span className="text-muted-foreground">{t("noLocation")}</span>
+      return (
+        <span className="flex items-center gap-1.5">
+          <CountryFlag iso2={o.country} />
+          {text}
+        </span>
+      )
+    },
+    [locationText, t]
+  )
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -73,6 +87,20 @@ export default function AdminOrganizationsPage() {
   }, [load])
 
   const fmtDate = (iso: string) => new Date(iso).toLocaleDateString(locale)
+
+  const table = useTable(orgs, {
+    locale,
+    initialSort: { key: "name" },
+    columns: {
+      name: (o) => o.name,
+      location: (o) => locationText(o),
+      members: (o) => o.members.length,
+      research: (o) => o.researchCount,
+      created: (o) => o.createdAt,
+    },
+    search: (o) =>
+      [o.name, locationText(o), ...o.members.flatMap((m) => [m.name ?? "", m.email])].join(" "),
+  })
 
   return (
     <div className="space-y-6 p-8">
@@ -88,35 +116,69 @@ export default function AdminOrganizationsPage() {
       ) : (
         <>
           <p className="text-xs text-muted-foreground">{t("hint")}</p>
+          <Input
+            value={table.query}
+            onChange={(e) => table.setQuery(e.target.value)}
+            placeholder={tc("search")}
+            className="max-w-sm"
+          />
           <div className="rounded-md border">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>{t("colName")}</TableHead>
-                  <TableHead>{t("colLocation")}</TableHead>
-                  <TableHead className="text-right">{t("colMembers")}</TableHead>
-                  <TableHead className="text-right">{t("colResearch")}</TableHead>
-                  <TableHead>{t("colCreated")}</TableHead>
+                  <SortableHead sortKey="name" sort={table.sort} onToggle={table.toggleSort}>
+                    {t("colName")}
+                  </SortableHead>
+                  <SortableHead sortKey="location" sort={table.sort} onToggle={table.toggleSort}>
+                    {t("colLocation")}
+                  </SortableHead>
+                  <SortableHead
+                    sortKey="members"
+                    sort={table.sort}
+                    onToggle={table.toggleSort}
+                    align="right"
+                  >
+                    {t("colMembers")}
+                  </SortableHead>
+                  <SortableHead
+                    sortKey="research"
+                    sort={table.sort}
+                    onToggle={table.toggleSort}
+                    align="right"
+                  >
+                    {t("colResearch")}
+                  </SortableHead>
+                  <SortableHead sortKey="created" sort={table.sort} onToggle={table.toggleSort}>
+                    {t("colCreated")}
+                  </SortableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {orgs.map((o) => (
-                  <TableRow
-                    key={o.id}
-                    className="cursor-pointer"
-                    onClick={() => setSelected(o)}
-                  >
-                    <TableCell className="font-medium">{o.name}</TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {renderLocation(o)}
-                    </TableCell>
-                    <TableCell className="text-right">{o.members.length}</TableCell>
-                    <TableCell className="text-right">{o.researchCount}</TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {fmtDate(o.createdAt)}
+                {table.rows.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-center text-sm text-muted-foreground">
+                      {tc("noResults")}
                     </TableCell>
                   </TableRow>
-                ))}
+                ) : (
+                  table.rows.map((o) => (
+                    <TableRow
+                      key={o.id}
+                      className="cursor-pointer"
+                      onClick={() => setSelected(o)}
+                    >
+                      <TableCell className="font-medium">{o.name}</TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {renderLocation(o)}
+                      </TableCell>
+                      <TableCell className="text-right">{o.members.length}</TableCell>
+                      <TableCell className="text-right">{o.researchCount}</TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {fmtDate(o.createdAt)}
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
               </TableBody>
             </Table>
           </div>

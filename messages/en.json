@@ -25,7 +25,9 @@
     "roleResearcher": "Researcher",
     "invited": "invited",
     "showPassword": "Show password",
-    "hidePassword": "Hide password"
+    "hidePassword": "Hide password",
+    "search": "Search...",
+    "noResults": "No results for your search."
   },
   "login": {
     "title": "Sign in",

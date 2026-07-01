@@ -25,7 +25,9 @@
     "roleResearcher": "Pesquisador",
     "invited": "convidado",
     "showPassword": "Mostrar senha",
-    "hidePassword": "Ocultar senha"
+    "hidePassword": "Ocultar senha",
+    "search": "Pesquisar...",
+    "noResults": "Nenhum resultado para a busca."
   },
   "login": {
     "title": "Entrar",
