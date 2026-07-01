@@ -10,6 +10,10 @@ const longitude = z.number({ error: "number" }).min(-180, "lonRange").max(180, "
 
 export const animalBaseSchema = z.object({
   species: z.string().min(1, "required").max(255),
+  // Preenchidos via WoRMS ao selecionar a espécie (opcionais; limpáveis).
+  wormsAphiaId: z.number().int().nullable().optional(),
+  taxonFamily: optionalText(120),
+  taxonOrder: optionalText(120),
   controlId: optionalText(120),
   simbaRecordNumber: optionalText(120),
   sex: optionalText(40),

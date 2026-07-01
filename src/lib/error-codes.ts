@@ -43,6 +43,10 @@ export const ERROR_CODES = {
   sampleHasAnalyses: "sampleHasAnalyses",
   organNotFound: "organNotFound",
   analysisInvalidCombo: "analysisInvalidCombo",
+  mediaNotFound: "mediaNotFound",
+  mediaInvalidType: "mediaInvalidType",
+  mediaTooLarge: "mediaTooLarge",
+  mediaUploadFailed: "mediaUploadFailed",
 } as const
 
 export type ErrorCode = (typeof ERROR_CODES)[keyof typeof ERROR_CODES]

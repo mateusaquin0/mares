@@ -32,6 +32,9 @@ export async function assertResearchInOrg(researchId: string, orgId: string) {
 type Nullable<T> = T | null | undefined
 export type AnimalWritable = {
   species?: string
+  wormsAphiaId?: Nullable<number>
+  taxonFamily?: Nullable<string>
+  taxonOrder?: Nullable<string>
   controlId?: Nullable<string>
   simbaRecordNumber?: Nullable<string>
   sex?: Nullable<string>
@@ -51,6 +54,9 @@ export type AnimalWritable = {
 export function animalData(input: AnimalWritable) {
   return {
     species: input.species?.trim(),
+    wormsAphiaId: input.wormsAphiaId,
+    taxonFamily: input.taxonFamily,
+    taxonOrder: input.taxonOrder,
     controlId: input.controlId,
     simbaRecordNumber: input.simbaRecordNumber,
     sex: input.sex,

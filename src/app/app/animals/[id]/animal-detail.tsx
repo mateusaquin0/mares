@@ -9,10 +9,15 @@ import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { SamplesTab } from "./samples-tab"
 import { AnalysesTab } from "./analyses-tab"
+import { MediaTab } from "./media-tab"
+import { AuditTab } from "./audit-tab"
 
 type Animal = {
   id: string
   species: string
+  wormsAphiaId: number | null
+  taxonFamily: string | null
+  taxonOrder: string | null
   controlId: string | null
   simbaRecordNumber: string | null
   sex: string | null
@@ -66,6 +71,8 @@ export function AnimalDetail({ id, isOrgAdmin }: { id: string; isOrgAdmin: boole
       ? `${animal.strandingLat}, ${animal.strandingLon}`
       : na
   const rows: { label: string; value: ReactNode }[] = [
+    { label: t("taxonFamily"), value: animal.taxonFamily ?? na },
+    { label: t("taxonOrder"), value: animal.taxonOrder ?? na },
     { label: t("controlId"), value: animal.controlId ?? na },
     { label: t("simbaRecordNumber"), value: animal.simbaRecordNumber ?? na },
     { label: t("sex"), value: sexLabel(animal.sex) ?? na },
@@ -115,6 +122,7 @@ export function AnimalDetail({ id, isOrgAdmin }: { id: string; isOrgAdmin: boole
           <TabsTrigger value="media">
             {t("mediaTab")} ({animal._count.media})
           </TabsTrigger>
+          <TabsTrigger value="audit">{t("auditTab")}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="info" className="mt-4 space-y-4">
@@ -149,7 +157,10 @@ export function AnimalDetail({ id, isOrgAdmin }: { id: string; isOrgAdmin: boole
           <AnalysesTab animalId={id} reloadKey={gridReload} />
         </TabsContent>
         <TabsContent value="media" className="mt-4">
-          <p className="text-sm text-muted-foreground">{t("comingSoon")}</p>
+          <MediaTab animalId={id} isOrgAdmin={isOrgAdmin} />
+        </TabsContent>
+        <TabsContent value="audit" className="mt-4">
+          <AuditTab animalId={id} />
         </TabsContent>
       </Tabs>
     </div>

@@ -23,6 +23,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { SortableHead } from "@/components/ui/sortable-head"
+import { WormsSpeciesInput } from "@/components/worms-species-input"
 import {
   Dialog,
   DialogContent,
@@ -66,6 +67,9 @@ type ResearchLite = { id: string; name: string }
 type FormState = {
   researchId: string
   species: string
+  wormsAphiaId: string
+  taxonFamily: string
+  taxonOrder: string
   controlId: string
   simbaRecordNumber: string
   sex: string
@@ -85,6 +89,9 @@ type FormState = {
 const emptyForm: FormState = {
   researchId: "",
   species: "",
+  wormsAphiaId: "",
+  taxonFamily: "",
+  taxonOrder: "",
   controlId: "",
   simbaRecordNumber: "",
   sex: "",
@@ -153,6 +160,9 @@ export function AnimalsManager({ isOrgAdmin }: { isOrgAdmin: boolean }) {
         setForm({
           researchId: full.research.id,
           species: full.species ?? "",
+          wormsAphiaId: full.wormsAphiaId?.toString() ?? "",
+          taxonFamily: full.taxonFamily ?? "",
+          taxonOrder: full.taxonOrder ?? "",
           controlId: full.controlId ?? "",
           simbaRecordNumber: full.simbaRecordNumber ?? "",
           sex: full.sex ?? "",
@@ -187,6 +197,9 @@ export function AnimalsManager({ isOrgAdmin }: { isOrgAdmin: boolean }) {
     const numOrNull = (v: string) => (v.trim() === "" ? null : Number(v))
     const payload: Record<string, unknown> = {
       species: form.species.trim(),
+      wormsAphiaId: form.wormsAphiaId.trim() === "" ? null : Number(form.wormsAphiaId),
+      taxonFamily: orNull(form.taxonFamily),
+      taxonOrder: orNull(form.taxonOrder),
       controlId: orNull(form.controlId),
       simbaRecordNumber: orNull(form.simbaRecordNumber),
       sex: orNull(form.sex),
@@ -424,13 +437,38 @@ export function AnimalsManager({ isOrgAdmin }: { isOrgAdmin: boolean }) {
               </div>
               <div className="space-y-1">
                 <Label htmlFor="species">{t("species")}</Label>
-                <Input
-                  id="species"
-                  className="italic"
-                  value={form.species}
-                  onChange={(e) => set({ species: e.target.value })}
-                />
+                <div className="flex items-center gap-2">
+                  <Input
+                    id="species"
+                    className="italic"
+                    value={form.species}
+                    onChange={(e) =>
+                      // Edição manual desvincula do registro WoRMS.
+                      set({ species: e.target.value, wormsAphiaId: "" })
+                    }
+                  />
+                  <WormsSpeciesInput
+                    onSelect={(m) =>
+                      set({
+                        species: m.scientificName,
+                        wormsAphiaId: String(m.aphiaId),
+                        taxonFamily: m.family ?? "",
+                        taxonOrder: m.order ?? "",
+                      })
+                    }
+                  />
+                </div>
                 {errors.species && <p className="text-xs text-destructive">{tval("required")}</p>}
+                {form.wormsAphiaId && (
+                  <p className="text-xs text-muted-foreground">
+                    {t("wormsLinked", {
+                      aphiaId: form.wormsAphiaId,
+                      taxon:
+                        [form.taxonFamily, form.taxonOrder].filter(Boolean).join(" · ") ||
+                        t("notInformed"),
+                    })}
+                  </p>
+                )}
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">
