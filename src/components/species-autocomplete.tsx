@@ -4,16 +4,11 @@ import { useEffect, useRef, useState } from "react"
 import { useTranslations } from "next-intl"
 
 import { cn } from "@/lib/utils"
+import { wormsService } from "@/services/worms"
+import type { WormsMatch } from "@/types/worms"
 import { Input } from "@/components/ui/input"
 
-export type WormsMatch = {
-  aphiaId: number
-  scientificName: string
-  rank: string | null
-  status: string | null
-  family: string | null
-  order: string | null
-}
+export type { WormsMatch }
 
 // Campo de espécie com busca nativa no WoRMS: ao digitar (≥3 letras) sugere espécies
 // inline; ao escolher, devolve a taxonomia. Edição livre continua permitida (espécie
@@ -53,8 +48,7 @@ export function SpeciesAutocomplete({
     const ctrl = new AbortController()
     const timer = setTimeout(async () => {
       try {
-        const res = await fetch(`/api/worms?q=${encodeURIComponent(q)}`, { signal: ctrl.signal })
-        setResults(res.ok ? await res.json() : [])
+        setResults(await wormsService.search(q, { signal: ctrl.signal }))
       } catch {
         // abortado ou falha de rede — ignora
       } finally {

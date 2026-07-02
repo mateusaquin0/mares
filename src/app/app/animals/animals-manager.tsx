@@ -6,7 +6,10 @@ import { useLocale, useTranslations } from "next-intl"
 import { toast } from "sonner"
 import { MoreHorizontal, Plus, Search } from "lucide-react"
 
-import { createAnimalSchema, updateAnimalSchema } from "@/schemas/animal.schema"
+import { createAnimalSchema, updateAnimalSchema, type CreateAnimalData } from "@/schemas/animal.schema"
+import { animalsService } from "@/services/animals"
+import { researchService } from "@/services/research"
+import type { AnimalListItem, ResearchLite } from "@/types/animal"
 import { useErrorMessage } from "@/lib/use-error-message"
 import { useTable } from "@/lib/use-table"
 import { Button } from "@/components/ui/button"
@@ -46,23 +49,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-
-type AnimalRow = {
-  id: string
-  controlId: string | null
-  simbaRecordNumber: string | null
-  species: string
-  sex: string | null
-  lifeStage: string | null
-  municipality: string | null
-  state: string | null
-  eventDate: string | null
-  isPublic: boolean
-  research: { id: string; name: string }
-  _count: { samples: number }
-}
-
-type ResearchLite = { id: string; name: string }
 
 // Estado do formulário — tudo string (inputs controlados); convertido no submit.
 type FormState = {
@@ -132,7 +118,7 @@ export function AnimalsManager({ isOrgAdmin }: { isOrgAdmin: boolean }) {
   const locale = useLocale()
   const em = useErrorMessage()
 
-  const [items, setItems] = useState<AnimalRow[]>([])
+  const [items, setItems] = useState<AnimalListItem[]>([])
   const [researches, setResearches] = useState<ResearchLite[]>([])
   const [loading, setLoading] = useState(true)
   const [dialog, setDialog] = useState<{ mode: "create" | "edit"; id?: string } | null>(null)
@@ -140,18 +126,23 @@ export function AnimalsManager({ isOrgAdmin }: { isOrgAdmin: boolean }) {
   // Erros de validação por campo: chave do campo -> chave de mensagem (namespace `validation`).
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [saving, setSaving] = useState(false)
-  const [confirm, setConfirm] = useState<AnimalRow | null>(null)
+  const [confirm, setConfirm] = useState<AnimalListItem | null>(null)
   const [fetchingSimba, setFetchingSimba] = useState(false)
 
   const load = useCallback(async () => {
     setLoading(true)
-    const [aRes, rRes] = await Promise.all([fetch("/api/animals"), fetch("/api/research")])
-    if (aRes.ok) setItems(await aRes.json())
-    if (rRes.ok) {
-      const list: { id: string; name: string }[] = await rRes.json()
-      setResearches(list.map((r) => ({ id: r.id, name: r.name })))
+    try {
+      const [animals, researchList] = await Promise.all([
+        animalsService.list(),
+        researchService.list(),
+      ])
+      setItems(animals)
+      setResearches(researchList.map((r) => ({ id: r.id, name: r.name })))
+    } catch {
+      // silencioso
+    } finally {
+      setLoading(false)
     }
-    setLoading(false)
   }, [])
 
   useEffect(() => {
@@ -180,38 +171,37 @@ export function AnimalsManager({ isOrgAdmin }: { isOrgAdmin: boolean }) {
     const rec = form.simbaRecordNumber.trim()
     if (!rec) return
     setFetchingSimba(true)
-    const res = await fetch(`/api/simba?record_number=${encodeURIComponent(rec)}`)
-    setFetchingSimba(false)
-    if (!res.ok) {
-      toast.error(t("simbaFetchError"), { description: em(await res.json().catch(() => ({}))) })
-      return
+    try {
+      const d = await animalsService.lookupSimba(rec)
+      set({
+        simbaRecordNumber: d.simbaRecordNumber ?? rec,
+        species: d.species ?? form.species,
+        wormsAphiaId: d.wormsAphiaId?.toString() ?? "",
+        taxonFamily: d.taxonFamily ?? "",
+        taxonOrder: d.taxonOrder ?? "",
+        sex: d.sex ?? "",
+        lifeStage: d.lifeStage ?? "",
+        strandingLat: d.strandingLat?.toString() ?? "",
+        strandingLon: d.strandingLon?.toString() ?? "",
+        strandingBeach: d.strandingBeach ?? "",
+        municipality: d.municipality ?? "",
+        state: d.state ?? "",
+        eventDate: d.eventDate ? d.eventDate.slice(0, 10) : "",
+      })
+      toast.success(t("simbaFetched"))
+    } catch (err) {
+      toast.error(t("simbaFetchError"), { description: em(err) })
+    } finally {
+      setFetchingSimba(false)
     }
-    const d = await res.json()
-    set({
-      simbaRecordNumber: d.simbaRecordNumber ?? rec,
-      species: d.species ?? form.species,
-      wormsAphiaId: d.wormsAphiaId?.toString() ?? "",
-      taxonFamily: d.taxonFamily ?? "",
-      taxonOrder: d.taxonOrder ?? "",
-      sex: d.sex ?? "",
-      lifeStage: d.lifeStage ?? "",
-      strandingLat: d.strandingLat?.toString() ?? "",
-      strandingLon: d.strandingLon?.toString() ?? "",
-      strandingBeach: d.strandingBeach ?? "",
-      municipality: d.municipality ?? "",
-      state: d.state ?? "",
-      eventDate: d.eventDate ? d.eventDate.slice(0, 10) : "",
-    })
-    toast.success(t("simbaFetched"))
   }
 
-  function openEdit(a: AnimalRow) {
+  function openEdit(a: AnimalListItem) {
     setErrors({})
     // Carrega os campos completos do animal para edição.
-    fetch(`/api/animals/${a.id}`)
-      .then((r) => (r.ok ? r.json() : null))
+    animalsService
+      .get(a.id)
       .then((full) => {
-        if (!full) return
         setForm({
           researchId: full.research.id,
           species: full.species ?? "",
@@ -234,6 +224,9 @@ export function AnimalsManager({ isOrgAdmin }: { isOrgAdmin: boolean }) {
           isPublic: full.isPublic ?? false,
         })
         setDialog({ mode: "edit", id: a.id })
+      })
+      .catch(() => {
+        // silencioso: falha ao carregar detalhe
       })
   }
 
@@ -279,35 +272,31 @@ export function AnimalsManager({ isOrgAdmin }: { isOrgAdmin: boolean }) {
     }
 
     setSaving(true)
-    const res = await fetch(isEdit ? `/api/animals/${dialog!.id}` : "/api/animals", {
-      method: isEdit ? "PUT" : "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(parsed.data),
-    })
-    setSaving(false)
-    if (!res.ok) {
-      toast.error(isEdit ? t("updateError") : t("createError"), {
-        description: em(await res.json().catch(() => ({}))),
-      })
-      return
+    try {
+      if (isEdit) await animalsService.update(dialog!.id!, parsed.data)
+      else await animalsService.create(parsed.data as CreateAnimalData)
+      toast.success(isEdit ? t("updated") : t("created"))
+      setDialog(null)
+      load()
+    } catch (err) {
+      toast.error(isEdit ? t("updateError") : t("createError"), { description: em(err) })
+    } finally {
+      setSaving(false)
     }
-    toast.success(isEdit ? t("updated") : t("created"))
-    setDialog(null)
-    load()
   }
 
-  async function remove(a: AnimalRow) {
-    const res = await fetch(`/api/animals/${a.id}`, { method: "DELETE" })
-    if (!res.ok) {
-      toast.error(t("deleteError"), { description: em(await res.json().catch(() => ({}))) })
-      return
+  async function remove(a: AnimalListItem) {
+    try {
+      await animalsService.remove(a.id)
+      toast.success(t("deleted"))
+      setItems((prev) => prev.filter((x) => x.id !== a.id))
+    } catch (err) {
+      toast.error(t("deleteError"), { description: em(err) })
     }
-    toast.success(t("deleted"))
-    setItems((prev) => prev.filter((x) => x.id !== a.id))
   }
 
-  const controlOf = (a: AnimalRow) => a.controlId ?? a.simbaRecordNumber ?? ""
-  const locationOf = (a: AnimalRow) => [a.municipality, a.state].filter(Boolean).join(", ")
+  const controlOf = (a: AnimalListItem) => a.controlId ?? a.simbaRecordNumber ?? ""
+  const locationOf = (a: AnimalListItem) => [a.municipality, a.state].filter(Boolean).join(", ")
   const fmtDate = (iso: string | null) => (iso ? new Date(iso).toLocaleDateString(locale) : "")
 
   const table = useTable(items, {

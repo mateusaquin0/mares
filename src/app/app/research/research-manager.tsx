@@ -9,6 +9,8 @@ import { toast } from "sonner"
 import { MoreHorizontal, Plus } from "lucide-react"
 
 import { createResearchSchema, type CreateResearchData } from "@/schemas/research.schema"
+import { researchService } from "@/services/research"
+import type { ResearchListItem } from "@/types/research"
 import { useErrorMessage } from "@/lib/use-error-message"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -40,26 +42,16 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 
-type Research = {
-  id: string
-  name: string
-  description: string | null
-  isPublic: boolean
-  createdById: string | null
-  createdAt: string
-  _count: { animals: number; protocols: number }
-}
-
 export function ResearchManager({ isOrgAdmin, selfId }: { isOrgAdmin: boolean; selfId: string }) {
   const t = useTranslations("research")
   const tc = useTranslations("common")
   const tval = useTranslations("validation")
   const em = useErrorMessage()
-  const [items, setItems] = useState<Research[]>([])
+  const [items, setItems] = useState<ResearchListItem[]>([])
   const [loading, setLoading] = useState(true)
   const [open, setOpen] = useState(false)
-  const [editing, setEditing] = useState<Research | null>(null)
-  const [confirm, setConfirm] = useState<Research | null>(null)
+  const [editing, setEditing] = useState<ResearchListItem | null>(null)
+  const [confirm, setConfirm] = useState<ResearchListItem | null>(null)
 
   const form = useForm<CreateResearchData>({
     resolver: zodResolver(createResearchSchema),
@@ -68,9 +60,13 @@ export function ResearchManager({ isOrgAdmin, selfId }: { isOrgAdmin: boolean; s
 
   const load = useCallback(async () => {
     setLoading(true)
-    const res = await fetch("/api/research")
-    if (res.ok) setItems(await res.json())
-    setLoading(false)
+    try {
+      setItems(await researchService.list())
+    } catch {
+      // silencioso
+    } finally {
+      setLoading(false)
+    }
   }, [])
 
   useEffect(() => {
@@ -83,39 +79,34 @@ export function ResearchManager({ isOrgAdmin, selfId }: { isOrgAdmin: boolean; s
     setOpen(true)
   }
 
-  function openEdit(r: Research) {
+  function openEdit(r: ResearchListItem) {
     setEditing(r)
     form.reset({ name: r.name, description: r.description ?? "", isPublic: r.isPublic })
     setOpen(true)
   }
 
   async function onSubmit(data: CreateResearchData) {
-    const res = await fetch(editing ? `/api/research/${editing.id}` : "/api/research", {
-      method: editing ? "PUT" : "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
-    })
-    if (!res.ok) {
-      toast.error(editing ? t("editError") : t("createError"), {
-        description: em(await res.json().catch(() => ({}))),
-      })
-      return
+    try {
+      if (editing) await researchService.update(editing.id, data)
+      else await researchService.create(data)
+      toast.success(editing ? t("edited") : t("created"))
+      form.reset({ name: "", description: "", isPublic: false })
+      setOpen(false)
+      setEditing(null)
+      load()
+    } catch (err) {
+      toast.error(editing ? t("editError") : t("createError"), { description: em(err) })
     }
-    toast.success(editing ? t("edited") : t("created"))
-    form.reset({ name: "", description: "", isPublic: false })
-    setOpen(false)
-    setEditing(null)
-    load()
   }
 
-  async function remove(r: Research) {
-    const res = await fetch(`/api/research/${r.id}`, { method: "DELETE" })
-    if (!res.ok) {
-      toast.error(t("deleteError"), { description: em(await res.json().catch(() => ({}))) })
-      return
+  async function remove(r: ResearchListItem) {
+    try {
+      await researchService.remove(r.id)
+      toast.success(t("deleted"))
+      setItems((prev) => prev.filter((x) => x.id !== r.id))
+    } catch (err) {
+      toast.error(t("deleteError"), { description: em(err) })
     }
-    toast.success(t("deleted"))
-    setItems((prev) => prev.filter((x) => x.id !== r.id))
   }
 
   return (

@@ -4,7 +4,9 @@ import { useCallback, useEffect, useState } from "react"
 import { useLocale, useTranslations } from "next-intl"
 import { ArrowRight } from "lucide-react"
 
-import { pathogenName, txt, type I18nText } from "@/lib/catalog-i18n"
+import { pathogenName, txt } from "@/lib/catalog-i18n"
+import { animalsService } from "@/services/animals"
+import type { AuditEntry } from "@/types/animal"
 import {
   Table,
   TableBody,
@@ -14,31 +16,23 @@ import {
   TableRow,
 } from "@/components/ui/table"
 
-type AuditRow = {
-  id: string
-  changedAt: string
-  field: string
-  oldValue: string | null
-  newValue: string | null
-  author: string
-  pathogen: { scientificName: string | null; name: string | I18nText | null } | null
-  examType: { name: string | I18nText } | null
-  organ: { name: string | I18nText } | null
-}
-
 export function AuditTab({ animalId }: { animalId: string }) {
   const t = useTranslations("audit")
   const ta = useTranslations("analyses")
   const tc = useTranslations("common")
   const locale = useLocale()
-  const [items, setItems] = useState<AuditRow[]>([])
+  const [items, setItems] = useState<AuditEntry[]>([])
   const [loading, setLoading] = useState(true)
 
   const load = useCallback(async () => {
     setLoading(true)
-    const res = await fetch(`/api/animals/${animalId}/audit`)
-    if (res.ok) setItems(await res.json())
-    setLoading(false)
+    try {
+      setItems(await animalsService.getAudit(animalId))
+    } catch {
+      // silencioso: aba somente-leitura
+    } finally {
+      setLoading(false)
+    }
   }, [animalId])
 
   useEffect(() => {
@@ -63,7 +57,7 @@ export function AuditTab({ animalId }: { animalId: string }) {
     return v
   }
 
-  const contextOf = (r: AuditRow) =>
+  const contextOf = (r: AuditEntry) =>
     [
       r.organ ? txt(locale, r.organ.name) : null,
       r.pathogen ? pathogenName(locale, r.pathogen) : null,

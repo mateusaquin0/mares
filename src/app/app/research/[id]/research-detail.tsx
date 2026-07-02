@@ -10,7 +10,10 @@ import { toast } from "sonner"
 import { ArrowLeft, Pencil, Plus, Trash2 } from "lucide-react"
 
 import { updateResearchSchema, type UpdateResearchData } from "@/schemas/research.schema"
-import { txt, pathogenName, type I18nText } from "@/lib/catalog-i18n"
+import { researchService } from "@/services/research"
+import { catalogService } from "@/services/catalog"
+import type { CatalogItem } from "@/types/catalog"
+import { txt, pathogenName } from "@/lib/catalog-i18n"
 import { useErrorMessage } from "@/lib/use-error-message"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -36,30 +39,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 
-type CatalogItem = { id: string; name: string | I18nText }
-type PathogenItem = { id: string; scientificName: string | null; name: string | I18nText | null }
-type ProtocolEntry = {
-  id: string
-  organ: CatalogItem
-  pathogen: PathogenItem
-  examType: CatalogItem
-}
-type Research = {
-  id: string
-  name: string
-  description: string | null
-  isPublic: boolean
-  createdById: string | null
-  _count: { animals: number }
-  protocols: ProtocolEntry[]
-}
-
-async function getJson<T>(url: string): Promise<T> {
-  const res = await fetch(url)
-  if (!res.ok) throw new Error(`GET ${url} ${res.status}`)
-  return res.json()
-}
-
 export function ResearchDetail({
   id,
   isOrgAdmin,
@@ -79,23 +58,23 @@ export function ResearchDetail({
 
   const researchQ = useQuery({
     queryKey: ["research", id],
-    queryFn: () => getJson<Research>(`/api/research/${id}`),
+    queryFn: () => researchService.get(id),
   })
   const organsQ = useQuery({
     queryKey: ["catalog", "organs"],
-    queryFn: () => getJson<CatalogItem[]>("/api/catalog/organs"),
+    queryFn: () => catalogService.listOrgans(),
     staleTime: Infinity,
     enabled: isOrgAdmin,
   })
   const pathogensQ = useQuery({
     queryKey: ["catalog", "pathogens"],
-    queryFn: () => getJson<PathogenItem[]>("/api/catalog/pathogens"),
+    queryFn: () => catalogService.listPathogens(),
     staleTime: Infinity,
     enabled: isOrgAdmin,
   })
   const examTypesQ = useQuery({
     queryKey: ["catalog", "exam-types"],
-    queryFn: () => getJson<CatalogItem[]>("/api/catalog/exam-types"),
+    queryFn: () => catalogService.listExamTypes(),
     staleTime: Infinity,
     enabled: isOrgAdmin,
   })
@@ -127,48 +106,41 @@ export function ResearchDetail({
   }
 
   async function onEdit(data: UpdateResearchData) {
-    const res = await fetch(`/api/research/${id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
-    })
-    if (!res.ok) {
-      toast.error(t("editError"), { description: em(await res.json().catch(() => ({}))) })
-      return
+    try {
+      await researchService.update(id, data)
+      toast.success(t("edited"))
+      setEditOpen(false)
+      qc.invalidateQueries({ queryKey: ["research", id] })
+    } catch (err) {
+      toast.error(t("editError"), { description: em(err) })
     }
-    toast.success(t("edited"))
-    setEditOpen(false)
-    qc.invalidateQueries({ queryKey: ["research", id] })
   }
 
   async function addEntry() {
     if (!organId || !pathogenId || !examTypeId) return
     setAdding(true)
-    const res = await fetch(`/api/research/${id}/protocol`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ entries: [{ organId, pathogenId, examTypeId }] }),
-    })
-    setAdding(false)
-    if (!res.ok) {
-      toast.error(tp("addError"), { description: em(await res.json().catch(() => ({}))) })
-      return
+    try {
+      await researchService.addProtocol(id, [{ organId, pathogenId, examTypeId }])
+      toast.success(tp("added"))
+      setOrganId(undefined)
+      setPathogenId(undefined)
+      setExamTypeId(undefined)
+      qc.invalidateQueries({ queryKey: ["research", id] })
+    } catch (err) {
+      toast.error(tp("addError"), { description: em(err) })
+    } finally {
+      setAdding(false)
     }
-    toast.success(tp("added"))
-    setOrganId(undefined)
-    setPathogenId(undefined)
-    setExamTypeId(undefined)
-    qc.invalidateQueries({ queryKey: ["research", id] })
   }
 
   async function removeEntry(entryId: string) {
-    const res = await fetch(`/api/research/${id}/protocol/${entryId}`, { method: "DELETE" })
-    if (!res.ok) {
-      toast.error(tp("removeError"), { description: em(await res.json().catch(() => ({}))) })
-      return
+    try {
+      await researchService.removeProtocol(id, entryId)
+      toast.success(tp("removed"))
+      qc.invalidateQueries({ queryKey: ["research", id] })
+    } catch (err) {
+      toast.error(tp("removeError"), { description: em(err) })
     }
-    toast.success(tp("removed"))
-    qc.invalidateQueries({ queryKey: ["research", id] })
   }
 
   if (researchQ.isLoading) {

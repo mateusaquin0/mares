@@ -4,8 +4,17 @@ import { useCallback, useEffect, useRef, useState } from "react"
 import { useLocale, useTranslations } from "next-intl"
 import { toast } from "sonner"
 
-import { pathogenName, txt, type I18nText } from "@/lib/catalog-i18n"
+import { pathogenName, txt } from "@/lib/catalog-i18n"
 import { useErrorMessage } from "@/lib/use-error-message"
+import { animalsService } from "@/services/animals"
+import { analysesService } from "@/services/analyses"
+import type {
+  AnalysisCell as Cell,
+  AnalysisGrid as Grid,
+  ProtocolEntry,
+  ResultValue,
+  SampleLite,
+} from "@/types/analysis"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import {
@@ -24,28 +33,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 
-type ResultValue = "POSITIVO" | "NEGATIVO" | "INCONCLUSIVO"
 const UNTESTED = "UNTESTED"
-
-type ProtocolEntry = {
-  organId: string
-  pathogenId: string
-  examTypeId: string
-  pathogen: { id: string; scientificName: string | null; name: string | I18nText | null }
-  examType: { id: string; name: string | I18nText }
-}
-type SampleLite = {
-  id: string
-  sampleType: string
-  status: string
-  organ: { id: string; name: string | I18nText }
-}
-type Cell = { result: ResultValue | null; ctValue: number | null; notes: string | null }
-type Grid = {
-  protocol: ProtocolEntry[]
-  samples: SampleLite[]
-  analyses: (Cell & { sampleId: string; pathogenId: string; examTypeId: string })[]
-}
 
 const keyOf = (sampleId: string, pathogenId: string, examTypeId: string) =>
   `${sampleId}|${pathogenId}|${examTypeId}`
@@ -63,9 +51,8 @@ export function AnalysesTab({ animalId, reloadKey }: { animalId: string; reloadK
 
   const load = useCallback(async () => {
     setLoading(true)
-    const res = await fetch(`/api/animals/${animalId}/grid`)
-    if (res.ok) {
-      const data: Grid = await res.json()
+    try {
+      const data = await animalsService.getGrid(animalId)
       setGrid(data)
       const map: Record<string, Cell> = {}
       for (const a of data.analyses) {
@@ -76,8 +63,11 @@ export function AnalysesTab({ animalId, reloadKey }: { animalId: string; reloadK
         }
       }
       setCells(map)
+    } catch {
+      // silencioso
+    } finally {
+      setLoading(false)
     }
-    setLoading(false)
   }, [animalId])
 
   useEffect(() => {
@@ -100,24 +90,20 @@ export function AnalysesTab({ animalId, reloadKey }: { animalId: string; reloadK
     const next = { ...prev, ...patch }
     setCells((c) => ({ ...c, [k]: next }))
 
-    const res = await fetch("/api/analyses", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
+    try {
+      await analysesService.upsert({
         sampleId: sample.id,
         pathogenId: entry.pathogenId,
         examTypeId: entry.examTypeId,
         result: next.result,
         ctValue: next.ctValue,
         notes: next.notes,
-      }),
-    })
-    if (!res.ok) {
-      toast.error(t("saveError"), { description: em(await res.json().catch(() => ({}))) })
+      })
+      toast.success(t("saved"))
+    } catch (err) {
+      toast.error(t("saveError"), { description: em(err) })
       setCells((c) => ({ ...c, [k]: prev })) // reverte
-      return
     }
-    toast.success(t("saved"))
   }
 
   if (loading) return <p className="text-sm text-muted-foreground">{tc("loading")}</p>

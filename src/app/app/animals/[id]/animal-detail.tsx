@@ -5,6 +5,8 @@ import Link from "next/link"
 import { useLocale, useTranslations } from "next-intl"
 import { ArrowLeft } from "lucide-react"
 
+import { animalsService } from "@/services/animals"
+import type { AnimalDetail as AnimalDetailData } from "@/types/animal"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { SamplesTab } from "./samples-tab"
@@ -12,43 +14,23 @@ import { AnalysesTab } from "./analyses-tab"
 import { MediaTab } from "./media-tab"
 import { AuditTab } from "./audit-tab"
 
-type Animal = {
-  id: string
-  species: string
-  wormsAphiaId: number | null
-  taxonFamily: string | null
-  taxonOrder: string | null
-  controlId: string | null
-  simbaRecordNumber: string | null
-  sex: string | null
-  lifeStage: string | null
-  bodyCondition: string | null
-  decompositionStage: string | null
-  strandingLat: number | null
-  strandingLon: number | null
-  strandingBeach: string | null
-  municipality: string | null
-  state: string | null
-  eventDate: string | null
-  macroscopicNotes: string | null
-  isPublic: boolean
-  research: { id: string; name: string }
-  _count: { samples: number; media: number }
-}
-
 export function AnimalDetail({ id, isOrgAdmin }: { id: string; isOrgAdmin: boolean }) {
   const t = useTranslations("animals")
   const tc = useTranslations("common")
   const locale = useLocale()
-  const [animal, setAnimal] = useState<Animal | null>(null)
+  const [animal, setAnimal] = useState<AnimalDetailData | null>(null)
   const [loading, setLoading] = useState(true)
   const [gridReload, setGridReload] = useState(0)
 
   const load = useCallback(async () => {
     setLoading(true)
-    const res = await fetch(`/api/animals/${id}`)
-    if (res.ok) setAnimal(await res.json())
-    setLoading(false)
+    try {
+      setAnimal(await animalsService.get(id))
+    } catch {
+      setAnimal(null)
+    } finally {
+      setLoading(false)
+    }
   }, [id])
 
   useEffect(() => {

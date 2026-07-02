@@ -5,8 +5,11 @@ import { useLocale, useTranslations } from "next-intl"
 import { toast } from "sonner"
 import { MoreHorizontal, Plus } from "lucide-react"
 
-import { txt, type I18nText } from "@/lib/catalog-i18n"
+import { txt } from "@/lib/catalog-i18n"
 import { useErrorMessage } from "@/lib/use-error-message"
+import { samplesService, type SamplePayload } from "@/services/samples"
+import { catalogService } from "@/services/catalog"
+import type { OrganLite, Sample, SampleStatus } from "@/types/sample"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -41,20 +44,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-
-type SampleStatus = "STORED" | "IN_USE" | "DEPLETED" | "DEGRADED"
-type OrganLite = { id: string; name: string | I18nText }
-type SampleRow = {
-  id: string
-  sampleType: string
-  collectionDate: string | null
-  storageLocation: string | null
-  storageTemp: number | null
-  status: SampleStatus
-  notes: string | null
-  organ: OrganLite
-  _count: { analyses: number }
-}
 
 type FormState = {
   organId: string
@@ -100,24 +89,29 @@ export function SamplesTab({
   const locale = useLocale()
   const em = useErrorMessage()
 
-  const [items, setItems] = useState<SampleRow[]>([])
+  const [items, setItems] = useState<Sample[]>([])
   const [organs, setOrgans] = useState<OrganLite[]>([])
   const [loading, setLoading] = useState(true)
-  const [dialog, setDialog] = useState<{ mode: "create" | "edit"; row?: SampleRow } | null>(null)
+  const [dialog, setDialog] = useState<{ mode: "create" | "edit"; row?: Sample } | null>(null)
   const [form, setForm] = useState<FormState>(emptyForm)
   const [errors, setErrors] = useState<{ organId?: boolean; sampleType?: boolean }>({})
   const [saving, setSaving] = useState(false)
-  const [confirm, setConfirm] = useState<SampleRow | null>(null)
+  const [confirm, setConfirm] = useState<Sample | null>(null)
 
   const load = useCallback(async () => {
     setLoading(true)
-    const [sRes, oRes] = await Promise.all([
-      fetch(`/api/animals/${animalId}/samples`),
-      fetch("/api/catalog/organs"),
-    ])
-    if (sRes.ok) setItems(await sRes.json())
-    if (oRes.ok) setOrgans(await oRes.json())
-    setLoading(false)
+    try {
+      const [samples, organList] = await Promise.all([
+        samplesService.listByAnimal(animalId),
+        catalogService.listOrgans(),
+      ])
+      setItems(samples)
+      setOrgans(organList)
+    } catch {
+      // silencioso
+    } finally {
+      setLoading(false)
+    }
   }, [animalId])
 
   useEffect(() => {
@@ -138,7 +132,7 @@ export function SamplesTab({
     setForm(emptyForm)
     setDialog({ mode: "create" })
   }
-  function openEdit(row: SampleRow) {
+  function openEdit(row: Sample) {
     setErrors({})
     setForm({
       organId: row.organ.id,
@@ -159,7 +153,7 @@ export function SamplesTab({
     if (nextErrors.organId || nextErrors.sampleType) return
 
     const orNull = (v: string) => (v.trim() === "" ? null : v.trim())
-    const payload = {
+    const payload: SamplePayload = {
       organId: form.organId,
       sampleType: form.sampleType.trim(),
       collectionDate: orNull(form.collectionDate),
@@ -170,33 +164,29 @@ export function SamplesTab({
     }
     const isEdit = dialog?.mode === "edit"
     setSaving(true)
-    const res = await fetch(isEdit ? `/api/samples/${dialog!.row!.id}` : `/api/animals/${animalId}/samples`, {
-      method: isEdit ? "PUT" : "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    })
-    setSaving(false)
-    if (!res.ok) {
-      toast.error(isEdit ? t("updateError") : t("createError"), {
-        description: em(await res.json().catch(() => ({}))),
-      })
-      return
+    try {
+      if (isEdit) await samplesService.update(dialog!.row!.id, payload)
+      else await samplesService.create(animalId, payload)
+      toast.success(isEdit ? t("updated") : t("created"))
+      setDialog(null)
+      load()
+      onChanged?.()
+    } catch (err) {
+      toast.error(isEdit ? t("updateError") : t("createError"), { description: em(err) })
+    } finally {
+      setSaving(false)
     }
-    toast.success(isEdit ? t("updated") : t("created"))
-    setDialog(null)
-    load()
-    onChanged?.()
   }
 
-  async function remove(row: SampleRow) {
-    const res = await fetch(`/api/samples/${row.id}`, { method: "DELETE" })
-    if (!res.ok) {
-      toast.error(t("deleteError"), { description: em(await res.json().catch(() => ({}))) })
-      return
+  async function remove(row: Sample) {
+    try {
+      await samplesService.remove(row.id)
+      toast.success(t("deleted"))
+      setItems((prev) => prev.filter((x) => x.id !== row.id))
+      onChanged?.()
+    } catch (err) {
+      toast.error(t("deleteError"), { description: em(err) })
     }
-    toast.success(t("deleted"))
-    setItems((prev) => prev.filter((x) => x.id !== row.id))
-    onChanged?.()
   }
 
   const fmtDate = (iso: string | null) => (iso ? new Date(iso).toLocaleDateString(locale) : "")

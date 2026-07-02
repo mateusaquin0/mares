@@ -6,17 +6,11 @@ import { toast } from "sonner"
 import { FileText, Trash2, Upload } from "lucide-react"
 
 import { useErrorMessage } from "@/lib/use-error-message"
+import { animalsService } from "@/services/animals"
+import type { AnimalMedia } from "@/types/animal"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { ConfirmDialog } from "@/components/confirm-dialog"
-
-type Media = {
-  id: string
-  url: string | null
-  mimeType: string
-  label: string | null
-  createdAt: string
-}
 
 export function MediaTab({ animalId, isOrgAdmin }: { animalId: string; isOrgAdmin: boolean }) {
   const t = useTranslations("media")
@@ -25,18 +19,22 @@ export function MediaTab({ animalId, isOrgAdmin }: { animalId: string; isOrgAdmi
   const em = useErrorMessage()
   const fileRef = useRef<HTMLInputElement>(null)
 
-  const [items, setItems] = useState<Media[]>([])
+  const [items, setItems] = useState<AnimalMedia[]>([])
   const [loading, setLoading] = useState(true)
   const [file, setFile] = useState<File | null>(null)
   const [label, setLabel] = useState("")
   const [uploading, setUploading] = useState(false)
-  const [confirm, setConfirm] = useState<Media | null>(null)
+  const [confirm, setConfirm] = useState<AnimalMedia | null>(null)
 
   const load = useCallback(async () => {
     setLoading(true)
-    const res = await fetch(`/api/animals/${animalId}/media`)
-    if (res.ok) setItems(await res.json())
-    setLoading(false)
+    try {
+      setItems(await animalsService.listMedia(animalId))
+    } catch {
+      // silencioso
+    } finally {
+      setLoading(false)
+    }
   }, [animalId])
 
   useEffect(() => {
@@ -49,27 +47,28 @@ export function MediaTab({ animalId, isOrgAdmin }: { animalId: string; isOrgAdmi
     body.append("file", file)
     if (label.trim()) body.append("label", label.trim())
     setUploading(true)
-    const res = await fetch(`/api/animals/${animalId}/media`, { method: "POST", body })
-    setUploading(false)
-    if (!res.ok) {
-      toast.error(t("uploadError"), { description: em(await res.json().catch(() => ({}))) })
-      return
+    try {
+      await animalsService.uploadMedia(animalId, body)
+      toast.success(t("uploaded"))
+      setFile(null)
+      setLabel("")
+      if (fileRef.current) fileRef.current.value = ""
+      load()
+    } catch (err) {
+      toast.error(t("uploadError"), { description: em(err) })
+    } finally {
+      setUploading(false)
     }
-    toast.success(t("uploaded"))
-    setFile(null)
-    setLabel("")
-    if (fileRef.current) fileRef.current.value = ""
-    load()
   }
 
-  async function remove(m: Media) {
-    const res = await fetch(`/api/media/${m.id}`, { method: "DELETE" })
-    if (!res.ok) {
-      toast.error(t("deleteError"), { description: em(await res.json().catch(() => ({}))) })
-      return
+  async function remove(m: AnimalMedia) {
+    try {
+      await animalsService.removeMedia(m.id)
+      toast.success(t("deleted"))
+      setItems((prev) => prev.filter((x) => x.id !== m.id))
+    } catch (err) {
+      toast.error(t("deleteError"), { description: em(err) })
     }
-    toast.success(t("deleted"))
-    setItems((prev) => prev.filter((x) => x.id !== m.id))
   }
 
   const fmtDate = (iso: string) => new Date(iso).toLocaleDateString(locale)
