@@ -2,15 +2,17 @@
 // Busca um registro por número e faz o parse do XML no padrão Darwin Core (TDWG),
 // devolvendo os campos já mapeados para o modelo Animal.
 //
-// O endpoint é configurável por env (SIMBA_API_URL), usando o placeholder {record}.
-// Por padrão usa o endpoint PÚBLICO (sem autenticação); se o acesso exigir token,
-// defina SIMBA_API_TOKEN (enviado como Bearer). Ver docs/PROJETO_COMPLETO.md §7.1.
+// O endpoint é configurável por env (SIMBA_API_URL). Por padrão usa o endpoint
+// PÚBLICO de ocorrências (sem autenticação); o registro é filtrado pela query
+// `record_number`. Para o endpoint autenticado, defina SIMBA_API_URL para
+// `.../occurrences` e SIMBA_API_TOKEN (enviado como Bearer).
+// Doc: https://simba.petrobras.com.br/simba/web/occurrences/doc — ver §7.1.
 
 import { NotFoundError, ServiceUnavailableError } from "@/lib/errors"
 import { ERROR_CODES } from "@/lib/error-codes"
 
 const DEFAULT_SIMBA_URL =
-  "https://simba.petrobras.com.br/simba/web/api/ocorrencia/{record}/dwc"
+  "https://simba.petrobras.com.br/simba/web/api/v1/occurrences/public"
 
 // Timeout defensivo para não prender o request caso o SIMBA demore.
 const TIMEOUT_MS = 15_000
@@ -29,12 +31,11 @@ export type SimbaRecord = {
 }
 
 function endpointFor(recordNumber: string): string {
-  const template = process.env.SIMBA_API_URL || DEFAULT_SIMBA_URL
-  const enc = encodeURIComponent(recordNumber)
-  return template.includes("{record}")
-    ? template.replace("{record}", enc)
-    : // Sem placeholder: anexa como query param (contrato ?record_number=X).
-      `${template}${template.includes("?") ? "&" : "?"}record_number=${enc}`
+  const base = process.env.SIMBA_API_URL || DEFAULT_SIMBA_URL
+  const url = new URL(base)
+  url.searchParams.set("record_number", recordNumber)
+  if (!url.searchParams.has("language")) url.searchParams.set("language", "pt_BR")
+  return url.toString()
 }
 
 // ── Parsing de XML Darwin Core ────────────────────────────────────────────────
@@ -72,6 +73,14 @@ function firstTerm(xml: string, names: string[]): string | null {
   return null
 }
 
+/** Isola o primeiro <SimpleDarwinRecord> do set (a busca por record_number retorna um). */
+function firstRecordBlock(xml: string): string {
+  const m = xml.match(
+    /<(?:[A-Za-z0-9_]+:)?SimpleDarwinRecord\b[^>]*>([\s\S]*?)<\/(?:[A-Za-z0-9_]+:)?SimpleDarwinRecord>/i
+  )
+  return m ? m[1] : xml
+}
+
 function toFloat(v: string | null): number | null {
   if (v == null) return null
   const n = Number(v.replace(",", "."))
@@ -89,19 +98,21 @@ function toEventDate(v: string | null): string | null {
   return Number.isNaN(d.getTime()) ? null : d.toISOString().slice(0, 10)
 }
 
-/** Faz o parse de um XML Darwin Core em SimbaRecord. */
+/** Faz o parse de um XML Darwin Core (SimpleDarwinRecordSet) em SimbaRecord. */
 export function parseDarwinCore(xml: string, recordNumber: string): SimbaRecord {
+  // No SIMBA, recordNumber é o identificador; occurrenceID é uma URN longa.
+  const r = firstRecordBlock(xml)
   return {
-    simbaRecordNumber: firstTerm(xml, ["occurrenceID", "catalogNumber", "recordNumber"]) ?? recordNumber,
-    species: firstTerm(xml, ["scientificName"]),
-    eventDate: toEventDate(firstTerm(xml, ["eventDate"])),
-    strandingLat: toFloat(firstTerm(xml, ["decimalLatitude"])),
-    strandingLon: toFloat(firstTerm(xml, ["decimalLongitude"])),
-    strandingBeach: firstTerm(xml, ["locality", "verbatimLocality"]),
-    municipality: firstTerm(xml, ["municipality"]),
-    state: firstTerm(xml, ["stateProvince"]),
-    sex: firstTerm(xml, ["sex"]),
-    lifeStage: firstTerm(xml, ["lifeStage"]),
+    simbaRecordNumber: firstTerm(r, ["recordNumber", "catalogNumber", "occurrenceID"]) ?? recordNumber,
+    species: firstTerm(r, ["scientificName"]),
+    eventDate: toEventDate(firstTerm(r, ["eventDate"])),
+    strandingLat: toFloat(firstTerm(r, ["decimalLatitude"])),
+    strandingLon: toFloat(firstTerm(r, ["decimalLongitude"])),
+    strandingBeach: firstTerm(r, ["locality", "verbatimLocality"]),
+    municipality: firstTerm(r, ["municipality"]),
+    state: firstTerm(r, ["stateProvince"]),
+    sex: firstTerm(r, ["sex"]),
+    lifeStage: firstTerm(r, ["lifeStage"]),
   }
 }
 
