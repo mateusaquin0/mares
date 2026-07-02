@@ -16,6 +16,7 @@ import {
 
 import { cn } from "@/lib/utils"
 import type { AuthMembership } from "@/lib/auth"
+import { organizationsService } from "@/services/organizations"
 import { Logo } from "@/components/logo"
 import { LocaleSwitcher } from "@/components/locale-switcher"
 import {
@@ -73,11 +74,11 @@ export function Sidebar({
 
   async function onSwitchOrg(orgId: string) {
     if (orgId === activeOrg?.orgId) return
-    await fetch("/api/active-org", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ orgId }),
-    })
+    try {
+      await organizationsService.setActive(orgId)
+    } catch {
+      // silencioso: a UI recarrega e reflete o estado atual
+    }
     router.refresh()
   }
 

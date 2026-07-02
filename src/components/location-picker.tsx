@@ -5,6 +5,7 @@ import { useLocale, useTranslations } from "next-intl"
 import { useQuery } from "@tanstack/react-query"
 
 import { getCountries } from "@/lib/countries"
+import { geoService } from "@/services/geo"
 import { CountryFlag } from "@/components/country-flag"
 import { Combobox, type ComboboxOption } from "@/components/ui/combobox"
 import { Label } from "@/components/ui/label"
@@ -14,15 +15,6 @@ export type LocationValue = {
   country?: string
   state?: string
   city?: string
-}
-
-type CscState = { id: number; name: string; iso2: string }
-type CscCity = { id: number; name: string }
-
-async function fetchJson<T>(url: string): Promise<T> {
-  const res = await fetch(url)
-  if (!res.ok) throw new Error(`GET ${url} → ${res.status}`)
-  return res.json()
 }
 
 // Seletor de localização em cascata: país → estado → cidade.
@@ -50,8 +42,7 @@ export function LocationPicker({
 
   const statesQuery = useQuery({
     queryKey: ["geo", "states", value.country],
-    queryFn: () =>
-      fetchJson<CscState[]>(`/api/geo/countries/${value.country}/states`),
+    queryFn: () => geoService.listStates(value.country!),
     enabled: !!value.country,
     staleTime: Infinity,
     gcTime: Infinity,
@@ -63,10 +54,7 @@ export function LocationPicker({
 
   const citiesQuery = useQuery({
     queryKey: ["geo", "cities", value.country, stateIso2],
-    queryFn: () =>
-      fetchJson<CscCity[]>(
-        `/api/geo/countries/${value.country}/states/${stateIso2}/cities`
-      ),
+    queryFn: () => geoService.listCities(value.country!, stateIso2!),
     enabled: !!value.country && !!stateIso2,
     staleTime: Infinity,
     gcTime: Infinity,

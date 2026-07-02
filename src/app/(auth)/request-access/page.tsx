@@ -9,6 +9,8 @@ import { toast } from "sonner"
 import { useTranslations } from "next-intl"
 
 import { accessRequestSchema, type AccessRequestData } from "@/schemas/organization.schema"
+import { accessRequestsService } from "@/services/access-requests"
+import { apiErrorBody } from "@/lib/http"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -35,21 +37,17 @@ export default function RequestAccessPage() {
 
   async function onSubmit(data: AccessRequestData) {
     setLoading(true)
-    const res = await fetch("/api/access-requests", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
-    })
-    setLoading(false)
-
-    if (!res.ok) {
-      const body = await res.json().catch(() => ({}))
+    try {
+      await accessRequestsService.create(data)
+      setSent(true)
+    } catch (err) {
+      const body = apiErrorBody(err) as { error?: unknown } | null
       toast.error(t("errorTitle"), {
-        description: typeof body.error === "string" ? body.error : undefined,
+        description: typeof body?.error === "string" ? body.error : undefined,
       })
-      return
+    } finally {
+      setLoading(false)
     }
-    setSent(true)
   }
 
   if (sent) {

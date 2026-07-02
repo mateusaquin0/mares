@@ -7,6 +7,8 @@ import { MoreHorizontal } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { useErrorMessage } from "@/lib/use-error-message"
+import { adminService } from "@/services/admin"
+import type { JoinRequest } from "@/types/admin"
 import {
   Table,
   TableBody,
@@ -22,15 +24,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 
-type JoinRequest = {
-  id: string
-  email: string
-  requesterName: string
-  organizationName: string
-  status: string
-  createdAt: string
-}
-
 export default function AccessRequestsPage() {
   const t = useTranslations("adminRequests")
   const tc = useTranslations("common")
@@ -41,9 +34,13 @@ export default function AccessRequestsPage() {
 
   const load = useCallback(async () => {
     setLoading(true)
-    const res = await fetch("/api/admin/access-requests?status=PENDING")
-    if (res.ok) setRequests(await res.json())
-    setLoading(false)
+    try {
+      setRequests(await adminService.listPendingRequests())
+    } catch {
+      // silencioso
+    } finally {
+      setLoading(false)
+    }
   }, [])
 
   useEffect(() => {
@@ -52,15 +49,15 @@ export default function AccessRequestsPage() {
 
   async function act(id: string, action: "approve" | "reject") {
     setBusy(`${id}:${action}`)
-    const res = await fetch(`/api/admin/access-requests/${id}/${action}`, { method: "POST" })
-    setBusy(null)
-    if (!res.ok) {
-      const body = await res.json().catch(() => ({}))
-      toast.error(t("opError"), { description: em(body) })
-      return
+    try {
+      await adminService.actOnRequest(id, action)
+      toast.success(action === "approve" ? t("approved") : t("rejected"))
+      setRequests((prev) => prev.filter((r) => r.id !== id))
+    } catch (err) {
+      toast.error(t("opError"), { description: em(err) })
+    } finally {
+      setBusy(null)
     }
-    toast.success(action === "approve" ? t("approved") : t("rejected"))
-    setRequests((prev) => prev.filter((r) => r.id !== id))
   }
 
   return (

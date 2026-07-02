@@ -14,6 +14,8 @@ import {
   updateOrganizationSchema,
 } from "@/schemas/organization.schema"
 import type { z } from "zod"
+import { organizationsService } from "@/services/organizations"
+import type { Member } from "@/types/organization"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -51,14 +53,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 
-type Member = {
-  userId: string
-  name: string | null
-  email: string
-  status: string
-  role: "ORG_ADMIN" | "RESEARCHER"
-}
-
 type OrgData = z.infer<typeof updateOrganizationSchema>
 
 type Confirm = { kind: "remove" | "leave" | "demote" | "promote"; member: Member }
@@ -95,9 +89,13 @@ export function MembersManager({
 
   const load = useCallback(async () => {
     setLoading(true)
-    const res = await fetch(`/api/organizations/${orgId}/members`)
-    if (res.ok) setMembers(await res.json())
-    setLoading(false)
+    try {
+      setMembers(await organizationsService.getMembers(orgId))
+    } catch {
+      // silencioso
+    } finally {
+      setLoading(false)
+    }
   }, [orgId])
 
   useEffect(() => {
@@ -105,66 +103,53 @@ export function MembersManager({
   }, [load])
 
   async function onAdd(data: AddMemberData) {
-    const res = await fetch(`/api/organizations/${orgId}/members`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
-    })
-    if (!res.ok) {
-      const body = await res.json().catch(() => ({}))
-      toast.error(t("addErrorTitle"), { description: em(body) })
-      return
+    try {
+      const result = await organizationsService.addMember(orgId, data)
+      toast.success(result.invited ? t("invitedToast") : t("addedToast"))
+      addForm.reset({ email: "", name: "", role: "RESEARCHER" })
+      setAddOpen(false)
+      load()
+    } catch (err) {
+      toast.error(t("addErrorTitle"), { description: em(err) })
     }
-    const result = await res.json()
-    toast.success(result.invited ? t("invitedToast") : t("addedToast"))
-    addForm.reset({ email: "", name: "", role: "RESEARCHER" })
-    setAddOpen(false)
-    load()
   }
 
   // Abre o modal de edição carregando os dados atuais da organização.
   async function openEdit() {
     setEditOpen(true)
-    const res = await fetch(`/api/organizations/${orgId}`)
-    if (res.ok) {
-      const o = await res.json()
+    try {
+      const o = await organizationsService.get(orgId)
       editForm.reset({
         name: o.name ?? "",
         city: o.city ?? "",
         state: o.state ?? "",
         country: o.country ?? "",
       })
+    } catch {
+      // silencioso
     }
   }
 
   async function onEditOrg(data: OrgData) {
-    const res = await fetch(`/api/organizations/${orgId}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
-    })
-    if (!res.ok) {
-      const body = await res.json().catch(() => ({}))
-      toast.error(t("orgUpdateError"), { description: em(body) })
-      return
+    try {
+      await organizationsService.update(orgId, data)
+      toast.success(t("orgUpdated"))
+      setEditOpen(false)
+      router.refresh()
+    } catch (err) {
+      toast.error(t("orgUpdateError"), { description: em(err) })
     }
-    toast.success(t("orgUpdated"))
-    setEditOpen(false)
-    router.refresh()
   }
 
   async function changeRole(m: Member, role: Member["role"]) {
     setBusy(m.userId)
-    const res = await fetch(`/api/organizations/${orgId}/members/${m.userId}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ role }),
-    })
-    setBusy(null)
-    if (!res.ok) {
-      const body = await res.json().catch(() => ({}))
-      toast.error(t("roleErrorTitle"), { description: em(body) })
+    try {
+      await organizationsService.setMemberRole(orgId, m.userId, role)
+    } catch (err) {
+      toast.error(t("roleErrorTitle"), { description: em(err) })
       return
+    } finally {
+      setBusy(null)
     }
     // Ao se rebaixar a pesquisador, o usuário perde acesso à gestão de membros.
     if (m.userId === selfId && role === "RESEARCHER") {
@@ -179,20 +164,17 @@ export function MembersManager({
   async function remove(m: Member) {
     const isSelf = m.userId === selfId
     setBusy(m.userId)
-    const res = await fetch(`/api/organizations/${orgId}/members/${m.userId}`, {
-      method: "DELETE",
-    })
-    setBusy(null)
-    if (!res.ok) {
-      const body = await res.json().catch(() => ({}))
-      toast.error(isSelf ? t("leaveErrorTitle") : t("removeErrorTitle"), {
-        description: em(body),
-      })
+    let result: { orgDeleted?: boolean }
+    try {
+      result = await organizationsService.removeMember(orgId, m.userId)
+    } catch (err) {
+      toast.error(isSelf ? t("leaveErrorTitle") : t("removeErrorTitle"), { description: em(err) })
       return
+    } finally {
+      setBusy(null)
     }
     if (isSelf) {
-      const body = await res.json().catch(() => ({}))
-      toast.success(body?.orgDeleted ? t("orgDeleted") : t("leftOrg"))
+      toast.success(result?.orgDeleted ? t("orgDeleted") : t("leftOrg"))
       router.push("/app/dashboard")
       router.refresh()
       return

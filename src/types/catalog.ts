@@ -11,3 +11,20 @@ export type PathogenItem = {
   scientificName: string | null
   name: string | I18nText | null
 }
+
+// ── Gestão de catálogos (CatalogManager) ─────────────────────────────────────
+export type NamedRow = { id: string; key: string; name: string | I18nText }
+export type GroupLite = {
+  id: string
+  key: string
+  name: string | I18nText
+  usesScientificName: boolean
+}
+export type PathogenRow = {
+  id: string
+  key: string
+  scientificName: string | null
+  name: string | I18nText | null
+  group: GroupLite
+}
+export type CatalogRow = NamedRow | PathogenRow

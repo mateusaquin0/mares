@@ -9,6 +9,8 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { ConfirmDialog } from "@/components/confirm-dialog"
 import { useErrorMessage } from "@/lib/use-error-message"
+import { organizationsService } from "@/services/organizations"
+import type { Membership } from "@/types/organization"
 import {
   Table,
   TableBody,
@@ -17,12 +19,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-
-type Membership = {
-  orgId: string
-  orgName: string
-  role: "ORG_ADMIN" | "RESEARCHER"
-}
 
 export function MyOrganizations({
   selfId,
@@ -40,17 +36,16 @@ export function MyOrganizations({
 
   async function leave(m: Membership) {
     setBusy(m.orgId)
-    const res = await fetch(`/api/organizations/${m.orgId}/members/${selfId}`, {
-      method: "DELETE",
-    })
-    setBusy(null)
-    if (!res.ok) {
-      const body = await res.json().catch(() => ({}))
-      toast.error(t("leaveError"), { description: em(body) })
+    let result: { orgDeleted?: boolean }
+    try {
+      result = await organizationsService.removeMember(m.orgId, selfId)
+    } catch (err) {
+      toast.error(t("leaveError"), { description: em(err) })
       return
+    } finally {
+      setBusy(null)
     }
-    const body = await res.json().catch(() => ({}))
-    toast.success(body?.orgDeleted ? t("orgDeleted") : t("leftOrg"))
+    toast.success(result?.orgDeleted ? t("orgDeleted") : t("leftOrg"))
     setList((prev) => prev.filter((x) => x.orgId !== m.orgId))
     router.refresh()
   }

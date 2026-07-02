@@ -4,6 +4,6 @@ import { http } from "@/lib/http"
 import type { WormsMatch } from "@/types/worms"
 
 export const wormsService = {
-  search: (query: string, init?: RequestInit) =>
-    http.get<WormsMatch[]>(`/api/worms?q=${encodeURIComponent(query)}`, init),
+  search: (query: string, opts?: { signal?: AbortSignal }) =>
+    http.get<WormsMatch[]>(`/api/worms?q=${encodeURIComponent(query)}`, opts),
 }

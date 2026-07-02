@@ -8,6 +8,8 @@ import { toast } from "sonner"
 import { MoreHorizontal, Plus } from "lucide-react"
 
 import type { CatalogType } from "@/schemas/catalog.schema"
+import { catalogService } from "@/services/catalog"
+import type { CatalogRow as Row, NamedRow, PathogenRow } from "@/types/catalog"
 import { txt, pathogenName, type I18nText } from "@/lib/catalog-i18n"
 import { useErrorMessage } from "@/lib/use-error-message"
 import { useTable } from "@/lib/use-table"
@@ -47,24 +49,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 
-type NamedRow = { id: string; key: string; name: string | I18nText }
-type GroupLite = { id: string; key: string; name: string | I18nText; usesScientificName: boolean }
-type PathogenRow = {
-  id: string
-  key: string
-  scientificName: string | null
-  name: string | I18nText | null
-  group: GroupLite
-}
-type Row = NamedRow | PathogenRow
-
 type FormShape = { namePt?: string; nameEn?: string; sci?: string }
-
-async function getJson<T>(url: string): Promise<T> {
-  const res = await fetch(url)
-  if (!res.ok) throw new Error(`GET ${url} ${res.status}`)
-  return res.json()
-}
 
 const i18nPt = (v: string | I18nText | null | undefined) =>
   v == null ? "" : typeof v === "string" ? v : v.pt ?? ""
@@ -86,12 +71,12 @@ export function CatalogManager({ canEdit }: { canEdit: boolean }) {
 
   const listQ = useQuery({
     queryKey: ["catalog", type],
-    queryFn: () => getJson<Row[]>(`/api/catalog/${type}`),
+    queryFn: () => catalogService.list(type),
     staleTime: 60_000,
   })
   const groupsQ = useQuery({
     queryKey: ["pathogen-groups"],
-    queryFn: () => getJson<GroupLite[]>("/api/catalog/pathogen-groups"),
+    queryFn: () => catalogService.listPathogenGroups(),
     staleTime: Infinity,
     enabled: isPathogen,
   })
@@ -135,34 +120,28 @@ export function CatalogManager({ canEdit }: { canEdit: boolean }) {
       return
     }
     const isEdit = dialog?.mode === "edit"
-    const url = isEdit ? `/api/catalog/${type}/${dialog!.row!.id}` : `/api/catalog/${type}`
     const body = isPathogen
       ? { groupId, scientificName: data.sci, namePt: data.namePt, nameEn: data.nameEn }
       : { namePt: data.namePt, nameEn: data.nameEn }
-    const res = await fetch(url, {
-      method: isEdit ? "PUT" : "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    })
-    if (!res.ok) {
-      toast.error(isEdit ? t("updateError") : t("createError"), {
-        description: em(await res.json().catch(() => ({}))),
-      })
-      return
+    try {
+      if (isEdit) await catalogService.update(type, dialog!.row!.id, body)
+      else await catalogService.create(type, body)
+      toast.success(isEdit ? t("updated") : t("created"))
+      setDialog(null)
+      qc.invalidateQueries({ queryKey: ["catalog", type] })
+    } catch (err) {
+      toast.error(isEdit ? t("updateError") : t("createError"), { description: em(err) })
     }
-    toast.success(isEdit ? t("updated") : t("created"))
-    setDialog(null)
-    qc.invalidateQueries({ queryKey: ["catalog", type] })
   }
 
   async function remove(row: Row) {
-    const res = await fetch(`/api/catalog/${type}/${row.id}`, { method: "DELETE" })
-    if (!res.ok) {
-      toast.error(t("deleteError"), { description: em(await res.json().catch(() => ({}))) })
-      return
+    try {
+      await catalogService.remove(type, row.id)
+      toast.success(t("deleted"))
+      qc.invalidateQueries({ queryKey: ["catalog", type] })
+    } catch (err) {
+      toast.error(t("deleteError"), { description: em(err) })
     }
-    toast.success(t("deleted"))
-    qc.invalidateQueries({ queryKey: ["catalog", type] })
   }
 
   const display = (r: Row) =>

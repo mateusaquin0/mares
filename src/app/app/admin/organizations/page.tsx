@@ -5,6 +5,8 @@ import { useLocale, useTranslations } from "next-intl"
 
 import { getCountryName } from "@/lib/countries"
 import { useTable } from "@/lib/use-table"
+import { adminService } from "@/services/admin"
+import type { AdminOrg } from "@/types/admin"
 import { CountryFlag } from "@/components/country-flag"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
@@ -25,44 +27,25 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 
-type OrgMember = {
-  userId: string
-  name: string | null
-  email: string
-  status: string
-  role: "ORG_ADMIN" | "RESEARCHER"
-}
-
-type Org = {
-  id: string
-  name: string
-  city: string | null
-  state: string | null
-  country: string | null
-  createdAt: string
-  researchCount: number
-  members: OrgMember[]
-}
-
 export default function AdminOrganizationsPage() {
   const t = useTranslations("adminOrgs")
   const tc = useTranslations("common")
   const locale = useLocale()
 
-  const [orgs, setOrgs] = useState<Org[]>([])
+  const [orgs, setOrgs] = useState<AdminOrg[]>([])
   const [loading, setLoading] = useState(true)
-  const [selected, setSelected] = useState<Org | null>(null)
+  const [selected, setSelected] = useState<AdminOrg | null>(null)
 
   // Texto puro da localização (cidade, estado, país traduzido), usado em busca/ordenação.
   const locationText = useCallback(
-    (o: Pick<Org, "city" | "state" | "country">) =>
+    (o: Pick<AdminOrg, "city" | "state" | "country">) =>
       [o.city, o.state, getCountryName(o.country, locale)].filter(Boolean).join(", "),
     [locale]
   )
 
   // Renderiza a localização com bandeira + nome do país (traduzido a partir do ISO2).
   const renderLocation = useCallback(
-    (o: Pick<Org, "city" | "state" | "country">) => {
+    (o: Pick<AdminOrg, "city" | "state" | "country">) => {
       const text = locationText(o)
       if (!text) return <span className="text-muted-foreground">{t("noLocation")}</span>
       return (
@@ -77,9 +60,13 @@ export default function AdminOrganizationsPage() {
 
   const load = useCallback(async () => {
     setLoading(true)
-    const res = await fetch("/api/admin/organizations")
-    if (res.ok) setOrgs(await res.json())
-    setLoading(false)
+    try {
+      setOrgs(await adminService.listOrganizations())
+    } catch {
+      // silencioso
+    } finally {
+      setLoading(false)
+    }
   }, [])
 
   useEffect(() => {

@@ -10,6 +10,8 @@ import { Badge } from "@/components/ui/badge"
 import { ConfirmDialog } from "@/components/confirm-dialog"
 import { useErrorMessage } from "@/lib/use-error-message"
 import { useTable } from "@/lib/use-table"
+import { adminService } from "@/services/admin"
+import type { AdminUser } from "@/types/admin"
 import {
   Table,
   TableBody,
@@ -19,15 +21,6 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { SortableHead } from "@/components/ui/sortable-head"
-
-type AdminUser = {
-  id: string
-  email: string
-  name: string | null
-  isSystemAdmin: boolean
-  status: string
-  memberships: { orgId: string; orgName: string; role: string }[]
-}
 
 export default function AdminUsersPage() {
   const t = useTranslations("adminUsers")
@@ -67,9 +60,13 @@ export default function AdminUsersPage() {
 
   const load = useCallback(async () => {
     setLoading(true)
-    const res = await fetch("/api/admin/users")
-    if (res.ok) setUsers(await res.json())
-    setLoading(false)
+    try {
+      setUsers(await adminService.listUsers())
+    } catch {
+      // silencioso
+    } finally {
+      setLoading(false)
+    }
   }, [])
 
   useEffect(() => {
@@ -78,15 +75,15 @@ export default function AdminUsersPage() {
 
   async function remove(u: AdminUser) {
     setBusy(u.id)
-    const res = await fetch(`/api/admin/users/${u.id}`, { method: "DELETE" })
-    setBusy(null)
-    if (!res.ok) {
-      const body = await res.json().catch(() => ({}))
-      toast.error(t("deleteError"), { description: em(body) })
-      return
+    try {
+      await adminService.removeUser(u.id)
+      toast.success(t("deleted"))
+      setUsers((prev) => prev.filter((x) => x.id !== u.id))
+    } catch (err) {
+      toast.error(t("deleteError"), { description: em(err) })
+    } finally {
+      setBusy(null)
     }
-    toast.success(t("deleted"))
-    setUsers((prev) => prev.filter((x) => x.id !== u.id))
   }
 
   return (
