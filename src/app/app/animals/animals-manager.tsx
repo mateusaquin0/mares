@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useEffect, useState, type FormEvent } from "react"
+import { useState, type FormEvent } from "react"
 import Link from "next/link"
 import { useLocale, useTranslations } from "next-intl"
 import { toast } from "sonner"
@@ -8,8 +8,9 @@ import { MoreHorizontal, Plus, Search } from "lucide-react"
 
 import { createAnimalSchema, updateAnimalSchema, type CreateAnimalData } from "@/schemas/animal.schema"
 import { animalsService } from "@/services/animals"
-import { researchService } from "@/services/research"
-import type { AnimalListItem, ResearchLite } from "@/types/animal"
+import { useAnimals } from "@/hooks/use-animals"
+import { useResearchList } from "@/hooks/use-research"
+import type { AnimalListItem } from "@/types/animal"
 import { useErrorMessage } from "@/lib/use-error-message"
 import { useTable } from "@/lib/use-table"
 import { Button } from "@/components/ui/button"
@@ -118,9 +119,11 @@ export function AnimalsManager({ isOrgAdmin }: { isOrgAdmin: boolean }) {
   const locale = useLocale()
   const em = useErrorMessage()
 
-  const [items, setItems] = useState<AnimalListItem[]>([])
-  const [researches, setResearches] = useState<ResearchLite[]>([])
-  const [loading, setLoading] = useState(true)
+  const animalsQ = useAnimals()
+  const researchQ = useResearchList()
+  const items = animalsQ.data ?? []
+  const researches = (researchQ.data ?? []).map((r) => ({ id: r.id, name: r.name }))
+  const loading = animalsQ.isLoading || researchQ.isLoading
   const [dialog, setDialog] = useState<{ mode: "create" | "edit"; id?: string } | null>(null)
   const [form, setForm] = useState<FormState>(emptyForm)
   // Erros de validação por campo: chave do campo -> chave de mensagem (namespace `validation`).
@@ -128,26 +131,6 @@ export function AnimalsManager({ isOrgAdmin }: { isOrgAdmin: boolean }) {
   const [saving, setSaving] = useState(false)
   const [confirm, setConfirm] = useState<AnimalListItem | null>(null)
   const [fetchingSimba, setFetchingSimba] = useState(false)
-
-  const load = useCallback(async () => {
-    setLoading(true)
-    try {
-      const [animals, researchList] = await Promise.all([
-        animalsService.list(),
-        researchService.list(),
-      ])
-      setItems(animals)
-      setResearches(researchList.map((r) => ({ id: r.id, name: r.name })))
-    } catch {
-      // silencioso
-    } finally {
-      setLoading(false)
-    }
-  }, [])
-
-  useEffect(() => {
-    load()
-  }, [load])
 
   const set = (patch: Partial<FormState>) => {
     setForm((f) => ({ ...f, ...patch }))
@@ -277,7 +260,7 @@ export function AnimalsManager({ isOrgAdmin }: { isOrgAdmin: boolean }) {
       else await animalsService.create(parsed.data as CreateAnimalData)
       toast.success(isEdit ? t("updated") : t("created"))
       setDialog(null)
-      load()
+      animalsQ.refetch()
     } catch (err) {
       toast.error(isEdit ? t("updateError") : t("createError"), { description: em(err) })
     } finally {
@@ -289,7 +272,7 @@ export function AnimalsManager({ isOrgAdmin }: { isOrgAdmin: boolean }) {
     try {
       await animalsService.remove(a.id)
       toast.success(t("deleted"))
-      setItems((prev) => prev.filter((x) => x.id !== a.id))
+      animalsQ.refetch()
     } catch (err) {
       toast.error(t("deleteError"), { description: em(err) })
     }

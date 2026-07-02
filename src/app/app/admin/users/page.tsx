@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, useCallback } from "react"
+import { useState, useCallback } from "react"
 import { useLocale, useTranslations } from "next-intl"
 import { toast } from "sonner"
 
@@ -11,6 +11,7 @@ import { ConfirmDialog } from "@/components/confirm-dialog"
 import { useErrorMessage } from "@/lib/use-error-message"
 import { useTable } from "@/lib/use-table"
 import { adminService } from "@/services/admin"
+import { useAdminUsers } from "@/hooks/use-admin"
 import type { AdminUser } from "@/types/admin"
 import {
   Table,
@@ -27,8 +28,9 @@ export default function AdminUsersPage() {
   const tc = useTranslations("common")
   const locale = useLocale()
   const em = useErrorMessage()
-  const [users, setUsers] = useState<AdminUser[]>([])
-  const [loading, setLoading] = useState(true)
+  const usersQ = useAdminUsers()
+  const users = usersQ.data ?? []
+  const loading = usersQ.isLoading
   const [busy, setBusy] = useState<string | null>(null)
 
   const orgsText = useCallback(
@@ -58,27 +60,12 @@ export default function AdminUsersPage() {
     search: (u) => [u.name ?? "", u.email, orgsText(u), u.status].join(" "),
   })
 
-  const load = useCallback(async () => {
-    setLoading(true)
-    try {
-      setUsers(await adminService.listUsers())
-    } catch {
-      // silencioso
-    } finally {
-      setLoading(false)
-    }
-  }, [])
-
-  useEffect(() => {
-    load()
-  }, [load])
-
   async function remove(u: AdminUser) {
     setBusy(u.id)
     try {
       await adminService.removeUser(u.id)
       toast.success(t("deleted"))
-      setUsers((prev) => prev.filter((x) => x.id !== u.id))
+      usersQ.refetch()
     } catch (err) {
       toast.error(t("deleteError"), { description: em(err) })
     } finally {

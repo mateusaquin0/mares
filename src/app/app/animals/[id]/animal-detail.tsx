@@ -1,12 +1,11 @@
 "use client"
 
-import { useCallback, useEffect, useState, type ReactNode } from "react"
+import { type ReactNode } from "react"
 import Link from "next/link"
 import { useLocale, useTranslations } from "next-intl"
 import { ArrowLeft } from "lucide-react"
 
-import { animalsService } from "@/services/animals"
-import type { AnimalDetail as AnimalDetailData } from "@/types/animal"
+import { useAnimal } from "@/hooks/use-animals"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { SamplesTab } from "./samples-tab"
@@ -18,24 +17,9 @@ export function AnimalDetail({ id, isOrgAdmin }: { id: string; isOrgAdmin: boole
   const t = useTranslations("animals")
   const tc = useTranslations("common")
   const locale = useLocale()
-  const [animal, setAnimal] = useState<AnimalDetailData | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [gridReload, setGridReload] = useState(0)
-
-  const load = useCallback(async () => {
-    setLoading(true)
-    try {
-      setAnimal(await animalsService.get(id))
-    } catch {
-      setAnimal(null)
-    } finally {
-      setLoading(false)
-    }
-  }, [id])
-
-  useEffect(() => {
-    load()
-  }, [load])
+  const animalQ = useAnimal(id)
+  const animal = animalQ.data ?? null
+  const loading = animalQ.isLoading
 
   const sexLabel = (s: string | null) =>
     s === "M" ? t("sexMale") : s === "F" ? t("sexFemale") : s === "U" ? t("sexUndetermined") : s
@@ -129,14 +113,10 @@ export function AnimalDetail({ id, isOrgAdmin }: { id: string; isOrgAdmin: boole
         </TabsContent>
 
         <TabsContent value="samples" className="mt-4">
-          <SamplesTab
-            animalId={id}
-            isOrgAdmin={isOrgAdmin}
-            onChanged={() => setGridReload((k) => k + 1)}
-          />
+          <SamplesTab animalId={id} isOrgAdmin={isOrgAdmin} />
         </TabsContent>
         <TabsContent value="analyses" className="mt-4">
-          <AnalysesTab animalId={id} reloadKey={gridReload} />
+          <AnalysesTab animalId={id} />
         </TabsContent>
         <TabsContent value="media" className="mt-4">
           <MediaTab animalId={id} isOrgAdmin={isOrgAdmin} />

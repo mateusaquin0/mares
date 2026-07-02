@@ -1,11 +1,10 @@
 "use client"
 
-import { useCallback, useEffect, useState } from "react"
 import { useLocale, useTranslations } from "next-intl"
 import { ArrowRight } from "lucide-react"
 
 import { pathogenName, txt } from "@/lib/catalog-i18n"
-import { animalsService } from "@/services/animals"
+import { useAnimalAudit } from "@/hooks/use-animals"
 import type { AuditEntry } from "@/types/animal"
 import {
   Table,
@@ -21,23 +20,9 @@ export function AuditTab({ animalId }: { animalId: string }) {
   const ta = useTranslations("analyses")
   const tc = useTranslations("common")
   const locale = useLocale()
-  const [items, setItems] = useState<AuditEntry[]>([])
-  const [loading, setLoading] = useState(true)
-
-  const load = useCallback(async () => {
-    setLoading(true)
-    try {
-      setItems(await animalsService.getAudit(animalId))
-    } catch {
-      // silencioso: aba somente-leitura
-    } finally {
-      setLoading(false)
-    }
-  }, [animalId])
-
-  useEffect(() => {
-    load()
-  }, [load])
+  const auditQ = useAnimalAudit(animalId)
+  const items = auditQ.data ?? []
+  const loading = auditQ.isLoading
 
   const fieldLabel = (f: string) =>
     ({ result: t("fieldResult"), ctValue: t("fieldCt"), notes: t("fieldNotes") })[f] ?? f

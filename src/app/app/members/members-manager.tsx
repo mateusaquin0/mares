@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, useCallback } from "react"
+import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -15,6 +15,7 @@ import {
 } from "@/schemas/organization.schema"
 import type { z } from "zod"
 import { organizationsService } from "@/services/organizations"
+import { useMembers } from "@/hooks/use-members"
 import type { Member } from "@/types/organization"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -71,8 +72,9 @@ export function MembersManager({
   const tc = useTranslations("common")
   const tval = useTranslations("validation")
   const em = useErrorMessage()
-  const [members, setMembers] = useState<Member[]>([])
-  const [loading, setLoading] = useState(true)
+  const membersQ = useMembers(orgId)
+  const members = membersQ.data ?? []
+  const loading = membersQ.isLoading
   const [busy, setBusy] = useState<string | null>(null)
   const [addOpen, setAddOpen] = useState(false)
   const [editOpen, setEditOpen] = useState(false)
@@ -87,28 +89,13 @@ export function MembersManager({
     defaultValues: { name: orgName, city: "", state: "", country: "" },
   })
 
-  const load = useCallback(async () => {
-    setLoading(true)
-    try {
-      setMembers(await organizationsService.getMembers(orgId))
-    } catch {
-      // silencioso
-    } finally {
-      setLoading(false)
-    }
-  }, [orgId])
-
-  useEffect(() => {
-    load()
-  }, [load])
-
   async function onAdd(data: AddMemberData) {
     try {
       const result = await organizationsService.addMember(orgId, data)
       toast.success(result.invited ? t("invitedToast") : t("addedToast"))
       addForm.reset({ email: "", name: "", role: "RESEARCHER" })
       setAddOpen(false)
-      load()
+      membersQ.refetch()
     } catch (err) {
       toast.error(t("addErrorTitle"), { description: em(err) })
     }
@@ -158,7 +145,7 @@ export function MembersManager({
       router.refresh()
       return
     }
-    setMembers((prev) => prev.map((x) => (x.userId === m.userId ? { ...x, role } : x)))
+    membersQ.refetch()
   }
 
   async function remove(m: Member) {
@@ -180,7 +167,7 @@ export function MembersManager({
       return
     }
     toast.success(t("memberRemoved"))
-    setMembers((prev) => prev.filter((x) => x.userId !== m.userId))
+    membersQ.refetch()
   }
 
   function runConfirm() {

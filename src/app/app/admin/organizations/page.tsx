@@ -1,11 +1,11 @@
 "use client"
 
-import { useEffect, useState, useCallback } from "react"
+import { useState, useCallback } from "react"
 import { useLocale, useTranslations } from "next-intl"
 
 import { getCountryName } from "@/lib/countries"
 import { useTable } from "@/lib/use-table"
-import { adminService } from "@/services/admin"
+import { useAdminOrganizations } from "@/hooks/use-admin"
 import type { AdminOrg } from "@/types/admin"
 import { CountryFlag } from "@/components/country-flag"
 import { Badge } from "@/components/ui/badge"
@@ -32,8 +32,9 @@ export default function AdminOrganizationsPage() {
   const tc = useTranslations("common")
   const locale = useLocale()
 
-  const [orgs, setOrgs] = useState<AdminOrg[]>([])
-  const [loading, setLoading] = useState(true)
+  const orgsQ = useAdminOrganizations()
+  const orgs = orgsQ.data ?? []
+  const loading = orgsQ.isLoading
   const [selected, setSelected] = useState<AdminOrg | null>(null)
 
   // Texto puro da localização (cidade, estado, país traduzido), usado em busca/ordenação.
@@ -57,21 +58,6 @@ export default function AdminOrganizationsPage() {
     },
     [locationText, t]
   )
-
-  const load = useCallback(async () => {
-    setLoading(true)
-    try {
-      setOrgs(await adminService.listOrganizations())
-    } catch {
-      // silencioso
-    } finally {
-      setLoading(false)
-    }
-  }, [])
-
-  useEffect(() => {
-    load()
-  }, [load])
 
   const fmtDate = (iso: string) => new Date(iso).toLocaleDateString(locale)
 

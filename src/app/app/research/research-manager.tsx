@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, useCallback } from "react"
+import { useState } from "react"
 import Link from "next/link"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -10,6 +10,7 @@ import { MoreHorizontal, Plus } from "lucide-react"
 
 import { createResearchSchema, type CreateResearchData } from "@/schemas/research.schema"
 import { researchService } from "@/services/research"
+import { useResearchList } from "@/hooks/use-research"
 import type { ResearchListItem } from "@/types/research"
 import { useErrorMessage } from "@/lib/use-error-message"
 import { Button } from "@/components/ui/button"
@@ -47,8 +48,9 @@ export function ResearchManager({ isOrgAdmin, selfId }: { isOrgAdmin: boolean; s
   const tc = useTranslations("common")
   const tval = useTranslations("validation")
   const em = useErrorMessage()
-  const [items, setItems] = useState<ResearchListItem[]>([])
-  const [loading, setLoading] = useState(true)
+  const researchQ = useResearchList()
+  const items = researchQ.data ?? []
+  const loading = researchQ.isLoading
   const [open, setOpen] = useState(false)
   const [editing, setEditing] = useState<ResearchListItem | null>(null)
   const [confirm, setConfirm] = useState<ResearchListItem | null>(null)
@@ -57,21 +59,6 @@ export function ResearchManager({ isOrgAdmin, selfId }: { isOrgAdmin: boolean; s
     resolver: zodResolver(createResearchSchema),
     defaultValues: { name: "", description: "", isPublic: false },
   })
-
-  const load = useCallback(async () => {
-    setLoading(true)
-    try {
-      setItems(await researchService.list())
-    } catch {
-      // silencioso
-    } finally {
-      setLoading(false)
-    }
-  }, [])
-
-  useEffect(() => {
-    load()
-  }, [load])
 
   function openCreate() {
     setEditing(null)
@@ -93,7 +80,7 @@ export function ResearchManager({ isOrgAdmin, selfId }: { isOrgAdmin: boolean; s
       form.reset({ name: "", description: "", isPublic: false })
       setOpen(false)
       setEditing(null)
-      load()
+      researchQ.refetch()
     } catch (err) {
       toast.error(editing ? t("editError") : t("createError"), { description: em(err) })
     }
@@ -103,7 +90,7 @@ export function ResearchManager({ isOrgAdmin, selfId }: { isOrgAdmin: boolean; s
     try {
       await researchService.remove(r.id)
       toast.success(t("deleted"))
-      setItems((prev) => prev.filter((x) => x.id !== r.id))
+      researchQ.refetch()
     } catch (err) {
       toast.error(t("deleteError"), { description: em(err) })
     }

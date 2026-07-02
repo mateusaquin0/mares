@@ -1,16 +1,15 @@
 "use client"
 
-import { useCallback, useEffect, useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { useLocale, useTranslations } from "next-intl"
 import { toast } from "sonner"
 
 import { pathogenName, txt } from "@/lib/catalog-i18n"
 import { useErrorMessage } from "@/lib/use-error-message"
-import { animalsService } from "@/services/animals"
 import { analysesService } from "@/services/analyses"
+import { useAnimalGrid } from "@/hooks/use-animals"
 import type {
   AnalysisCell as Cell,
-  AnalysisGrid as Grid,
   ProtocolEntry,
   ResultValue,
   SampleLite,
@@ -38,41 +37,31 @@ const UNTESTED = "UNTESTED"
 const keyOf = (sampleId: string, pathogenId: string, examTypeId: string) =>
   `${sampleId}|${pathogenId}|${examTypeId}`
 
-export function AnalysesTab({ animalId, reloadKey }: { animalId: string; reloadKey: number }) {
+export function AnalysesTab({ animalId }: { animalId: string }) {
   const t = useTranslations("analyses")
   const ts = useTranslations("samples")
   const tc = useTranslations("common")
   const locale = useLocale()
   const em = useErrorMessage()
 
-  const [grid, setGrid] = useState<Grid | null>(null)
-  const [loading, setLoading] = useState(true)
+  const gridQ = useAnimalGrid(animalId)
+  const grid = gridQ.data ?? null
+  const loading = gridQ.isLoading
   const [cells, setCells] = useState<Record<string, Cell>>({})
 
-  const load = useCallback(async () => {
-    setLoading(true)
-    try {
-      const data = await animalsService.getGrid(animalId)
-      setGrid(data)
-      const map: Record<string, Cell> = {}
-      for (const a of data.analyses) {
-        map[keyOf(a.sampleId, a.pathogenId, a.examTypeId)] = {
-          result: a.result,
-          ctValue: a.ctValue,
-          notes: a.notes,
-        }
-      }
-      setCells(map)
-    } catch {
-      // silencioso
-    } finally {
-      setLoading(false)
-    }
-  }, [animalId])
-
+  // Sincroniza o mapa de células (editável, com update otimista) com a grade carregada.
   useEffect(() => {
-    load()
-  }, [load, reloadKey])
+    if (!grid) return
+    const map: Record<string, Cell> = {}
+    for (const a of grid.analyses) {
+      map[keyOf(a.sampleId, a.pathogenId, a.examTypeId)] = {
+        result: a.result,
+        ctValue: a.ctValue,
+        notes: a.notes,
+      }
+    }
+    setCells(map)
+  }, [grid])
 
   const getCell = (k: string): Cell => cells[k] ?? { result: null, ctValue: null, notes: null }
 

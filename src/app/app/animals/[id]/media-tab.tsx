@@ -1,12 +1,13 @@
 "use client"
 
-import { useCallback, useEffect, useRef, useState } from "react"
+import { useRef, useState } from "react"
 import { useLocale, useTranslations } from "next-intl"
 import { toast } from "sonner"
 import { FileText, Trash2, Upload } from "lucide-react"
 
 import { useErrorMessage } from "@/lib/use-error-message"
 import { animalsService } from "@/services/animals"
+import { useAnimalMedia } from "@/hooks/use-animals"
 import type { AnimalMedia } from "@/types/animal"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -19,27 +20,13 @@ export function MediaTab({ animalId, isOrgAdmin }: { animalId: string; isOrgAdmi
   const em = useErrorMessage()
   const fileRef = useRef<HTMLInputElement>(null)
 
-  const [items, setItems] = useState<AnimalMedia[]>([])
-  const [loading, setLoading] = useState(true)
+  const mediaQ = useAnimalMedia(animalId)
+  const items = mediaQ.data ?? []
+  const loading = mediaQ.isLoading
   const [file, setFile] = useState<File | null>(null)
   const [label, setLabel] = useState("")
   const [uploading, setUploading] = useState(false)
   const [confirm, setConfirm] = useState<AnimalMedia | null>(null)
-
-  const load = useCallback(async () => {
-    setLoading(true)
-    try {
-      setItems(await animalsService.listMedia(animalId))
-    } catch {
-      // silencioso
-    } finally {
-      setLoading(false)
-    }
-  }, [animalId])
-
-  useEffect(() => {
-    load()
-  }, [load])
 
   async function upload() {
     if (!file) return
@@ -53,7 +40,7 @@ export function MediaTab({ animalId, isOrgAdmin }: { animalId: string; isOrgAdmi
       setFile(null)
       setLabel("")
       if (fileRef.current) fileRef.current.value = ""
-      load()
+      mediaQ.refetch()
     } catch (err) {
       toast.error(t("uploadError"), { description: em(err) })
     } finally {
@@ -65,7 +52,7 @@ export function MediaTab({ animalId, isOrgAdmin }: { animalId: string; isOrgAdmi
     try {
       await animalsService.removeMedia(m.id)
       toast.success(t("deleted"))
-      setItems((prev) => prev.filter((x) => x.id !== m.id))
+      mediaQ.refetch()
     } catch (err) {
       toast.error(t("deleteError"), { description: em(err) })
     }

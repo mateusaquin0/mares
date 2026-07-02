@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, useCallback } from "react"
+import { useState } from "react"
 import { useTranslations } from "next-intl"
 import { toast } from "sonner"
 import { MoreHorizontal } from "lucide-react"
@@ -8,7 +8,7 @@ import { MoreHorizontal } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useErrorMessage } from "@/lib/use-error-message"
 import { adminService } from "@/services/admin"
-import type { JoinRequest } from "@/types/admin"
+import { useAccessRequests } from "@/hooks/use-admin"
 import {
   Table,
   TableBody,
@@ -28,31 +28,17 @@ export default function AccessRequestsPage() {
   const t = useTranslations("adminRequests")
   const tc = useTranslations("common")
   const em = useErrorMessage()
-  const [requests, setRequests] = useState<JoinRequest[]>([])
-  const [loading, setLoading] = useState(true)
+  const requestsQ = useAccessRequests()
+  const requests = requestsQ.data ?? []
+  const loading = requestsQ.isLoading
   const [busy, setBusy] = useState<string | null>(null)
-
-  const load = useCallback(async () => {
-    setLoading(true)
-    try {
-      setRequests(await adminService.listPendingRequests())
-    } catch {
-      // silencioso
-    } finally {
-      setLoading(false)
-    }
-  }, [])
-
-  useEffect(() => {
-    load()
-  }, [load])
 
   async function act(id: string, action: "approve" | "reject") {
     setBusy(`${id}:${action}`)
     try {
       await adminService.actOnRequest(id, action)
       toast.success(action === "approve" ? t("approved") : t("rejected"))
-      setRequests((prev) => prev.filter((r) => r.id !== id))
+      requestsQ.refetch()
     } catch (err) {
       toast.error(t("opError"), { description: em(err) })
     } finally {
