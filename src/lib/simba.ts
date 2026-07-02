@@ -26,7 +26,7 @@ export type SimbaRecord = {
   strandingBeach: string | null
   municipality: string | null
   state: string | null
-  sex: string | null
+  sex: string // código do form: "F" | "M" | "U" (indeterminado quando ausente)
   lifeStage: string | null
 }
 
@@ -87,6 +87,15 @@ function toFloat(v: string | null): number | null {
   return Number.isFinite(n) ? n : null
 }
 
+/** Mapeia o sexo do SIMBA (ex.: "Fêmea"/"Macho"/"Indefinido") para o código do form.
+ *  Sem informação (ou valor desconhecido) → "U" (indeterminado). */
+function normalizeSex(v: string | null): string {
+  const s = (v ?? "").trim().toLowerCase()
+  if (s.startsWith("f")) return "F" // fêmea / femea / female
+  if (s.startsWith("m")) return "M" // macho / male
+  return "U"
+}
+
 /** Normaliza a data do evento para ISO (yyyy-mm-dd) quando reconhecível. */
 function toEventDate(v: string | null): string | null {
   if (!v) return null
@@ -111,7 +120,7 @@ export function parseDarwinCore(xml: string, recordNumber: string): SimbaRecord 
     strandingBeach: firstTerm(r, ["locality", "verbatimLocality"]),
     municipality: firstTerm(r, ["municipality"]),
     state: firstTerm(r, ["stateProvince"]),
-    sex: firstTerm(r, ["sex"]),
+    sex: normalizeSex(firstTerm(r, ["sex"])),
     lifeStage: firstTerm(r, ["lifeStage"]),
   }
 }

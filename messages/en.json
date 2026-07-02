@@ -27,7 +27,8 @@
     "showPassword": "Show password",
     "hidePassword": "Hide password",
     "search": "Search...",
-    "noResults": "No results for your search."
+    "noResults": "No results for your search.",
+    "optional": "optional"
   },
   "login": {
     "title": "Sign in",
@@ -380,10 +381,7 @@
     "research": "Research",
     "researchPlaceholder": "Select research",
     "species": "Species (scientific name)",
-    "wormsSearch": "WoRMS",
-    "wormsPlaceholder": "Search species in WoRMS…",
     "wormsSearching": "Searching…",
-    "wormsHint": "Type at least 3 letters.",
     "wormsEmpty": "No species found.",
     "wormsLinked": "Linked to WoRMS (AphiaID {aphiaId}) · {taxon}",
     "taxonFamily": "Family",

@@ -23,7 +23,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { SortableHead } from "@/components/ui/sortable-head"
-import { WormsSpeciesInput } from "@/components/worms-species-input"
+import { SpeciesAutocomplete } from "@/components/species-autocomplete"
 import {
   Dialog,
   DialogContent,
@@ -110,6 +110,12 @@ const emptyForm: FormState = {
 
 // ISO -> YYYY-MM-DD para <input type="date">.
 const toDateInput = (iso: string | null) => (iso ? iso.slice(0, 10) : "")
+
+// Marcador visual "(opcional)" ao lado do rótulo de campos não obrigatórios.
+function OptionalHint() {
+  const tc = useTranslations("common")
+  return <span className="font-normal text-muted-foreground">({tc("optional")})</span>
+}
 
 export function AnimalsManager({ isOrgAdmin }: { isOrgAdmin: boolean }) {
   const t = useTranslations("animals")
@@ -468,27 +474,21 @@ export function AnimalsManager({ isOrgAdmin }: { isOrgAdmin: boolean }) {
               </div>
               <div className="space-y-1">
                 <Label htmlFor="species">{t("species")}</Label>
-                <div className="flex items-center gap-2">
-                  <Input
-                    id="species"
-                    className="italic"
-                    value={form.species}
-                    onChange={(e) =>
-                      // Edição manual desvincula do registro WoRMS.
-                      set({ species: e.target.value, wormsAphiaId: "" })
-                    }
-                  />
-                  <WormsSpeciesInput
-                    onSelect={(m) =>
-                      set({
-                        species: m.scientificName,
-                        wormsAphiaId: String(m.aphiaId),
-                        taxonFamily: m.family ?? "",
-                        taxonOrder: m.order ?? "",
-                      })
-                    }
-                  />
-                </div>
+                <SpeciesAutocomplete
+                  id="species"
+                  value={form.species}
+                  onChange={(species, m) =>
+                    m
+                      ? set({
+                          species: m.scientificName,
+                          wormsAphiaId: String(m.aphiaId),
+                          taxonFamily: m.family ?? "",
+                          taxonOrder: m.order ?? "",
+                        })
+                      : // Edição manual desvincula do registro WoRMS.
+                        set({ species, wormsAphiaId: "" })
+                  }
+                />
                 {errors.species && <p className="text-xs text-destructive">{tval("required")}</p>}
                 {form.wormsAphiaId && (
                   <p className="text-xs text-muted-foreground">
@@ -549,7 +549,9 @@ export function AnimalsManager({ isOrgAdmin }: { isOrgAdmin: boolean }) {
                   />
                 </div>
                 <div className="space-y-1">
-                  <Label htmlFor="beach">{t("strandingBeach")}</Label>
+                  <Label htmlFor="beach">
+                    {t("strandingBeach")} <OptionalHint />
+                  </Label>
                   <Input
                     id="beach"
                     value={form.strandingBeach}
@@ -624,7 +626,9 @@ export function AnimalsManager({ isOrgAdmin }: { isOrgAdmin: boolean }) {
                   />
                 </div>
                 <div className="space-y-1">
-                  <Label htmlFor="bodyCondition">{t("bodyCondition")}</Label>
+                  <Label htmlFor="bodyCondition">
+                    {t("bodyCondition")} <OptionalHint />
+                  </Label>
                   <Input
                     id="bodyCondition"
                     value={form.bodyCondition}
@@ -632,7 +636,9 @@ export function AnimalsManager({ isOrgAdmin }: { isOrgAdmin: boolean }) {
                   />
                 </div>
                 <div className="space-y-1">
-                  <Label htmlFor="decomp">{t("decompositionStage")}</Label>
+                  <Label htmlFor="decomp">
+                    {t("decompositionStage")} <OptionalHint />
+                  </Label>
                   <Input
                     id="decomp"
                     value={form.decompositionStage}
@@ -646,7 +652,9 @@ export function AnimalsManager({ isOrgAdmin }: { isOrgAdmin: boolean }) {
             <section className="space-y-3">
               <h3 className="text-sm font-semibold">{t("sectionNotes")}</h3>
               <div className="space-y-1">
-                <Label htmlFor="notes">{t("macroscopicNotes")}</Label>
+                <Label htmlFor="notes">
+                  {t("macroscopicNotes")} <OptionalHint />
+                </Label>
                 <Textarea
                   id="notes"
                   rows={3}
