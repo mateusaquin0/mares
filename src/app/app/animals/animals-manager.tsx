@@ -529,7 +529,7 @@ export function AnimalsManager({ isOrgAdmin }: { isOrgAdmin: boolean }) {
                       disabled={!form.simbaRecordNumber.trim()}
                       title={t("simbaFetch")}
                     >
-                      <Search className="size-4" />
+                      {!fetchingSimba && <Search className="size-4" />}
                     </Button>
                   </div>
                   <FieldError msg={errors.simbaRecordNumber} />
@@ -634,12 +634,18 @@ export function AnimalsManager({ isOrgAdmin }: { isOrgAdmin: boolean }) {
                 </div>
                 <div className="space-y-1">
                   <Label htmlFor="lifeStage">{t("lifeStage")}</Label>
-                  <Input
-                    id="lifeStage"
-                    value={form.lifeStage}
-                    aria-invalid={!!errors.lifeStage || undefined}
-                    onChange={(e) => set({ lifeStage: e.target.value })}
-                  />
+                  <Select value={form.lifeStage || undefined} onValueChange={(v) => set({ lifeStage: v })}>
+                    <SelectTrigger id="lifeStage" aria-invalid={!!errors.lifeStage || undefined}>
+                      <SelectValue placeholder={t("lifeStagePlaceholder")} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="FETUS">{t("lifeStageFetus")}</SelectItem>
+                      <SelectItem value="PUP">{t("lifeStagePup")}</SelectItem>
+                      <SelectItem value="JUVENILE">{t("lifeStageJuvenile")}</SelectItem>
+                      <SelectItem value="ADULT">{t("lifeStageAdult")}</SelectItem>
+                      <SelectItem value="UNDETERMINED">{t("lifeStageUndetermined")}</SelectItem>
+                    </SelectContent>
+                  </Select>
                   <FieldError msg={errors.lifeStage} />
                 </div>
                 <div className="space-y-1">

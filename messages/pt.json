@@ -422,7 +422,13 @@
     "notInformed": "—",
     "simbaFetch": "Buscar dados no SIMBA",
     "simbaFetched": "Dados do SIMBA carregados",
-    "simbaFetchError": "Falha ao buscar no SIMBA"
+    "simbaFetchError": "Falha ao buscar no SIMBA",
+    "lifeStagePlaceholder": "Selecione",
+    "lifeStageFetus": "Feto",
+    "lifeStagePup": "Filhote",
+    "lifeStageJuvenile": "Juvenil",
+    "lifeStageAdult": "Adulto",
+    "lifeStageUndetermined": "Indeterminado"
   },
   "samples": {
     "new": "Nova amostra",

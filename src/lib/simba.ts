@@ -27,7 +27,7 @@ export type SimbaRecord = {
   municipality: string | null
   state: string | null
   sex: string // código do form: "F" | "M" | "U" (indeterminado quando ausente)
-  lifeStage: string | null
+  lifeStage: string // código do form: FETUS|PUP|JUVENILE|ADULT|UNDETERMINED
 }
 
 function endpointFor(recordNumber: string): string {
@@ -96,6 +96,17 @@ function normalizeSex(v: string | null): string {
   return "U"
 }
 
+/** Mapeia o estágio de vida do SIMBA (Feto/Filhote/Juvenil/Adulto/Indeterminado)
+ *  para o código do form. Sem informação/desconhecido → "UNDETERMINED". */
+function normalizeLifeStage(v: string | null): string {
+  const s = (v ?? "").trim().toLowerCase()
+  if (s.startsWith("fet")) return "FETUS" // feto / fetus
+  if (s.startsWith("fil")) return "PUP" // filhote
+  if (s.startsWith("juv")) return "JUVENILE" // juvenil
+  if (s.startsWith("adu")) return "ADULT" // adulto
+  return "UNDETERMINED"
+}
+
 /** Normaliza a data do evento para ISO (yyyy-mm-dd) quando reconhecível. */
 function toEventDate(v: string | null): string | null {
   if (!v) return null
@@ -121,7 +132,7 @@ export function parseDarwinCore(xml: string, recordNumber: string): SimbaRecord 
     municipality: firstTerm(r, ["municipality"]),
     state: firstTerm(r, ["stateProvince"]),
     sex: normalizeSex(firstTerm(r, ["sex"])),
-    lifeStage: firstTerm(r, ["lifeStage"]),
+    lifeStage: normalizeLifeStage(firstTerm(r, ["lifeStage"])),
   }
 }
 

@@ -82,5 +82,5 @@ export type SimbaLookup = {
   municipality: string | null
   state: string | null
   sex: string
-  lifeStage: string | null
+  lifeStage: string
 }

@@ -24,6 +24,15 @@ export function AnimalDetail({ id, isOrgAdmin }: { id: string; isOrgAdmin: boole
   const sexLabel = (s: string | null) =>
     s === "M" ? t("sexMale") : s === "F" ? t("sexFemale") : s === "U" ? t("sexUndetermined") : s
 
+  const lifeStageLabel = (s: string | null) =>
+    ({
+      FETUS: t("lifeStageFetus"),
+      PUP: t("lifeStagePup"),
+      JUVENILE: t("lifeStageJuvenile"),
+      ADULT: t("lifeStageAdult"),
+      UNDETERMINED: t("lifeStageUndetermined"),
+    })[s ?? ""] ?? s
+
   if (loading) {
     return <p className="p-8 text-sm text-muted-foreground">{tc("loading")}</p>
   }
@@ -42,7 +51,7 @@ export function AnimalDetail({ id, isOrgAdmin }: { id: string; isOrgAdmin: boole
     { label: t("controlId"), value: animal.controlId ?? na },
     { label: t("simbaRecordNumber"), value: animal.simbaRecordNumber ?? na },
     { label: t("sex"), value: sexLabel(animal.sex) ?? na },
-    { label: t("lifeStage"), value: animal.lifeStage ?? na },
+    { label: t("lifeStage"), value: lifeStageLabel(animal.lifeStage) ?? na },
     { label: t("bodyCondition"), value: animal.bodyCondition ?? na },
     { label: t("decompositionStage"), value: animal.decompositionStage ?? na },
     {

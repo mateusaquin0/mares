@@ -422,7 +422,13 @@
     "notInformed": "—",
     "simbaFetch": "Fetch data from SIMBA",
     "simbaFetched": "SIMBA data loaded",
-    "simbaFetchError": "Failed to fetch from SIMBA"
+    "simbaFetchError": "Failed to fetch from SIMBA",
+    "lifeStagePlaceholder": "Select",
+    "lifeStageFetus": "Fetus",
+    "lifeStagePup": "Pup",
+    "lifeStageJuvenile": "Juvenile",
+    "lifeStageAdult": "Adult",
+    "lifeStageUndetermined": "Undetermined"
   },
   "samples": {
     "new": "New sample",
