@@ -217,27 +217,28 @@ export function AnimalsManager({ isOrgAdmin }: { isOrgAdmin: boolean }) {
     e.preventDefault()
     const isEdit = dialog?.mode === "edit"
 
-    // Monta o payload; "" -> null (limpa), exceto obrigatórios.
-    const orNull = (v: string) => (v.trim() === "" ? null : v.trim())
+    // Monta o payload enviando a string (vazia quando em branco): o schema decide
+    // — campo obrigatório vazio vira erro "required"; opcional vazio vira null.
+    const str = (v: string) => v.trim()
     const numOrNull = (v: string) => (v.trim() === "" ? null : Number(v))
     const payload: Record<string, unknown> = {
-      species: form.species.trim(),
+      species: str(form.species),
       wormsAphiaId: form.wormsAphiaId.trim() === "" ? null : Number(form.wormsAphiaId),
-      taxonFamily: orNull(form.taxonFamily),
-      taxonOrder: orNull(form.taxonOrder),
-      controlId: orNull(form.controlId),
-      simbaRecordNumber: orNull(form.simbaRecordNumber),
-      sex: orNull(form.sex),
-      lifeStage: orNull(form.lifeStage),
-      bodyCondition: orNull(form.bodyCondition),
-      decompositionStage: orNull(form.decompositionStage),
+      taxonFamily: str(form.taxonFamily),
+      taxonOrder: str(form.taxonOrder),
+      controlId: str(form.controlId),
+      simbaRecordNumber: str(form.simbaRecordNumber),
+      sex: str(form.sex),
+      lifeStage: str(form.lifeStage),
+      bodyCondition: str(form.bodyCondition),
+      decompositionStage: str(form.decompositionStage),
       strandingLat: numOrNull(form.strandingLat),
       strandingLon: numOrNull(form.strandingLon),
-      strandingBeach: orNull(form.strandingBeach),
-      municipality: orNull(form.municipality),
-      state: orNull(form.state),
-      eventDate: orNull(form.eventDate),
-      macroscopicNotes: orNull(form.macroscopicNotes),
+      strandingBeach: str(form.strandingBeach),
+      municipality: str(form.municipality),
+      state: str(form.state),
+      eventDate: str(form.eventDate),
+      macroscopicNotes: str(form.macroscopicNotes),
     }
     if (isOrgAdmin) payload.isPublic = form.isPublic
     if (!isEdit) payload.researchId = form.researchId
@@ -508,7 +509,9 @@ export function AnimalsManager({ isOrgAdmin }: { isOrgAdmin: boolean }) {
                   <FieldError msg={errors.controlId} />
                 </div>
                 <div className="space-y-1">
-                  <Label htmlFor="simba">{t("simbaRecordNumber")}</Label>
+                  <Label htmlFor="simba">
+                    {t("simbaRecordNumber")} <OptionalHint />
+                  </Label>
                   <div className="flex items-center gap-2">
                     <Input
                       id="simba"

@@ -21,7 +21,7 @@ export function animalDuplicateError(e: Prisma.PrismaClientKnownRequestError): C
   if (/control/i.test(target)) {
     return new ConflictError("ID de controle já cadastrado", ERROR_CODES.animalControlDuplicate)
   }
-  return new ConflictError("Identificador já cadastrado", ERROR_CODES.animalDuplicate)
+  return new ConflictError("ID já cadastrado", ERROR_CODES.animalDuplicate)
 }
 
 /** Carrega o animal com o orgId da pesquisa (para checagem de papel). */
