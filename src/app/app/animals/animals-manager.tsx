@@ -6,6 +6,7 @@ import { useLocale, useTranslations } from "next-intl"
 import { toast } from "sonner"
 import { MoreHorizontal, Plus, Search } from "lucide-react"
 
+import { createAnimalSchema, updateAnimalSchema } from "@/schemas/animal.schema"
 import { useErrorMessage } from "@/lib/use-error-message"
 import { useTable } from "@/lib/use-table"
 import { Button } from "@/components/ui/button"
@@ -117,10 +118,17 @@ function OptionalHint() {
   return <span className="font-normal text-muted-foreground">({tc("optional")})</span>
 }
 
+// Mensagem de erro de um campo (traduz a chave do namespace `validation`; se não for
+// uma chave conhecida, mostra o texto como veio).
+function FieldError({ msg }: { msg?: string }) {
+  const tval = useTranslations("validation")
+  if (!msg) return null
+  return <p className="text-xs text-destructive">{tval.has(msg) ? tval(msg) : msg}</p>
+}
+
 export function AnimalsManager({ isOrgAdmin }: { isOrgAdmin: boolean }) {
   const t = useTranslations("animals")
   const tc = useTranslations("common")
-  const tval = useTranslations("validation")
   const locale = useLocale()
   const em = useErrorMessage()
 
@@ -129,7 +137,8 @@ export function AnimalsManager({ isOrgAdmin }: { isOrgAdmin: boolean }) {
   const [loading, setLoading] = useState(true)
   const [dialog, setDialog] = useState<{ mode: "create" | "edit"; id?: string } | null>(null)
   const [form, setForm] = useState<FormState>(emptyForm)
-  const [errors, setErrors] = useState<{ species?: boolean; researchId?: boolean }>({})
+  // Erros de validação por campo: chave do campo -> chave de mensagem (namespace `validation`).
+  const [errors, setErrors] = useState<Record<string, string>>({})
   const [saving, setSaving] = useState(false)
   const [confirm, setConfirm] = useState<AnimalRow | null>(null)
   const [fetchingSimba, setFetchingSimba] = useState(false)
@@ -149,7 +158,16 @@ export function AnimalsManager({ isOrgAdmin }: { isOrgAdmin: boolean }) {
     load()
   }, [load])
 
-  const set = (patch: Partial<FormState>) => setForm((f) => ({ ...f, ...patch }))
+  const set = (patch: Partial<FormState>) => {
+    setForm((f) => ({ ...f, ...patch }))
+    // Limpa o erro dos campos que estão sendo editados.
+    setErrors((e) => {
+      if (Object.keys(e).length === 0) return e
+      const next = { ...e }
+      for (const k of Object.keys(patch)) delete next[k]
+      return next
+    })
+  }
 
   function openCreate() {
     setErrors({})
@@ -222,14 +240,8 @@ export function AnimalsManager({ isOrgAdmin }: { isOrgAdmin: boolean }) {
   async function onSubmit(e: FormEvent) {
     e.preventDefault()
     const isEdit = dialog?.mode === "edit"
-    const nextErrors = {
-      species: !form.species.trim(),
-      researchId: !isEdit && !form.researchId,
-    }
-    setErrors(nextErrors)
-    if (nextErrors.species || nextErrors.researchId) return
 
-    // Constrói o payload; "" -> null (limpa), exceto obrigatórios.
+    // Monta o payload; "" -> null (limpa), exceto obrigatórios.
     const orNull = (v: string) => (v.trim() === "" ? null : v.trim())
     const numOrNull = (v: string) => (v.trim() === "" ? null : Number(v))
     const payload: Record<string, unknown> = {
@@ -254,11 +266,23 @@ export function AnimalsManager({ isOrgAdmin }: { isOrgAdmin: boolean }) {
     if (isOrgAdmin) payload.isPublic = form.isPublic
     if (!isEdit) payload.researchId = form.researchId
 
+    // Validação interna com o mesmo schema do servidor, antes do POST.
+    const parsed = (isEdit ? updateAnimalSchema : createAnimalSchema).safeParse(payload)
+    if (!parsed.success) {
+      const fieldErrors: Record<string, string> = {}
+      for (const issue of parsed.error.issues) {
+        const key = String(issue.path[0] ?? "")
+        if (key && !fieldErrors[key]) fieldErrors[key] = issue.message
+      }
+      setErrors(fieldErrors)
+      return
+    }
+
     setSaving(true)
     const res = await fetch(isEdit ? `/api/animals/${dialog!.id}` : "/api/animals", {
       method: isEdit ? "PUT" : "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
+      body: JSON.stringify(parsed.data),
     })
     setSaving(false)
     if (!res.ok) {
@@ -456,7 +480,7 @@ export function AnimalsManager({ isOrgAdmin }: { isOrgAdmin: boolean }) {
                   />
                 ) : (
                   <Select value={form.researchId} onValueChange={(v) => set({ researchId: v })}>
-                    <SelectTrigger id="research">
+                    <SelectTrigger id="research" aria-invalid={!!errors.researchId || undefined}>
                       <SelectValue placeholder={t("researchPlaceholder")} />
                     </SelectTrigger>
                     <SelectContent>
@@ -468,15 +492,14 @@ export function AnimalsManager({ isOrgAdmin }: { isOrgAdmin: boolean }) {
                     </SelectContent>
                   </Select>
                 )}
-                {errors.researchId && (
-                  <p className="text-xs text-destructive">{tval("required")}</p>
-                )}
+                <FieldError msg={errors.researchId} />
               </div>
               <div className="space-y-1">
                 <Label htmlFor="species">{t("species")}</Label>
                 <SpeciesAutocomplete
                   id="species"
                   value={form.species}
+                  invalid={!!errors.species}
                   onChange={(species, m) =>
                     m
                       ? set({
@@ -489,7 +512,7 @@ export function AnimalsManager({ isOrgAdmin }: { isOrgAdmin: boolean }) {
                         set({ species, wormsAphiaId: "" })
                   }
                 />
-                {errors.species && <p className="text-xs text-destructive">{tval("required")}</p>}
+                <FieldError msg={errors.species} />
                 {form.wormsAphiaId && (
                   <p className="text-xs text-muted-foreground">
                     {t("wormsLinked", {
@@ -507,8 +530,10 @@ export function AnimalsManager({ isOrgAdmin }: { isOrgAdmin: boolean }) {
                   <Input
                     id="controlId"
                     value={form.controlId}
+                    aria-invalid={!!errors.controlId || undefined}
                     onChange={(e) => set({ controlId: e.target.value })}
                   />
+                  <FieldError msg={errors.controlId} />
                 </div>
                 <div className="space-y-1">
                   <Label htmlFor="simba">{t("simbaRecordNumber")}</Label>
@@ -516,6 +541,7 @@ export function AnimalsManager({ isOrgAdmin }: { isOrgAdmin: boolean }) {
                     <Input
                       id="simba"
                       value={form.simbaRecordNumber}
+                      aria-invalid={!!errors.simbaRecordNumber || undefined}
                       onChange={(e) => set({ simbaRecordNumber: e.target.value })}
                     />
                     <Button
@@ -531,6 +557,7 @@ export function AnimalsManager({ isOrgAdmin }: { isOrgAdmin: boolean }) {
                       <Search className="size-4" />
                     </Button>
                   </div>
+                  <FieldError msg={errors.simbaRecordNumber} />
                 </div>
               </div>
             </section>
@@ -545,8 +572,10 @@ export function AnimalsManager({ isOrgAdmin }: { isOrgAdmin: boolean }) {
                     id="eventDate"
                     type="date"
                     value={form.eventDate}
+                    aria-invalid={!!errors.eventDate || undefined}
                     onChange={(e) => set({ eventDate: e.target.value })}
                   />
+                  <FieldError msg={errors.eventDate} />
                 </div>
                 <div className="space-y-1">
                   <Label htmlFor="beach">
@@ -555,24 +584,30 @@ export function AnimalsManager({ isOrgAdmin }: { isOrgAdmin: boolean }) {
                   <Input
                     id="beach"
                     value={form.strandingBeach}
+                    aria-invalid={!!errors.strandingBeach || undefined}
                     onChange={(e) => set({ strandingBeach: e.target.value })}
                   />
+                  <FieldError msg={errors.strandingBeach} />
                 </div>
                 <div className="space-y-1">
                   <Label htmlFor="municipality">{t("municipality")}</Label>
                   <Input
                     id="municipality"
                     value={form.municipality}
+                    aria-invalid={!!errors.municipality || undefined}
                     onChange={(e) => set({ municipality: e.target.value })}
                   />
+                  <FieldError msg={errors.municipality} />
                 </div>
                 <div className="space-y-1">
                   <Label htmlFor="state">{t("state")}</Label>
                   <Input
                     id="state"
                     value={form.state}
+                    aria-invalid={!!errors.state || undefined}
                     onChange={(e) => set({ state: e.target.value })}
                   />
+                  <FieldError msg={errors.state} />
                 </div>
                 <div className="space-y-1">
                   <Label htmlFor="lat">{t("strandingLat")}</Label>
@@ -581,8 +616,10 @@ export function AnimalsManager({ isOrgAdmin }: { isOrgAdmin: boolean }) {
                     type="number"
                     step="any"
                     value={form.strandingLat}
+                    aria-invalid={!!errors.strandingLat || undefined}
                     onChange={(e) => set({ strandingLat: e.target.value })}
                   />
+                  <FieldError msg={errors.strandingLat} />
                 </div>
                 <div className="space-y-1">
                   <Label htmlFor="lon">{t("strandingLon")}</Label>
@@ -591,8 +628,10 @@ export function AnimalsManager({ isOrgAdmin }: { isOrgAdmin: boolean }) {
                     type="number"
                     step="any"
                     value={form.strandingLon}
+                    aria-invalid={!!errors.strandingLon || undefined}
                     onChange={(e) => set({ strandingLon: e.target.value })}
                   />
+                  <FieldError msg={errors.strandingLon} />
                 </div>
               </div>
             </section>
@@ -607,7 +646,7 @@ export function AnimalsManager({ isOrgAdmin }: { isOrgAdmin: boolean }) {
                     value={form.sex || undefined}
                     onValueChange={(v) => set({ sex: v })}
                   >
-                    <SelectTrigger id="sex">
+                    <SelectTrigger id="sex" aria-invalid={!!errors.sex || undefined}>
                       <SelectValue placeholder={t("sexPlaceholder")} />
                     </SelectTrigger>
                     <SelectContent>
@@ -616,14 +655,17 @@ export function AnimalsManager({ isOrgAdmin }: { isOrgAdmin: boolean }) {
                       <SelectItem value="U">{t("sexUndetermined")}</SelectItem>
                     </SelectContent>
                   </Select>
+                  <FieldError msg={errors.sex} />
                 </div>
                 <div className="space-y-1">
                   <Label htmlFor="lifeStage">{t("lifeStage")}</Label>
                   <Input
                     id="lifeStage"
                     value={form.lifeStage}
+                    aria-invalid={!!errors.lifeStage || undefined}
                     onChange={(e) => set({ lifeStage: e.target.value })}
                   />
+                  <FieldError msg={errors.lifeStage} />
                 </div>
                 <div className="space-y-1">
                   <Label htmlFor="bodyCondition">
@@ -632,8 +674,10 @@ export function AnimalsManager({ isOrgAdmin }: { isOrgAdmin: boolean }) {
                   <Input
                     id="bodyCondition"
                     value={form.bodyCondition}
+                    aria-invalid={!!errors.bodyCondition || undefined}
                     onChange={(e) => set({ bodyCondition: e.target.value })}
                   />
+                  <FieldError msg={errors.bodyCondition} />
                 </div>
                 <div className="space-y-1">
                   <Label htmlFor="decomp">
@@ -642,8 +686,10 @@ export function AnimalsManager({ isOrgAdmin }: { isOrgAdmin: boolean }) {
                   <Input
                     id="decomp"
                     value={form.decompositionStage}
+                    aria-invalid={!!errors.decompositionStage || undefined}
                     onChange={(e) => set({ decompositionStage: e.target.value })}
                   />
+                  <FieldError msg={errors.decompositionStage} />
                 </div>
               </div>
             </section>
@@ -659,8 +705,10 @@ export function AnimalsManager({ isOrgAdmin }: { isOrgAdmin: boolean }) {
                   id="notes"
                   rows={3}
                   value={form.macroscopicNotes}
+                  aria-invalid={!!errors.macroscopicNotes || undefined}
                   onChange={(e) => set({ macroscopicNotes: e.target.value })}
                 />
+                <FieldError msg={errors.macroscopicNotes} />
               </div>
               {isOrgAdmin && (
                 <div className="flex items-start gap-2">

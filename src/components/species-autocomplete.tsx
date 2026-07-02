@@ -23,11 +23,13 @@ export function SpeciesAutocomplete({
   value,
   onChange,
   className,
+  invalid,
 }: {
   id?: string
   value: string
   onChange: (species: string, match?: WormsMatch) => void
   className?: string
+  invalid?: boolean
 }) {
   const t = useTranslations("animals")
   const [open, setOpen] = useState(false)
@@ -88,6 +90,7 @@ export function SpeciesAutocomplete({
       <Input
         id={id}
         autoComplete="off"
+        aria-invalid={invalid || undefined}
         className={cn("italic", className)}
         value={value}
         onChange={(e) => {
