@@ -46,9 +46,10 @@ export async function POST(req: NextRequest) {
 
     await assertResearchInOrg(data.researchId, orgId)
 
-    // Visibilidade pública só pode ser definida por admin da organização.
+    // Visibilidade: animais são públicos por padrão (visíveis quando a pesquisa é
+    // pública). Só o admin da org pode ocultar um animal (data.isPublic = false).
     const isOrgAdmin = orgRole(user, orgId) === "ORG_ADMIN"
-    const isPublic = isOrgAdmin ? data.isPublic ?? false : false
+    const isPublic = isOrgAdmin ? data.isPublic ?? true : true
 
     try {
       const animal = await prisma.animal.create({

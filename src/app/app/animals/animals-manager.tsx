@@ -93,7 +93,7 @@ const emptyForm: FormState = {
   state: "",
   eventDate: "",
   macroscopicNotes: "",
-  isPublic: false,
+  isPublic: true, // visível por padrão; o admin pode ocultar (opt-out)
 }
 
 // ISO -> YYYY-MM-DD para <input type="date">.
@@ -694,13 +694,13 @@ export function AnimalsManager({ isOrgAdmin }: { isOrgAdmin: boolean }) {
               {isOrgAdmin && (
                 <div className="flex items-start gap-2">
                   <Checkbox
-                    id="isPublic"
-                    checked={form.isPublic}
-                    onCheckedChange={(v) => set({ isPublic: v === true })}
+                    id="isHidden"
+                    checked={!form.isPublic}
+                    onCheckedChange={(v) => set({ isPublic: v !== true })}
                     className="mt-0.5"
                   />
-                  <Label htmlFor="isPublic" className="text-sm font-normal text-muted-foreground">
-                    {t("isPublicHint")}
+                  <Label htmlFor="isHidden" className="text-sm font-normal text-muted-foreground">
+                    {t("isHiddenHint")}
                   </Label>
                 </div>
               )}

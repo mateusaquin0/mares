@@ -428,7 +428,9 @@
     "lifeStagePup": "Pup",
     "lifeStageJuvenile": "Juvenile",
     "lifeStageAdult": "Adult",
-    "lifeStageUndetermined": "Undetermined"
+    "lifeStageUndetermined": "Undetermined",
+    "isHiddenHint": "Hide this animal from public data (only applies when the research is public)",
+    "hidden": "Hidden"
   },
   "samples": {
     "new": "New sample",

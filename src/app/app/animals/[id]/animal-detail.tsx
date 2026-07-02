@@ -77,7 +77,7 @@ export function AnimalDetail({ id, isOrgAdmin }: { id: string; isOrgAdmin: boole
       <div className="flex flex-wrap items-center gap-3">
         <h1 className="text-2xl font-bold italic">{animal.species}</h1>
         <Badge variant={animal.isPublic ? "default" : "secondary"}>
-          {animal.isPublic ? t("public") : t("private")}
+          {animal.isPublic ? t("public") : t("hidden")}
         </Badge>
         <Link
           href={`/app/research/${animal.research.id}`}

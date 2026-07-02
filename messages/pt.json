@@ -428,7 +428,9 @@
     "lifeStagePup": "Filhote",
     "lifeStageJuvenile": "Juvenil",
     "lifeStageAdult": "Adulto",
-    "lifeStageUndetermined": "Indeterminado"
+    "lifeStageUndetermined": "Indeterminado",
+    "isHiddenHint": "Ocultar este animal dos dados públicos (aplica-se apenas quando a pesquisa é pública)",
+    "hidden": "Oculto"
   },
   "samples": {
     "new": "Nova amostra",
