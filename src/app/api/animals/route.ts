@@ -58,6 +58,8 @@ export async function POST(req: NextRequest) {
           ...animalData(data),
           species: data.species.trim(),
           isPublic,
+          // Origem derivada do vínculo com o SIMBA (ver docs/MIGRACAO.md).
+          source: data.simbaRecordNumber ? "simba" : "manual",
           research: { connect: { id: data.researchId } },
         },
         select: { id: true, species: true },

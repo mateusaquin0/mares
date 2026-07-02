@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState, type FormEvent } from "react"
 import Link from "next/link"
 import { useLocale, useTranslations } from "next-intl"
 import { toast } from "sonner"
-import { Download, MoreHorizontal, Plus } from "lucide-react"
+import { MoreHorizontal, Plus, Search } from "lucide-react"
 
 import { useErrorMessage } from "@/lib/use-error-message"
 import { useTable } from "@/lib/use-table"
@@ -126,12 +126,7 @@ export function AnimalsManager({ isOrgAdmin }: { isOrgAdmin: boolean }) {
   const [errors, setErrors] = useState<{ species?: boolean; researchId?: boolean }>({})
   const [saving, setSaving] = useState(false)
   const [confirm, setConfirm] = useState<AnimalRow | null>(null)
-
-  // Import do SIMBA (por número de registro).
-  const [simbaOpen, setSimbaOpen] = useState(false)
-  const [simbaForm, setSimbaForm] = useState({ researchId: "", recordNumber: "" })
-  const [simbaErrors, setSimbaErrors] = useState<{ researchId?: boolean; recordNumber?: boolean }>({})
-  const [importing, setImporting] = useState(false)
+  const [fetchingSimba, setFetchingSimba] = useState(false)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -156,38 +151,34 @@ export function AnimalsManager({ isOrgAdmin }: { isOrgAdmin: boolean }) {
     setDialog({ mode: "create" })
   }
 
-  function openImport() {
-    setSimbaErrors({})
-    setSimbaForm({ researchId: researches.length === 1 ? researches[0].id : "", recordNumber: "" })
-    setSimbaOpen(true)
-  }
-
-  async function onImport(e: FormEvent) {
-    e.preventDefault()
-    const nextErrors = {
-      researchId: !simbaForm.researchId,
-      recordNumber: !simbaForm.recordNumber.trim(),
-    }
-    setSimbaErrors(nextErrors)
-    if (nextErrors.researchId || nextErrors.recordNumber) return
-
-    setImporting(true)
-    const res = await fetch("/api/animals/import-simba", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        researchId: simbaForm.researchId,
-        simbaRecordNumber: simbaForm.recordNumber.trim(),
-      }),
-    })
-    setImporting(false)
+  // Busca o registro no SIMBA e pré-preenche o formulário (o usuário revisa e salva).
+  async function fetchSimba() {
+    const rec = form.simbaRecordNumber.trim()
+    if (!rec) return
+    setFetchingSimba(true)
+    const res = await fetch(`/api/simba?record_number=${encodeURIComponent(rec)}`)
+    setFetchingSimba(false)
     if (!res.ok) {
-      toast.error(t("simbaImportError"), { description: em(await res.json().catch(() => ({}))) })
+      toast.error(t("simbaFetchError"), { description: em(await res.json().catch(() => ({}))) })
       return
     }
-    toast.success(t("simbaImported"))
-    setSimbaOpen(false)
-    load()
+    const d = await res.json()
+    set({
+      simbaRecordNumber: d.simbaRecordNumber ?? rec,
+      species: d.species ?? form.species,
+      wormsAphiaId: d.wormsAphiaId?.toString() ?? "",
+      taxonFamily: d.taxonFamily ?? "",
+      taxonOrder: d.taxonOrder ?? "",
+      sex: d.sex ?? "",
+      lifeStage: d.lifeStage ?? "",
+      strandingLat: d.strandingLat?.toString() ?? "",
+      strandingLon: d.strandingLon?.toString() ?? "",
+      strandingBeach: d.strandingBeach ?? "",
+      municipality: d.municipality ?? "",
+      state: d.state ?? "",
+      eventDate: d.eventDate ? d.eventDate.slice(0, 10) : "",
+    })
+    toast.success(t("simbaFetched"))
   }
 
   function openEdit(a: AnimalRow) {
@@ -317,16 +308,10 @@ export function AnimalsManager({ isOrgAdmin }: { isOrgAdmin: boolean }) {
           <h1 className="text-2xl font-bold">{t("title")}</h1>
           <p className="mt-1 text-sm text-muted-foreground">{t("subtitle")}</p>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={openImport} disabled={noResearch}>
-            <Download className="size-4" />
-            {t("simbaImport")}
-          </Button>
-          <Button onClick={openCreate} disabled={noResearch}>
-            <Plus className="size-4" />
-            {t("new")}
-          </Button>
-        </div>
+        <Button onClick={openCreate} disabled={noResearch}>
+          <Plus className="size-4" />
+          {t("new")}
+        </Button>
       </div>
 
       {loading ? (
@@ -527,11 +512,25 @@ export function AnimalsManager({ isOrgAdmin }: { isOrgAdmin: boolean }) {
                 </div>
                 <div className="space-y-1">
                   <Label htmlFor="simba">{t("simbaRecordNumber")}</Label>
-                  <Input
-                    id="simba"
-                    value={form.simbaRecordNumber}
-                    onChange={(e) => set({ simbaRecordNumber: e.target.value })}
-                  />
+                  <div className="flex items-center gap-2">
+                    <Input
+                      id="simba"
+                      value={form.simbaRecordNumber}
+                      onChange={(e) => set({ simbaRecordNumber: e.target.value })}
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      className="shrink-0"
+                      onClick={fetchSimba}
+                      loading={fetchingSimba}
+                      disabled={!form.simbaRecordNumber.trim()}
+                      title={t("simbaFetch")}
+                    >
+                      <Search className="size-4" />
+                    </Button>
+                  </div>
                 </div>
               </div>
             </section>
@@ -676,56 +675,6 @@ export function AnimalsManager({ isOrgAdmin }: { isOrgAdmin: boolean }) {
               </Button>
               <Button type="submit" loading={saving}>
                 {dialog?.mode === "edit" ? tc("save") : t("create")}
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={simbaOpen} onOpenChange={setSimbaOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>{t("simbaTitle")}</DialogTitle>
-            <DialogDescription>{t("simbaDesc")}</DialogDescription>
-          </DialogHeader>
-          <form onSubmit={onImport} className="space-y-4">
-            <div className="space-y-1">
-              <Label htmlFor="simba-research">{t("research")}</Label>
-              <Select
-                value={simbaForm.researchId}
-                onValueChange={(v) => setSimbaForm((f) => ({ ...f, researchId: v }))}
-              >
-                <SelectTrigger id="simba-research">
-                  <SelectValue placeholder={t("researchPlaceholder")} />
-                </SelectTrigger>
-                <SelectContent>
-                  {researches.map((r) => (
-                    <SelectItem key={r.id} value={r.id}>
-                      {r.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {simbaErrors.researchId && <p className="text-xs text-destructive">{tval("required")}</p>}
-            </div>
-            <div className="space-y-1">
-              <Label htmlFor="simba-record">{t("simbaRecordNumber")}</Label>
-              <Input
-                id="simba-record"
-                value={simbaForm.recordNumber}
-                onChange={(e) => setSimbaForm((f) => ({ ...f, recordNumber: e.target.value }))}
-                placeholder={t("simbaRecordPlaceholder")}
-              />
-              {simbaErrors.recordNumber && (
-                <p className="text-xs text-destructive">{tval("required")}</p>
-              )}
-            </div>
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setSimbaOpen(false)}>
-                {tc("cancel")}
-              </Button>
-              <Button type="submit" loading={importing}>
-                {t("simbaImport")}
               </Button>
             </DialogFooter>
           </form>

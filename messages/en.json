@@ -420,12 +420,9 @@
     "auditTab": "History",
     "comingSoon": "Coming soon.",
     "notInformed": "—",
-    "simbaImport": "Import from SIMBA",
-    "simbaImported": "Animal imported from SIMBA",
-    "simbaImportError": "Failed to import from SIMBA",
-    "simbaTitle": "Import from SIMBA",
-    "simbaDesc": "Enter the SIMBA record number to import the animal into a research.",
-    "simbaRecordPlaceholder": "e.g. 12345"
+    "simbaFetch": "Fetch data from SIMBA",
+    "simbaFetched": "SIMBA data loaded",
+    "simbaFetchError": "Failed to fetch from SIMBA"
   },
   "samples": {
     "new": "New sample",
