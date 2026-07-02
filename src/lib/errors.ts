@@ -39,3 +39,13 @@ export class ValidationError extends Error {
     this.code = code
   }
 }
+
+// Serviço externo (ex.: SIMBA) indisponível ou com resposta inesperada → 503.
+export class ServiceUnavailableError extends Error {
+  code: string
+  constructor(message = "Serviço indisponível", code: string = ERROR_CODES.internal) {
+    super(message)
+    this.name = "ServiceUnavailableError"
+    this.code = code
+  }
+}

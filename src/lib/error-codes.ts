@@ -47,6 +47,9 @@ export const ERROR_CODES = {
   mediaInvalidType: "mediaInvalidType",
   mediaTooLarge: "mediaTooLarge",
   mediaUploadFailed: "mediaUploadFailed",
+  // Fase 3 — integração SIMBA
+  simbaNotFound: "simbaNotFound",
+  simbaUnavailable: "simbaUnavailable",
 } as const
 
 export type ErrorCode = (typeof ERROR_CODES)[keyof typeof ERROR_CODES]

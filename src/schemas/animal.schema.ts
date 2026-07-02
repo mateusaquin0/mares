@@ -36,5 +36,12 @@ export const createAnimalSchema = animalBaseSchema.extend({
 
 export const updateAnimalSchema = animalBaseSchema.partial()
 
+// Import a partir de um registro do SIMBA (ver docs/CONTRATO_API.md §Import).
+export const importSimbaSchema = z.object({
+  simbaRecordNumber: z.string().trim().min(1, "required").max(120),
+  researchId: z.string().min(1, "required"),
+})
+
 export type CreateAnimalData = z.infer<typeof createAnimalSchema>
 export type UpdateAnimalData = z.infer<typeof updateAnimalSchema>
+export type ImportSimbaData = z.infer<typeof importSimbaSchema>

@@ -301,7 +301,9 @@
     "mediaNotFound": "File not found",
     "mediaInvalidType": "Unsupported file type",
     "mediaTooLarge": "File too large (max. 10 MB)",
-    "mediaUploadFailed": "Failed to upload the file"
+    "mediaUploadFailed": "Failed to upload the file",
+    "simbaNotFound": "Record not found in SIMBA",
+    "simbaUnavailable": "SIMBA is unavailable right now. Please try again."
   },
   "location": {
     "country": "Country",
@@ -417,7 +419,13 @@
     "mediaTab": "Media",
     "auditTab": "History",
     "comingSoon": "Coming soon.",
-    "notInformed": "—"
+    "notInformed": "—",
+    "simbaImport": "Import from SIMBA",
+    "simbaImported": "Animal imported from SIMBA",
+    "simbaImportError": "Failed to import from SIMBA",
+    "simbaTitle": "Import from SIMBA",
+    "simbaDesc": "Enter the SIMBA record number to import the animal into a research.",
+    "simbaRecordPlaceholder": "e.g. 12345"
   },
   "samples": {
     "new": "New sample",

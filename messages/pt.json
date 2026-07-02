@@ -301,7 +301,9 @@
     "mediaNotFound": "Arquivo não encontrado",
     "mediaInvalidType": "Tipo de arquivo não suportado",
     "mediaTooLarge": "Arquivo muito grande (máx. 10 MB)",
-    "mediaUploadFailed": "Falha ao enviar o arquivo"
+    "mediaUploadFailed": "Falha ao enviar o arquivo",
+    "simbaNotFound": "Registro não encontrado no SIMBA",
+    "simbaUnavailable": "SIMBA indisponível no momento. Tente novamente."
   },
   "location": {
     "country": "País",
@@ -417,7 +419,13 @@
     "mediaTab": "Mídia",
     "auditTab": "Histórico",
     "comingSoon": "Disponível em breve.",
-    "notInformed": "—"
+    "notInformed": "—",
+    "simbaImport": "Importar do SIMBA",
+    "simbaImported": "Animal importado do SIMBA",
+    "simbaImportError": "Falha ao importar do SIMBA",
+    "simbaTitle": "Importar do SIMBA",
+    "simbaDesc": "Informe o número de registro do SIMBA para importar o animal para uma pesquisa.",
+    "simbaRecordPlaceholder": "Ex.: 12345"
   },
   "samples": {
     "new": "Nova amostra",

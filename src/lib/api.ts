@@ -2,7 +2,13 @@
 
 import { NextResponse } from "next/server"
 import { ZodError } from "zod"
-import { ConflictError, ForbiddenError, NotFoundError, ValidationError } from "@/lib/errors"
+import {
+  ConflictError,
+  ForbiddenError,
+  NotFoundError,
+  ServiceUnavailableError,
+  ValidationError,
+} from "@/lib/errors"
 import { ERROR_CODES } from "@/lib/error-codes"
 
 export function apiError(err: unknown): NextResponse {
@@ -20,6 +26,9 @@ export function apiError(err: unknown): NextResponse {
   }
   if (err instanceof ConflictError) {
     return NextResponse.json({ error: err.message, code: err.code }, { status: 409 })
+  }
+  if (err instanceof ServiceUnavailableError) {
+    return NextResponse.json({ error: err.message, code: err.code }, { status: 503 })
   }
   console.error("[api] erro não tratado:", err)
   return NextResponse.json({ error: "Erro interno", code: ERROR_CODES.internal }, { status: 500 })
