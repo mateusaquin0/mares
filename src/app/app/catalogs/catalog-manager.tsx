@@ -3,12 +3,13 @@
 import { useState } from "react"
 import { useForm } from "react-hook-form"
 import { useLocale, useTranslations } from "next-intl"
-import { useQuery, useQueryClient } from "@tanstack/react-query"
+import { useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
 import { MoreHorizontal, Plus } from "lucide-react"
 
 import type { CatalogType } from "@/schemas/catalog.schema"
 import { catalogService } from "@/services/catalog"
+import { useCatalogList, usePathogenGroups, catalogKeys } from "@/hooks/use-catalog"
 import type { CatalogRow as Row, NamedRow, PathogenRow } from "@/types/catalog"
 import { txt, pathogenName, type I18nText } from "@/lib/catalog-i18n"
 import { useErrorMessage } from "@/lib/use-error-message"
@@ -69,17 +70,8 @@ export function CatalogManager({ canEdit }: { canEdit: boolean }) {
   const [confirmRow, setConfirmRow] = useState<Row | null>(null)
   const isPathogen = type === "pathogens"
 
-  const listQ = useQuery({
-    queryKey: ["catalog", type],
-    queryFn: () => catalogService.list(type),
-    staleTime: 60_000,
-  })
-  const groupsQ = useQuery({
-    queryKey: ["pathogen-groups"],
-    queryFn: () => catalogService.listPathogenGroups(),
-    staleTime: Infinity,
-    enabled: isPathogen,
-  })
+  const listQ = useCatalogList(type)
+  const groupsQ = usePathogenGroups(isPathogen)
   const groups = groupsQ.data ?? []
 
   const form = useForm<FormShape>({
@@ -128,7 +120,7 @@ export function CatalogManager({ canEdit }: { canEdit: boolean }) {
       else await catalogService.create(type, body)
       toast.success(isEdit ? t("updated") : t("created"))
       setDialog(null)
-      qc.invalidateQueries({ queryKey: ["catalog", type] })
+      qc.invalidateQueries({ queryKey: catalogKeys.list(type) })
     } catch (err) {
       toast.error(isEdit ? t("updateError") : t("createError"), { description: em(err) })
     }
@@ -138,7 +130,7 @@ export function CatalogManager({ canEdit }: { canEdit: boolean }) {
     try {
       await catalogService.remove(type, row.id)
       toast.success(t("deleted"))
-      qc.invalidateQueries({ queryKey: ["catalog", type] })
+      qc.invalidateQueries({ queryKey: catalogKeys.list(type) })
     } catch (err) {
       toast.error(t("deleteError"), { description: em(err) })
     }

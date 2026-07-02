@@ -5,13 +5,14 @@ import Link from "next/link"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useLocale, useTranslations } from "next-intl"
-import { useQuery, useQueryClient } from "@tanstack/react-query"
+import { useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
 import { ArrowLeft, Pencil, Plus, Trash2 } from "lucide-react"
 
 import { updateResearchSchema, type UpdateResearchData } from "@/schemas/research.schema"
 import { researchService } from "@/services/research"
-import { catalogService } from "@/services/catalog"
+import { useResearch, researchKeys } from "@/hooks/use-research"
+import { useOrgans, usePathogens, useExamTypes } from "@/hooks/use-catalog"
 import type { CatalogItem } from "@/types/catalog"
 import { txt, pathogenName } from "@/lib/catalog-i18n"
 import { useErrorMessage } from "@/lib/use-error-message"
@@ -56,28 +57,10 @@ export function ResearchDetail({
   const em = useErrorMessage()
   const qc = useQueryClient()
 
-  const researchQ = useQuery({
-    queryKey: ["research", id],
-    queryFn: () => researchService.get(id),
-  })
-  const organsQ = useQuery({
-    queryKey: ["catalog", "organs"],
-    queryFn: () => catalogService.listOrgans(),
-    staleTime: Infinity,
-    enabled: isOrgAdmin,
-  })
-  const pathogensQ = useQuery({
-    queryKey: ["catalog", "pathogens"],
-    queryFn: () => catalogService.listPathogens(),
-    staleTime: Infinity,
-    enabled: isOrgAdmin,
-  })
-  const examTypesQ = useQuery({
-    queryKey: ["catalog", "exam-types"],
-    queryFn: () => catalogService.listExamTypes(),
-    staleTime: Infinity,
-    enabled: isOrgAdmin,
-  })
+  const researchQ = useResearch(id)
+  const organsQ = useOrgans(isOrgAdmin)
+  const pathogensQ = usePathogens(isOrgAdmin)
+  const examTypesQ = useExamTypes(isOrgAdmin)
 
   const [organId, setOrganId] = useState<string>()
   const [pathogenId, setPathogenId] = useState<string>()
@@ -110,7 +93,7 @@ export function ResearchDetail({
       await researchService.update(id, data)
       toast.success(t("edited"))
       setEditOpen(false)
-      qc.invalidateQueries({ queryKey: ["research", id] })
+      qc.invalidateQueries({ queryKey: researchKeys.detail(id) })
     } catch (err) {
       toast.error(t("editError"), { description: em(err) })
     }
@@ -125,7 +108,7 @@ export function ResearchDetail({
       setOrganId(undefined)
       setPathogenId(undefined)
       setExamTypeId(undefined)
-      qc.invalidateQueries({ queryKey: ["research", id] })
+      qc.invalidateQueries({ queryKey: researchKeys.detail(id) })
     } catch (err) {
       toast.error(tp("addError"), { description: em(err) })
     } finally {
@@ -137,7 +120,7 @@ export function ResearchDetail({
     try {
       await researchService.removeProtocol(id, entryId)
       toast.success(tp("removed"))
-      qc.invalidateQueries({ queryKey: ["research", id] })
+      qc.invalidateQueries({ queryKey: researchKeys.detail(id) })
     } catch (err) {
       toast.error(tp("removeError"), { description: em(err) })
     }

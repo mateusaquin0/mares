@@ -2,10 +2,9 @@
 
 import * as React from "react"
 import { useLocale, useTranslations } from "next-intl"
-import { useQuery } from "@tanstack/react-query"
 
 import { getCountries } from "@/lib/countries"
-import { geoService } from "@/services/geo"
+import { useGeoStates, useGeoCities } from "@/hooks/use-geo"
 import { CountryFlag } from "@/components/country-flag"
 import { Combobox, type ComboboxOption } from "@/components/ui/combobox"
 import { Label } from "@/components/ui/label"
@@ -40,25 +39,13 @@ export function LocationPicker({
     [locale]
   )
 
-  const statesQuery = useQuery({
-    queryKey: ["geo", "states", value.country],
-    queryFn: () => geoService.listStates(value.country!),
-    enabled: !!value.country,
-    staleTime: Infinity,
-    gcTime: Infinity,
-  })
+  const statesQuery = useGeoStates(value.country)
 
   const states = statesQuery.data ?? []
   // Estado é armazenado pelo NOME; derivamos o código (iso2) para buscar as cidades.
   const stateIso2 = states.find((s) => s.name === value.state)?.iso2
 
-  const citiesQuery = useQuery({
-    queryKey: ["geo", "cities", value.country, stateIso2],
-    queryFn: () => geoService.listCities(value.country!, stateIso2!),
-    enabled: !!value.country && !!stateIso2,
-    staleTime: Infinity,
-    gcTime: Infinity,
-  })
+  const citiesQuery = useGeoCities(value.country, stateIso2)
 
   const stateOptions: ComboboxOption[] = states.map((s) => ({
     value: s.name,
