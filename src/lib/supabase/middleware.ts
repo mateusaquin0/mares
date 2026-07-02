@@ -4,15 +4,8 @@ import { createServerClient } from "@supabase/ssr"
 import { NextResponse, type NextRequest } from "next/server"
 
 // Rotas públicas (não exigem sessão)
-const PUBLIC_PATHS = [
-  "/login",
-  "/request-access",
-  "/terms",
-  "/map",
-  "/auth",
-  "/api/public",
-  "/api/access-requests",
-]
+// (Rotas /api são tratadas antes desta lista — validam a sessão nos handlers.)
+const PUBLIC_PATHS = ["/login", "/request-access", "/terms", "/map", "/auth"]
 
 function isPublic(pathname: string) {
   if (pathname === "/") return true
@@ -21,6 +14,13 @@ function isPublic(pathname: string) {
 
 export async function updateSession(request: NextRequest) {
   let response = NextResponse.next({ request })
+  const pathname = request.nextUrl.pathname
+
+  // Rotas de API validam a sessão nelas mesmas (getAuthUser → getUser) e, por
+  // serem Route Handlers, gravam o cookie de refresh na própria resposta.
+  // Retornar antes evita um getUser() redundante (round-trip ao Auth) por
+  // chamada de API — a principal fonte de latência em /api/*.
+  if (pathname.startsWith("/api")) return response
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -41,37 +41,34 @@ export async function updateSession(request: NextRequest) {
     }
   )
 
-  // IMPORTANTE: getUser() revalida o token (não confie em getSession() no middleware)
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  const pathname = request.nextUrl.pathname
+  // Verifica o JWT localmente (chaves assimétricas ES256): getClaims() valida
+  // assinatura + expiração com a JWKS cacheada, sem round-trip ao Auth server.
+  // A chamada acima (getClaims lê os cookies e pode refrescar a sessão) mantém
+  // a renovação do token; aqui só extraímos o id do usuário do token verificado.
+  const { data: jwt } = await supabase.auth.getClaims()
+  const userId = jwt?.claims.sub
 
   if (isPublic(pathname)) return response
 
-  // Rotas de API (exceto públicas) fazem sua própria validação e retornam JSON.
-  if (pathname.startsWith("/api")) return response
-
   // Sem sessão → login (preservando destino)
-  if (!user) {
+  if (!userId) {
     const url = request.nextUrl.clone()
     url.pathname = "/login"
     url.searchParams.set("redirectTo", pathname)
     return NextResponse.redirect(url)
   }
 
-  // Com sessão: descobre se é admin global e se tem algum vínculo (Membership).
-  const [{ data: dbUser }, { count }] = await Promise.all([
-    supabase.from("User").select("isSystemAdmin").eq("id", user.id).maybeSingle(),
-    supabase
-      .from("Membership")
-      .select("id", { count: "exact", head: true })
-      .eq("userId", user.id),
-  ])
+  // Com sessão: descobre se é admin global e se tem algum vínculo (Membership)
+  // numa única chamada — o count de memberships vem embutido (embed do PostgREST).
+  const { data: dbUser } = await supabase
+    .from("User")
+    .select("isSystemAdmin, memberships:Membership(count)")
+    .eq("id", userId)
+    .maybeSingle()
 
   const isAdmin = dbUser?.isSystemAdmin === true
-  const hasOrg = (count ?? 0) > 0
+  const membershipCount = (dbUser?.memberships as { count: number }[] | null)?.[0]?.count ?? 0
+  const hasOrg = membershipCount > 0
 
   // Área de admin global exige isSystemAdmin
   if (pathname.startsWith("/app/admin") && !isAdmin) {

@@ -1,6 +1,7 @@
 // MARES — Helpers de autenticação para Route Handlers e Server Components.
 // O papel é POR organização (Membership); o admin global é User.isSystemAdmin.
 
+import { cache } from "react"
 import { cookies } from "next/headers"
 import { prisma } from "@/lib/prisma"
 import { createClient } from "@/lib/supabase/server"
@@ -20,15 +21,19 @@ export type AuthUser = {
 }
 
 // Valida a sessão e retorna o usuário do banco com seus vínculos (ou null).
-export async function getAuthUser(): Promise<AuthUser | null> {
+// Memoizado por request (React.cache): se chamado mais de uma vez no mesmo
+// request, o getUser() + a query ao banco só acontecem uma vez.
+export const getAuthUser = cache(async (): Promise<AuthUser | null> => {
   const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-  if (!user) return null
+  // Verifica o JWT localmente: o projeto usa chaves assimétricas (ES256), então
+  // getClaims() valida assinatura + expiração com a JWKS cacheada, sem round-trip
+  // ao Auth server (ao contrário de getUser()). Ver docs/NOTES sobre o trade-off.
+  const { data } = await supabase.auth.getClaims()
+  const userId = data?.claims.sub
+  if (!userId) return null
 
   const dbUser = await prisma.user.findUnique({
-    where: { id: user.id },
+    where: { id: userId },
     select: {
       id: true,
       email: true,
@@ -53,7 +58,7 @@ export async function getAuthUser(): Promise<AuthUser | null> {
       role: m.role,
     })),
   }
-}
+})
 
 // Hierarquia de papéis dentro de uma organização.
 const ORG_HIERARCHY: MembershipRole[] = ["RESEARCHER", "ORG_ADMIN"]
