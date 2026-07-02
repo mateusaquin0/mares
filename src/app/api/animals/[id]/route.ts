@@ -10,7 +10,7 @@ import { prisma } from "@/lib/prisma"
 import { getAuthUser, requireOrgRole, orgRole } from "@/lib/auth"
 import { apiError, unauthorized } from "@/lib/api"
 import { updateAnimalSchema } from "@/schemas/animal.schema"
-import { animalData, loadAnimalOrg } from "@/lib/animals"
+import { animalData, animalDuplicateError, loadAnimalOrg } from "@/lib/animals"
 import { ConflictError, ForbiddenError } from "@/lib/errors"
 import { ERROR_CODES } from "@/lib/error-codes"
 
@@ -63,7 +63,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
       return NextResponse.json(animal)
     } catch (e) {
       if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
-        throw new ConflictError("Identificador já cadastrado", ERROR_CODES.animalDuplicate)
+        throw animalDuplicateError(e)
       }
       throw e
     }

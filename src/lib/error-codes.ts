@@ -38,6 +38,8 @@ export const ERROR_CODES = {
   // Fase 3 — animais, amostras e análises
   animalNotFound: "animalNotFound",
   animalDuplicate: "animalDuplicate",
+  animalControlDuplicate: "animalControlDuplicate",
+  animalSimbaDuplicate: "animalSimbaDuplicate",
   animalHasSamples: "animalHasSamples",
   sampleNotFound: "sampleNotFound",
   sampleHasAnalyses: "sampleHasAnalyses",

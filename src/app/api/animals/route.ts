@@ -9,9 +9,7 @@ import { prisma } from "@/lib/prisma"
 import { getAuthUser, getActiveOrgId, requireOrgRole, orgRole } from "@/lib/auth"
 import { apiError, unauthorized } from "@/lib/api"
 import { createAnimalSchema } from "@/schemas/animal.schema"
-import { animalData, animalListSelect, assertResearchInOrg } from "@/lib/animals"
-import { ConflictError } from "@/lib/errors"
-import { ERROR_CODES } from "@/lib/error-codes"
+import { animalData, animalDuplicateError, animalListSelect, assertResearchInOrg } from "@/lib/animals"
 
 export async function GET(req: NextRequest) {
   try {
@@ -68,7 +66,7 @@ export async function POST(req: NextRequest) {
     } catch (e) {
       // Viola unique de controlId / simbaRecordNumber.
       if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
-        throw new ConflictError("Identificador já cadastrado", ERROR_CODES.animalDuplicate)
+        throw animalDuplicateError(e)
       }
       throw e
     }

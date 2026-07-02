@@ -2,9 +2,27 @@
 // Um animal pertence a uma pesquisa, que pertence a uma organização. O acesso é validado
 // pelo Membership do usuário naquela organização (ver docs/PERMISSOES.md §Animais).
 
+import { Prisma } from "@prisma/client"
 import { prisma } from "@/lib/prisma"
-import { NotFoundError } from "@/lib/errors"
+import { ConflictError, NotFoundError } from "@/lib/errors"
 import { ERROR_CODES } from "@/lib/error-codes"
+
+/**
+ * Traduz a violação de unicidade (P2002) do animal no erro mais específico possível,
+ * indicando QUAL identificador está duplicado (ID de controle ou Nº SIMBA).
+ */
+export function animalDuplicateError(e: Prisma.PrismaClientKnownRequestError): ConflictError {
+  const target = Array.isArray(e.meta?.target)
+    ? e.meta.target.join(",")
+    : String(e.meta?.target ?? "")
+  if (/simba/i.test(target)) {
+    return new ConflictError("Nº SIMBA já cadastrado", ERROR_CODES.animalSimbaDuplicate)
+  }
+  if (/control/i.test(target)) {
+    return new ConflictError("ID de controle já cadastrado", ERROR_CODES.animalControlDuplicate)
+  }
+  return new ConflictError("Identificador já cadastrado", ERROR_CODES.animalDuplicate)
+}
 
 /** Carrega o animal com o orgId da pesquisa (para checagem de papel). */
 export async function loadAnimalOrg(id: string) {
