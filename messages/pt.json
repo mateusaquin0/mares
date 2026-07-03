@@ -145,7 +145,19 @@
     "thControl": "ID de controle",
     "thSpecies": "Espécie",
     "thLocation": "Localização",
-    "thDate": "Data"
+    "thDate": "Data",
+    "filterResearch": "Pesquisa",
+    "allResearch": "Todas as pesquisas",
+    "filterFrom": "De",
+    "filterTo": "Até",
+    "clearFilters": "Limpar filtros",
+    "statPositives": "Resultados positivos",
+    "chartTimelineTitle": "Encalhes ao longo do tempo",
+    "chartTimelineEmpty": "Sem encalhes com data para exibir.",
+    "timelineCount": "Encalhes",
+    "heatmapTitle": "Mapa de calor",
+    "heatmapDesc": "Concentração geográfica dos encalhes registrados.",
+    "heatmapEmpty": "Nenhum encalhe com coordenadas para exibir."
   },
   "map": {
     "title": "Mapa",

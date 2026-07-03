@@ -145,7 +145,19 @@
     "thControl": "Control ID",
     "thSpecies": "Species",
     "thLocation": "Location",
-    "thDate": "Date"
+    "thDate": "Date",
+    "filterResearch": "Research",
+    "allResearch": "All research",
+    "filterFrom": "From",
+    "filterTo": "To",
+    "clearFilters": "Clear filters",
+    "statPositives": "Positive results",
+    "chartTimelineTitle": "Strandings over time",
+    "chartTimelineEmpty": "No strandings with a date to display.",
+    "timelineCount": "Strandings",
+    "heatmapTitle": "Heatmap",
+    "heatmapDesc": "Geographic concentration of recorded strandings.",
+    "heatmapEmpty": "No strandings with coordinates to display."
   },
   "map": {
     "title": "Map",
