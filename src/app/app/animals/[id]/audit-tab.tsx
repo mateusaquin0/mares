@@ -1,19 +1,12 @@
 "use client"
 
 import { useLocale, useTranslations } from "next-intl"
-import { ArrowRight } from "lucide-react"
+import { ArrowRight, Clock, User } from "lucide-react"
 
 import { pathogenName, txt } from "@/lib/catalog-i18n"
 import { useAnimalAudit } from "@/hooks/use-animals"
 import type { AuditEntry } from "@/types/animal"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
+import { Badge } from "@/components/ui/badge"
 
 export function AuditTab({ animalId }: { animalId: string }) {
   const t = useTranslations("audit")
@@ -27,7 +20,6 @@ export function AuditTab({ animalId }: { animalId: string }) {
   const fieldLabel = (f: string) =>
     ({ result: t("fieldResult"), ctValue: t("fieldCt"), notes: t("fieldNotes") })[f] ?? f
 
-  // Traduz valores de resultado; demais campos são exibidos crus.
   const valueLabel = (field: string, v: string | null) => {
     if (v == null || v === "") return t("emptyValue")
     if (field === "result") {
@@ -42,6 +34,11 @@ export function AuditTab({ animalId }: { animalId: string }) {
     return v
   }
 
+  const resultVariant = (field: string, v: string | null): "positive" | "negative" | "inconclusive" | "secondary" => {
+    if (field !== "result" || !v) return "secondary"
+    return v === "POSITIVO" ? "positive" : v === "NEGATIVO" ? "negative" : v === "INCONCLUSIVO" ? "inconclusive" : "secondary"
+  }
+
   const contextOf = (r: AuditEntry) =>
     [
       r.organ ? txt(locale, r.organ.name) : null,
@@ -51,45 +48,56 @@ export function AuditTab({ animalId }: { animalId: string }) {
       .filter(Boolean)
       .join(" · ")
 
-  const fmt = (iso: string) => new Date(iso).toLocaleString(locale)
+  const fmtDate = (iso: string) => new Date(iso).toLocaleDateString(locale, { day: "2-digit", month: "short", year: "numeric" })
+  const fmtTime = (iso: string) => new Date(iso).toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" })
 
   if (loading) return <p className="text-sm text-muted-foreground">{tc("loading")}</p>
   if (items.length === 0) return <p className="text-sm text-muted-foreground">{t("empty")}</p>
 
   return (
-    <div className="rounded-md border">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>{t("colWhen")}</TableHead>
-            <TableHead>{t("colWho")}</TableHead>
-            <TableHead>{t("colContext")}</TableHead>
-            <TableHead>{t("colField")}</TableHead>
-            <TableHead>{t("colChange")}</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {items.map((r) => (
-            <TableRow key={r.id}>
-              <TableCell className="whitespace-nowrap text-muted-foreground">
-                {fmt(r.changedAt)}
-              </TableCell>
-              <TableCell>{r.author}</TableCell>
-              <TableCell className="text-muted-foreground">{contextOf(r)}</TableCell>
-              <TableCell>{fieldLabel(r.field)}</TableCell>
-              <TableCell>
-                <span className="flex items-center gap-2 text-sm">
-                  <span className="text-muted-foreground line-through">
-                    {valueLabel(r.field, r.oldValue)}
-                  </span>
-                  <ArrowRight className="size-3.5 shrink-0 text-muted-foreground" />
-                  <span className="font-medium">{valueLabel(r.field, r.newValue)}</span>
+    <div className="relative ml-4">
+      {/* Vertical timeline line */}
+      <div className="absolute left-0 top-0 bottom-0 w-px bg-border" />
+
+      <div className="space-y-6">
+        {items.map((r) => (
+          <div key={r.id} className="relative pl-8">
+            {/* Timeline dot */}
+            <div className="absolute left-0 top-2 -translate-x-1/2 size-3 rounded-full border-2 border-accent-foreground bg-card" />
+
+            <div className="rounded-lg border bg-card p-4 shadow-sm">
+              {/* Header: date + author */}
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
+                <span className="inline-flex items-center gap-1">
+                  <Clock className="size-3" />
+                  {fmtDate(r.changedAt)} · {fmtTime(r.changedAt)}
                 </span>
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+                <span className="inline-flex items-center gap-1">
+                  <User className="size-3" />
+                  {r.author}
+                </span>
+              </div>
+
+              {/* Context (organ · pathogen · exam) */}
+              {contextOf(r) && (
+                <p className="mt-1 text-xs text-muted-foreground">{contextOf(r)}</p>
+              )}
+
+              {/* Change detail */}
+              <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
+                <span className="font-medium text-foreground">{fieldLabel(r.field)}</span>
+                <Badge variant={resultVariant(r.field, r.oldValue)} className="text-xs">
+                  {valueLabel(r.field, r.oldValue)}
+                </Badge>
+                <ArrowRight className="size-3.5 shrink-0 text-muted-foreground" />
+                <Badge variant={resultVariant(r.field, r.newValue)} className="text-xs">
+                  {valueLabel(r.field, r.newValue)}
+                </Badge>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   )
 }

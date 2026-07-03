@@ -146,7 +146,7 @@ export function ResearchManager({ isOrgAdmin, selfId }: { isOrgAdmin: boolean; s
             </TableHeader>
             <TableBody>
               {filtered.map((r) => (
-                <TableRow key={r.id}>
+                <TableRow key={r.id} className={r.isPublic ? "border-l-[3px] border-l-[hsl(var(--brand-cyan))]" : "border-l-[3px] border-l-primary"}>
                   <TableCell className="font-medium">
                     <Link href={`/app/research/${r.id}`} className="hover:underline">
                       {r.name}
@@ -154,12 +154,12 @@ export function ResearchManager({ isOrgAdmin, selfId }: { isOrgAdmin: boolean; s
                   </TableCell>
                   <TableCell>
                     {r.isPublic ? (
-                      <Badge className="gap-1 border-transparent bg-bio text-bio-foreground hover:bg-bio/90">
+                      <Badge variant="public" className="gap-1">
                         <Globe className="size-3" />
                         {t("public")}
                       </Badge>
                     ) : (
-                      <Badge variant="secondary" className="gap-1">
+                      <Badge variant="private" className="gap-1">
                         <Lock className="size-3" />
                         {t("private")}
                       </Badge>

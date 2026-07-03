@@ -15,6 +15,14 @@ const badgeVariants = cva(
         destructive:
           "border-transparent bg-destructive text-destructive-foreground hover:bg-destructive/80",
         outline: "text-foreground",
+        // Variantes semânticas do design MARES (ver design.md §Chips/Badges).
+        public: "border-transparent bg-accent text-accent-foreground",
+        private: "border-transparent bg-primary/10 text-primary",
+        positive:
+          "border-[hsl(var(--bio)/0.35)] bg-[hsl(var(--bio)/0.14)] text-[hsl(123_44%_30%)]",
+        negative: "border-transparent bg-secondary text-muted-foreground",
+        inconclusive:
+          "border-[hsl(35_80%_78%)] bg-[hsl(35_92%_92%)] text-[hsl(28_80%_34%)]",
       },
     },
     defaultVariants: {

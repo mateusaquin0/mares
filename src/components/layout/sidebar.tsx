@@ -119,27 +119,31 @@ export function Sidebar({
   return (
     <aside
       className={cn(
-        "flex h-screen shrink-0 flex-col border-r border-border transition-[width,background-color] duration-200",
-        collapsed ? "w-16 bg-background" : "w-64 bg-white"
+        "flex h-screen shrink-0 flex-col border-r border-border transition-[width,background-color] duration-300 ease-in-out",
+        collapsed ? "w-16 bg-secondary" : "w-64 bg-card"
       )}
     >
       <div className={cn("flex flex-col gap-3 py-5", collapsed ? "items-center px-2" : "px-5")}>
         <div className={cn("flex w-full items-center", collapsed && "justify-center")}>
           <Link
             href="/"
-            className="flex items-center gap-3 transition-opacity hover:opacity-80"
+            className={cn(
+              "flex items-center gap-3 transition-opacity hover:opacity-80",
+              !collapsed && "min-w-0 flex-1"
+            )}
             title="MARES"
           >
             <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-accent text-primary">
               <Logo className="size-6 shrink-0" />
             </span>
             {!collapsed && (
-              <span className="flex min-w-0 flex-col leading-tight">
-                <span className="text-lg font-bold tracking-tight text-primary">MARES</span>
-                <span className="text-[11px] text-muted-foreground">{tc("tagline")}</span>
+              <span className="flex min-w-0 flex-1 flex-col overflow-hidden leading-tight">
+                <span className="truncate text-lg font-bold tracking-tight text-primary">MARES</span>
+                <span className="line-clamp-2 text-[11px] text-muted-foreground">{tc("tagline")}</span>
               </span>
             )}
           </Link>
+        </div>
           {!collapsed && (
             <button
               type="button"
@@ -151,7 +155,6 @@ export function Sidebar({
               <PanelLeftClose className="size-4" />
             </button>
           )}
-        </div>
 
         {collapsed && (
           <button

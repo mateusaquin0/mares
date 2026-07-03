@@ -1,9 +1,10 @@
 import Link from "next/link"
 import { getTranslations } from "next-intl/server"
 
+import { AlertTriangle } from "lucide-react"
+
 import { createClient } from "@/lib/supabase/server"
 import { SetPasswordForm } from "./set-password-form"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 
 // Server Component: valida a sessão criada pela rota /auth/confirm de forma confiável
 // (sem depender do SDK de auth no navegador).
@@ -17,26 +18,25 @@ export default async function SetPasswordPage() {
     const t = await getTranslations("setPassword")
     const tc = await getTranslations("common")
     return (
-      <Card className="w-full max-w-sm">
-        <CardHeader>
-          <CardTitle className="text-xl">{t("invalidTitle")}</CardTitle>
-          <CardDescription>{t("invalidDescription")}</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-2">
-          <Link
-            href="/auth/forgot-password"
-            className="block text-sm font-medium text-primary hover:underline"
-          >
+      <div className="text-center">
+        <span className="mb-5 inline-flex size-16 items-center justify-center rounded-full bg-destructive/10 text-destructive">
+          <AlertTriangle className="size-8" />
+        </span>
+        <h2 className="mb-2.5 text-2xl font-semibold tracking-tight text-foreground">
+          {t("invalidTitle")}
+        </h2>
+        <p className="mx-auto mb-7 max-w-sm text-sm leading-relaxed text-muted-foreground">
+          {t("invalidDescription")}
+        </p>
+        <div className="flex flex-col items-center gap-2 text-sm font-semibold">
+          <Link href="/auth/forgot-password" className="text-accent-foreground hover:underline">
             {t("requestNew")}
           </Link>
-          <Link
-            href="/login"
-            className="block text-sm font-medium text-primary hover:underline"
-          >
+          <Link href="/login" className="text-accent-foreground hover:underline">
             {tc("backToLogin")}
           </Link>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     )
   }
 

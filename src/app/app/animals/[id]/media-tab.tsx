@@ -93,29 +93,29 @@ export function MediaTab({ animalId, isOrgAdmin }: { animalId: string; isOrgAdmi
           {items.map((m) => {
             const isImage = m.mimeType.startsWith("image/")
             return (
-              <div key={m.id} className="group relative overflow-hidden rounded-md border">
+              <div key={m.id} className="group relative overflow-hidden rounded-xl border bg-card shadow-card transition-all duration-150 hover:-translate-y-0.5 hover:shadow-card-hover">
                 <a
                   href={m.url ?? "#"}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="block aspect-square bg-muted"
+                  className="block aspect-[4/3] bg-muted"
                 >
                   {isImage && m.url ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={m.url} alt={m.label ?? ""} className="size-full object-cover" />
                   ) : (
                     <span className="flex size-full flex-col items-center justify-center gap-2 text-muted-foreground">
-                      <FileText className="size-10" />
-                      <span className="text-xs">{t("pdf")}</span>
+                      <FileText className="size-8 text-destructive/60" />
+                      <span className="text-[11px] font-medium uppercase tracking-wider">PDF</span>
                     </span>
                   )}
                 </a>
-                <div className="flex items-center justify-between gap-1 p-2">
+                <div className="flex items-center justify-between gap-1 border-t p-2.5">
                   <div className="min-w-0">
                     <p className="truncate text-xs font-medium" title={m.label ?? ""}>
                       {m.label || t("noLabel")}
                     </p>
-                    <p className="text-[10px] text-muted-foreground">{fmtDate(m.createdAt)}</p>
+                    <p className="mt-0.5 text-[10px] text-muted-foreground">{fmtDate(m.createdAt)}</p>
                   </div>
                   {isOrgAdmin && (
                     <Button

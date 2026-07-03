@@ -74,6 +74,9 @@ export function AnalysesTab({ animalId }: { animalId: string }) {
       DEGRADED: ts("statusDegraded"),
     })[s] ?? s
 
+  const resultVariant = (r: string | null): "positive" | "negative" | "inconclusive" | "outline" =>
+    r === "POSITIVO" ? "positive" : r === "NEGATIVO" ? "negative" : r === "INCONCLUSIVO" ? "inconclusive" : "outline"
+
   async function save(sample: SampleLite, entry: ProtocolEntry, patch: Partial<Cell>) {
     const k = keyOf(sample.id, entry.pathogenId, entry.examTypeId)
     const prev = getCell(k)
@@ -143,26 +146,44 @@ export function AnalysesTab({ animalId }: { animalId: string }) {
                             {txt(locale, entry.examType.name)}
                           </TableCell>
                           <TableCell>
-                            <Select
-                              value={cell.result ?? UNTESTED}
-                              onValueChange={(v) =>
-                                save(sample, entry, {
-                                  result: v === UNTESTED ? null : (v as ResultValue),
-                                })
-                              }
-                            >
-                              <SelectTrigger className="h-8">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value={UNTESTED}>{t("resultUntested")}</SelectItem>
-                                <SelectItem value="POSITIVO">{t("resultPositive")}</SelectItem>
-                                <SelectItem value="NEGATIVO">{t("resultNegative")}</SelectItem>
-                                <SelectItem value="INCONCLUSIVO">
-                                  {t("resultInconclusive")}
-                                </SelectItem>
-                              </SelectContent>
-                            </Select>
+                            <div className="flex items-center gap-2">
+                              {cell.result && (
+                                <Badge variant={resultVariant(cell.result)} className="pointer-events-none px-0 py-0 size-2.5 rounded-full border-0" />
+                              )}
+                              <Select
+                                value={cell.result ?? UNTESTED}
+                                onValueChange={(v) =>
+                                  save(sample, entry, {
+                                    result: v === UNTESTED ? null : (v as ResultValue),
+                                  })
+                                }
+                              >
+                                <SelectTrigger className="h-8">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value={UNTESTED}>{t("resultUntested")}</SelectItem>
+                                  <SelectItem value="POSITIVO">
+                                    <span className="flex items-center gap-2">
+                                      <span className="size-2 rounded-full bg-[hsl(123_41%_45%)]" />
+                                      {t("resultPositive")}
+                                    </span>
+                                  </SelectItem>
+                                  <SelectItem value="NEGATIVO">
+                                    <span className="flex items-center gap-2">
+                                      <span className="size-2 rounded-full bg-muted-foreground/40" />
+                                      {t("resultNegative")}
+                                    </span>
+                                  </SelectItem>
+                                  <SelectItem value="INCONCLUSIVO">
+                                    <span className="flex items-center gap-2">
+                                      <span className="size-2 rounded-full bg-[hsl(35_80%_50%)]" />
+                                      {t("resultInconclusive")}
+                                    </span>
+                                  </SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
                           </TableCell>
                           <TableCell>
                             <CtInput

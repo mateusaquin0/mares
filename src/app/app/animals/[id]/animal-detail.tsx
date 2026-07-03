@@ -1,14 +1,17 @@
 "use client"
 
-import { type ReactNode } from "react"
+import { type ReactNode, useState } from "react"
 import Link from "next/link"
 import { useLocale, useTranslations } from "next-intl"
-import { ArrowLeft } from "lucide-react"
+import { ArrowLeft, Fish, Pencil } from "lucide-react"
 
 import { useAnimal } from "@/hooks/use-animals"
+import { useResearchList } from "@/hooks/use-research"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { AnimalFormDialog } from "../animal-form"
 import { SamplesTab } from "./samples-tab"
 import { AnalysesTab } from "./analyses-tab"
 import { MediaTab } from "./media-tab"
@@ -21,6 +24,9 @@ export function AnimalDetail({ id, isOrgAdmin }: { id: string; isOrgAdmin: boole
   const animalQ = useAnimal(id)
   const animal = animalQ.data ?? null
   const loading = animalQ.isLoading
+  const [editing, setEditing] = useState(false)
+  const researchQ = useResearchList()
+  const researches = (researchQ.data ?? []).map((r) => ({ id: r.id, name: r.name }))
 
   const sexLabel = (s: string | null) =>
     s === "M" ? t("sexMale") : s === "F" ? t("sexFemale") : s === "U" ? t("sexUndetermined") : s
@@ -80,17 +86,38 @@ export function AnimalDetail({ id, isOrgAdmin }: { id: string; isOrgAdmin: boole
         {t("back")}
       </Link>
 
-      <div className="flex flex-wrap items-center gap-3">
-        <h1 className="text-3xl font-semibold italic tracking-tight">{animal.species}</h1>
-        <Badge variant={animal.isPublic ? "default" : "secondary"}>
-          {animal.isPublic ? t("public") : t("hidden")}
-        </Badge>
-        <Link
-          href={`/app/research/${animal.research.id}`}
-          className="text-sm text-muted-foreground hover:underline"
-        >
-          {animal.research.name}
-        </Link>
+      <div className="flex items-start gap-4">
+        <span className="flex size-14 shrink-0 items-center justify-center rounded-xl bg-accent text-accent-foreground">
+          <Fish className="size-7" />
+        </span>
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-3">
+            <h1 className="text-2xl font-semibold italic tracking-tight">{animal.species}</h1>
+            <Badge variant={animal.isPublic ? "public" : "private"}>
+              {animal.isPublic ? t("public") : t("hidden")}
+            </Badge>
+          </div>
+          <p className="mt-1 flex flex-wrap items-center gap-x-2 text-sm text-muted-foreground">
+            {[animal.controlId, [animal.municipality, animal.state].filter(Boolean).join(", ")]
+              .filter(Boolean)
+              .join(" · ")}
+            {(animal.controlId || animal.municipality || animal.state) && (
+              <span aria-hidden>·</span>
+            )}
+            <Link
+              href={`/app/research/${animal.research.id}`}
+              className="text-accent-foreground hover:underline"
+            >
+              {animal.research.name}
+            </Link>
+          </p>
+        </div>
+        <div className="flex shrink-0 items-center gap-2">
+          <Button variant="outline" size="sm" onClick={() => setEditing(true)}>
+            <Pencil className="size-4" />
+            {tc("edit")}
+          </Button>
+        </div>
       </div>
 
       <Tabs defaultValue="info">
@@ -160,6 +187,20 @@ export function AnimalDetail({ id, isOrgAdmin }: { id: string; isOrgAdmin: boole
           </Card>
         </TabsContent>
       </Tabs>
+
+      <AnimalFormDialog
+        open={editing}
+        mode="edit"
+        animalId={id}
+        researches={researches}
+        defaultResearchId={animal.research.id}
+        isOrgAdmin={isOrgAdmin}
+        onOpenChange={setEditing}
+        onSaved={() => {
+          setEditing(false)
+          animalQ.refetch()
+        }}
+      />
     </div>
   )
 }

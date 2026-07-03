@@ -2,10 +2,11 @@
 
 import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
-import { MoreHorizontal } from "lucide-react";
+import { Fish, Globe, Lock, MoreHorizontal } from "lucide-react";
 
 import type { AnimalListItem } from "@/types/animal";
 import { useTable } from "@/lib/use-table";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -67,6 +68,7 @@ export function AnimalsTable({
       location: locationOf,
       date: (a) => a.eventDate ?? "",
       research: (a) => a.research.name,
+      isPublic: (a) => a.isPublic ? "1" : "0",
       samples: (a) => a._count.samples,
     },
     search: (a) =>
@@ -135,6 +137,13 @@ export function AnimalsTable({
                 {t("colResearch")}
               </SortableHead>
               <SortableHead
+                sortKey="isPublic"
+                sort={table.sort}
+                onToggle={table.toggleSort}
+              >
+                {t("colVisibility")}
+              </SortableHead>
+              <SortableHead
                 sortKey="samples"
                 sort={table.sort}
                 onToggle={table.toggleSort}
@@ -149,7 +158,7 @@ export function AnimalsTable({
             {table.rows.length === 0 ? (
               <TableRow>
                 <TableCell
-                  colSpan={8}
+                  colSpan={9}
                   className="text-center text-sm text-muted-foreground"
                 >
                   {tc("noResults")}
@@ -170,7 +179,12 @@ export function AnimalsTable({
                       )}
                     </Link>
                   </TableCell>
-                  <TableCell className="italic">{a.species}</TableCell>
+                  <TableCell>
+                    <span className="flex items-center gap-2">
+                      <Fish className="size-4 shrink-0 text-accent-foreground" />
+                      <span className="italic">{a.species}</span>
+                    </span>
+                  </TableCell>
                   <TableCell className="text-muted-foreground">
                     {sexLabel(a.sex)}
                   </TableCell>
@@ -182,6 +196,19 @@ export function AnimalsTable({
                   </TableCell>
                   <TableCell className="text-muted-foreground">
                     {a.research.name}
+                  </TableCell>
+                  <TableCell>
+                    {a.isPublic ? (
+                      <Badge variant="public" className="gap-1">
+                        <Globe className="size-3" />
+                        {t("public")}
+                      </Badge>
+                    ) : (
+                      <Badge variant="private" className="gap-1">
+                        <Lock className="size-3" />
+                        {t("private")}
+                      </Badge>
+                    )}
                   </TableCell>
                   <TableCell className="text-right">
                     {a._count.samples}

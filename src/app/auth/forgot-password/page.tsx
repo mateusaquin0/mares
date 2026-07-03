@@ -10,10 +10,11 @@ import { useTranslations } from "next-intl"
 
 import { createClient } from "@/lib/supabase/client"
 import { forgotPasswordSchema, type ForgotPasswordData } from "@/schemas/auth.schema"
+import { MailCheck } from "lucide-react"
+
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 
 export default function ForgotPasswordPage() {
   const t = useTranslations("forgotPassword")
@@ -44,45 +45,44 @@ export default function ForgotPasswordPage() {
 
   if (sent) {
     return (
-      <Card className="w-full max-w-sm">
-        <CardHeader>
-          <CardTitle className="text-xl">{t("sentTitle")}</CardTitle>
-          <CardDescription>{t("sentDescription")}</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Link href="/login" className="text-sm font-medium text-primary hover:underline">
-            {tc("backToLogin")}
-          </Link>
-        </CardContent>
-      </Card>
+      <div className="text-center">
+        <span className="mb-5 inline-flex size-16 items-center justify-center rounded-full bg-[hsl(var(--bio)/0.14)] text-[hsl(123_44%_30%)]">
+          <MailCheck className="size-8" />
+        </span>
+        <h2 className="mb-2.5 text-2xl font-semibold tracking-tight text-foreground">
+          {t("sentTitle")}
+        </h2>
+        <p className="mx-auto mb-7 max-w-sm text-sm leading-relaxed text-muted-foreground">
+          {t("sentDescription")}
+        </p>
+        <Button variant="outline" asChild>
+          <Link href="/login">{tc("backToLogin")}</Link>
+        </Button>
+      </div>
     )
   }
 
   return (
-    <Card className="w-full max-w-sm">
-      <CardHeader>
-        <CardTitle className="text-xl">{t("title")}</CardTitle>
-        <CardDescription>{t("description")}</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="email">{tc("email")}</Label>
-            <Input id="email" type="email" autoComplete="email" {...register("email")} />
-            {errors.email && (
-              <p className="text-sm text-destructive">{tval(errors.email.message!)}</p>
-            )}
-          </div>
-          <Button type="submit" className="w-full" loading={loading}>
-            {t("submit")}
-          </Button>
-        </form>
-        <p className="mt-4 text-center text-sm text-muted-foreground">
-          <Link href="/login" className="font-medium text-primary hover:underline">
-            {tc("backToLogin")}
-          </Link>
-        </p>
-      </CardContent>
-    </Card>
+    <div>
+      <h2 className="text-2xl font-semibold tracking-tight text-foreground">{t("title")}</h2>
+      <p className="mt-1.5 mb-7 text-sm text-muted-foreground">{t("description")}</p>
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="email">{tc("email")}</Label>
+          <Input id="email" type="email" autoComplete="email" {...register("email")} />
+          {errors.email && (
+            <p className="text-sm text-destructive">{tval(errors.email.message!)}</p>
+          )}
+        </div>
+        <Button type="submit" className="w-full" loading={loading}>
+          {t("submit")}
+        </Button>
+      </form>
+      <p className="mt-6 text-center text-sm text-muted-foreground">
+        <Link href="/login" className="font-semibold text-accent-foreground hover:underline">
+          {tc("backToLogin")}
+        </Link>
+      </p>
+    </div>
   )
 }
