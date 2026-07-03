@@ -70,7 +70,7 @@ export function Sidebar({
   const navItems: NavItem[] = [
     { href: "/app/dashboard", label: t("dashboard"), icon: LayoutDashboard },
     { href: "/app/research", label: t("research"), icon: FlaskConical },
-    { href: "/app/map", label: t("map"), icon: Map, disabled: true },
+    { href: "/app/map", label: t("map"), icon: Map },
     { href: "/app/animals", label: t("animals"), icon: Fish },
   ]
   if (activeOrg?.role === "ORG_ADMIN") {
