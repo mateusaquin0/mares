@@ -21,6 +21,8 @@ export type SimbaRecord = {
   simbaRecordNumber: string
   species: string | null
   eventDate: string | null // ISO (yyyy-mm-dd) quando possível
+  // Data de necrópsia: do SIMBA `measurementDeterminedDate` (vem em DD/MM/YYYY).
+  necropsyDate: string | null // ISO (yyyy-mm-dd)
   strandingLat: number | null
   strandingLon: number | null
   strandingBeach: string | null
@@ -28,6 +30,9 @@ export type SimbaRecord = {
   state: string | null
   sex: string // código do form: "F" | "M" | "U" (indeterminado quando ausente)
   lifeStage: string // código do form: FETUS|PUP|JUVENILE|ADULT|UNDETERMINED
+  // "Exame externo": texto livre de observações (occurrenceRemarks). Os demais campos
+  // de necrópsia (condição da carcaça/escore/morte) NÃO são exportados pela API do SIMBA.
+  macroscopicNotes: string | null
 }
 
 function endpointFor(recordNumber: string): string {
@@ -118,6 +123,15 @@ function toEventDate(v: string | null): string | null {
   return Number.isNaN(d.getTime()) ? null : d.toISOString().slice(0, 10)
 }
 
+/** Normaliza uma data brasileira (DD/MM/YYYY, como em measurementDeterminedDate) para ISO. */
+function toBrDate(v: string | null): string | null {
+  if (!v) return null
+  const m = v.trim().match(/^(\d{2})\/(\d{2})\/(\d{4})/)
+  if (m) return `${m[3]}-${m[2]}-${m[1]}`
+  // Fallback: se já vier em ISO.
+  return toEventDate(v)
+}
+
 /** Faz o parse de um XML Darwin Core (SimpleDarwinRecordSet) em SimbaRecord. */
 export function parseDarwinCore(xml: string, recordNumber: string): SimbaRecord {
   // No SIMBA, recordNumber é o identificador; occurrenceID é uma URN longa.
@@ -126,6 +140,7 @@ export function parseDarwinCore(xml: string, recordNumber: string): SimbaRecord 
     simbaRecordNumber: firstTerm(r, ["recordNumber", "catalogNumber", "occurrenceID"]) ?? recordNumber,
     species: firstTerm(r, ["scientificName"]),
     eventDate: toEventDate(firstTerm(r, ["eventDate"])),
+    necropsyDate: toBrDate(firstTerm(r, ["measurementDeterminedDate"])),
     strandingLat: toFloat(firstTerm(r, ["decimalLatitude"])),
     strandingLon: toFloat(firstTerm(r, ["decimalLongitude"])),
     strandingBeach: firstTerm(r, ["locality", "verbatimLocality"]),
@@ -133,6 +148,7 @@ export function parseDarwinCore(xml: string, recordNumber: string): SimbaRecord 
     state: firstTerm(r, ["stateProvince"]),
     sex: normalizeSex(firstTerm(r, ["sex"])),
     lifeStage: normalizeLifeStage(firstTerm(r, ["lifeStage"])),
+    macroscopicNotes: firstTerm(r, ["occurrenceRemarks"]),
   }
 }
 

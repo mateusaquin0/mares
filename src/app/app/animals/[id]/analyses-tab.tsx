@@ -6,8 +6,8 @@ import { toast } from "sonner"
 
 import { pathogenName, txt } from "@/lib/catalog-i18n"
 import { useErrorMessage } from "@/lib/use-error-message"
-import { analysesService } from "@/services/analyses"
 import { useAnimalGrid } from "@/hooks/use-animals"
+import { useUpsertAnalysis } from "@/hooks/use-analyses"
 import type {
   AnalysisCell as Cell,
   ProtocolEntry,
@@ -47,6 +47,7 @@ export function AnalysesTab({ animalId }: { animalId: string }) {
   const gridQ = useAnimalGrid(animalId)
   const grid = gridQ.data ?? null
   const loading = gridQ.isLoading
+  const upsertM = useUpsertAnalysis()
   const [cells, setCells] = useState<Record<string, Cell>>({})
 
   // Sincroniza o mapa de células (editável, com update otimista) com a grade carregada.
@@ -80,7 +81,7 @@ export function AnalysesTab({ animalId }: { animalId: string }) {
     setCells((c) => ({ ...c, [k]: next }))
 
     try {
-      await analysesService.upsert({
+      await upsertM.mutateAsync({
         sampleId: sample.id,
         pathogenId: entry.pathogenId,
         examTypeId: entry.examTypeId,

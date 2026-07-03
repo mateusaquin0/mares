@@ -10,6 +10,10 @@ export type CatalogItemPayload = {
   nameEn?: string
   groupId?: string
   scientificName?: string
+  // Táxon (NCBI) do patógeno — preenchido pelo autocomplete do nome científico.
+  taxonFamily?: string
+  taxonOrder?: string
+  taxonId?: number | null
 }
 
 export const catalogService = {

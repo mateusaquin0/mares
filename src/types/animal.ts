@@ -34,6 +34,8 @@ export type AnimalDetail = {
   lifeStage: string | null
   bodyCondition: string | null
   decompositionStage: string | null
+  deathCondition: string | null
+  necropsyDate: string | null
   strandingLat: number | null
   strandingLon: number | null
   strandingBeach: string | null
@@ -76,6 +78,7 @@ export type SimbaLookup = {
   taxonFamily: string | null
   taxonOrder: string | null
   eventDate: string | null
+  necropsyDate: string | null
   strandingLat: number | null
   strandingLon: number | null
   strandingBeach: string | null
@@ -83,4 +86,5 @@ export type SimbaLookup = {
   state: string | null
   sex: string
   lifeStage: string
+  macroscopicNotes: string | null
 }

@@ -1,20 +1,39 @@
-// MARES — Editar / remover uma entrada de catálogo global. Restrito ao admin global.
-// A remoção é bloqueada (409) se a entrada estiver em uso (protocolos / amostras / análises).
+// MARES — Editar / remover uma entrada de catálogo global.
+// Permissão: admin global sempre; senão, o CRIADOR do item enquanto ele não estiver
+// em uso (protocolos / amostras / análises). A remoção é sempre bloqueada (409) se em uso.
 
 import { NextRequest, NextResponse } from "next/server"
-import { getAuthUser, requireSystemAdmin } from "@/lib/auth"
+import { Prisma } from "@prisma/client"
+import { getAuthUser } from "@/lib/auth"
 import { apiError, unauthorized } from "@/lib/api"
 import { isCatalogType, nameI18nSchema } from "@/schemas/catalog.schema"
 import {
-  catalogExists,
   updateNamed,
   updatePathogenEntry,
   resolvePathogen,
   deleteCatalog,
   catalogUsage,
+  catalogCreatedBy,
+  canModifyCatalog,
 } from "@/lib/catalog"
-import { NotFoundError, ConflictError } from "@/lib/errors"
+import { NotFoundError, ConflictError, ForbiddenError } from "@/lib/errors"
 import { ERROR_CODES } from "@/lib/error-codes"
+import type { CatalogType } from "@/schemas/catalog.schema"
+
+// Carrega o item e valida a permissão de modificação (edição/exclusão) do usuário.
+async function assertCanModify(
+  user: { id: string; isSystemAdmin: boolean },
+  type: CatalogType,
+  id: string
+): Promise<number> {
+  const row = await catalogCreatedBy(type, id)
+  if (!row) throw new NotFoundError("Entrada não encontrada", ERROR_CODES.catalogNotFound)
+  const usage = await catalogUsage(type, id)
+  if (!canModifyCatalog({ isSystemAdmin: user.isSystemAdmin, createdById: row.createdById, userId: user.id, usage })) {
+    throw new ForbiddenError("Sem permissão para alterar este item", ERROR_CODES.forbidden)
+  }
+  return usage
+}
 
 export async function PUT(
   req: NextRequest,
@@ -23,28 +42,34 @@ export async function PUT(
   try {
     const user = await getAuthUser()
     if (!user) return unauthorized()
-    requireSystemAdmin(user)
 
     const { type, id } = await params
     if (!isCatalogType(type)) throw new NotFoundError("Catálogo inválido", ERROR_CODES.catalogNotFound)
-    if (!(await catalogExists(type, id)))
-      throw new NotFoundError("Entrada não encontrada", ERROR_CODES.catalogNotFound)
+    await assertCanModify(user, type, id)
 
     const body = await req.json().catch(() => null)
 
-    if (type === "pathogens") {
-      const p = await resolvePathogen(body)
-      const updated = await updatePathogenEntry(id, {
-        groupId: p.groupId,
-        scientificName: p.scientificName,
-        name: p.name,
-      })
-      return NextResponse.json(updated)
-    }
+    try {
+      if (type === "pathogens") {
+        const p = await resolvePathogen(body)
+        const updated = await updatePathogenEntry(id, {
+          groupId: p.groupId,
+          scientificName: p.scientificName,
+          name: p.name,
+          taxon: p.taxon,
+        })
+        return NextResponse.json(updated)
+      }
 
-    const data = nameI18nSchema.parse(body)
-    const updated = await updateNamed(type, id, { pt: data.namePt.trim(), en: data.nameEn.trim() })
-    return NextResponse.json(updated)
+      const data = nameI18nSchema.parse(body)
+      const updated = await updateNamed(type, id, { pt: data.namePt.trim(), en: data.nameEn.trim() })
+      return NextResponse.json(updated)
+    } catch (e) {
+      if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
+        throw new ConflictError("Já existe um item com esse nome", ERROR_CODES.catalogDuplicate)
+      }
+      throw e
+    }
   } catch (err) {
     return apiError(err)
   }
@@ -57,14 +82,13 @@ export async function DELETE(
   try {
     const user = await getAuthUser()
     if (!user) return unauthorized()
-    requireSystemAdmin(user)
 
     const { type, id } = await params
     if (!isCatalogType(type)) throw new NotFoundError("Catálogo inválido", ERROR_CODES.catalogNotFound)
-    if (!(await catalogExists(type, id)))
-      throw new NotFoundError("Entrada não encontrada", ERROR_CODES.catalogNotFound)
+    const usage = await assertCanModify(user, type, id)
 
-    if ((await catalogUsage(type, id)) > 0) {
+    // Bloqueio adicional: mesmo o admin global não remove um item em uso.
+    if (usage > 0) {
       throw new ConflictError("Entrada em uso; não pode ser removida", ERROR_CODES.catalogInUse)
     }
 

@@ -10,8 +10,7 @@ import { Badge } from "@/components/ui/badge"
 import { ConfirmDialog } from "@/components/confirm-dialog"
 import { useErrorMessage } from "@/lib/use-error-message"
 import { useTable } from "@/lib/use-table"
-import { adminService } from "@/services/admin"
-import { useAdminUsers } from "@/hooks/use-admin"
+import { useAdminUsers, useRemoveUser } from "@/hooks/use-admin"
 import type { AdminUser } from "@/types/admin"
 import {
   Table,
@@ -31,6 +30,7 @@ export default function AdminUsersPage() {
   const usersQ = useAdminUsers()
   const users = usersQ.data ?? []
   const loading = usersQ.isLoading
+  const removeM = useRemoveUser()
   const [busy, setBusy] = useState<string | null>(null)
 
   const orgsText = useCallback(
@@ -63,9 +63,8 @@ export default function AdminUsersPage() {
   async function remove(u: AdminUser) {
     setBusy(u.id)
     try {
-      await adminService.removeUser(u.id)
+      await removeM.mutateAsync(u.id)
       toast.success(t("deleted"))
-      usersQ.refetch()
     } catch (err) {
       toast.error(t("deleteError"), { description: em(err) })
     } finally {
@@ -74,9 +73,9 @@ export default function AdminUsersPage() {
   }
 
   return (
-    <div className="space-y-6 p-8">
+    <div className="mx-auto max-w-6xl space-y-6 p-8">
       <div>
-        <h1 className="text-2xl font-bold">{t("title")}</h1>
+        <h1 className="text-3xl font-semibold tracking-tight">{t("title")}</h1>
         <p className="mt-1 text-sm text-muted-foreground">{t("subtitle")}</p>
       </div>
 
@@ -92,7 +91,7 @@ export default function AdminUsersPage() {
             placeholder={tc("search")}
             className="max-w-sm"
           />
-          <div className="rounded-md border">
+          <div className="overflow-hidden rounded-xl border bg-card shadow-card">
             <Table>
               <TableHeader>
                 <TableRow>

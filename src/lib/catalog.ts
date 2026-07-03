@@ -24,27 +24,45 @@ export function slugify(s: string): string {
 // ── Órgão / Exame (name JSON) ───────────────────────────────────────────────
 
 export type NamedType = "organs" | "exam-types"
-export type NamedRow = { id: string; key: string; name: Prisma.JsonValue }
-
-const namedSelect = { id: true, key: true, name: true }
-
-export async function listNamed(type: NamedType): Promise<NamedRow[]> {
-  return type === "organs"
-    ? prisma.organ.findMany({ orderBy: { key: "asc" }, select: namedSelect })
-    : prisma.examType.findMany({ orderBy: { key: "asc" }, select: namedSelect })
+export type NamedRow = {
+  id: string
+  key: string
+  name: Prisma.JsonValue
+  createdById: string | null
+  inUse: boolean
 }
 
-export async function createNamed(type: NamedType, key: string, name: I18n): Promise<NamedRow> {
-  const data = { key, name }
-  return type === "organs"
-    ? prisma.organ.create({ data, select: namedSelect })
-    : prisma.examType.create({ data, select: namedSelect })
+const namedSelect = { id: true, key: true, name: true, createdById: true }
+
+export async function listNamed(type: NamedType): Promise<NamedRow[]> {
+  const rows =
+    type === "organs"
+      ? await prisma.organ.findMany({ orderBy: { key: "asc" }, select: namedSelect })
+      : await prisma.examType.findMany({ orderBy: { key: "asc" }, select: namedSelect })
+  const used = await catalogUsedIds(type)
+  return rows.map((r) => ({ ...r, inUse: used.has(r.id) }))
+}
+
+export async function createNamed(
+  type: NamedType,
+  key: string,
+  name: I18n,
+  createdById: string
+): Promise<NamedRow> {
+  const data = { key, name, createdById }
+  const row =
+    type === "organs"
+      ? await prisma.organ.create({ data, select: namedSelect })
+      : await prisma.examType.create({ data, select: namedSelect })
+  return { ...row, inUse: false }
 }
 
 export async function updateNamed(type: NamedType, id: string, name: I18n): Promise<NamedRow> {
-  return type === "organs"
-    ? prisma.organ.update({ where: { id }, data: { name }, select: namedSelect })
-    : prisma.examType.update({ where: { id }, data: { name }, select: namedSelect })
+  const row =
+    type === "organs"
+      ? await prisma.organ.update({ where: { id }, data: { name }, select: namedSelect })
+      : await prisma.examType.update({ where: { id }, data: { name }, select: namedSelect })
+  return { ...row, inUse: (await catalogUsage(type, id)) > 0 }
 }
 
 // ── Patógeno + Grupo ────────────────────────────────────────────────────────
@@ -60,7 +78,12 @@ export type PathogenRow = {
   key: string
   scientificName: string | null
   name: Prisma.JsonValue | null
+  taxonFamily: string | null
+  taxonOrder: string | null
+  taxonId: number | null
+  createdById: string | null
   group: PathogenGroupRow
+  inUse: boolean
 }
 
 const pathogenSelect = {
@@ -68,6 +91,10 @@ const pathogenSelect = {
   key: true,
   scientificName: true,
   name: true,
+  taxonFamily: true,
+  taxonOrder: true,
+  taxonId: true,
+  createdById: true,
   group: { select: { id: true, key: true, name: true, usesScientificName: true } },
 } satisfies Prisma.PathogenSelect
 
@@ -88,10 +115,19 @@ export async function findPathogenGroup(
 }
 
 export async function listPathogens(): Promise<PathogenRow[]> {
-  return prisma.pathogen.findMany({
+  const rows = await prisma.pathogen.findMany({
     orderBy: [{ group: { key: "asc" } }, { scientificName: "asc" }],
     select: pathogenSelect,
   })
+  const used = await catalogUsedIds("pathogens")
+  return rows.map((r) => ({ ...r, inUse: used.has(r.id) }))
+}
+
+// Táxon do patógeno (NCBI): família/ordem/TaxId. Só faz sentido para grupos científicos.
+export type PathogenTaxon = {
+  taxonFamily: string | null
+  taxonOrder: string | null
+  taxonId: number | null
 }
 
 export async function createPathogenEntry(data: {
@@ -99,31 +135,46 @@ export async function createPathogenEntry(data: {
   groupId: string
   scientificName: string | null
   name: I18n | null
+  taxon: PathogenTaxon
+  createdById: string
 }): Promise<PathogenRow> {
-  return prisma.pathogen.create({
+  const row = await prisma.pathogen.create({
     data: {
       key: data.key,
       groupId: data.groupId,
       scientificName: data.scientificName,
       name: data.name ?? Prisma.DbNull,
+      taxonFamily: data.taxon.taxonFamily,
+      taxonOrder: data.taxon.taxonOrder,
+      taxonId: data.taxon.taxonId,
+      createdById: data.createdById,
     },
     select: pathogenSelect,
   })
+  return { ...row, inUse: false }
 }
 
 export async function updatePathogenEntry(
   id: string,
-  data: { groupId: string; scientificName: string | null; name: I18n | null }
+  data: { groupId: string; scientificName: string | null; name: I18n | null; taxon: PathogenTaxon }
 ): Promise<PathogenRow> {
-  return prisma.pathogen.update({
+  const row = await prisma.pathogen.update({
     where: { id },
     data: {
       groupId: data.groupId,
       scientificName: data.scientificName,
       name: data.name ?? Prisma.DbNull,
+      taxonFamily: data.taxon.taxonFamily,
+      taxonOrder: data.taxon.taxonOrder,
+      taxonId: data.taxon.taxonId,
     },
     select: pathogenSelect,
   })
+  const [p, a] = await Promise.all([
+    prisma.researchProtocol.count({ where: { pathogenId: id } }),
+    prisma.analysis.count({ where: { pathogenId: id } }),
+  ])
+  return { ...row, inUse: p + a > 0 }
 }
 
 // Valida o corpo do patógeno conforme o grupo (científico exige scientificName; comum exige
@@ -132,6 +183,7 @@ export async function resolvePathogen(body: unknown): Promise<{
   groupId: string
   scientificName: string | null
   name: I18n | null
+  taxon: PathogenTaxon
   keySource: string
 }> {
   const data = pathogenSchema.parse(body)
@@ -141,12 +193,18 @@ export async function resolvePathogen(body: unknown): Promise<{
   if (group.usesScientificName) {
     const sci = data.scientificName?.trim()
     if (!sci) throw new ValidationError("Nome científico é obrigatório", ERROR_CODES.catalogNameRequired)
-    return { groupId: group.id, scientificName: sci, name: null, keySource: sci }
+    const taxon: PathogenTaxon = {
+      taxonFamily: data.taxonFamily?.trim() || null,
+      taxonOrder: data.taxonOrder?.trim() || null,
+      taxonId: data.taxonId ?? null,
+    }
+    return { groupId: group.id, scientificName: sci, name: null, taxon, keySource: sci }
   }
   const pt = data.namePt?.trim()
   const en = data.nameEn?.trim()
   if (!pt || !en) throw new ValidationError("Nome (PT e EN) é obrigatório", ERROR_CODES.catalogNameRequired)
-  return { groupId: group.id, scientificName: null, name: { pt, en }, keySource: pt }
+  const emptyTaxon: PathogenTaxon = { taxonFamily: null, taxonOrder: null, taxonId: null }
+  return { groupId: group.id, scientificName: null, name: { pt, en }, taxon: emptyTaxon, keySource: pt }
 }
 
 // ── Genéricos (todos os tipos) ──────────────────────────────────────────────
@@ -203,4 +261,50 @@ export async function catalogUsage(type: CatalogType, id: string): Promise<numbe
     prisma.analysis.count({ where: { examTypeId: id } }),
   ])
   return p + a
+}
+
+// Conjunto de ids de um tipo que já estão em uso (protocolos + amostras/análises).
+// Usado para marcar `inUse` na listagem sem uma consulta por linha.
+export async function catalogUsedIds(type: CatalogType): Promise<Set<string>> {
+  if (type === "organs") {
+    const [p, s] = await Promise.all([
+      prisma.researchProtocol.findMany({ distinct: ["organId"], select: { organId: true } }),
+      prisma.sample.findMany({ distinct: ["organId"], select: { organId: true } }),
+    ])
+    return new Set([...p.map((x) => x.organId), ...s.map((x) => x.organId)])
+  }
+  if (type === "pathogens") {
+    const [p, a] = await Promise.all([
+      prisma.researchProtocol.findMany({ distinct: ["pathogenId"], select: { pathogenId: true } }),
+      prisma.analysis.findMany({ distinct: ["pathogenId"], select: { pathogenId: true } }),
+    ])
+    return new Set([...p.map((x) => x.pathogenId), ...a.map((x) => x.pathogenId)])
+  }
+  const [p, a] = await Promise.all([
+    prisma.researchProtocol.findMany({ distinct: ["examTypeId"], select: { examTypeId: true } }),
+    prisma.analysis.findMany({ distinct: ["examTypeId"], select: { examTypeId: true } }),
+  ])
+  return new Set([...p.map((x) => x.examTypeId), ...a.map((x) => x.examTypeId)])
+}
+
+/** Autor do item (para checagem de permissão). null = existe sem autor; undefined = não existe. */
+export async function catalogCreatedBy(
+  type: CatalogType,
+  id: string
+): Promise<{ createdById: string | null } | null> {
+  const args = { where: { id }, select: { createdById: true } }
+  if (type === "organs") return prisma.organ.findUnique(args)
+  if (type === "pathogens") return prisma.pathogen.findUnique(args)
+  return prisma.examType.findUnique(args)
+}
+
+/** Regra de edição/exclusão: admin global sempre; senão, o criador enquanto não usado. */
+export function canModifyCatalog(opts: {
+  isSystemAdmin: boolean
+  createdById: string | null
+  userId: string
+  usage: number
+}): boolean {
+  if (opts.isSystemAdmin) return true
+  return !!opts.createdById && opts.createdById === opts.userId && opts.usage === 0
 }

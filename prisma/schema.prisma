@@ -151,11 +151,15 @@ model ResearchProtocol {
 // novos idiomas sem migration. Patógeno é nome científico (latim, universal) → `name` texto
 // simples; só o `group` é traduzível. Ver docs/I18N.md §catálogos.
 model Organ {
-  id        String             @id @default(uuid())
-  key       String             @unique // ex: "encefalo"
-  name      Json // { pt: "Encéfalo", en: "Brain" }
-  protocols ResearchProtocol[]
-  samples   Sample[]
+  id          String             @id @default(uuid())
+  key         String             @unique // ex: "encefalo"
+  name        Json // { pt: "Encéfalo", en: "Brain" }
+  // Autor do item; o criador edita/exclui enquanto não usado (ver docs/PERMISSOES.md).
+  createdById String?            @map("created_by_id")
+  protocols   ResearchProtocol[]
+  samples     Sample[]
+
+  @@index([createdById])
 }
 
 // Grupo de patógeno (vocabulário controlado): bactérias, fungos, protozoários, vírus,
@@ -179,18 +183,27 @@ model Pathogen {
   // scientificName ?? name[locale].
   scientificName String?            @map("scientific_name")
   name           Json?
+  // Táxon (NCBI Taxonomy) — preenchido pelo autocomplete do nome científico. taxonId = TaxId.
+  taxonFamily    String?            @map("taxon_family")
+  taxonOrder     String?            @map("taxon_order")
+  taxonId        Int?               @map("taxon_id")
+  createdById    String?            @map("created_by_id")
   protocols      ResearchProtocol[]
   analyses       Analysis[]
 
   @@index([groupId])
+  @@index([createdById])
 }
 
 model ExamType {
-  id        String             @id @default(uuid())
-  key       String             @unique // ex: "npcr"
-  name      Json // { pt: "nPCR", en: "nested PCR (nPCR)" }
-  protocols ResearchProtocol[]
-  analyses  Analysis[]
+  id          String             @id @default(uuid())
+  key         String             @unique // ex: "npcr"
+  name        Json // { pt: "nPCR", en: "nested PCR (nPCR)" }
+  createdById String?            @map("created_by_id")
+  protocols   ResearchProtocol[]
+  analyses    Analysis[]
+
+  @@index([createdById])
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -208,8 +221,13 @@ model Animal {
   taxonOrder         String?
   sex                String?
   lifeStage          String?
-  bodyCondition      String?
-  decompositionStage String?
+  // Necrópsia — condição da carcaça / escore corporal / condição da morte.
+  // Preenchidos manualmente: a API pública do SIMBA não os exporta (só a data de
+  // necrópsia em measurementDeterminedDate e as observações em occurrenceRemarks).
+  bodyCondition      String? // "Condição da carcaça" (ex.: código 1-5)
+  decompositionStage String? // "Escore corporal"
+  deathCondition     String? // "Condição da morte" (ex.: Natural)
+  necropsyDate       DateTime?
   // lat/lon como Float; em produção, considerar PostGIS geography
   strandingLat       Float?
   strandingLon       Float?
@@ -217,7 +235,7 @@ model Animal {
   municipality       String?
   state              String?
   eventDate          DateTime?
-  macroscopicNotes   String?
+  macroscopicNotes   String? // "Exame externo" (occurrenceRemarks no SIMBA)
   source             String        @default("manual")
   isPublic           Boolean       @default(false)
   researchId         String

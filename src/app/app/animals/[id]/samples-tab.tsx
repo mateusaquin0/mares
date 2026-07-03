@@ -2,16 +2,14 @@
 
 import { useState, type FormEvent } from "react"
 import { useLocale, useTranslations } from "next-intl"
-import { useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
 import { MoreHorizontal, Plus } from "lucide-react"
 
 import { txt } from "@/lib/catalog-i18n"
 import { useErrorMessage } from "@/lib/use-error-message"
-import { samplesService, type SamplePayload } from "@/services/samples"
-import { useSamples } from "@/hooks/use-samples"
+import { type SamplePayload } from "@/services/samples"
+import { useSamples, useCreateSample, useUpdateSample, useDeleteSample } from "@/hooks/use-samples"
 import { useOrgans } from "@/hooks/use-catalog"
-import { animalKeys } from "@/hooks/use-animals"
 import type { Sample, SampleStatus } from "@/types/sample"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -82,20 +80,19 @@ export function SamplesTab({ animalId, isOrgAdmin }: { animalId: string; isOrgAd
   const tval = useTranslations("validation")
   const locale = useLocale()
   const em = useErrorMessage()
-  const qc = useQueryClient()
 
   const samplesQ = useSamples(animalId)
   const items = samplesQ.data ?? []
   const { data: organs = [] } = useOrgans()
   const loading = samplesQ.isLoading
+  const createM = useCreateSample(animalId)
+  const updateM = useUpdateSample(animalId)
+  const deleteM = useDeleteSample(animalId)
+  const saving = createM.isPending || updateM.isPending
   const [dialog, setDialog] = useState<{ mode: "create" | "edit"; row?: Sample } | null>(null)
   const [form, setForm] = useState<FormState>(emptyForm)
   const [errors, setErrors] = useState<{ organId?: boolean; sampleType?: boolean }>({})
-  const [saving, setSaving] = useState(false)
   const [confirm, setConfirm] = useState<Sample | null>(null)
-
-  // Ao mudar amostras, invalida a grade de análises (colunas dependem das amostras).
-  const invalidateGrid = () => qc.invalidateQueries({ queryKey: animalKeys.grid(animalId) })
 
   const set = (patch: Partial<FormState>) => setForm((f) => ({ ...f, ...patch }))
   const statusLabel = (s: SampleStatus) =>
@@ -142,27 +139,20 @@ export function SamplesTab({ animalId, isOrgAdmin }: { animalId: string; isOrgAd
       notes: orNull(form.notes),
     }
     const isEdit = dialog?.mode === "edit"
-    setSaving(true)
     try {
-      if (isEdit) await samplesService.update(dialog!.row!.id, payload)
-      else await samplesService.create(animalId, payload)
+      if (isEdit) await updateM.mutateAsync({ id: dialog!.row!.id, data: payload })
+      else await createM.mutateAsync(payload)
       toast.success(isEdit ? t("updated") : t("created"))
       setDialog(null)
-      samplesQ.refetch()
-      invalidateGrid()
     } catch (err) {
       toast.error(isEdit ? t("updateError") : t("createError"), { description: em(err) })
-    } finally {
-      setSaving(false)
     }
   }
 
   async function remove(row: Sample) {
     try {
-      await samplesService.remove(row.id)
+      await deleteM.mutateAsync(row.id)
       toast.success(t("deleted"))
-      samplesQ.refetch()
-      invalidateGrid()
     } catch (err) {
       toast.error(t("deleteError"), { description: em(err) })
     }

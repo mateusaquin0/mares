@@ -22,6 +22,10 @@ export const pathogenSchema = z.object({
   scientificName: z.string().max(255).optional().or(z.literal("")),
   namePt: z.string().max(255).optional().or(z.literal("")),
   nameEn: z.string().max(255).optional().or(z.literal("")),
+  // Táxon (NCBI) — preenchido pelo autocomplete do nome científico.
+  taxonFamily: z.string().max(120).optional().or(z.literal("")),
+  taxonOrder: z.string().max(120).optional().or(z.literal("")),
+  taxonId: z.number().int().nullable().optional(),
 })
 
 export function catalogBodySchema(type: CatalogType) {

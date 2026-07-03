@@ -13,7 +13,14 @@ export type PathogenItem = {
 }
 
 // ── Gestão de catálogos (CatalogManager) ─────────────────────────────────────
-export type NamedRow = { id: string; key: string; name: string | I18nText }
+// `createdById` + `inUse` alimentam a permissão de editar/excluir (criador enquanto não usado).
+export type NamedRow = {
+  id: string
+  key: string
+  name: string | I18nText
+  createdById: string | null
+  inUse: boolean
+}
 export type GroupLite = {
   id: string
   key: string
@@ -25,6 +32,11 @@ export type PathogenRow = {
   key: string
   scientificName: string | null
   name: string | I18nText | null
+  taxonFamily: string | null
+  taxonOrder: string | null
+  taxonId: number | null
+  createdById: string | null
+  inUse: boolean
   group: GroupLite
 }
 export type CatalogRow = NamedRow | PathogenRow

@@ -1,8 +1,8 @@
 // MARES — Hooks de dados de Catálogos (react-query sobre catalogService).
 
-import { useQuery } from "@tanstack/react-query"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 
-import { catalogService } from "@/services/catalog"
+import { catalogService, type CatalogItemPayload } from "@/services/catalog"
 import type { CatalogType } from "@/schemas/catalog.schema"
 
 export const catalogKeys = {
@@ -57,5 +57,32 @@ export function usePathogenGroups(enabled = true) {
     queryFn: () => catalogService.listPathogenGroups(),
     staleTime: Infinity,
     enabled,
+  })
+}
+
+// ── Mutações (CatalogManager) ────────────────────────────────────────────────
+
+export function useCreateCatalogItem(type: CatalogType) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (body: CatalogItemPayload) => catalogService.create(type, body),
+    onSuccess: () => qc.invalidateQueries({ queryKey: catalogKeys.list(type) }),
+  })
+}
+
+export function useUpdateCatalogItem(type: CatalogType) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (vars: { id: string; body: CatalogItemPayload }) =>
+      catalogService.update(type, vars.id, vars.body),
+    onSuccess: () => qc.invalidateQueries({ queryKey: catalogKeys.list(type) }),
+  })
+}
+
+export function useDeleteCatalogItem(type: CatalogType) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => catalogService.remove(type, id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: catalogKeys.list(type) }),
   })
 }

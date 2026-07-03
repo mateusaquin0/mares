@@ -2,11 +2,13 @@
 // Encapsulam cache/dedupe das requisições, evitando o double-fetch do
 // useEffect manual (React Strict Mode) e centralizando as chaves de query.
 
-import { useQuery } from "@tanstack/react-query"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 
 import { animalsService } from "@/services/animals"
+import type { CreateAnimalData, UpdateAnimalData } from "@/schemas/animal.schema"
 
 export const animalKeys = {
+  all: ["animals"] as const,
   list: (researchId?: string) => ["animals", researchId ?? null] as const,
   detail: (id: string) => ["animal", id] as const,
   grid: (id: string) => ["animal-grid", id] as const,
@@ -21,10 +23,11 @@ export function useAnimals(researchId?: string) {
   })
 }
 
-export function useAnimal(id: string) {
+export function useAnimal(id: string, enabled = true) {
   return useQuery({
     queryKey: animalKeys.detail(id),
     queryFn: () => animalsService.get(id),
+    enabled: enabled && !!id,
   })
 }
 
@@ -46,5 +49,63 @@ export function useAnimalAudit(animalId: string) {
   return useQuery({
     queryKey: animalKeys.audit(animalId),
     queryFn: () => animalsService.getAudit(animalId),
+  })
+}
+
+// ── Mutações ─────────────────────────────────────────────────────────────────
+
+export function useCreateAnimal() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (data: CreateAnimalData) => animalsService.create(data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: animalKeys.all }),
+  })
+}
+
+export function useUpdateAnimal(id: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (data: UpdateAnimalData) => animalsService.update(id, data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: animalKeys.all })
+      qc.invalidateQueries({ queryKey: animalKeys.detail(id) })
+    },
+  })
+}
+
+export function useDeleteAnimal() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => animalsService.remove(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: animalKeys.all }),
+  })
+}
+
+// Busca no SIMBA sob demanda (ação imperativa) — sem cache.
+export function useSimbaLookup() {
+  return useMutation({
+    mutationFn: (recordNumber: string) => animalsService.lookupSimba(recordNumber),
+  })
+}
+
+export function useUploadAnimalMedia(animalId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (form: FormData) => animalsService.uploadMedia(animalId, form),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: animalKeys.media(animalId) })
+      qc.invalidateQueries({ queryKey: animalKeys.detail(animalId) })
+    },
+  })
+}
+
+export function useDeleteAnimalMedia(animalId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (mediaId: string) => animalsService.removeMedia(mediaId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: animalKeys.media(animalId) })
+      qc.invalidateQueries({ queryKey: animalKeys.detail(animalId) })
+    },
   })
 }

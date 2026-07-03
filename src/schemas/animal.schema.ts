@@ -1,6 +1,6 @@
 import { z } from "zod"
 
-import { optionalText } from "@/schemas/common"
+import { optionalText, optionalDate } from "@/schemas/common"
 
 // Mensagens = chaves do namespace `validation` (resolvidas no componente). Ver docs/I18N.md.
 
@@ -27,6 +27,8 @@ export const animalBaseSchema = z.object({
   lifeStage: requiredText(60),
   bodyCondition: optionalText(60),
   decompositionStage: optionalText(60),
+  deathCondition: optionalText(60),
+  necropsyDate: optionalDate,
   strandingLat: latitude,
   strandingLon: longitude,
   strandingBeach: optionalText(255),

@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { toast } from "sonner"
+import { Mail, Lock, ArrowRight } from "lucide-react"
 
 import { useTranslations } from "next-intl"
 
@@ -58,7 +59,16 @@ function LoginForm() {
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="email">{tc("email")}</Label>
-            <Input id="email" type="email" autoComplete="email" {...register("email")} />
+            <div className="relative">
+              <Mail className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                id="email"
+                type="email"
+                autoComplete="email"
+                className="pl-9"
+                {...register("email")}
+              />
+            </div>
             {errors.email && (
               <p className="text-sm text-destructive">{tval(errors.email.message!)}</p>
             )}
@@ -73,17 +83,22 @@ function LoginForm() {
                 {t("forgot")}
               </Link>
             </div>
-            <PasswordInput
-              id="password"
-              autoComplete="current-password"
-              {...register("password")}
-            />
+            <div className="relative">
+              <Lock className="pointer-events-none absolute left-3 top-1/2 z-10 size-4 -translate-y-1/2 text-muted-foreground" />
+              <PasswordInput
+                id="password"
+                autoComplete="current-password"
+                className="pl-9"
+                {...register("password")}
+              />
+            </div>
             {errors.password && (
               <p className="text-sm text-destructive">{tval(errors.password.message!)}</p>
             )}
           </div>
           <Button type="submit" className="w-full" loading={loading}>
             {t("submit")}
+            {!loading && <ArrowRight className="size-4" />}
           </Button>
         </form>
         <p className="mt-4 text-center text-sm text-muted-foreground">

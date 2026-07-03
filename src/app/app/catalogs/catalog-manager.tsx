@@ -1,16 +1,22 @@
 "use client"
 
 import { useState } from "react"
-import { useForm } from "react-hook-form"
+import { Controller, useForm } from "react-hook-form"
 import { useLocale, useTranslations } from "next-intl"
-import { useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
-import { MoreHorizontal, Plus } from "lucide-react"
+import { MoreHorizontal, Pencil, Plus, Trash2 } from "lucide-react"
 
 import type { CatalogType } from "@/schemas/catalog.schema"
-import { catalogService } from "@/services/catalog"
-import { useCatalogList, usePathogenGroups, catalogKeys } from "@/hooks/use-catalog"
+import { useNcbiSearch } from "@/hooks/use-ncbi"
+import {
+  useCatalogList,
+  usePathogenGroups,
+  useCreateCatalogItem,
+  useUpdateCatalogItem,
+  useDeleteCatalogItem,
+} from "@/hooks/use-catalog"
 import type { CatalogRow as Row, NamedRow, PathogenRow } from "@/types/catalog"
+import { TaxonAutocomplete } from "@/components/taxon-autocomplete"
 import { txt, pathogenName, type I18nText } from "@/lib/catalog-i18n"
 import { useErrorMessage } from "@/lib/use-error-message"
 import { useTable } from "@/lib/use-table"
@@ -50,25 +56,48 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 
-type FormShape = { namePt?: string; nameEn?: string; sci?: string }
+type FormShape = {
+  namePt?: string
+  nameEn?: string
+  sci?: string
+  taxonFamily?: string
+  taxonOrder?: string
+}
 
 const i18nPt = (v: string | I18nText | null | undefined) =>
   v == null ? "" : typeof v === "string" ? v : v.pt ?? ""
 const i18nEn = (v: string | I18nText | null | undefined) =>
   v == null ? "" : typeof v === "string" ? v : v.en ?? ""
 
-export function CatalogManager({ canEdit }: { canEdit: boolean }) {
+export function CatalogManager({
+  userId,
+  isSystemAdmin,
+}: {
+  userId: string
+  isSystemAdmin: boolean
+}) {
   const t = useTranslations("catalogs")
   const tc = useTranslations("common")
   const tval = useTranslations("validation")
   const locale = useLocale()
   const em = useErrorMessage()
-  const qc = useQueryClient()
 
   const [type, setType] = useState<CatalogType>("organs")
   const [dialog, setDialog] = useState<{ mode: "create" | "edit"; row?: Row } | null>(null)
   const [confirmRow, setConfirmRow] = useState<Row | null>(null)
+  // Táxon NCBI selecionado para o patógeno (fora do react-hook-form por ser numérico).
+  const [taxonId, setTaxonId] = useState<number | null>(null)
   const isPathogen = type === "pathogens"
+
+  const createM = useCreateCatalogItem(type)
+  const updateM = useUpdateCatalogItem(type)
+  const deleteM = useDeleteCatalogItem(type)
+
+  // Editar/excluir: admin global sempre; senão, o criador enquanto o item não estiver em uso.
+  const canModify = (r: Row) =>
+    isSystemAdmin || (r.createdById === userId && !r.inUse)
+
+  const taxonSearch = useNcbiSearch()
 
   const listQ = useCatalogList(type)
   const groupsQ = usePathogenGroups(isPathogen)
@@ -89,7 +118,8 @@ export function CatalogManager({ canEdit }: { canEdit: boolean }) {
   function openCreate() {
     setGroupId("")
     setGroupError(false)
-    form.reset({ namePt: "", nameEn: "", sci: "" })
+    setTaxonId(null)
+    form.reset({ namePt: "", nameEn: "", sci: "", taxonFamily: "", taxonOrder: "" })
     setDialog({ mode: "create" })
   }
   function openEdit(row: Row) {
@@ -97,9 +127,17 @@ export function CatalogManager({ canEdit }: { canEdit: boolean }) {
     if (isPathogen) {
       const p = row as PathogenRow
       setGroupId(p.group.id)
-      form.reset({ sci: p.scientificName ?? "", namePt: i18nPt(p.name), nameEn: i18nEn(p.name) })
+      setTaxonId(p.taxonId)
+      form.reset({
+        sci: p.scientificName ?? "",
+        namePt: i18nPt(p.name),
+        nameEn: i18nEn(p.name),
+        taxonFamily: p.taxonFamily ?? "",
+        taxonOrder: p.taxonOrder ?? "",
+      })
     } else {
       setGroupId("")
+      setTaxonId(null)
       const n = row as NamedRow
       form.reset({ namePt: i18nPt(n.name), nameEn: i18nEn(n.name) })
     }
@@ -113,14 +151,21 @@ export function CatalogManager({ canEdit }: { canEdit: boolean }) {
     }
     const isEdit = dialog?.mode === "edit"
     const body = isPathogen
-      ? { groupId, scientificName: data.sci, namePt: data.namePt, nameEn: data.nameEn }
+      ? {
+          groupId,
+          scientificName: data.sci,
+          namePt: data.namePt,
+          nameEn: data.nameEn,
+          taxonFamily: data.taxonFamily,
+          taxonOrder: data.taxonOrder,
+          taxonId,
+        }
       : { namePt: data.namePt, nameEn: data.nameEn }
     try {
-      if (isEdit) await catalogService.update(type, dialog!.row!.id, body)
-      else await catalogService.create(type, body)
+      if (isEdit) await updateM.mutateAsync({ id: dialog!.row!.id, body })
+      else await createM.mutateAsync(body)
       toast.success(isEdit ? t("updated") : t("created"))
       setDialog(null)
-      qc.invalidateQueries({ queryKey: catalogKeys.list(type) })
     } catch (err) {
       toast.error(isEdit ? t("updateError") : t("createError"), { description: em(err) })
     }
@@ -128,9 +173,8 @@ export function CatalogManager({ canEdit }: { canEdit: boolean }) {
 
   async function remove(row: Row) {
     try {
-      await catalogService.remove(type, row.id)
+      await deleteM.mutateAsync(row.id)
       toast.success(t("deleted"))
-      qc.invalidateQueries({ queryKey: catalogKeys.list(type) })
     } catch (err) {
       toast.error(t("deleteError"), { description: em(err) })
     }
@@ -165,10 +209,10 @@ export function CatalogManager({ canEdit }: { canEdit: boolean }) {
   })
 
   return (
-    <div className="space-y-6 p-8">
+    <div className="mx-auto max-w-6xl space-y-6 p-8">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold">{t("title")}</h1>
+          <h1 className="text-3xl font-semibold tracking-tight">{t("title")}</h1>
           <p className="mt-1 text-sm text-muted-foreground">{t("subtitle")}</p>
         </div>
         <Button onClick={openCreate}>
@@ -197,7 +241,7 @@ export function CatalogManager({ canEdit }: { canEdit: boolean }) {
             placeholder={tc("search")}
             className="max-w-sm"
           />
-          <div className="rounded-md border">
+          <div className="overflow-hidden rounded-xl border bg-card shadow-card">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -220,14 +264,14 @@ export function CatalogManager({ canEdit }: { canEdit: boolean }) {
                       </SortableHead>
                     </>
                   )}
-                  {canEdit && <TableHead className="w-32 text-right">{tc("actions")}</TableHead>}
+                  <TableHead className="w-32 text-right">{tc("actions")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {table.rows.length === 0 ? (
                   <TableRow>
                     <TableCell
-                      colSpan={canEdit ? 3 : 2}
+                      colSpan={3}
                       className="text-center text-sm text-muted-foreground"
                     >
                       {tc("noResults")}
@@ -249,8 +293,8 @@ export function CatalogManager({ canEdit }: { canEdit: boolean }) {
                       <TableCell>{i18nEn((r as NamedRow).name)}</TableCell>
                     </>
                   )}
-                  {canEdit && (
-                    <TableCell className="text-right">
+                  <TableCell className="text-right">
+                    {canModify(r) && (
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button variant="ghost" size="icon" className="size-8">
@@ -260,18 +304,20 @@ export function CatalogManager({ canEdit }: { canEdit: boolean }) {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem onSelect={() => openEdit(r)}>
+                            <Pencil className="size-4" />
                             {tc("edit")}
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             className="text-destructive focus:text-destructive"
                             onSelect={() => setConfirmRow(r)}
                           >
+                            <Trash2 className="size-4" />
                             {tc("delete")}
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
-                    </TableCell>
-                  )}
+                    )}
+                  </TableCell>
                 </TableRow>
                   ))
                 )}
@@ -328,13 +374,45 @@ export function CatalogManager({ canEdit }: { canEdit: boolean }) {
             {isPathogen && groupUsesSci ? (
               <div className="space-y-1">
                 <Label htmlFor="sci">{t("nameSci")}</Label>
-                <Input id="sci" {...form.register("sci", { required: tval("required") })} />
+                <Controller
+                  control={form.control}
+                  name="sci"
+                  rules={{ required: tval("required") }}
+                  render={({ field }) => (
+                    <TaxonAutocomplete
+                      id="sci"
+                      value={field.value ?? ""}
+                      invalid={!!form.formState.errors.sci}
+                      searchingText={t("ncbiSearching")}
+                      emptyText={t("ncbiEmpty")}
+                      search={taxonSearch}
+                      onChange={(name, m) => {
+                        field.onChange(name)
+                        // Ao escolher no NCBI, vincula o táxon; edição manual desvincula.
+                        setTaxonId(m ? m.id : null)
+                        form.setValue("taxonFamily", m?.family ?? "")
+                        form.setValue("taxonOrder", m?.order ?? "")
+                      }}
+                    />
+                  )}
+                />
                 {form.formState.errors.sci && (
                   <p className="text-xs text-destructive">{form.formState.errors.sci.message}</p>
                 )}
+                {taxonId != null && (
+                  <p className="text-xs text-muted-foreground">
+                    {t("ncbiLinked", {
+                      taxonId,
+                      taxon:
+                        [form.watch("taxonFamily"), form.watch("taxonOrder")]
+                          .filter(Boolean)
+                          .join(" · ") || "—",
+                    })}
+                  </p>
+                )}
               </div>
             ) : (
-              <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-3">
                 <div className="space-y-1">
                   <Label htmlFor="namePt">{t("namePt")}</Label>
                   <Input id="namePt" {...form.register("namePt", { required: tval("required") })} />

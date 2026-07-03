@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { ConfirmDialog } from "@/components/confirm-dialog"
 import { useErrorMessage } from "@/lib/use-error-message"
-import { organizationsService } from "@/services/organizations"
+import { useLeaveOrganization } from "@/hooks/use-members"
 import type { Membership } from "@/types/organization"
 import {
   Table,
@@ -33,12 +33,13 @@ export function MyOrganizations({
   const em = useErrorMessage()
   const [list, setList] = useState(memberships)
   const [busy, setBusy] = useState<string | null>(null)
+  const leaveM = useLeaveOrganization()
 
   async function leave(m: Membership) {
     setBusy(m.orgId)
     let result: { orgDeleted?: boolean }
     try {
-      result = await organizationsService.removeMember(m.orgId, selfId)
+      result = await leaveM.mutateAsync({ orgId: m.orgId, userId: selfId })
     } catch (err) {
       toast.error(t("leaveError"), { description: em(err) })
       return
@@ -51,16 +52,16 @@ export function MyOrganizations({
   }
 
   return (
-    <div className="space-y-6 p-8">
+    <div className="mx-auto max-w-6xl space-y-6 p-8">
       <div>
-        <h1 className="text-2xl font-bold">{t("title")}</h1>
+        <h1 className="text-3xl font-semibold tracking-tight">{t("title")}</h1>
         <p className="mt-1 text-sm text-muted-foreground">{t("subtitle")}</p>
       </div>
 
       {list.length === 0 ? (
         <p className="text-sm text-muted-foreground">{t("empty")}</p>
       ) : (
-        <div className="max-w-3xl rounded-md border">
+        <div className="max-w-3xl overflow-hidden rounded-xl border bg-card shadow-card">
           <Table>
             <TableHeader>
               <TableRow>

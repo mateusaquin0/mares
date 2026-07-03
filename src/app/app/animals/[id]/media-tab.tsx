@@ -6,8 +6,7 @@ import { toast } from "sonner"
 import { FileText, Trash2, Upload } from "lucide-react"
 
 import { useErrorMessage } from "@/lib/use-error-message"
-import { animalsService } from "@/services/animals"
-import { useAnimalMedia } from "@/hooks/use-animals"
+import { useAnimalMedia, useUploadAnimalMedia, useDeleteAnimalMedia } from "@/hooks/use-animals"
 import type { AnimalMedia } from "@/types/animal"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -23,9 +22,10 @@ export function MediaTab({ animalId, isOrgAdmin }: { animalId: string; isOrgAdmi
   const mediaQ = useAnimalMedia(animalId)
   const items = mediaQ.data ?? []
   const loading = mediaQ.isLoading
+  const uploadM = useUploadAnimalMedia(animalId)
+  const deleteM = useDeleteAnimalMedia(animalId)
   const [file, setFile] = useState<File | null>(null)
   const [label, setLabel] = useState("")
-  const [uploading, setUploading] = useState(false)
   const [confirm, setConfirm] = useState<AnimalMedia | null>(null)
 
   async function upload() {
@@ -33,26 +33,21 @@ export function MediaTab({ animalId, isOrgAdmin }: { animalId: string; isOrgAdmi
     const body = new FormData()
     body.append("file", file)
     if (label.trim()) body.append("label", label.trim())
-    setUploading(true)
     try {
-      await animalsService.uploadMedia(animalId, body)
+      await uploadM.mutateAsync(body)
       toast.success(t("uploaded"))
       setFile(null)
       setLabel("")
       if (fileRef.current) fileRef.current.value = ""
-      mediaQ.refetch()
     } catch (err) {
       toast.error(t("uploadError"), { description: em(err) })
-    } finally {
-      setUploading(false)
     }
   }
 
   async function remove(m: AnimalMedia) {
     try {
-      await animalsService.removeMedia(m.id)
+      await deleteM.mutateAsync(m.id)
       toast.success(t("deleted"))
-      mediaQ.refetch()
     } catch (err) {
       toast.error(t("deleteError"), { description: em(err) })
     }
@@ -82,7 +77,7 @@ export function MediaTab({ animalId, isOrgAdmin }: { animalId: string; isOrgAdmi
             className="max-w-xs"
           />
         </div>
-        <Button onClick={upload} disabled={!file} loading={uploading}>
+        <Button onClick={upload} disabled={!file} loading={uploadM.isPending}>
           <Upload className="size-4" />
           {t("upload")}
         </Button>

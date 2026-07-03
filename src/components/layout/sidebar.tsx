@@ -1,5 +1,6 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
@@ -12,11 +13,13 @@ import {
   Building2,
   ShieldCheck,
   Library,
+  PanelLeftClose,
+  PanelLeft,
 } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import type { AuthMembership } from "@/lib/auth"
-import { organizationsService } from "@/services/organizations"
+import { useSetActiveOrg } from "@/hooks/use-members"
 import { Logo } from "@/components/logo"
 import { LocaleSwitcher } from "@/components/locale-switcher"
 import {
@@ -48,7 +51,21 @@ export function Sidebar({
 }) {
   const pathname = usePathname()
   const router = useRouter()
+  const setActiveM = useSetActiveOrg()
   const t = useTranslations("sidebar")
+  const tc = useTranslations("common")
+
+  const [collapsed, setCollapsed] = useState(false)
+  useEffect(() => {
+    setCollapsed(localStorage.getItem("mares:sidebar-collapsed") === "1")
+  }, [])
+  function toggleCollapsed() {
+    setCollapsed((c) => {
+      const next = !c
+      localStorage.setItem("mares:sidebar-collapsed", next ? "1" : "0")
+      return next
+    })
+  }
 
   const navItems: NavItem[] = [
     { href: "/app/dashboard", label: t("dashboard"), icon: LayoutDashboard },
@@ -75,44 +92,101 @@ export function Sidebar({
   async function onSwitchOrg(orgId: string) {
     if (orgId === activeOrg?.orgId) return
     try {
-      await organizationsService.setActive(orgId)
+      await setActiveM.mutateAsync(orgId)
     } catch {
       // silencioso: a UI recarrega e reflete o estado atual
     }
     router.refresh()
   }
 
+  const initials = (userName || "?")
+    .split(" ")
+    .map((p) => p[0])
+    .filter(Boolean)
+    .slice(0, 2)
+    .join("")
+    .toUpperCase()
+
+  const linkClass = (active: boolean) =>
+    cn(
+      "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors",
+      collapsed && "justify-center px-0",
+      active
+        ? "bg-accent font-semibold text-accent-foreground"
+        : "text-foreground/70 hover:bg-muted hover:text-foreground"
+    )
+
   return (
-    <aside className="flex h-screen w-60 shrink-0 flex-col bg-slate-900 text-slate-300">
-      <div className="flex flex-col gap-1 px-6 py-5">
-        <Link
-          href="/"
-          className="flex items-center gap-2 text-xl font-bold tracking-tight text-white transition-opacity hover:opacity-80"
-        >
-          <Logo className="size-6 text-sky-400" />
-          MARES
-        </Link>
-        {memberships.length > 1 ? (
-          <Select value={activeOrg?.orgId ?? ""} onValueChange={onSwitchOrg}>
-            <SelectTrigger className="mt-1 h-7 border-slate-700 bg-slate-800 px-2 text-xs text-slate-200">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {memberships.map((m) => (
-                <SelectItem key={m.orgId} value={m.orgId}>
-                  {m.orgName}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        ) : (
-          <span className="truncate text-xs text-slate-400" title={activeOrg?.orgName}>
-            {activeOrg?.orgName ?? (isSystemAdmin ? t("globalAdminOrg") : "")}
-          </span>
+    <aside
+      className={cn(
+        "flex h-screen shrink-0 flex-col border-r border-border transition-[width,background-color] duration-200",
+        collapsed ? "w-16 bg-background" : "w-64 bg-white"
+      )}
+    >
+      <div className={cn("flex flex-col gap-3 py-5", collapsed ? "items-center px-2" : "px-5")}>
+        <div className={cn("flex w-full items-center", collapsed && "justify-center")}>
+          <Link
+            href="/"
+            className="flex items-center gap-3 transition-opacity hover:opacity-80"
+            title="MARES"
+          >
+            <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-accent text-primary">
+              <Logo className="size-6 shrink-0" />
+            </span>
+            {!collapsed && (
+              <span className="flex min-w-0 flex-col leading-tight">
+                <span className="text-lg font-bold tracking-tight text-primary">MARES</span>
+                <span className="text-[11px] text-muted-foreground">{tc("tagline")}</span>
+              </span>
+            )}
+          </Link>
+          {!collapsed && (
+            <button
+              type="button"
+              onClick={toggleCollapsed}
+              aria-label={t("collapse")}
+              title={t("collapse")}
+              className="ml-auto flex size-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            >
+              <PanelLeftClose className="size-4" />
+            </button>
+          )}
+        </div>
+
+        {collapsed && (
+          <button
+            type="button"
+            onClick={toggleCollapsed}
+            aria-label={t("expand")}
+            title={t("expand")}
+            className="flex size-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+          >
+            <PanelLeft className="size-4" />
+          </button>
         )}
+
+        {!collapsed &&
+          (memberships.length > 1 ? (
+            <Select value={activeOrg?.orgId ?? ""} onValueChange={onSwitchOrg}>
+              <SelectTrigger className="h-8 px-2 text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {memberships.map((m) => (
+                  <SelectItem key={m.orgId} value={m.orgId}>
+                    {m.orgName}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          ) : (
+            <span className="truncate text-xs text-muted-foreground" title={activeOrg?.orgName}>
+              {activeOrg?.orgName ?? (isSystemAdmin ? t("globalAdminOrg") : "")}
+            </span>
+          ))}
       </div>
 
-      <nav className="flex-1 space-y-1 px-3 py-2">
+      <nav className={cn("flex-1 space-y-1 overflow-y-auto py-2", collapsed ? "px-2" : "px-3")}>
         {activeOrg &&
           navItems.map((item) => {
             const active = pathname === item.href || pathname.startsWith(item.href + "/")
@@ -122,11 +196,14 @@ export function Sidebar({
               return (
                 <span
                   key={item.href}
-                  className="flex cursor-not-allowed items-center gap-3 rounded-md px-3 py-2 text-sm text-slate-600"
-                  title={t("comingSoon")}
+                  className={cn(
+                    "flex cursor-not-allowed items-center gap-3 rounded-lg px-3 py-2 text-sm text-muted-foreground/50",
+                    collapsed && "justify-center px-0"
+                  )}
+                  title={collapsed ? `${item.label} — ${t("comingSoon")}` : t("comingSoon")}
                 >
-                  <Icon className="size-4" />
-                  {item.label}
+                  <Icon className="size-4 shrink-0" />
+                  {!collapsed && item.label}
                 </span>
               )
             }
@@ -135,22 +212,24 @@ export function Sidebar({
               <Link
                 key={item.href}
                 href={item.href}
-                className={cn(
-                  "flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors",
-                  active ? "bg-sky-600 text-white" : "hover:bg-slate-800 hover:text-white"
-                )}
+                className={linkClass(active)}
+                title={collapsed ? item.label : undefined}
               >
-                <Icon className="size-4" />
-                {item.label}
+                <Icon className="size-4 shrink-0" />
+                {!collapsed && <span className="truncate">{item.label}</span>}
               </Link>
             )
           })}
 
         {isSystemAdmin && (
           <>
-            <p className="px-3 pb-1 pt-4 text-xs font-semibold uppercase tracking-wide text-slate-500">
-              {t("adminSection")}
-            </p>
+            {collapsed ? (
+              <div className="my-2 border-t border-border" />
+            ) : (
+              <p className="px-3 pb-1 pt-4 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                {t("adminSection")}
+              </p>
+            )}
             {[
               { href: "/app/admin/access-requests", label: t("adminRequests") },
               { href: "/app/admin/organizations", label: t("adminOrgs") },
@@ -162,13 +241,11 @@ export function Sidebar({
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={cn(
-                    "flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors",
-                    active ? "bg-sky-600 text-white" : "hover:bg-slate-800 hover:text-white"
-                  )}
+                  className={linkClass(active)}
+                  title={collapsed ? item.label : undefined}
                 >
-                  <ShieldCheck className="size-4" />
-                  {item.label}
+                  <ShieldCheck className="size-4 shrink-0" />
+                  {!collapsed && <span className="truncate">{item.label}</span>}
                 </Link>
               )
             })}
@@ -176,15 +253,30 @@ export function Sidebar({
         )}
       </nav>
 
-      <div className="border-t border-slate-800 px-3 py-3">
-        <div className="px-3 py-2">
-          <p className="truncate text-sm font-medium text-white">{userName}</p>
-          <p className="text-xs text-slate-400">{roleLabel}</p>
+      <div className={cn("border-t border-border py-3", collapsed ? "px-2" : "px-3")}>
+        <div
+          className={cn(
+            "flex items-center gap-3 py-2",
+            collapsed ? "justify-center" : "px-2"
+          )}
+          title={collapsed ? `${userName} — ${roleLabel}` : undefined}
+        >
+          <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground">
+            {initials}
+          </span>
+          {!collapsed && (
+            <div className="min-w-0">
+              <p className="truncate text-sm font-medium text-foreground">{userName}</p>
+              <p className="truncate text-xs text-muted-foreground">{roleLabel}</p>
+            </div>
+          )}
         </div>
-        <div className="mb-1 px-2">
-          <LocaleSwitcher className="text-slate-400" />
-        </div>
-        <SignOutButton />
+        {!collapsed && (
+          <div className="mb-1 px-2">
+            <LocaleSwitcher className="text-muted-foreground" />
+          </div>
+        )}
+        <SignOutButton collapsed={collapsed} />
       </div>
     </aside>
   )

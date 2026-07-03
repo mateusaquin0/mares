@@ -5,13 +5,16 @@ import Link from "next/link"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useLocale, useTranslations } from "next-intl"
-import { useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
 import { ArrowLeft, Pencil, Plus, Trash2 } from "lucide-react"
 
 import { updateResearchSchema, type UpdateResearchData } from "@/schemas/research.schema"
-import { researchService } from "@/services/research"
-import { useResearch, researchKeys } from "@/hooks/use-research"
+import {
+  useResearch,
+  useUpdateResearch,
+  useAddProtocol,
+  useRemoveProtocol,
+} from "@/hooks/use-research"
 import { useOrgans, usePathogens, useExamTypes } from "@/hooks/use-catalog"
 import type { CatalogItem } from "@/types/catalog"
 import { txt, pathogenName } from "@/lib/catalog-i18n"
@@ -22,6 +25,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Badge } from "@/components/ui/badge"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Combobox, type ComboboxOption } from "@/components/ui/combobox"
 import {
   Table,
@@ -55,17 +59,18 @@ export function ResearchDetail({
   const tval = useTranslations("validation")
   const locale = useLocale()
   const em = useErrorMessage()
-  const qc = useQueryClient()
 
   const researchQ = useResearch(id)
   const organsQ = useOrgans(isOrgAdmin)
   const pathogensQ = usePathogens(isOrgAdmin)
   const examTypesQ = useExamTypes(isOrgAdmin)
+  const updateM = useUpdateResearch(id)
+  const addM = useAddProtocol(id)
+  const removeM = useRemoveProtocol(id)
 
   const [organId, setOrganId] = useState<string>()
   const [pathogenId, setPathogenId] = useState<string>()
   const [examTypeId, setExamTypeId] = useState<string>()
-  const [adding, setAdding] = useState(false)
   const [editOpen, setEditOpen] = useState(false)
 
   const research = researchQ.data
@@ -90,10 +95,9 @@ export function ResearchDetail({
 
   async function onEdit(data: UpdateResearchData) {
     try {
-      await researchService.update(id, data)
+      await updateM.mutateAsync(data)
       toast.success(t("edited"))
       setEditOpen(false)
-      qc.invalidateQueries({ queryKey: researchKeys.detail(id) })
     } catch (err) {
       toast.error(t("editError"), { description: em(err) })
     }
@@ -101,26 +105,21 @@ export function ResearchDetail({
 
   async function addEntry() {
     if (!organId || !pathogenId || !examTypeId) return
-    setAdding(true)
     try {
-      await researchService.addProtocol(id, [{ organId, pathogenId, examTypeId }])
+      await addM.mutateAsync([{ organId, pathogenId, examTypeId }])
       toast.success(tp("added"))
       setOrganId(undefined)
       setPathogenId(undefined)
       setExamTypeId(undefined)
-      qc.invalidateQueries({ queryKey: researchKeys.detail(id) })
     } catch (err) {
       toast.error(tp("addError"), { description: em(err) })
-    } finally {
-      setAdding(false)
     }
   }
 
   async function removeEntry(entryId: string) {
     try {
-      await researchService.removeProtocol(id, entryId)
+      await removeM.mutateAsync(entryId)
       toast.success(tp("removed"))
-      qc.invalidateQueries({ queryKey: researchKeys.detail(id) })
     } catch (err) {
       toast.error(tp("removeError"), { description: em(err) })
     }
@@ -134,7 +133,7 @@ export function ResearchDetail({
   }
 
   return (
-    <div className="space-y-6 p-8">
+    <div className="mx-auto max-w-5xl space-y-6 p-8">
       <Link
         href="/app/research"
         className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
@@ -146,7 +145,7 @@ export function ResearchDetail({
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-bold">{research.name}</h1>
+            <h1 className="text-3xl font-semibold tracking-tight">{research.name}</h1>
             <Badge variant={research.isPublic ? "default" : "secondary"}>
               {research.isPublic ? t("public") : t("private")}
             </Badge>
@@ -168,12 +167,14 @@ export function ResearchDetail({
         )}
       </div>
 
-      <div className="space-y-3">
-        <h2 className="text-lg font-semibold">{tp("title")}</h2>
-        <p className="text-sm text-muted-foreground">{tp("subtitle")}</p>
-
-        {isOrgAdmin && (
-          <div className="grid gap-2 rounded-md border p-3 sm:grid-cols-[1fr_1fr_1fr_auto]">
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">{tp("title")}</CardTitle>
+          <p className="text-sm text-muted-foreground">{tp("subtitle")}</p>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {isOrgAdmin && (
+          <div className="grid gap-2 rounded-lg border bg-muted/30 p-3 sm:grid-cols-[1fr_1fr_1fr_auto]">
             <Combobox
               options={opts(organsQ.data)}
               value={organId}
@@ -207,7 +208,7 @@ export function ResearchDetail({
             <Button
               onClick={addEntry}
               disabled={!organId || !pathogenId || !examTypeId}
-              loading={adding}
+              loading={addM.isPending}
             >
               <Plus className="size-4" />
               {tc("add")}
@@ -215,10 +216,10 @@ export function ResearchDetail({
           </div>
         )}
 
-        {research.protocols.length === 0 ? (
+          {research.protocols.length === 0 ? (
           <p className="text-sm text-muted-foreground">{tp("empty")}</p>
         ) : (
-          <div className="rounded-md border">
+          <div className="overflow-hidden rounded-lg border">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -253,7 +254,8 @@ export function ResearchDetail({
             </Table>
           </div>
         )}
-      </div>
+        </CardContent>
+      </Card>
 
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
         <DialogContent>

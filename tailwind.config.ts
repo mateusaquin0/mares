@@ -42,11 +42,29 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        ocean: {
+          DEFAULT: "hsl(var(--ocean))",
+          foreground: "#ffffff",
+        },
+        "brand-cyan": "hsl(var(--brand-cyan))",
+        bio: {
+          DEFAULT: "hsl(var(--bio))",
+          foreground: "hsl(var(--bio-foreground))",
+        },
       },
       borderRadius: {
+        xl: "calc(var(--radius) + 8px)", /* 1rem — cards e seções grandes */
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
+      },
+      boxShadow: {
+        /* Sombra ambiente com leve tom navy (design.md §Elevation). */
+        card: "0 4px 6px -1px rgba(0, 51, 102, 0.05), 0 2px 4px -2px rgba(0, 51, 102, 0.05)",
+        "card-hover": "0 10px 20px -4px rgba(0, 51, 102, 0.10)",
+      },
+      fontFamily: {
+        sans: ["var(--font-inter)", "Inter", "system-ui", "sans-serif"],
       },
     },
   },

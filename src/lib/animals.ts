@@ -59,6 +59,8 @@ export type AnimalWritable = {
   lifeStage?: Nullable<string>
   bodyCondition?: Nullable<string>
   decompositionStage?: Nullable<string>
+  deathCondition?: Nullable<string>
+  necropsyDate?: Nullable<string>
   strandingLat?: Nullable<number>
   strandingLon?: Nullable<number>
   strandingBeach?: Nullable<string>
@@ -81,6 +83,7 @@ export function animalData(input: AnimalWritable) {
     lifeStage: input.lifeStage,
     bodyCondition: input.bodyCondition,
     decompositionStage: input.decompositionStage,
+    deathCondition: input.deathCondition,
     strandingLat: input.strandingLat,
     strandingLon: input.strandingLon,
     strandingBeach: input.strandingBeach,
@@ -88,6 +91,12 @@ export function animalData(input: AnimalWritable) {
     state: input.state,
     eventDate:
       input.eventDate === undefined ? undefined : input.eventDate === null ? null : new Date(input.eventDate),
+    necropsyDate:
+      input.necropsyDate === undefined
+        ? undefined
+        : input.necropsyDate === null
+          ? null
+          : new Date(input.necropsyDate),
     macroscopicNotes: input.macroscopicNotes,
   }
 }

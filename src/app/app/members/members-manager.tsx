@@ -1,12 +1,12 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useTranslations } from "next-intl"
 import { toast } from "sonner"
-import { MoreHorizontal, Pencil, UserPlus } from "lucide-react"
+import { MoreHorizontal, Pencil, UserPlus, Search, Users, Mail } from "lucide-react"
 
 import {
   addMemberSchema,
@@ -14,13 +14,20 @@ import {
   updateOrganizationSchema,
 } from "@/schemas/organization.schema"
 import type { z } from "zod"
-import { organizationsService } from "@/services/organizations"
-import { useMembers } from "@/hooks/use-members"
+import {
+  useMembers,
+  useOrganization,
+  useAddMember,
+  useUpdateOrganization,
+  useSetMemberRole,
+  useRemoveMember,
+} from "@/hooks/use-members"
 import type { Member } from "@/types/organization"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { ConfirmDialog } from "@/components/confirm-dialog"
 import { LocationPicker } from "@/components/location-picker"
 import { useErrorMessage } from "@/lib/use-error-message"
@@ -75,10 +82,17 @@ export function MembersManager({
   const membersQ = useMembers(orgId)
   const members = membersQ.data ?? []
   const loading = membersQ.isLoading
+  const [query, setQuery] = useState("")
   const [busy, setBusy] = useState<string | null>(null)
   const [addOpen, setAddOpen] = useState(false)
   const [editOpen, setEditOpen] = useState(false)
   const [confirm, setConfirm] = useState<Confirm | null>(null)
+
+  const addM = useAddMember(orgId)
+  const updateOrgM = useUpdateOrganization(orgId)
+  const roleM = useSetMemberRole(orgId)
+  const removeM = useRemoveMember(orgId)
+  const orgQ = useOrganization(orgId, editOpen)
 
   const addForm = useForm<AddMemberData>({
     resolver: zodResolver(addMemberSchema),
@@ -89,37 +103,36 @@ export function MembersManager({
     defaultValues: { name: orgName, city: "", state: "", country: "" },
   })
 
+  // Semeia o formulário de edição quando o detalhe da organização chega.
+  useEffect(() => {
+    if (editOpen && orgQ.data) {
+      editForm.reset({
+        name: orgQ.data.name ?? "",
+        city: orgQ.data.city ?? "",
+        state: orgQ.data.state ?? "",
+        country: orgQ.data.country ?? "",
+      })
+    }
+  }, [editOpen, orgQ.data, editForm])
+
   async function onAdd(data: AddMemberData) {
     try {
-      const result = await organizationsService.addMember(orgId, data)
+      const result = await addM.mutateAsync(data)
       toast.success(result.invited ? t("invitedToast") : t("addedToast"))
       addForm.reset({ email: "", name: "", role: "RESEARCHER" })
       setAddOpen(false)
-      membersQ.refetch()
     } catch (err) {
       toast.error(t("addErrorTitle"), { description: em(err) })
     }
   }
 
-  // Abre o modal de edição carregando os dados atuais da organização.
-  async function openEdit() {
+  function openEdit() {
     setEditOpen(true)
-    try {
-      const o = await organizationsService.get(orgId)
-      editForm.reset({
-        name: o.name ?? "",
-        city: o.city ?? "",
-        state: o.state ?? "",
-        country: o.country ?? "",
-      })
-    } catch {
-      // silencioso
-    }
   }
 
   async function onEditOrg(data: OrgData) {
     try {
-      await organizationsService.update(orgId, data)
+      await updateOrgM.mutateAsync(data)
       toast.success(t("orgUpdated"))
       setEditOpen(false)
       router.refresh()
@@ -131,7 +144,7 @@ export function MembersManager({
   async function changeRole(m: Member, role: Member["role"]) {
     setBusy(m.userId)
     try {
-      await organizationsService.setMemberRole(orgId, m.userId, role)
+      await roleM.mutateAsync({ userId: m.userId, role })
     } catch (err) {
       toast.error(t("roleErrorTitle"), { description: em(err) })
       return
@@ -145,7 +158,6 @@ export function MembersManager({
       router.refresh()
       return
     }
-    membersQ.refetch()
   }
 
   async function remove(m: Member) {
@@ -153,7 +165,7 @@ export function MembersManager({
     setBusy(m.userId)
     let result: { orgDeleted?: boolean }
     try {
-      result = await organizationsService.removeMember(orgId, m.userId)
+      result = await removeM.mutateAsync(m.userId)
     } catch (err) {
       toast.error(isSelf ? t("leaveErrorTitle") : t("removeErrorTitle"), { description: em(err) })
       return
@@ -202,11 +214,26 @@ export function MembersManager({
       }[confirm.kind]
     : null
 
+  const initials = (s: string) =>
+    s
+      .split(" ")
+      .map((p) => p[0])
+      .filter(Boolean)
+      .slice(0, 2)
+      .join("")
+      .toUpperCase()
+  const q = query.trim().toLowerCase()
+  const filtered = members.filter(
+    (m) => (m.name ?? "").toLowerCase().includes(q) || m.email.toLowerCase().includes(q)
+  )
+  const adminCount = members.filter((m) => m.role === "ORG_ADMIN").length
+  const pending = members.filter((m) => m.status === "INVITED")
+
   return (
-    <div className="space-y-6 p-8">
+    <div className="mx-auto max-w-6xl space-y-6 p-8">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold">{t("title")}</h1>
+          <h1 className="text-3xl font-semibold tracking-tight">{t("title")}</h1>
           <p className="mt-1 text-sm text-muted-foreground">{orgName}</p>
         </div>
         <div className="flex gap-2">
@@ -226,94 +253,172 @@ export function MembersManager({
       ) : members.length === 0 ? (
         <p className="text-sm text-muted-foreground">{t("empty")}</p>
       ) : (
-        <div className="rounded-md border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>{t("colName")}</TableHead>
-                <TableHead>{t("colEmail")}</TableHead>
-                <TableHead>{t("colRole")}</TableHead>
-                <TableHead className="w-16 text-right">{t("colActions")}</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {members.map((m) => {
-                const isSelf = m.userId === selfId
-                const isAdmin = m.role === "ORG_ADMIN"
-                return (
-                  <TableRow key={m.userId}>
-                    <TableCell className="font-medium">
-                      <span className="flex items-center gap-2">
-                        {m.name ?? "—"}
-                        {m.status === "INVITED" && (
-                          <Badge variant="secondary">{tc("invited")}</Badge>
-                        )}
-                      </span>
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">{m.email}</TableCell>
-                    <TableCell>
-                      <Badge variant={isAdmin ? "default" : "secondary"}>
-                        {isAdmin ? tc("roleAdmin") : tc("roleResearcher")}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="size-8"
-                            disabled={busy === m.userId}
-                          >
-                            <MoreHorizontal className="size-4" />
-                            <span className="sr-only">{t("colActions")}</span>
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          {isSelf ? (
-                            <>
-                              {isAdmin && (
-                                <DropdownMenuItem
-                                  onSelect={() => setConfirm({ kind: "demote", member: m })}
-                                >
-                                  {t("makeResearcher")}
-                                </DropdownMenuItem>
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+          {/* Tabela de membros (esquerda) */}
+          <div className="overflow-hidden rounded-xl border bg-card shadow-card lg:col-span-2">
+            <div className="border-b p-4">
+              <div className="relative max-w-sm">
+                <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder={t("searchPlaceholder")}
+                  className="pl-9"
+                />
+              </div>
+            </div>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>{t("colName")}</TableHead>
+                  <TableHead>{t("colRole")}</TableHead>
+                  <TableHead className="w-16 text-right">{t("colActions")}</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filtered.map((m) => {
+                  const isSelf = m.userId === selfId
+                  const isAdmin = m.role === "ORG_ADMIN"
+                  return (
+                    <TableRow key={m.userId}>
+                      <TableCell>
+                        <div className="flex items-center gap-3">
+                          <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-accent text-xs font-semibold text-accent-foreground">
+                            {initials(m.name ?? m.email)}
+                          </span>
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-2 font-medium">
+                              <span className="truncate">{m.name ?? "—"}</span>
+                              {m.status === "INVITED" && (
+                                <Badge variant="secondary">{tc("invited")}</Badge>
                               )}
-                              <DropdownMenuItem
-                                className="text-destructive focus:text-destructive"
-                                onSelect={() => setConfirm({ kind: "leave", member: m })}
-                              >
-                                {tc("leave")}
-                              </DropdownMenuItem>
-                            </>
-                          ) : (
-                            <>
-                              <DropdownMenuItem
-                                // Não é possível alterar o papel de outro admin (visível,
-                                // desabilitado). Promover pesquisador → admin passa por confirmação.
-                                disabled={isAdmin}
-                                onSelect={() => setConfirm({ kind: "promote", member: m })}
-                              >
-                                {isAdmin ? t("makeResearcher") : t("makeAdmin")}
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                className="text-destructive focus:text-destructive"
-                                // Não é possível remover outro admin.
-                                disabled={isAdmin}
-                                onSelect={() => setConfirm({ kind: "remove", member: m })}
-                              >
-                                {tc("remove")}
-                              </DropdownMenuItem>
-                            </>
-                          )}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
-                )
-              })}
-            </TableBody>
-          </Table>
+                            </div>
+                            <p className="truncate text-xs text-muted-foreground">{m.email}</p>
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        {isAdmin ? (
+                          <Badge className="border-transparent bg-primary text-primary-foreground hover:bg-primary/90">
+                            {tc("roleAdmin")}
+                          </Badge>
+                        ) : (
+                          <Badge variant="secondary">{tc("roleResearcher")}</Badge>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="size-8"
+                              disabled={busy === m.userId}
+                            >
+                              <MoreHorizontal className="size-4" />
+                              <span className="sr-only">{t("colActions")}</span>
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            {isSelf ? (
+                              <>
+                                {isAdmin && (
+                                  <DropdownMenuItem
+                                    onSelect={() => setConfirm({ kind: "demote", member: m })}
+                                  >
+                                    {t("makeResearcher")}
+                                  </DropdownMenuItem>
+                                )}
+                                <DropdownMenuItem
+                                  className="text-destructive focus:text-destructive"
+                                  onSelect={() => setConfirm({ kind: "leave", member: m })}
+                                >
+                                  {tc("leave")}
+                                </DropdownMenuItem>
+                              </>
+                            ) : (
+                              <>
+                                <DropdownMenuItem
+                                  // Não é possível alterar o papel de outro admin (visível,
+                                  // desabilitado). Promover pesquisador → admin passa por confirmação.
+                                  disabled={isAdmin}
+                                  onSelect={() => setConfirm({ kind: "promote", member: m })}
+                                >
+                                  {isAdmin ? t("makeResearcher") : t("makeAdmin")}
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  className="text-destructive focus:text-destructive"
+                                  // Não é possível remover outro admin.
+                                  disabled={isAdmin}
+                                  onSelect={() => setConfirm({ kind: "remove", member: m })}
+                                >
+                                  {tc("remove")}
+                                </DropdownMenuItem>
+                              </>
+                            )}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  )
+                })}
+              </TableBody>
+            </Table>
+          </div>
+
+          {/* Coluna lateral: resumo + convites pendentes */}
+          <div className="space-y-6">
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2 text-base">
+                  <Users className="size-4 text-accent-foreground" />
+                  {t("summaryTitle")}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2 text-sm">
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">{t("summaryTotal")}</span>
+                  <span className="font-semibold">{members.length}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">{t("summaryAdmins")}</span>
+                  <span className="font-semibold">{adminCount}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">{t("summaryResearchers")}</span>
+                  <span className="font-semibold">{members.length - adminCount}</span>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2 text-base">
+                  <Mail className="size-4 text-accent-foreground" />
+                  {t("pendingTitle")}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {pending.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">{t("pendingEmpty")}</p>
+                ) : (
+                  <ul className="space-y-3">
+                    {pending.map((m) => (
+                      <li key={m.userId} className="flex items-center gap-3">
+                        <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-semibold text-muted-foreground">
+                          {initials(m.name ?? m.email)}
+                        </span>
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-medium">{m.email}</p>
+                          <p className="text-xs text-muted-foreground">{t("pendingLabel")}</p>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </CardContent>
+            </Card>
+          </div>
         </div>
       )}
 

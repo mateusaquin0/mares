@@ -7,8 +7,7 @@ import { MoreHorizontal } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { useErrorMessage } from "@/lib/use-error-message"
-import { adminService } from "@/services/admin"
-import { useAccessRequests } from "@/hooks/use-admin"
+import { useAccessRequests, useActOnRequest } from "@/hooks/use-admin"
 import {
   Table,
   TableBody,
@@ -31,14 +30,14 @@ export default function AccessRequestsPage() {
   const requestsQ = useAccessRequests()
   const requests = requestsQ.data ?? []
   const loading = requestsQ.isLoading
+  const actM = useActOnRequest()
   const [busy, setBusy] = useState<string | null>(null)
 
   async function act(id: string, action: "approve" | "reject") {
     setBusy(`${id}:${action}`)
     try {
-      await adminService.actOnRequest(id, action)
+      await actM.mutateAsync({ id, action })
       toast.success(action === "approve" ? t("approved") : t("rejected"))
-      requestsQ.refetch()
     } catch (err) {
       toast.error(t("opError"), { description: em(err) })
     } finally {
@@ -47,9 +46,9 @@ export default function AccessRequestsPage() {
   }
 
   return (
-    <div className="space-y-6 p-8">
+    <div className="mx-auto max-w-6xl space-y-6 p-8">
       <div>
-        <h1 className="text-2xl font-bold">{t("title")}</h1>
+        <h1 className="text-3xl font-semibold tracking-tight">{t("title")}</h1>
         <p className="mt-1 text-sm text-muted-foreground">{t("subtitle")}</p>
       </div>
 
@@ -58,7 +57,7 @@ export default function AccessRequestsPage() {
       ) : requests.length === 0 ? (
         <p className="text-sm text-muted-foreground">{t("empty")}</p>
       ) : (
-        <div className="rounded-md border">
+        <div className="overflow-hidden rounded-xl border bg-card shadow-card">
           <Table>
             <TableHeader>
               <TableRow>

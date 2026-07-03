@@ -3,34 +3,41 @@
 @tailwind utilities;
 
 @layer base {
+  /* MARES Academic Intelligence — tokens do design system (ver design.md). */
   :root {
-    --background: 210 40% 98%; /* slate-50 — fundo da página */
-    --foreground: 222 47% 11%; /* slate-900 */
+    --background: 210 33% 98%; /* surface #f7f9fb — near-white slate */
+    --foreground: 217 33% 17%; /* text-main #1E293B */
 
     --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
+    --card-foreground: 217 33% 17%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
+    --popover-foreground: 217 33% 17%;
 
-    --primary: 201 90% 32%; /* sky-700 */
+    --primary: 210 100% 20%; /* deep navy #003366 */
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 210 40% 96%;
-    --secondary-foreground: 222 47% 11%;
+    --secondary: 210 12% 93%; /* surface-container #eceef0 */
+    --secondary-foreground: 217 33% 17%;
 
-    --muted: 210 40% 96%;
-    --muted-foreground: 215 16% 47%; /* slate-500 */
+    --muted: 210 12% 93%;
+    --muted-foreground: 220 8% 29%; /* on-surface-variant #43474f */
 
-    --accent: 210 40% 96%;
-    --accent-foreground: 222 47% 11%;
+    --accent: 187 65% 93%; /* surface-cyan #E0F7FA — coastal highlight */
+    --accent-foreground: 189 100% 23%; /* cyan #006876 */
 
-    --destructive: 0 84% 60%; /* red-500 */
+    --destructive: 0 75% 42%; /* error #ba1a1a */
     --destructive-foreground: 0 0% 100%;
 
-    --border: 214 32% 91%; /* slate-200 */
+    --border: 214 32% 91%; /* border-subtle #E2E8F0 */
     --input: 214 32% 91%;
-    --ring: 201 90% 32%;
+    --ring: 189 100% 30%; /* soft cyan focus ring */
+
+    /* Cores de marca para uso direto (bg-ocean, bg-bio, text-cyan-brand). */
+    --ocean: 212 100% 14%; /* ocean-deep #002147 — chrome de navegação */
+    --brand-cyan: 189 100% 23%; /* secondary cyan #006876 */
+    --bio: 123 41% 45%; /* biological-green #43A047 — status positivo/saudável */
+    --bio-foreground: 0 0% 100%;
 
     --radius: 0.5rem;
   }

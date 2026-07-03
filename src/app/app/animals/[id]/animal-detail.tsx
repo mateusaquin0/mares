@@ -7,6 +7,7 @@ import { ArrowLeft } from "lucide-react"
 
 import { useAnimal } from "@/hooks/use-animals"
 import { Badge } from "@/components/ui/badge"
+import { Card, CardContent } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { SamplesTab } from "./samples-tab"
 import { AnalysesTab } from "./analyses-tab"
@@ -54,9 +55,14 @@ export function AnimalDetail({ id, isOrgAdmin }: { id: string; isOrgAdmin: boole
     { label: t("lifeStage"), value: lifeStageLabel(animal.lifeStage) ?? na },
     { label: t("bodyCondition"), value: animal.bodyCondition ?? na },
     { label: t("decompositionStage"), value: animal.decompositionStage ?? na },
+    { label: t("deathCondition"), value: animal.deathCondition ?? na },
     {
       label: t("eventDate"),
       value: animal.eventDate ? new Date(animal.eventDate).toLocaleDateString(locale) : na,
+    },
+    {
+      label: t("necropsyDate"),
+      value: animal.necropsyDate ? new Date(animal.necropsyDate).toLocaleDateString(locale) : na,
     },
     { label: t("strandingBeach"), value: animal.strandingBeach ?? na },
     { label: t("municipality"), value: animal.municipality ?? na },
@@ -65,7 +71,7 @@ export function AnimalDetail({ id, isOrgAdmin }: { id: string; isOrgAdmin: boole
   ]
 
   return (
-    <div className="space-y-6 p-8">
+    <div className="mx-auto max-w-5xl space-y-6 p-8">
       <Link
         href="/app/animals"
         className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
@@ -75,7 +81,7 @@ export function AnimalDetail({ id, isOrgAdmin }: { id: string; isOrgAdmin: boole
       </Link>
 
       <div className="flex flex-wrap items-center gap-3">
-        <h1 className="text-2xl font-bold italic">{animal.species}</h1>
+        <h1 className="text-3xl font-semibold italic tracking-tight">{animal.species}</h1>
         <Badge variant={animal.isPublic ? "default" : "secondary"}>
           {animal.isPublic ? t("public") : t("hidden")}
         </Badge>
@@ -88,7 +94,7 @@ export function AnimalDetail({ id, isOrgAdmin }: { id: string; isOrgAdmin: boole
       </div>
 
       <Tabs defaultValue="info">
-        <TabsList>
+        <TabsList className="flex-wrap">
           <TabsTrigger value="info">{t("detailInfo")}</TabsTrigger>
           <TabsTrigger value="samples">
             {t("samplesTab")} ({animal._count.samples})
@@ -100,38 +106,58 @@ export function AnimalDetail({ id, isOrgAdmin }: { id: string; isOrgAdmin: boole
           <TabsTrigger value="audit">{t("auditTab")}</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="info" className="mt-4 space-y-4">
-          <dl className="grid grid-cols-1 gap-x-8 gap-y-3 sm:grid-cols-2">
-            {rows.map((r) => (
-              <div key={r.label} className="flex flex-col">
-                <dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                  {r.label}
-                </dt>
-                <dd className="text-sm">{r.value}</dd>
-              </div>
-            ))}
-          </dl>
-          {animal.macroscopicNotes && (
-            <div>
-              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                {t("macroscopicNotes")}
-              </p>
-              <p className="mt-1 whitespace-pre-wrap text-sm">{animal.macroscopicNotes}</p>
-            </div>
-          )}
+        <TabsContent value="info" className="mt-4">
+          <Card>
+            <CardContent className="space-y-6 pt-6">
+              <dl className="grid grid-cols-1 gap-x-8 gap-y-4 sm:grid-cols-2 lg:grid-cols-3">
+                {rows.map((r) => (
+                  <div key={r.label} className="flex flex-col gap-0.5">
+                    <dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                      {r.label}
+                    </dt>
+                    <dd className="text-sm text-foreground">{r.value}</dd>
+                  </div>
+                ))}
+              </dl>
+              {animal.macroscopicNotes && (
+                <div className="border-t pt-4">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    {t("macroscopicNotes")}
+                  </p>
+                  <p className="mt-1 whitespace-pre-wrap text-sm">{animal.macroscopicNotes}</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </TabsContent>
 
         <TabsContent value="samples" className="mt-4">
-          <SamplesTab animalId={id} isOrgAdmin={isOrgAdmin} />
+          <Card>
+            <CardContent className="pt-6">
+              <SamplesTab animalId={id} isOrgAdmin={isOrgAdmin} />
+            </CardContent>
+          </Card>
         </TabsContent>
         <TabsContent value="analyses" className="mt-4">
-          <AnalysesTab animalId={id} />
+          <Card>
+            <CardContent className="pt-6">
+              <AnalysesTab animalId={id} />
+            </CardContent>
+          </Card>
         </TabsContent>
         <TabsContent value="media" className="mt-4">
-          <MediaTab animalId={id} isOrgAdmin={isOrgAdmin} />
+          <Card>
+            <CardContent className="pt-6">
+              <MediaTab animalId={id} isOrgAdmin={isOrgAdmin} />
+            </CardContent>
+          </Card>
         </TabsContent>
         <TabsContent value="audit" className="mt-4">
-          <AuditTab animalId={id} />
+          <Card>
+            <CardContent className="pt-6">
+              <AuditTab animalId={id} />
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
     </div>

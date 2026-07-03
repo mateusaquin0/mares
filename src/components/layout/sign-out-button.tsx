@@ -5,10 +5,11 @@ import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { LogOut } from "lucide-react"
 
+import { cn } from "@/lib/utils"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 
-export function SignOutButton() {
+export function SignOutButton({ collapsed = false }: { collapsed?: boolean }) {
   const t = useTranslations("sidebar")
   const router = useRouter()
   const [loading, setLoading] = useState(false)
@@ -27,10 +28,15 @@ export function SignOutButton() {
       size="sm"
       onClick={handleSignOut}
       loading={loading}
-      className="w-full justify-start text-slate-300 hover:bg-slate-800 hover:text-white"
+      aria-label={t("signOut")}
+      title={collapsed ? t("signOut") : undefined}
+      className={cn(
+        "w-full text-muted-foreground hover:bg-muted hover:text-foreground",
+        collapsed ? "justify-center px-0" : "justify-start"
+      )}
     >
       {!loading && <LogOut className="size-4" />}
-      {t("signOut")}
+      {!collapsed && t("signOut")}
     </Button>
   )
 }

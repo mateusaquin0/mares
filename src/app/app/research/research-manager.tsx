@@ -6,11 +6,15 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useTranslations } from "next-intl"
 import { toast } from "sonner"
-import { MoreHorizontal, Plus } from "lucide-react"
+import { MoreHorizontal, Plus, Search, Globe, Lock } from "lucide-react"
 
 import { createResearchSchema, type CreateResearchData } from "@/schemas/research.schema"
-import { researchService } from "@/services/research"
-import { useResearchList } from "@/hooks/use-research"
+import {
+  useResearchList,
+  useCreateResearch,
+  useUpdateResearch,
+  useDeleteResearch,
+} from "@/hooks/use-research"
 import type { ResearchListItem } from "@/types/research"
 import { useErrorMessage } from "@/lib/use-error-message"
 import { Button } from "@/components/ui/button"
@@ -51,9 +55,15 @@ export function ResearchManager({ isOrgAdmin, selfId }: { isOrgAdmin: boolean; s
   const researchQ = useResearchList()
   const items = researchQ.data ?? []
   const loading = researchQ.isLoading
+  const [query, setQuery] = useState("")
+  const filtered = items.filter((r) => r.name.toLowerCase().includes(query.trim().toLowerCase()))
   const [open, setOpen] = useState(false)
   const [editing, setEditing] = useState<ResearchListItem | null>(null)
   const [confirm, setConfirm] = useState<ResearchListItem | null>(null)
+
+  const createM = useCreateResearch()
+  const updateM = useUpdateResearch(editing?.id ?? "")
+  const deleteM = useDeleteResearch()
 
   const form = useForm<CreateResearchData>({
     resolver: zodResolver(createResearchSchema),
@@ -74,13 +84,12 @@ export function ResearchManager({ isOrgAdmin, selfId }: { isOrgAdmin: boolean; s
 
   async function onSubmit(data: CreateResearchData) {
     try {
-      if (editing) await researchService.update(editing.id, data)
-      else await researchService.create(data)
+      if (editing) await updateM.mutateAsync(data)
+      else await createM.mutateAsync(data)
       toast.success(editing ? t("edited") : t("created"))
       form.reset({ name: "", description: "", isPublic: false })
       setOpen(false)
       setEditing(null)
-      researchQ.refetch()
     } catch (err) {
       toast.error(editing ? t("editError") : t("createError"), { description: em(err) })
     }
@@ -88,19 +97,18 @@ export function ResearchManager({ isOrgAdmin, selfId }: { isOrgAdmin: boolean; s
 
   async function remove(r: ResearchListItem) {
     try {
-      await researchService.remove(r.id)
+      await deleteM.mutateAsync(r.id)
       toast.success(t("deleted"))
-      researchQ.refetch()
     } catch (err) {
       toast.error(t("deleteError"), { description: em(err) })
     }
   }
 
   return (
-    <div className="space-y-6 p-8">
+    <div className="mx-auto max-w-6xl space-y-6 p-8">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold">{t("title")}</h1>
+          <h1 className="text-3xl font-semibold tracking-tight">{t("title")}</h1>
           <p className="mt-1 text-sm text-muted-foreground">{t("subtitle")}</p>
         </div>
         <Button onClick={openCreate}>
@@ -114,7 +122,18 @@ export function ResearchManager({ isOrgAdmin, selfId }: { isOrgAdmin: boolean; s
       ) : items.length === 0 ? (
         <p className="text-sm text-muted-foreground">{t("empty")}</p>
       ) : (
-        <div className="rounded-md border">
+        <div className="overflow-hidden rounded-xl border bg-card shadow-card">
+          <div className="border-b p-4">
+            <div className="relative max-w-sm">
+              <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder={t("searchPlaceholder")}
+                className="pl-9"
+              />
+            </div>
+          </div>
           <Table>
             <TableHeader>
               <TableRow>
@@ -126,7 +145,7 @@ export function ResearchManager({ isOrgAdmin, selfId }: { isOrgAdmin: boolean; s
               </TableRow>
             </TableHeader>
             <TableBody>
-              {items.map((r) => (
+              {filtered.map((r) => (
                 <TableRow key={r.id}>
                   <TableCell className="font-medium">
                     <Link href={`/app/research/${r.id}`} className="hover:underline">
@@ -134,9 +153,17 @@ export function ResearchManager({ isOrgAdmin, selfId }: { isOrgAdmin: boolean; s
                     </Link>
                   </TableCell>
                   <TableCell>
-                    <Badge variant={r.isPublic ? "default" : "secondary"}>
-                      {r.isPublic ? t("public") : t("private")}
-                    </Badge>
+                    {r.isPublic ? (
+                      <Badge className="gap-1 border-transparent bg-bio text-bio-foreground hover:bg-bio/90">
+                        <Globe className="size-3" />
+                        {t("public")}
+                      </Badge>
+                    ) : (
+                      <Badge variant="secondary" className="gap-1">
+                        <Lock className="size-3" />
+                        {t("private")}
+                      </Badge>
+                    )}
                   </TableCell>
                   <TableCell className="text-right">{r._count.protocols}</TableCell>
                   <TableCell className="text-right">{r._count.animals}</TableCell>

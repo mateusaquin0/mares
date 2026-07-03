@@ -76,9 +76,9 @@ export default function AdminOrganizationsPage() {
   })
 
   return (
-    <div className="space-y-6 p-8">
+    <div className="mx-auto max-w-6xl space-y-6 p-8">
       <div>
-        <h1 className="text-2xl font-bold">{t("title")}</h1>
+        <h1 className="text-3xl font-semibold tracking-tight">{t("title")}</h1>
         <p className="mt-1 text-sm text-muted-foreground">{t("subtitle")}</p>
       </div>
 
@@ -95,7 +95,7 @@ export default function AdminOrganizationsPage() {
             placeholder={tc("search")}
             className="max-w-sm"
           />
-          <div className="rounded-md border">
+          <div className="overflow-hidden rounded-xl border bg-card shadow-card">
             <Table>
               <TableHeader>
                 <TableRow>
