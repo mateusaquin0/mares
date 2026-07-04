@@ -152,10 +152,6 @@ export function IdentificationSection({
 export function StrandingSection({ form, errors, set }: SectionProps) {
   const t = useTranslations("animals");
 
-  // Oculta as setinhas do input numérico (WebKit/Blink + Firefox).
-  const noSpin =
-    "[appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none";
-
   return (
     <Section title={t("sectionStranding")} icon={MapPin}>
       <div className="grid grid-cols-2 gap-3">
@@ -163,7 +159,6 @@ export function StrandingSection({ form, errors, set }: SectionProps) {
           id="eventDate"
           label={t("eventDate")}
           type="date"
-          className="pr-10"
           value={form.eventDate}
           error={errors.eventDate}
           onChange={(v) => set({ eventDate: v })}
@@ -195,7 +190,6 @@ export function StrandingSection({ form, errors, set }: SectionProps) {
           label={t("strandingLat")}
           type="number"
           step="any"
-          className={noSpin}
           value={form.strandingLat}
           error={errors.strandingLat}
           onChange={(v) => set({ strandingLat: v })}
@@ -205,7 +199,6 @@ export function StrandingSection({ form, errors, set }: SectionProps) {
           label={t("strandingLon")}
           type="number"
           step="any"
-          className={noSpin}
           value={form.strandingLon}
           error={errors.strandingLon}
           onChange={(v) => set({ strandingLon: v })}
@@ -282,7 +275,6 @@ export function ConditionSection({ form, errors, set }: SectionProps) {
           label={t("necropsyDate")}
           optional
           type="date"
-          className="pr-10"
           value={form.necropsyDate}
           error={errors.necropsyDate}
           onChange={(v) => set({ necropsyDate: v })}

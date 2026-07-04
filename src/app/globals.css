@@ -51,3 +51,28 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Inputs de data (type="date"): o componente Input aplica `display:flex` (utilitário
+   Tailwind), que agrupa texto + ícone à esquerda. Voltamos ao layout nativo do campo
+   (block) para o WebKit encostar o ícone do calendário na direita, e o deixamos clicável.
+   Regra FORA de @layer de propósito: CSS sem layer vence o layer `utilities` do `.flex`. */
+input[type="date"] {
+  display: block;
+}
+input[type="date"]::-webkit-calendar-picker-indicator {
+  margin-inline-start: auto;
+  cursor: pointer;
+}
+
+/* Campos numéricos: remove as setinhas de incremento/decremento em todos os
+   input[type="number"] (WebKit/Blink + Firefox). */
+input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  appearance: none;
+  margin: 0;
+}
