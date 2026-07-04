@@ -41,6 +41,22 @@ const exportSelect = {
   macroscopicNotes: true,
   research: { select: { name: true, organization: { select: { name: true } } } },
   _count: { select: { samples: true } },
+  // Amostras + análises (para os resultados na planilha Excel).
+  samples: {
+    select: {
+      identification: true,
+      organ: { select: { name: true } },
+      analyses: {
+        select: {
+          result: true,
+          ctValue: true,
+          notes: true,
+          pathogen: { select: { scientificName: true, name: true } },
+          examType: { select: { name: true } },
+        },
+      },
+    },
+  },
 } as const
 
 const XLSX_MIME = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"

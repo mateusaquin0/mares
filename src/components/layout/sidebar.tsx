@@ -53,7 +53,6 @@ export function Sidebar({
   const router = useRouter()
   const setActiveM = useSetActiveOrg()
   const t = useTranslations("sidebar")
-  const tc = useTranslations("common")
 
   const [collapsed, setCollapsed] = useState(false)
   useEffect(() => {
@@ -139,11 +138,9 @@ export function Sidebar({
             {!collapsed && (
               <span className="flex min-w-0 flex-1 flex-col overflow-hidden leading-tight">
                 <span className="truncate text-lg font-bold tracking-tight text-primary">MARES</span>
-                <span className="line-clamp-2 text-[11px] text-muted-foreground">{tc("tagline")}</span>
               </span>
             )}
           </Link>
-        </div>
           {!collapsed && (
             <button
               type="button"
@@ -155,6 +152,7 @@ export function Sidebar({
               <PanelLeftClose className="size-4" />
             </button>
           )}
+        </div>
 
         {collapsed && (
           <button

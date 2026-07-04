@@ -4,6 +4,27 @@
 
 import ExcelJS from "exceljs"
 
+import { txt, pathogenName, type I18nText } from "@/lib/catalog-i18n"
+
+type Result = "POSITIVO" | "NEGATIVO" | "INCONCLUSIVO"
+
+export type XlsxAnalysis = {
+  result: Result | null
+  ctValue: number | null
+  notes: string | null
+  // `name` como unknown para aceitar o Prisma.JsonValue; convertido via txt/pathogenName.
+  pathogen: { scientificName: string | null; name: unknown }
+  examType: { name: unknown }
+}
+
+export type XlsxSample = {
+  identification: string
+  organ: { name: unknown }
+  analyses: XlsxAnalysis[]
+}
+
+const asI18n = (v: unknown) => v as I18nText | string | null
+
 export type XlsxAnimal = {
   controlId: string | null
   simbaRecordNumber: string | null
@@ -26,9 +47,30 @@ export type XlsxAnimal = {
   macroscopicNotes: string | null
   research: { name: string }
   _count: { samples: number }
+  samples: XlsxSample[]
 }
 
 type Loc = "pt" | "en"
+
+const RESULT: Record<Result, { pt: string; en: string }> = {
+  POSITIVO: { pt: "Positivo", en: "Positive" },
+  NEGATIVO: { pt: "Negativo", en: "Negative" },
+  INCONCLUSIVO: { pt: "Inconclusivo", en: "Inconclusive" },
+}
+
+// Nomes distintos de patógenos com ao menos um resultado POSITIVO no animal.
+function positivePathogens(a: XlsxAnimal, loc: Loc): string {
+  const names = new Set<string>()
+  for (const s of a.samples) {
+    for (const an of s.analyses) {
+      if (an.result === "POSITIVO") {
+        const label = pathogenName(loc, { scientificName: an.pathogen.scientificName, name: asI18n(an.pathogen.name) })
+        if (label) names.add(label)
+      }
+    }
+  }
+  return [...names].sort((x, y) => x.localeCompare(y, loc)).join(", ")
+}
 
 const SEX: Record<string, { pt: string; en: string }> = {
   M: { pt: "Macho", en: "Male" },
@@ -65,7 +107,21 @@ const COLUMNS: { key: string; pt: string; en: string; width: number }[] = [
   { key: "research", pt: "Pesquisa", en: "Research", width: 24 },
   { key: "visibility", pt: "Visibilidade", en: "Visibility", width: 12 },
   { key: "samples", pt: "Amostras", en: "Samples", width: 10 },
+  { key: "positives", pt: "Patógenos positivos", en: "Positive pathogens", width: 32 },
   { key: "notes", pt: "Exame externo", en: "External exam", width: 40 },
+]
+
+// Colunas da aba de análises (uma linha por análise).
+const ANALYSIS_COLUMNS: { key: string; pt: string; en: string; width: number }[] = [
+  { key: "animal", pt: "Animal", en: "Animal", width: 16 },
+  { key: "species", pt: "Espécie", en: "Species", width: 24 },
+  { key: "sample", pt: "Amostra", en: "Sample", width: 16 },
+  { key: "organ", pt: "Órgão", en: "Organ", width: 18 },
+  { key: "pathogen", pt: "Patógeno", en: "Pathogen", width: 24 },
+  { key: "exam", pt: "Exame", en: "Exam", width: 18 },
+  { key: "result", pt: "Resultado", en: "Result", width: 14 },
+  { key: "ct", pt: "Ct", en: "Ct", width: 8 },
+  { key: "notes", pt: "Observações", en: "Notes", width: 40 },
 ]
 
 const isoDate = (d: Date | null) => (d ? d.toISOString().slice(0, 10) : "")
@@ -95,6 +151,7 @@ function rowFor(a: XlsxAnimal, loc: Loc): Record<string, string | number> {
     research: a.research.name,
     visibility: visible,
     samples: a._count.samples,
+    positives: positivePathogens(a, loc),
     notes: a.macroscopicNotes ?? "",
   }
 }
@@ -108,6 +165,31 @@ export async function buildAnimalsXlsx(animals: XlsxAnimal[], locale: string): P
   ws.getRow(1).font = { bold: true }
   ws.views = [{ state: "frozen", ySplit: 1 }]
   for (const a of animals) ws.addRow(rowFor(a, loc))
+
+  // Aba de análises: uma linha por análise (patógeno × exame) de cada amostra.
+  const wsA = wb.addWorksheet(loc === "en" ? "Analyses" : "Análises")
+  wsA.columns = ANALYSIS_COLUMNS.map((c) => ({ header: c[loc], key: c.key, width: c.width }))
+  wsA.getRow(1).font = { bold: true }
+  wsA.views = [{ state: "frozen", ySplit: 1 }]
+  for (const a of animals) {
+    const animalLabel = a.controlId ?? a.simbaRecordNumber ?? ""
+    for (const s of a.samples) {
+      for (const an of s.analyses) {
+        wsA.addRow({
+          animal: animalLabel,
+          species: a.species,
+          sample: s.identification,
+          organ: txt(loc, asI18n(s.organ.name)),
+          pathogen: pathogenName(loc, { scientificName: an.pathogen.scientificName, name: asI18n(an.pathogen.name) }),
+          exam: txt(loc, asI18n(an.examType.name)),
+          result: an.result ? RESULT[an.result][loc] : "",
+          ct: an.ctValue ?? "",
+          notes: an.notes ?? "",
+        })
+      }
+    }
+  }
+
   const buf = await wb.xlsx.writeBuffer()
   return Buffer.from(buf)
 }
