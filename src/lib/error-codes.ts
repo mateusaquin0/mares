@@ -43,6 +43,7 @@ export const ERROR_CODES = {
   animalHasSamples: "animalHasSamples",
   sampleNotFound: "sampleNotFound",
   sampleHasAnalyses: "sampleHasAnalyses",
+  sampleIdentificationDuplicate: "sampleIdentificationDuplicate",
   organNotFound: "organNotFound",
   analysisInvalidCombo: "analysisInvalidCombo",
   mediaNotFound: "mediaNotFound",

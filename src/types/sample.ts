@@ -10,6 +10,7 @@ export type OrganLite = CatalogItem
 // Amostra de um animal (/api/animals/:id/samples).
 export type Sample = {
   id: string
+  identification: string
   sampleType: string
   collectionDate: string | null
   storageLocation: string | null

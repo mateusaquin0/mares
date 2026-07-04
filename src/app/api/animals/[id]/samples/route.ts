@@ -2,12 +2,13 @@
 // Regras (docs/PERMISSOES.md §Amostras): ver/criar/editar = qualquer membro da org.
 
 import { NextRequest, NextResponse } from "next/server"
+import { Prisma } from "@prisma/client"
 import { prisma } from "@/lib/prisma"
 import { getAuthUser, requireOrgRole } from "@/lib/auth"
 import { apiError, unauthorized } from "@/lib/api"
 import { createSampleSchema } from "@/schemas/sample.schema"
 import { loadAnimalOrg } from "@/lib/animals"
-import { assertOrgan, sampleData, sampleSelect } from "@/lib/samples"
+import { assertOrgan, sampleData, sampleDuplicateError, sampleSelect } from "@/lib/samples"
 
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -40,16 +41,24 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     const data = createSampleSchema.parse(body)
     await assertOrgan(data.organId)
 
-    const sample = await prisma.sample.create({
-      data: {
-        ...sampleData(data),
-        sampleType: data.sampleType.trim(),
-        animal: { connect: { id } },
-        organ: { connect: { id: data.organId } },
-      },
-      select: sampleSelect,
-    })
-    return NextResponse.json(sample, { status: 201 })
+    try {
+      const sample = await prisma.sample.create({
+        data: {
+          ...sampleData(data),
+          identification: data.identification.trim(),
+          sampleType: data.sampleType.trim(),
+          animal: { connect: { id } },
+          organ: { connect: { id: data.organId } },
+        },
+        select: sampleSelect,
+      })
+      return NextResponse.json(sample, { status: 201 })
+    } catch (e) {
+      if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
+        throw sampleDuplicateError()
+      }
+      throw e
+    }
   } catch (err) {
     return apiError(err)
   }

@@ -6,6 +6,7 @@ import type { Sample } from "@/types/sample"
 // Payload de criação/edição de amostra (campos já normalizados no formulário).
 export type SamplePayload = {
   organId: string
+  identification: string
   sampleType: string
   collectionDate: string | null
   storageLocation: string | null

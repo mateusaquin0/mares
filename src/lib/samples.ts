@@ -2,8 +2,16 @@
 // Amostra -> Animal -> Research -> Organization. Acesso validado pelo Membership.
 
 import { prisma } from "@/lib/prisma"
-import { NotFoundError } from "@/lib/errors"
+import { ConflictError, NotFoundError } from "@/lib/errors"
 import { ERROR_CODES } from "@/lib/error-codes"
+
+/** Erro de identificação de amostra duplicada (única violação de unicidade possível). */
+export function sampleDuplicateError(): ConflictError {
+  return new ConflictError(
+    "Identificação de amostra já cadastrada",
+    ERROR_CODES.sampleIdentificationDuplicate
+  )
+}
 
 /** Carrega a amostra com orgId/organId/researchId (via animal -> pesquisa) para checagens. */
 export async function loadSampleOrg(id: string) {
@@ -36,6 +44,7 @@ type Nullable<T> = T | null | undefined
 
 /** Monta os dados do Prisma a partir dos campos validados da amostra. */
 export function sampleData(input: {
+  identification?: string
   sampleType?: string
   collectionDate?: Nullable<string>
   storageLocation?: Nullable<string>
@@ -44,6 +53,7 @@ export function sampleData(input: {
   notes?: Nullable<string>
 }) {
   return {
+    identification: input.identification?.trim(),
     sampleType: input.sampleType?.trim(),
     collectionDate:
       input.collectionDate === undefined
@@ -60,6 +70,7 @@ export function sampleData(input: {
 
 export const sampleSelect = {
   id: true,
+  identification: true,
   sampleType: true,
   collectionDate: true,
   storageLocation: true,

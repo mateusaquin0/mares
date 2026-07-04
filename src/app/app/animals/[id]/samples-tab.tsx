@@ -48,6 +48,7 @@ import {
 
 type FormState = {
   organId: string
+  identification: string
   sampleType: string
   collectionDate: string
   storageLocation: string
@@ -58,6 +59,7 @@ type FormState = {
 
 const emptyForm: FormState = {
   organId: "",
+  identification: "",
   sampleType: "",
   collectionDate: "",
   storageLocation: "",
@@ -91,7 +93,11 @@ export function SamplesTab({ animalId, isOrgAdmin }: { animalId: string; isOrgAd
   const saving = createM.isPending || updateM.isPending
   const [dialog, setDialog] = useState<{ mode: "create" | "edit"; row?: Sample } | null>(null)
   const [form, setForm] = useState<FormState>(emptyForm)
-  const [errors, setErrors] = useState<{ organId?: boolean; sampleType?: boolean }>({})
+  const [errors, setErrors] = useState<{
+    organId?: boolean
+    identification?: boolean
+    sampleType?: boolean
+  }>({})
   const [confirm, setConfirm] = useState<Sample | null>(null)
 
   const set = (patch: Partial<FormState>) => setForm((f) => ({ ...f, ...patch }))
@@ -112,6 +118,7 @@ export function SamplesTab({ animalId, isOrgAdmin }: { animalId: string; isOrgAd
     setErrors({})
     setForm({
       organId: row.organ.id,
+      identification: row.identification,
       sampleType: row.sampleType,
       collectionDate: row.collectionDate ? row.collectionDate.slice(0, 10) : "",
       storageLocation: row.storageLocation ?? "",
@@ -124,13 +131,18 @@ export function SamplesTab({ animalId, isOrgAdmin }: { animalId: string; isOrgAd
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault()
-    const nextErrors = { organId: !form.organId, sampleType: !form.sampleType.trim() }
+    const nextErrors = {
+      organId: !form.organId,
+      identification: !form.identification.trim(),
+      sampleType: !form.sampleType.trim(),
+    }
     setErrors(nextErrors)
-    if (nextErrors.organId || nextErrors.sampleType) return
+    if (nextErrors.organId || nextErrors.identification || nextErrors.sampleType) return
 
     const orNull = (v: string) => (v.trim() === "" ? null : v.trim())
     const payload: SamplePayload = {
       organId: form.organId,
+      identification: form.identification.trim(),
       sampleType: form.sampleType.trim(),
       collectionDate: orNull(form.collectionDate),
       storageLocation: orNull(form.storageLocation),
@@ -178,6 +190,7 @@ export function SamplesTab({ animalId, isOrgAdmin }: { animalId: string; isOrgAd
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead>{t("colIdentification")}</TableHead>
                 <TableHead>{t("colOrgan")}</TableHead>
                 <TableHead>{t("colType")}</TableHead>
                 <TableHead>{t("colCollection")}</TableHead>
@@ -191,7 +204,8 @@ export function SamplesTab({ animalId, isOrgAdmin }: { animalId: string; isOrgAd
             <TableBody>
               {items.map((s) => (
                 <TableRow key={s.id}>
-                  <TableCell className="font-medium">{txt(locale, s.organ.name)}</TableCell>
+                  <TableCell className="font-medium">{s.identification}</TableCell>
+                  <TableCell>{txt(locale, s.organ.name)}</TableCell>
                   <TableCell>{s.sampleType}</TableCell>
                   <TableCell className="text-muted-foreground">{fmtDate(s.collectionDate)}</TableCell>
                   <TableCell className="text-muted-foreground">{s.storageLocation ?? ""}</TableCell>
@@ -248,6 +262,18 @@ export function SamplesTab({ animalId, isOrgAdmin }: { animalId: string; isOrgAd
             <DialogTitle>{dialog?.mode === "edit" ? t("editTitle") : t("addTitle")}</DialogTitle>
           </DialogHeader>
           <form onSubmit={onSubmit} className="space-y-4">
+            <div className="space-y-1">
+              <Label htmlFor="identification">{t("identification")}</Label>
+              <Input
+                id="identification"
+                placeholder={t("identificationPlaceholder")}
+                value={form.identification}
+                onChange={(e) => set({ identification: e.target.value })}
+              />
+              {errors.identification && (
+                <p className="text-xs text-destructive">{tval("required")}</p>
+              )}
+            </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1">
                 <Label htmlFor="organ">{t("organ")}</Label>

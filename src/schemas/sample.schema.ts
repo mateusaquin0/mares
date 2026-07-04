@@ -8,6 +8,7 @@ export const sampleStatusSchema = z.enum(["STORED", "IN_USE", "DEPLETED", "DEGRA
 
 export const createSampleSchema = z.object({
   organId: z.string().min(1, "required"),
+  identification: z.string().min(1, "required").max(255),
   sampleType: z.string().min(1, "required").max(255),
   collectionDate: optionalDate,
   storageLocation: optionalText(255),

@@ -3,11 +3,12 @@
 // Exclusão bloqueada (409) se houver análises vinculadas (preserva rastreabilidade).
 
 import { NextRequest, NextResponse } from "next/server"
+import { Prisma } from "@prisma/client"
 import { prisma } from "@/lib/prisma"
 import { getAuthUser, requireOrgRole } from "@/lib/auth"
 import { apiError, unauthorized } from "@/lib/api"
 import { updateSampleSchema } from "@/schemas/sample.schema"
-import { assertOrgan, loadSampleOrg, sampleData, sampleSelect } from "@/lib/samples"
+import { assertOrgan, loadSampleOrg, sampleData, sampleDuplicateError, sampleSelect } from "@/lib/samples"
 import { ConflictError } from "@/lib/errors"
 import { ERROR_CODES } from "@/lib/error-codes"
 
@@ -23,15 +24,22 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     const data = updateSampleSchema.parse(body)
     if (data.organId) await assertOrgan(data.organId)
 
-    const updated = await prisma.sample.update({
-      where: { id },
-      data: {
-        ...sampleData(data),
-        organ: data.organId ? { connect: { id: data.organId } } : undefined,
-      },
-      select: sampleSelect,
-    })
-    return NextResponse.json(updated)
+    try {
+      const updated = await prisma.sample.update({
+        where: { id },
+        data: {
+          ...sampleData(data),
+          organ: data.organId ? { connect: { id: data.organId } } : undefined,
+        },
+        select: sampleSelect,
+      })
+      return NextResponse.json(updated)
+    } catch (e) {
+      if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
+        throw sampleDuplicateError()
+      }
+      throw e
+    }
   } catch (err) {
     return apiError(err)
   }

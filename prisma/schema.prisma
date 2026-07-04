@@ -255,6 +255,7 @@ model Sample {
   animal          Animal       @relation(fields: [animalId], references: [id], onDelete: Cascade)
   organId         String
   organ           Organ        @relation(fields: [organId], references: [id])
+  identification  String       @unique // identificação/código da amostra, obrigatória e única (ex.: "AM-001")
   sampleType      String // "tecido fresco", "DNA extraído", "lâmina", "parafina", "soro"
   collectionDate  DateTime?
   storageLocation String? // ex: "Freezer A, caixa 3, posição B2"
