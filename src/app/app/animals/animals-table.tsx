@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
-import { Fish, Globe, Lock, MoreHorizontal } from "lucide-react";
+import { Globe, Lock, MoreHorizontal } from "lucide-react";
 
 import type { AnimalListItem } from "@/types/animal";
 import { useTable } from "@/lib/use-table";
@@ -180,10 +180,7 @@ export function AnimalsTable({
                     </Link>
                   </TableCell>
                   <TableCell>
-                    <span className="flex items-center gap-2">
-                      <Fish className="size-4 shrink-0 text-accent-foreground" />
-                      <span className="italic">{a.species}</span>
-                    </span>
+                    <span className="italic">{a.species}</span>
                   </TableCell>
                   <TableCell className="text-muted-foreground">
                     {sexLabel(a.sex)}
