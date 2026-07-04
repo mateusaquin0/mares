@@ -6,7 +6,7 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useLocale, useTranslations } from "next-intl"
 import { toast } from "sonner"
-import { ArrowLeft, Pencil, Plus, Trash2 } from "lucide-react"
+import { ArrowLeft, Download, Pencil, Plus, Trash2 } from "lucide-react"
 
 import { updateResearchSchema, type UpdateResearchData } from "@/schemas/research.schema"
 import {
@@ -159,12 +159,22 @@ export function ResearchDetail({
             {t("animalsCount", { count: research._count.animals })}
           </p>
         </div>
-        {canEditContent && (
-          <Button variant="outline" onClick={openEdit}>
-            <Pencil className="size-4" />
-            {tc("edit")}
-          </Button>
-        )}
+        <div className="flex items-center gap-2">
+          {research._count.animals > 0 && (
+            <Button asChild variant="outline">
+              <a href={`/api/research/${id}/export/darwin-core`}>
+                <Download className="size-4" />
+                {t("export")}
+              </a>
+            </Button>
+          )}
+          {canEditContent && (
+            <Button variant="outline" onClick={openEdit}>
+              <Pencil className="size-4" />
+              {tc("edit")}
+            </Button>
+          )}
+        </div>
       </div>
 
       <Card>

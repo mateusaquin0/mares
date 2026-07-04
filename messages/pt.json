@@ -409,6 +409,7 @@
     "view": "Visualizar",
     "back": "Voltar para pesquisas",
     "notFound": "Pesquisa não encontrada.",
+    "export": "Exportar (Darwin Core)",
     "animalsCount": "{count} animal(is) registrado(s)",
     "createTitle": "Nova pesquisa",
     "editTitle": "Editar pesquisa",

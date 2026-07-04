@@ -409,6 +409,7 @@
     "view": "View",
     "back": "Back to research",
     "notFound": "Research not found.",
+    "export": "Export (Darwin Core)",
     "animalsCount": "{count} animal(s) registered",
     "createTitle": "New research",
     "editTitle": "Edit research",
