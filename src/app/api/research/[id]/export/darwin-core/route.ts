@@ -64,10 +64,11 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
         strandingBeach: true,
         macroscopicNotes: true,
         simbaRecordNumber: true,
+        research: { select: { name: true, organization: { select: { name: true } } } },
       },
     })
 
-    const xml = buildDarwinCoreXml(animals, research)
+    const xml = buildDarwinCoreXml(animals)
     return new Response(xml, {
       status: 200,
       headers: {

@@ -1,13 +1,17 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
-import { Globe, Lock, MoreHorizontal } from "lucide-react";
+import { toast } from "sonner";
+import { Download, Globe, Lock, MoreHorizontal } from "lucide-react";
 
 import type { AnimalListItem } from "@/types/animal";
 import { useTable } from "@/lib/use-table";
+import { downloadAnimalsExport, type ExportFormat } from "@/lib/export-download";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import {
   Table,
@@ -82,18 +86,87 @@ export function AnimalsTable({
       ].join(" "),
   });
 
+  // Seleção para exportação (ids acumulados; a seleção "todos" age sobre as linhas filtradas).
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [exporting, setExporting] = useState(false);
+  const rowIds = table.rows.map((a) => a.id);
+  const allSelected = rowIds.length > 0 && rowIds.every((id) => selected.has(id));
+  const someSelected = rowIds.some((id) => selected.has(id));
+
+  const toggleRow = (id: string, on: boolean) =>
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (on) next.add(id);
+      else next.delete(id);
+      return next;
+    });
+
+  const toggleAll = (on: boolean) =>
+    setSelected((prev) => {
+      const next = new Set(prev);
+      for (const id of rowIds) {
+        if (on) next.add(id);
+        else next.delete(id);
+      }
+      return next;
+    });
+
+  async function exportAs(format: ExportFormat) {
+    if (selected.size === 0) return;
+    setExporting(true);
+    try {
+      await downloadAnimalsExport([...selected], format);
+    } catch {
+      toast.error(t("exportError"));
+    } finally {
+      setExporting(false);
+    }
+  }
+
   return (
     <div className="space-y-3">
-      <Input
-        value={table.query}
-        onChange={(e) => table.setQuery(e.target.value)}
-        placeholder={tc("search")}
-        className="max-w-sm"
-      />
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <Input
+          value={table.query}
+          onChange={(e) => table.setQuery(e.target.value)}
+          placeholder={tc("search")}
+          className="max-w-sm"
+        />
+        {selected.size > 0 && (
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-muted-foreground">
+              {t("selectedCount", { count: selected.size })}
+            </span>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" loading={exporting}>
+                  <Download className="size-4" />
+                  {t("export")}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onSelect={() => exportAs("xlsx")}>
+                  {t("exportExcel")}
+                </DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => exportAs("darwin-core")}>
+                  {t("exportDarwin")}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        )}
+      </div>
       <div className="overflow-hidden rounded-xl border bg-card shadow-card">
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead className="w-10">
+                <Checkbox
+                  aria-label={t("selectAll")}
+                  checked={allSelected ? true : someSelected ? "indeterminate" : false}
+                  onCheckedChange={(v) => toggleAll(v === true)}
+                />
+              </TableHead>
               <SortableHead
                 sortKey="control"
                 sort={table.sort}
@@ -158,7 +231,7 @@ export function AnimalsTable({
             {table.rows.length === 0 ? (
               <TableRow>
                 <TableCell
-                  colSpan={9}
+                  colSpan={10}
                   className="text-center text-sm text-muted-foreground"
                 >
                   {tc("noResults")}
@@ -166,7 +239,14 @@ export function AnimalsTable({
               </TableRow>
             ) : (
               table.rows.map((a) => (
-                <TableRow key={a.id}>
+                <TableRow key={a.id} data-state={selected.has(a.id) ? "selected" : undefined}>
+                  <TableCell>
+                    <Checkbox
+                      aria-label={t("selectRow")}
+                      checked={selected.has(a.id)}
+                      onCheckedChange={(v) => toggleRow(a.id, v === true)}
+                    />
+                  </TableCell>
                   <TableCell className="font-medium">
                     <Link
                       href={`/app/animals/${a.id}`}

@@ -3,7 +3,13 @@
 // com submissão ao GBIF/SiBBr. O mapeamento converte os valores internos (sexo M/F/U,
 // estágio de vida FETUS/PUP/JUVENILE/ADULT/UNDETERMINED) para o vocabulário Darwin Core.
 
-// Campos do animal usados na exportação (selecionados na rota).
+export type DwcResearch = {
+  name: string
+  organization: { name: string }
+}
+
+// Campos do animal usados na exportação (selecionados na rota). A pesquisa é embutida por
+// animal (datasetName/institutionCode) para suportar seleções que cruzam pesquisas.
 export type DwcAnimal = {
   id: string
   controlId: string | null
@@ -21,11 +27,7 @@ export type DwcAnimal = {
   strandingBeach: string | null
   macroscopicNotes: string | null
   simbaRecordNumber: string | null
-}
-
-export type DwcResearch = {
-  name: string
-  organization: { name: string }
+  research: DwcResearch
 }
 
 // Valores internos → vocabulário Darwin Core. Valores sem correspondência são omitidos.
@@ -52,7 +54,8 @@ function tag(name: string, value: string): string {
   return `<${name}>${esc(value)}</${name}>`
 }
 
-function recordXml(a: DwcAnimal, r: DwcResearch): string {
+function recordXml(a: DwcAnimal): string {
+  const r = a.research
   const lat = a.strandingLat != null ? String(a.strandingLat) : ""
   const lon = a.strandingLon != null ? String(a.strandingLon) : ""
   const fields = [
@@ -90,7 +93,7 @@ function recordXml(a: DwcAnimal, r: DwcResearch): string {
   return `  <dwr:SimpleDarwinRecord>\n${fields}\n  </dwr:SimpleDarwinRecord>`
 }
 
-export function buildDarwinCoreXml(animals: DwcAnimal[], research: DwcResearch): string {
+export function buildDarwinCoreXml(animals: DwcAnimal[]): string {
   const xmlns = [
     'xmlns:dwr="http://rs.tdwg.org/dwc/dwcrecord/"',
     'xmlns:dcterms="http://purl.org/dc/terms/"',
@@ -98,7 +101,7 @@ export function buildDarwinCoreXml(animals: DwcAnimal[], research: DwcResearch):
     'xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"',
     'xsi:schemaLocation="http://rs.tdwg.org/dwc/xsd/simpledarwincore/ http://rs.tdwg.org/dwc/xsd/simpledarwincore/tdwg_dwc_simple.xsd"',
   ].join("\n  ")
-  const body = animals.map((a) => recordXml(a, research)).join("\n\n")
+  const body = animals.map((a) => recordXml(a)).join("\n\n")
   return `<?xml version="1.0" encoding="UTF-8"?>
 <dwr:SimpleDarwinRecordSet
   ${xmlns}>
