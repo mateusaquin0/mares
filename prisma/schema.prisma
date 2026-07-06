@@ -255,7 +255,10 @@ model Sample {
   animal          Animal       @relation(fields: [animalId], references: [id], onDelete: Cascade)
   organId         String
   organ           Organ        @relation(fields: [organId], references: [id])
-  identification  String       @unique // identificação/código da amostra, obrigatória e única (ex.: "AM-001")
+  // Organização dona, denormalizada de animal→pesquisa, para a unicidade da identificação
+  // ser POR ORGANIZAÇÃO (não global). Definida na criação; o animal nunca muda de org.
+  orgId           String
+  identification  String // identificação/código da amostra, obrigatória e única por organização (ex.: "AM-001")
   sampleType      String // "tecido fresco", "DNA extraído", "lâmina", "parafina", "soro"
   collectionDate  DateTime?
   storageLocation String? // ex: "Freezer A, caixa 3, posição B2"
@@ -265,6 +268,7 @@ model Sample {
   analyses        Analysis[]
   createdAt       DateTime     @default(now())
 
+  @@unique([orgId, identification])
   @@index([animalId])
 }
 

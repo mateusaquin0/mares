@@ -47,6 +47,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
           ...sampleData(data),
           identification: data.identification.trim(),
           sampleType: data.sampleType.trim(),
+          orgId: animal.orgId, // denormalizado p/ unicidade por organização
           animal: { connect: { id } },
           organ: { connect: { id: data.organId } },
         },
