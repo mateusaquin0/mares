@@ -8,6 +8,28 @@ export type DwcResearch = {
   organization: { name: string }
 }
 
+// Campos do animal (Prisma select) necessários para o Darwin Core. Reutilizado pelas rotas
+// de exportação (por pesquisa e por seleção) para evitar duplicar a lista.
+export const dwcAnimalSelect = {
+  id: true,
+  controlId: true,
+  species: true,
+  taxonFamily: true,
+  taxonOrder: true,
+  wormsAphiaId: true,
+  strandingLat: true,
+  strandingLon: true,
+  eventDate: true,
+  sex: true,
+  lifeStage: true,
+  municipality: true,
+  state: true,
+  strandingBeach: true,
+  macroscopicNotes: true,
+  simbaRecordNumber: true,
+  research: { select: { name: true, organization: { select: { name: true } } } },
+} as const
+
 // Campos do animal usados na exportação (selecionados na rota). A pesquisa é embutida por
 // animal (datasetName/institutionCode) para suportar seleções que cruzam pesquisas.
 export type DwcAnimal = {

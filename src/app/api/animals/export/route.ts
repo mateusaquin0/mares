@@ -8,7 +8,7 @@ import { getLocale } from "next-intl/server"
 import { prisma } from "@/lib/prisma"
 import { getAuthUser, getActiveOrgId, requireOrgRole } from "@/lib/auth"
 import { apiError, unauthorized } from "@/lib/api"
-import { buildDarwinCoreXml } from "@/lib/darwin-core"
+import { buildDarwinCoreXml, dwcAnimalSelect } from "@/lib/darwin-core"
 import { buildAnimalsXlsx } from "@/lib/animals-xlsx"
 
 const exportSchema = z.object({
@@ -16,30 +16,14 @@ const exportSchema = z.object({
   format: z.enum(["darwin-core", "xlsx"]),
 })
 
-// Campos que cobrem os dois formatos (Darwin Core e Excel).
+// Campos que cobrem os dois formatos: os do Darwin Core + os extras do Excel.
 const exportSelect = {
-  id: true,
-  controlId: true,
-  simbaRecordNumber: true,
-  species: true,
-  taxonFamily: true,
-  taxonOrder: true,
-  wormsAphiaId: true,
-  sex: true,
-  lifeStage: true,
+  ...dwcAnimalSelect,
   bodyCondition: true,
   decompositionStage: true,
   deathCondition: true,
-  eventDate: true,
   necropsyDate: true,
-  municipality: true,
-  state: true,
-  strandingBeach: true,
-  strandingLat: true,
-  strandingLon: true,
   isPublic: true,
-  macroscopicNotes: true,
-  research: { select: { name: true, organization: { select: { name: true } } } },
   _count: { select: { samples: true } },
   // Amostras + análises (para os resultados na planilha Excel).
   samples: {

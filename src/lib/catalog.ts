@@ -8,18 +8,9 @@ import type { CatalogType } from "@/schemas/catalog.schema"
 import { pathogenSchema } from "@/schemas/catalog.schema"
 import { NotFoundError, ValidationError } from "@/lib/errors"
 import { ERROR_CODES } from "@/lib/error-codes"
+import { slugify } from "@/lib/slug"
 
 export type I18n = { pt: string; en: string }
-
-export function slugify(s: string): string {
-  return s
-    .normalize("NFD")
-    .replace(/\p{Diacritic}/gu, "")
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9]+/g, "_")
-    .replace(/^_+|_+$/g, "")
-}
 
 // ── Órgão / Exame (name JSON) ───────────────────────────────────────────────
 

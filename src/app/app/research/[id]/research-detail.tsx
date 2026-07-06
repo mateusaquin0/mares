@@ -146,7 +146,7 @@ export function ResearchDetail({
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-3xl font-semibold tracking-tight">{research.name}</h1>
-            <Badge variant={research.isPublic ? "default" : "secondary"}>
+            <Badge variant={research.isPublic ? "public" : "private"}>
               {research.isPublic ? t("public") : t("private")}
             </Badge>
           </div>
