@@ -99,7 +99,7 @@
     "research": "Research",
     "animals": "Animals",
     "members": "Members",
-    "catalogs": "Catalogs",
+    "catalogs": "Glossaries",
     "myOrgs": "My research groups",
     "comingSoon": "Coming soon",
     "adminSection": "Administration",
@@ -121,8 +121,8 @@
     "adminMode": "You are in global administration mode.",
     "statResearch": "Research",
     "statAnimals": "Animals",
-    "statOrgans": "Organs in catalog",
-    "statPathogens": "Pathogens in catalog",
+    "statOrgans": "Organs in glossary",
+    "statPathogens": "Pathogens in glossary",
     "statExams": "Exam types",
     "hintActiveOrg": "in the active research group",
     "hintRegistered": "registered",
@@ -362,7 +362,7 @@
     "protocolNotFound": "Protocol entry not found",
     "protocolDuplicate": "This combination already exists in the protocol",
     "protocolInUse": "Cannot remove: there are analyses linked to this protocol entry",
-    "catalogNotFound": "Catalog item not found",
+    "catalogNotFound": "Glossary item not found",
     "catalogDuplicate": "An item with this name already exists",
     "catalogInUse": "This item is in use and cannot be removed",
     "catalogNameRequired": "Enter the name",
@@ -614,7 +614,7 @@
     "removeError": "Could not remove"
   },
   "catalogs": {
-    "title": "Catalogs",
+    "title": "Glossaries",
     "subtitle": "Organs, pathogens and exam types — global and shared. Editing/removing is restricted to the global admin.",
     "add": "Add",
     "addTitle": "Add item",
@@ -648,6 +648,6 @@
     "updateError": "Could not save",
     "deleteError": "Could not remove",
     "deleteTitle": "Remove item",
-    "deleteDesc": "Remove \"{name}\" from the catalog?"
+    "deleteDesc": "Remove \"{name}\" from the glossary?"
   }
 }
