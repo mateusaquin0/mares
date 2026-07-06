@@ -7,6 +7,7 @@ import { ArrowLeft, Fish, Pencil } from "lucide-react"
 
 import { useAnimal } from "@/hooks/use-animals"
 import { useResearchList } from "@/hooks/use-research"
+import { SEX_OPTIONS, LIFE_STAGE_OPTIONS } from "@/lib/animal-enums"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -28,17 +29,15 @@ export function AnimalDetail({ id, isOrgAdmin }: { id: string; isOrgAdmin: boole
   const researchQ = useResearchList()
   const researches = (researchQ.data ?? []).map((r) => ({ id: r.id, name: r.name }))
 
-  const sexLabel = (s: string | null) =>
-    s === "M" ? t("sexMale") : s === "F" ? t("sexFemale") : s === "U" ? t("sexUndetermined") : s
+  const sexLabel = (s: string | null) => {
+    const o = SEX_OPTIONS.find((x) => x.value === s)
+    return o ? t(o.key) : s
+  }
 
-  const lifeStageLabel = (s: string | null) =>
-    ({
-      FETUS: t("lifeStageFetus"),
-      PUP: t("lifeStagePup"),
-      JUVENILE: t("lifeStageJuvenile"),
-      ADULT: t("lifeStageAdult"),
-      UNDETERMINED: t("lifeStageUndetermined"),
-    })[s ?? ""] ?? s
+  const lifeStageLabel = (s: string | null) => {
+    const o = LIFE_STAGE_OPTIONS.find((x) => x.value === s)
+    return o ? t(o.key) : s
+  }
 
   if (loading) {
     return <p className="p-8 text-sm text-muted-foreground">{tc("loading")}</p>

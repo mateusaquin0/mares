@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { SpeciesAutocomplete } from "@/components/species-autocomplete";
 import { Field, TextField, TextareaField, SelectField } from "@/components/form";
+import { SEX_OPTIONS, LIFE_STAGE_OPTIONS } from "@/lib/animal-enums";
 import type { AnimalFormApi } from "./use-animal-form";
 import type { ResearchOption } from ".";
 
@@ -212,18 +213,9 @@ export function StrandingSection({ form, errors, set }: SectionProps) {
 export function ConditionSection({ form, errors, set }: SectionProps) {
   const t = useTranslations("animals");
 
-  const sexOptions = [
-    { value: "M", label: t("sexMale") },
-    { value: "F", label: t("sexFemale") },
-    { value: "U", label: t("sexUndetermined") },
-  ];
-  const lifeStageOptions = [
-    { value: "FETUS", label: t("lifeStageFetus") },
-    { value: "PUP", label: t("lifeStagePup") },
-    { value: "JUVENILE", label: t("lifeStageJuvenile") },
-    { value: "ADULT", label: t("lifeStageAdult") },
-    { value: "UNDETERMINED", label: t("lifeStageUndetermined") },
-  ];
+  // Valores canônicos em src/lib/animal-enums.ts; aqui só resolvemos o rótulo i18n.
+  const sexOptions = SEX_OPTIONS.map((o) => ({ value: o.value, label: t(o.key) }));
+  const lifeStageOptions = LIFE_STAGE_OPTIONS.map((o) => ({ value: o.value, label: t(o.key) }));
 
   return (
     <Section title={t("sectionCondition")} icon={Stethoscope}>

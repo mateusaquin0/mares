@@ -8,6 +8,7 @@ import { Download, Globe, Lock, MoreHorizontal } from "lucide-react";
 
 import type { AnimalListItem } from "@/types/animal";
 import { useTable } from "@/lib/use-table";
+import { SEX_OPTIONS } from "@/lib/animal-enums";
 import { downloadAnimalsExport, type ExportFormat } from "@/lib/export-download";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -52,14 +53,10 @@ export function AnimalsTable({
     [a.municipality, a.state].filter(Boolean).join(", ");
   const fmtDate = (iso: string | null) =>
     iso ? new Date(iso).toLocaleDateString(locale) : "";
-  const sexLabel = (s: string | null) =>
-    s === "M"
-      ? t("sexMale")
-      : s === "F"
-        ? t("sexFemale")
-        : s === "U"
-          ? t("sexUndetermined")
-          : (s ?? "");
+  const sexLabel = (s: string | null) => {
+    const o = SEX_OPTIONS.find((x) => x.value === s);
+    return o ? t(o.key) : (s ?? "");
+  };
 
   const table = useTable(items, {
     locale,

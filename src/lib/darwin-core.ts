@@ -3,6 +3,8 @@
 // com submissão ao GBIF/SiBBr. O mapeamento converte os valores internos (sexo M/F/U,
 // estágio de vida FETUS/PUP/JUVENILE/ADULT/UNDETERMINED) para o vocabulário Darwin Core.
 
+import type { SexValue, LifeStageValue } from "@/lib/animal-enums"
+
 export type DwcResearch = {
   name: string
   organization: { name: string }
@@ -52,9 +54,9 @@ export type DwcAnimal = {
   research: DwcResearch
 }
 
-// Valores internos → vocabulário Darwin Core. Valores sem correspondência são omitidos.
-const SEX_MAP: Record<string, string> = { M: "Male", F: "Female" } // U (indeterminado) → omitido
-const LIFE_STAGE_MAP: Record<string, string> = {
+// Valores internos (ver animal-enums.ts) → vocabulário Darwin Core. Sem correspondência = omitido.
+const SEX_MAP: Partial<Record<SexValue, string>> = { M: "Male", F: "Female" } // U → omitido
+const LIFE_STAGE_MAP: Partial<Record<LifeStageValue, string>> = {
   FETUS: "fetus",
   PUP: "juvenile",
   JUVENILE: "subadult",
@@ -101,8 +103,8 @@ function recordXml(a: DwcAnimal): string {
     tag("dwc:stateProvince", a.state ?? ""),
     tag("dwc:municipality", a.municipality ?? ""),
     tag("dwc:locality", a.strandingBeach ?? ""),
-    tag("dwc:sex", SEX_MAP[a.sex ?? ""] ?? ""),
-    tag("dwc:lifeStage", LIFE_STAGE_MAP[a.lifeStage ?? ""] ?? ""),
+    tag("dwc:sex", SEX_MAP[(a.sex ?? "") as SexValue] ?? ""),
+    tag("dwc:lifeStage", LIFE_STAGE_MAP[(a.lifeStage ?? "") as LifeStageValue] ?? ""),
     tag("dwc:catalogNumber", a.simbaRecordNumber ?? ""),
     tag("dwc:occurrenceRemarks", a.macroscopicNotes ?? ""),
     tag("dwc:datasetName", r.name),

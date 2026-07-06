@@ -5,6 +5,7 @@
 import ExcelJS from "exceljs"
 
 import { txt, pathogenName, type I18nText } from "@/lib/catalog-i18n"
+import type { SexValue, LifeStageValue } from "@/lib/animal-enums"
 
 type Result = "POSITIVO" | "NEGATIVO" | "INCONCLUSIVO"
 
@@ -72,12 +73,13 @@ function positivePathogens(a: XlsxAnimal, loc: Loc): string {
   return [...names].sort((x, y) => x.localeCompare(y, loc)).join(", ")
 }
 
-const SEX: Record<string, { pt: string; en: string }> = {
+// Valores canônicos em animal-enums.ts; aqui os rótulos completos (pt/en) para a planilha.
+const SEX: Record<SexValue, { pt: string; en: string }> = {
   M: { pt: "Macho", en: "Male" },
   F: { pt: "Fêmea", en: "Female" },
   U: { pt: "Indeterminado", en: "Undetermined" },
 }
-const LIFE_STAGE: Record<string, { pt: string; en: string }> = {
+const LIFE_STAGE: Record<LifeStageValue, { pt: string; en: string }> = {
   FETUS: { pt: "Feto", en: "Fetus" },
   PUP: { pt: "Filhote", en: "Pup" },
   JUVENILE: { pt: "Juvenil", en: "Juvenile" },
@@ -127,8 +129,8 @@ const ANALYSIS_COLUMNS: { key: string; pt: string; en: string; width: number }[]
 const isoDate = (d: Date | null) => (d ? d.toISOString().slice(0, 10) : "")
 
 function rowFor(a: XlsxAnimal, loc: Loc): Record<string, string | number> {
-  const sex = a.sex ? (SEX[a.sex]?.[loc] ?? a.sex) : ""
-  const lifeStage = a.lifeStage ? (LIFE_STAGE[a.lifeStage]?.[loc] ?? a.lifeStage) : ""
+  const sex = a.sex ? (SEX[a.sex as SexValue]?.[loc] ?? a.sex) : ""
+  const lifeStage = a.lifeStage ? (LIFE_STAGE[a.lifeStage as LifeStageValue]?.[loc] ?? a.lifeStage) : ""
   const visible = loc === "en" ? (a.isPublic ? "Public" : "Hidden") : a.isPublic ? "Público" : "Oculto"
   return {
     controlId: a.controlId ?? "",

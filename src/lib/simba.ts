@@ -10,6 +10,7 @@
 
 import { NotFoundError, ServiceUnavailableError } from "@/lib/errors"
 import { ERROR_CODES } from "@/lib/error-codes"
+import type { SexValue, LifeStageValue } from "@/lib/animal-enums"
 
 const DEFAULT_SIMBA_URL =
   "https://simba.petrobras.com.br/simba/web/api/v1/occurrences/public"
@@ -94,7 +95,7 @@ function toFloat(v: string | null): number | null {
 
 /** Mapeia o sexo do SIMBA (ex.: "Fêmea"/"Macho"/"Indefinido") para o código do form.
  *  Sem informação (ou valor desconhecido) → "U" (indeterminado). */
-function normalizeSex(v: string | null): string {
+function normalizeSex(v: string | null): SexValue {
   const s = (v ?? "").trim().toLowerCase()
   if (s.startsWith("f")) return "F" // fêmea / femea / female
   if (s.startsWith("m")) return "M" // macho / male
@@ -103,7 +104,7 @@ function normalizeSex(v: string | null): string {
 
 /** Mapeia o estágio de vida do SIMBA (Feto/Filhote/Juvenil/Adulto/Indeterminado)
  *  para o código do form. Sem informação/desconhecido → "UNDETERMINED". */
-function normalizeLifeStage(v: string | null): string {
+function normalizeLifeStage(v: string | null): LifeStageValue {
   const s = (v ?? "").trim().toLowerCase()
   if (s.startsWith("fet")) return "FETUS" // feto / fetus
   if (s.startsWith("fil")) return "PUP" // filhote
