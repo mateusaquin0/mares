@@ -89,6 +89,28 @@
     "invalidDescription": "This link is no longer valid. Request a new email to set your password.",
     "requestNew": "Request a new link"
   },
+  "profile": {
+    "title": "My profile",
+    "subtitle": "Manage your account details, password and profile deletion.",
+    "nameSection": "Account details",
+    "emailLabel": "Email",
+    "emailHint": "Your email is your sign-in identity and can't be changed here.",
+    "nameLabel": "Display name",
+    "saved": "Profile updated",
+    "saveError": "Couldn't save your profile",
+    "passwordSection": "Password",
+    "newPassword": "New password",
+    "confirmPassword": "Confirm password",
+    "changePassword": "Change password",
+    "passwordChanged": "Password changed",
+    "passwordError": "Couldn't change your password",
+    "dangerZone": "Delete profile",
+    "deleteDesc": "Deleting your profile removes your account and memberships and ends your access. Scientific data already published (animals, samples, analyses and research) REMAINS on the platform, no longer associated with you. If any research group is left with no members, it will be deactivated. This action is irreversible.",
+    "deleteTitle": "Delete your profile?",
+    "deleteConfirmDesc": "Your account and memberships will be permanently removed. Scientific data already published remains on the platform. This action cannot be undone.",
+    "deleteButton": "Delete my profile",
+    "deleteError": "Couldn't delete your profile"
+  },
   "noOrg": {
     "title": "You don't belong to any research group",
     "description": "Your account is not linked to a research group yet. Ask an administrator of your research group to add you, or wait for your access request to be approved. If you don't recognize this account, contact us to request the deletion of your profile."
@@ -107,6 +129,7 @@
     "adminOrgs": "Research groups",
     "adminUsers": "Users",
     "signOut": "Sign out",
+    "profile": "My profile",
     "roleOwner": "Research group admin",
     "roleResearcher": "Researcher",
     "roleAdmin": "Global administrator",
@@ -215,8 +238,12 @@
       "title": "4. Responsibilities",
       "body": "The accuracy of scientific data is the responsibility of whoever records it. The platform is provided as is, without guarantees of uninterrupted availability."
     },
+    "deletion": {
+      "title": "5. Profile deletion and data permanence",
+      "body": "You can delete your profile at any time from the \"My profile\" area. Deletion removes your account data (name, email and memberships) and ends your access, but does NOT delete scientific data already published on the platform (animals, samples, analyses and research): it remains recorded to preserve scientific integrity and is no longer associated with you. If a research group is left with no members, it is deactivated, and its public data stays visible on the public map."
+    },
     "changes": {
-      "title": "5. Changes",
+      "title": "6. Changes",
       "body": "These terms may be updated. When that happens, you may be asked to accept them again on your next sign-in. The date of the current version is shown at the top of this page."
     }
   },
@@ -243,11 +270,11 @@
     "memberRemoved": "Member removed",
     "selfDemoted": "You are no longer an administrator",
     "leftOrg": "You left the research group",
-    "orgDeleted": "Research group deleted",
+    "orgDeactivated": "Research group deactivated (no members)",
     "removeTitle": "Remove member",
     "removeDesc": "Remove {email} from the research group?",
     "leaveTitle": "Leave research group",
-    "leaveDesc": "Do you want to leave this research group? If you are the only administrator and there is no data, the research group will be deleted.",
+    "leaveDesc": "Do you want to leave this research group? If you are the last member, the group will be deactivated (its public data stays visible).",
     "demoteTitle": "Step down as administrator",
     "demoteDesc": "Do you want to step down from administrator to researcher? You will lose access to member management.",
     "promoteTitle": "Make administrator",
@@ -277,11 +304,11 @@
     "colActions": "Actions",
     "empty": "You don't belong to any research group.",
     "leaveTitle": "Leave research group",
-    "leaveDescAdmin": "Do you want to leave? If you are the only administrator and the research group has no data, it will be deleted.",
+    "leaveDescAdmin": "Do you want to leave? If you are the last member, the research group will be deactivated (its public data stays visible).",
     "leaveDesc": "Do you want to leave {org}?",
     "leaveError": "Could not leave",
     "leftOrg": "You left the research group",
-    "orgDeleted": "Research group deleted"
+    "orgDeactivated": "Research group deactivated (no members)"
   },
   "adminUsers": {
     "title": "Users",
@@ -293,6 +320,9 @@
     "colActions": "Actions",
     "noOrg": "No research group",
     "globalAdmin": "Global admin",
+    "statusInvited": "Invited",
+    "statusActive": "Active",
+    "statusDeletionRequested": "Deletion requested",
     "deleteTitle": "Delete user",
     "deleteDesc": "Delete the profile of {email}? This action is irreversible.",
     "deleted": "User deleted",
@@ -301,8 +331,8 @@
   },
   "adminOrgs": {
     "title": "Research groups",
-    "subtitle": "Global view (read-only). You see research groups and their users, but not scientific data.",
-    "hint": "Click a row to see the details.",
+    "subtitle": "Global view. You manage the users of any group, but you don't see scientific data.",
+    "hint": "Click a row to see and manage its users.",
     "colName": "Name",
     "colLocation": "Location",
     "colMembers": "Members",
@@ -316,7 +346,23 @@
     "colUserName": "Name",
     "colUserEmail": "Email",
     "colUserRole": "Type",
-    "noMembers": "No members."
+    "noMembers": "No members.",
+    "deactivatedBadge": "Deactivated",
+    "addMemberTitle": "Add user",
+    "addMemberButton": "Add",
+    "addEmailLabel": "Email",
+    "addNameLabel": "Name (if new)",
+    "addNameHint": "If the email already has an account, it is simply linked. Otherwise we send an invite — provide the name.",
+    "memberAdded": "User linked to the research group",
+    "memberInvited": "Invitation sent by email",
+    "addError": "Couldn't add the user",
+    "roleChanged": "Access type updated",
+    "roleError": "Couldn't change the type",
+    "removeMemberTitle": "Remove user",
+    "removeMemberDesc": "Remove {email} from this research group?",
+    "memberRemoved": "User removed",
+    "removeError": "Couldn't remove",
+    "orgDeactivatedToast": "Group deactivated (left with no members)"
   },
   "adminRequests": {
     "title": "Access requests",

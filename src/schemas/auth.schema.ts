@@ -22,6 +22,24 @@ export const setPasswordSchema = z
     path: ["confirm"],
   })
 
+// Troca de senha na área de perfil (usuário já autenticado; sem aceite de termos).
+export const changePasswordSchema = z
+  .object({
+    password: z.string().min(8, "passwordMin8"),
+    confirm: z.string(),
+  })
+  .refine((d) => d.password === d.confirm, {
+    message: "passwordsNoMatch",
+    path: ["confirm"],
+  })
+
+// Edição dos próprios dados de perfil.
+export const updateProfileSchema = z.object({
+  name: z.string().min(2, "name").max(255),
+})
+
 export type LoginData = z.infer<typeof loginSchema>
 export type ForgotPasswordData = z.infer<typeof forgotPasswordSchema>
 export type SetPasswordData = z.infer<typeof setPasswordSchema>
+export type ChangePasswordData = z.infer<typeof changePasswordSchema>
+export type UpdateProfileData = z.infer<typeof updateProfileSchema>

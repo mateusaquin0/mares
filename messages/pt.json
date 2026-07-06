@@ -89,6 +89,28 @@
     "invalidDescription": "Este link não é mais válido. Solicite um novo e-mail para definir sua senha.",
     "requestNew": "Solicitar novo link"
   },
+  "profile": {
+    "title": "Meu perfil",
+    "subtitle": "Gerencie seus dados de conta, senha e exclusão de perfil.",
+    "nameSection": "Dados da conta",
+    "emailLabel": "E-mail",
+    "emailHint": "O e-mail é sua identidade de acesso e não pode ser alterado aqui.",
+    "nameLabel": "Nome de exibição",
+    "saved": "Perfil atualizado",
+    "saveError": "Não foi possível salvar o perfil",
+    "passwordSection": "Senha",
+    "newPassword": "Nova senha",
+    "confirmPassword": "Confirmar senha",
+    "changePassword": "Alterar senha",
+    "passwordChanged": "Senha alterada",
+    "passwordError": "Não foi possível alterar a senha",
+    "dangerZone": "Excluir perfil",
+    "deleteDesc": "Ao excluir seu perfil, sua conta e seus vínculos são removidos e seu acesso é encerrado. Os dados científicos já publicados (animais, amostras, análises e pesquisas) PERMANECEM na plataforma, sem associação a você. Se algum grupo de pesquisa ficar sem membros, ele será desativado. Esta ação é irreversível.",
+    "deleteTitle": "Excluir seu perfil?",
+    "deleteConfirmDesc": "Sua conta e seus vínculos serão removidos definitivamente. Os dados científicos já publicados permanecem na plataforma. Esta ação não pode ser desfeita.",
+    "deleteButton": "Excluir meu perfil",
+    "deleteError": "Não foi possível excluir o perfil"
+  },
   "noOrg": {
     "title": "Você não pertence a nenhum grupo de pesquisa",
     "description": "Sua conta ainda não está vinculada a um grupo de pesquisa. Peça a um administrador do seu grupo de pesquisa para adicioná-lo, ou aguarde a aprovação da sua solicitação de acesso. Se você não reconhece este cadastro, entre em contato para solicitar a exclusão do seu perfil."
@@ -107,6 +129,7 @@
     "adminOrgs": "Grupos de pesquisa",
     "adminUsers": "Usuários",
     "signOut": "Sair",
+    "profile": "Meu perfil",
     "roleOwner": "Administrador do grupo de pesquisa",
     "roleResearcher": "Pesquisador",
     "roleAdmin": "Administrador global",
@@ -215,8 +238,12 @@
       "title": "4. Responsabilidades",
       "body": "A exatidão dos dados científicos é responsabilidade de quem os registra. A plataforma é fornecida no estado em que se encontra, sem garantias de disponibilidade ininterrupta."
     },
+    "deletion": {
+      "title": "5. Exclusão de perfil e permanência dos dados",
+      "body": "Você pode excluir seu perfil a qualquer momento pela área \"Meu perfil\". A exclusão remove seus dados de conta (nome, e-mail e vínculos) e encerra seu acesso, mas NÃO exclui os dados científicos já publicados na plataforma (animais, amostras, análises e pesquisas): eles permanecem registrados para preservar a integridade científica, deixando de ser associados a você. Se um grupo de pesquisa ficar sem membros, ele é desativado, e seus dados públicos continuam visíveis no mapa público."
+    },
     "changes": {
-      "title": "5. Alterações",
+      "title": "6. Alterações",
       "body": "Estes termos podem ser atualizados. Quando isso ocorrer, poderá ser solicitado um novo aceite no próximo acesso. A data da versão vigente é exibida no topo desta página."
     }
   },
@@ -243,11 +270,11 @@
     "memberRemoved": "Membro removido",
     "selfDemoted": "Você deixou de ser administrador",
     "leftOrg": "Você saiu do grupo de pesquisa",
-    "orgDeleted": "Grupo de pesquisa excluído",
+    "orgDeactivated": "Grupo de pesquisa desativado (sem membros)",
     "removeTitle": "Remover membro",
     "removeDesc": "Remover {email} do grupo de pesquisa?",
     "leaveTitle": "Sair do grupo de pesquisa",
-    "leaveDesc": "Deseja sair deste grupo de pesquisa? Se você for o único administrador e não houver dados, o grupo de pesquisa será excluído.",
+    "leaveDesc": "Deseja sair deste grupo de pesquisa? Se você for o último membro, o grupo será desativado (os dados públicos continuam visíveis).",
     "demoteTitle": "Deixar de ser administrador",
     "demoteDesc": "Deseja deixar de ser administrador e passar a pesquisador? Você perderá o acesso à gestão de membros.",
     "promoteTitle": "Tornar administrador",
@@ -277,11 +304,11 @@
     "colActions": "Ações",
     "empty": "Você não pertence a nenhum grupo de pesquisa.",
     "leaveTitle": "Sair do grupo de pesquisa",
-    "leaveDescAdmin": "Deseja sair? Se você for o único administrador e o grupo de pesquisa não tiver dados, ele será excluído.",
+    "leaveDescAdmin": "Deseja sair? Se você for o último membro, o grupo de pesquisa será desativado (os dados públicos continuam visíveis).",
     "leaveDesc": "Deseja sair de {org}?",
     "leaveError": "Não foi possível sair",
     "leftOrg": "Você saiu do grupo de pesquisa",
-    "orgDeleted": "Grupo de pesquisa excluído"
+    "orgDeactivated": "Grupo de pesquisa desativado (sem membros)"
   },
   "adminUsers": {
     "title": "Usuários",
@@ -293,6 +320,9 @@
     "colActions": "Ações",
     "noOrg": "Sem grupo de pesquisa",
     "globalAdmin": "Admin global",
+    "statusInvited": "Convidado",
+    "statusActive": "Ativo",
+    "statusDeletionRequested": "Remoção solicitada",
     "deleteTitle": "Excluir usuário",
     "deleteDesc": "Excluir o perfil de {email}? Esta ação é irreversível.",
     "deleted": "Usuário excluído",
@@ -301,8 +331,8 @@
   },
   "adminOrgs": {
     "title": "Grupos de pesquisa",
-    "subtitle": "Visão global (somente leitura). Você vê os grupos de pesquisa e seus usuários, mas não os dados científicos.",
-    "hint": "Clique em uma linha para ver os detalhes.",
+    "subtitle": "Visão global. Você gerencia os usuários de qualquer grupo, mas não vê os dados científicos.",
+    "hint": "Clique em uma linha para ver e gerenciar os usuários.",
     "colName": "Nome",
     "colLocation": "Localização",
     "colMembers": "Membros",
@@ -316,7 +346,23 @@
     "colUserName": "Nome",
     "colUserEmail": "E-mail",
     "colUserRole": "Tipo",
-    "noMembers": "Sem membros."
+    "noMembers": "Sem membros.",
+    "deactivatedBadge": "Desativado",
+    "addMemberTitle": "Adicionar usuário",
+    "addMemberButton": "Adicionar",
+    "addEmailLabel": "E-mail",
+    "addNameLabel": "Nome (se for novo)",
+    "addNameHint": "Se o e-mail já tiver conta, ele é apenas vinculado. Caso contrário, enviamos um convite — informe o nome.",
+    "memberAdded": "Usuário vinculado ao grupo de pesquisa",
+    "memberInvited": "Convite enviado por e-mail",
+    "addError": "Não foi possível adicionar o usuário",
+    "roleChanged": "Tipo de acesso atualizado",
+    "roleError": "Não foi possível alterar o tipo",
+    "removeMemberTitle": "Remover usuário",
+    "removeMemberDesc": "Remover {email} deste grupo de pesquisa?",
+    "memberRemoved": "Usuário removido",
+    "removeError": "Não foi possível remover",
+    "orgDeactivatedToast": "Grupo desativado (ficou sem membros)"
   },
   "adminRequests": {
     "title": "Solicitações de acesso",

@@ -20,6 +20,7 @@ export async function GET() {
         city: true,
         state: true,
         country: true,
+        deactivatedAt: true,
         createdAt: true,
         _count: { select: { researches: true } },
         memberships: {
@@ -39,6 +40,7 @@ export async function GET() {
         city: o.city,
         state: o.state,
         country: o.country,
+        deactivatedAt: o.deactivatedAt,
         createdAt: o.createdAt,
         researchCount: o._count.researches,
         members: o.memberships.map((m) => ({

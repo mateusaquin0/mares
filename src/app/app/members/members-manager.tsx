@@ -27,6 +27,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
+import { TableSkeleton } from "@/components/ui/skeleton"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { ConfirmDialog } from "@/components/confirm-dialog"
 import { LocationPicker } from "@/components/location-picker"
@@ -163,7 +164,7 @@ export function MembersManager({
   async function remove(m: Member) {
     const isSelf = m.userId === selfId
     setBusy(m.userId)
-    let result: { orgDeleted?: boolean }
+    let result: { orgDeactivated?: boolean }
     try {
       result = await removeM.mutateAsync(m.userId)
     } catch (err) {
@@ -173,7 +174,7 @@ export function MembersManager({
       setBusy(null)
     }
     if (isSelf) {
-      toast.success(result?.orgDeleted ? t("orgDeleted") : t("leftOrg"))
+      toast.success(result?.orgDeactivated ? t("orgDeactivated") : t("leftOrg"))
       router.push("/app/dashboard")
       router.refresh()
       return
@@ -249,7 +250,7 @@ export function MembersManager({
       </div>
 
       {loading ? (
-        <p className="text-sm text-muted-foreground">{tc("loading")}</p>
+        <TableSkeleton />
       ) : members.length === 0 ? (
         <p className="text-sm text-muted-foreground">{t("empty")}</p>
       ) : (

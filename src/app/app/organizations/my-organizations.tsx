@@ -37,7 +37,7 @@ export function MyOrganizations({
 
   async function leave(m: Membership) {
     setBusy(m.orgId)
-    let result: { orgDeleted?: boolean }
+    let result: { orgDeactivated?: boolean }
     try {
       result = await leaveM.mutateAsync({ orgId: m.orgId, userId: selfId })
     } catch (err) {
@@ -46,7 +46,7 @@ export function MyOrganizations({
     } finally {
       setBusy(null)
     }
-    toast.success(result?.orgDeleted ? t("orgDeleted") : t("leftOrg"))
+    toast.success(result?.orgDeactivated ? t("orgDeactivated") : t("leftOrg"))
     setList((prev) => prev.filter((x) => x.orgId !== m.orgId))
     router.refresh()
   }

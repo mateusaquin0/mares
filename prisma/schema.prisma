@@ -56,6 +56,10 @@ model Organization {
   city        String?
   state       String? // UF / província
   country     String?
+  // Desativação: um grupo que fica SEM membros é desativado (deactivatedAt = data), não
+  // excluído. Seus dados públicos continuam visíveis no mapa público (que filtra só por
+  // isPublic). Readicionar um membro reativa (deactivatedAt = null). Ver docs/CADASTRO_E_ACESSO.md.
+  deactivatedAt DateTime?
   memberships Membership[]
   researches  Research[]
   createdAt   DateTime     @default(now())

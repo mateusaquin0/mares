@@ -9,6 +9,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { getAuthUser, requireOrgRole } from "@/lib/auth"
+import { deactivateOrgIfEmpty } from "@/lib/org-lifecycle"
 import { apiError, unauthorized } from "@/lib/api"
 import { updateMemberRoleSchema } from "@/schemas/organization.schema"
 import { NotFoundError, ConflictError, ForbiddenError } from "@/lib/errors"
@@ -16,6 +17,10 @@ import { ERROR_CODES } from "@/lib/error-codes"
 
 async function orgAdminCount(orgId: string) {
   return prisma.membership.count({ where: { orgId, role: "ORG_ADMIN" } })
+}
+
+async function orgMemberCount(orgId: string) {
+  return prisma.membership.count({ where: { orgId } })
 }
 
 async function orgHasData(orgId: string) {
@@ -100,7 +105,11 @@ export async function DELETE(
         )
       }
       await prisma.membership.delete({ where: { userId_orgId: { userId, orgId } } })
-      return new NextResponse(null, { status: 204 })
+      // Remover o último membro (ex.: único pesquisador) desativa o grupo.
+      const deactivated = await deactivateOrgIfEmpty(orgId)
+      return deactivated
+        ? NextResponse.json({ orgDeactivated: true })
+        : new NextResponse(null, { status: 204 })
     }
 
     // Saída por conta própria (pesquisador ou admin).
@@ -111,19 +120,27 @@ export async function DELETE(
       throw new NotFoundError("Você não pertence a esta organização", ERROR_CODES.notMember)
 
     if (membership.role === "ORG_ADMIN" && (await orgAdminCount(orgId)) <= 1) {
-      // Último admin saindo: com dados, bloqueia; sem dados, exclui a organização.
-      if (await orgHasData(orgId)) {
+      // Último admin saindo. Se o grupo tem dados e AINDA há outros membros, exige um
+      // sucessor (senão o grupo ficaria com pesquisadores mas sem admin). Se ele é o
+      // último membro, o grupo é desativado (dados públicos permanecem visíveis).
+      if ((await orgHasData(orgId)) && (await orgMemberCount(orgId)) > 1) {
         throw new ConflictError(
           "A organização possui dados; promova outro administrador antes de sair",
           ERROR_CODES.lastAdminHasData
         )
       }
-      await prisma.organization.delete({ where: { id: orgId } })
-      return NextResponse.json({ orgDeleted: true })
+      await prisma.membership.delete({ where: { userId_orgId: { userId, orgId } } })
+      const deactivated = await deactivateOrgIfEmpty(orgId)
+      return deactivated
+        ? NextResponse.json({ orgDeactivated: true })
+        : new NextResponse(null, { status: 204 })
     }
 
     await prisma.membership.delete({ where: { userId_orgId: { userId, orgId } } })
-    return new NextResponse(null, { status: 204 })
+    const deactivated = await deactivateOrgIfEmpty(orgId)
+    return deactivated
+      ? NextResponse.json({ orgDeactivated: true })
+      : new NextResponse(null, { status: 204 })
   } catch (err) {
     return apiError(err)
   }

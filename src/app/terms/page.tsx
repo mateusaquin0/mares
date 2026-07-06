@@ -12,7 +12,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function TermsPage() {
   const t = await getTranslations("terms")
-  const sections = ["data", "usage", "privacy", "responsibility", "changes"] as const
+  const sections = ["data", "usage", "privacy", "responsibility", "deletion", "changes"] as const
 
   return (
     <div className="mx-auto min-h-screen max-w-3xl px-6 py-12">

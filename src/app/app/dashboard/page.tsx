@@ -8,8 +8,12 @@ export default async function DashboardPage() {
   const user = await getAuthUser()
   if (!user) redirect("/login")
 
-  const t = await getTranslations("dashboard")
   const activeOrgId = await getActiveOrgId(user)
+  // Admin global não participa de organizações → não tem dados no dashboard.
+  // Sua tela inicial são as solicitações de acesso.
+  if (user.isSystemAdmin && !activeOrgId) redirect("/app/admin/access-requests")
+
+  const t = await getTranslations("dashboard")
   const activeOrg = user.memberships.find((m) => m.orgId === activeOrgId) ?? null
 
   return (

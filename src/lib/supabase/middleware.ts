@@ -75,8 +75,14 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(new URL("/app/dashboard", request.url))
   }
 
-  // Usuário sem organização (e que não é admin global) → tela dedicada
-  if (!hasOrg && !isAdmin && pathname !== "/app/no-organization") {
+  // Usuário sem organização (e que não é admin global) → tela dedicada.
+  // Exceção: o próprio perfil continua acessível (para editar dados ou excluir a conta).
+  if (
+    !hasOrg &&
+    !isAdmin &&
+    pathname !== "/app/no-organization" &&
+    !pathname.startsWith("/app/profile")
+  ) {
     return NextResponse.redirect(new URL("/app/no-organization", request.url))
   }
 

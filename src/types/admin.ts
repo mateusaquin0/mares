@@ -29,6 +29,7 @@ export type AdminOrg = {
   city: string | null
   state: string | null
   country: string | null
+  deactivatedAt: string | null
   createdAt: string
   researchCount: number
   members: Member[]

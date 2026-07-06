@@ -9,12 +9,13 @@ import { useAdminOrganizations } from "@/hooks/use-admin"
 import type { AdminOrg } from "@/types/admin"
 import { CountryFlag } from "@/components/country-flag"
 import { Badge } from "@/components/ui/badge"
+import { TableSkeleton } from "@/components/ui/skeleton"
 import { Input } from "@/components/ui/input"
+import { OrgMembers } from "./org-members"
 import {
   Table,
   TableBody,
   TableCell,
-  TableHead,
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
@@ -35,7 +36,9 @@ export default function AdminOrganizationsPage() {
   const orgsQ = useAdminOrganizations()
   const orgs = orgsQ.data ?? []
   const loading = orgsQ.isLoading
-  const [selected, setSelected] = useState<AdminOrg | null>(null)
+  // Guarda o id; o objeto é derivado da lista viva para refletir mutações de membros.
+  const [selectedId, setSelectedId] = useState<string | null>(null)
+  const selected = orgs.find((o) => o.id === selectedId) ?? null
 
   // Texto puro da localização (cidade, estado, país traduzido), usado em busca/ordenação.
   const locationText = useCallback(
@@ -83,7 +86,7 @@ export default function AdminOrganizationsPage() {
       </div>
 
       {loading ? (
-        <p className="text-sm text-muted-foreground">{tc("loading")}</p>
+        <TableSkeleton />
       ) : orgs.length === 0 ? (
         <p className="text-sm text-muted-foreground">{t("empty")}</p>
       ) : (
@@ -138,9 +141,16 @@ export default function AdminOrganizationsPage() {
                     <TableRow
                       key={o.id}
                       className="cursor-pointer"
-                      onClick={() => setSelected(o)}
+                      onClick={() => setSelectedId(o.id)}
                     >
-                      <TableCell className="font-medium">{o.name}</TableCell>
+                      <TableCell className="font-medium">
+                        <span className="flex items-center gap-2">
+                          {o.name}
+                          {o.deactivatedAt && (
+                            <Badge variant="secondary">{t("deactivatedBadge")}</Badge>
+                          )}
+                        </span>
+                      </TableCell>
                       <TableCell className="text-muted-foreground">
                         {renderLocation(o)}
                       </TableCell>
@@ -158,7 +168,7 @@ export default function AdminOrganizationsPage() {
         </>
       )}
 
-      <Dialog open={!!selected} onOpenChange={(open) => !open && setSelected(null)}>
+      <Dialog open={!!selected} onOpenChange={(open) => !open && setSelectedId(null)}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>{selected?.name}</DialogTitle>
@@ -167,43 +177,7 @@ export default function AdminOrganizationsPage() {
             </DialogDescription>
           </DialogHeader>
 
-          {selected && (
-            <div className="space-y-2">
-              <p className="text-sm font-medium">{t("membersSection")}</p>
-              {selected.members.length === 0 ? (
-                <p className="text-sm text-muted-foreground">{t("noMembers")}</p>
-              ) : (
-                <div className="rounded-md border">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>{t("colUserName")}</TableHead>
-                        <TableHead>{t("colUserEmail")}</TableHead>
-                        <TableHead>{t("colUserRole")}</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {selected.members.map((m) => (
-                        <TableRow key={m.userId}>
-                          <TableCell className="font-medium">{m.name ?? "—"}</TableCell>
-                          <TableCell className="text-muted-foreground">{m.email}</TableCell>
-                          <TableCell>
-                            <Badge
-                              variant={m.role === "ORG_ADMIN" ? "default" : "secondary"}
-                            >
-                              {m.role === "ORG_ADMIN"
-                                ? tc("roleAdmin")
-                                : tc("roleResearcher")}
-                            </Badge>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              )}
-            </div>
-          )}
+          {selected && <OrgMembers org={selected} />}
         </DialogContent>
       </Dialog>
     </div>

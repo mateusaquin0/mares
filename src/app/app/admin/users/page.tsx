@@ -7,6 +7,7 @@ import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
+import { TableSkeleton } from "@/components/ui/skeleton"
 import { ConfirmDialog } from "@/components/confirm-dialog"
 import { useErrorMessage } from "@/lib/use-error-message"
 import { useTable } from "@/lib/use-table"
@@ -33,6 +34,16 @@ export default function AdminUsersPage() {
   const removeM = useRemoveUser()
   const [busy, setBusy] = useState<string | null>(null)
 
+  const statusLabel = useCallback(
+    (s: string) =>
+      ({
+        INVITED: t("statusInvited"),
+        ACTIVE: t("statusActive"),
+        DELETION_REQUESTED: t("statusDeletionRequested"),
+      })[s] ?? s,
+    [t]
+  )
+
   const orgsText = useCallback(
     (u: AdminUser) =>
       u.memberships.length === 0
@@ -55,9 +66,9 @@ export default function AdminUsersPage() {
       name: (u) => u.name ?? "",
       email: (u) => u.email,
       orgs: (u) => orgsText(u),
-      status: (u) => u.status,
+      status: (u) => statusLabel(u.status),
     },
-    search: (u) => [u.name ?? "", u.email, orgsText(u), u.status].join(" "),
+    search: (u) => [u.name ?? "", u.email, orgsText(u), statusLabel(u.status)].join(" "),
   })
 
   async function remove(u: AdminUser) {
@@ -80,7 +91,7 @@ export default function AdminUsersPage() {
       </div>
 
       {loading ? (
-        <p className="text-sm text-muted-foreground">{tc("loading")}</p>
+        <TableSkeleton />
       ) : users.length === 0 ? (
         <p className="text-sm text-muted-foreground">{t("empty")}</p>
       ) : (
@@ -133,7 +144,7 @@ export default function AdminUsersPage() {
                   <TableCell className="text-muted-foreground">{u.email}</TableCell>
                   <TableCell className="text-sm text-muted-foreground">{orgsText(u)}</TableCell>
                   <TableCell>
-                    <Badge variant="secondary">{u.status}</Badge>
+                    <Badge variant="secondary">{statusLabel(u.status)}</Badge>
                   </TableCell>
                   <TableCell className="text-right">
                     <ConfirmDialog

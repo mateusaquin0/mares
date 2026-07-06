@@ -255,12 +255,14 @@ export function Sidebar({
       </nav>
 
       <div className={cn("border-t border-border py-3", collapsed ? "px-2" : "px-3")}>
-        <div
+        <Link
+          href="/app/profile"
           className={cn(
-            "flex items-center gap-3 py-2",
-            collapsed ? "justify-center" : "px-2"
+            "flex items-center gap-3 rounded-lg py-2 transition-colors hover:bg-muted",
+            collapsed ? "justify-center" : "px-2",
+            pathname.startsWith("/app/profile") && "bg-accent"
           )}
-          title={collapsed ? `${userName} — ${roleLabel}` : undefined}
+          title={collapsed ? `${userName} — ${t("profile")}` : t("profile")}
         >
           <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground">
             {initials}
@@ -271,7 +273,7 @@ export function Sidebar({
               <p className="truncate text-xs text-muted-foreground">{roleLabel}</p>
             </div>
           )}
-        </div>
+        </Link>
         {!collapsed && (
           <div className="mb-1 px-2">
             <LocaleSwitcher className="text-muted-foreground" />
