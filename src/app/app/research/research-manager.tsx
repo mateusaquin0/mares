@@ -23,6 +23,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Badge } from "@/components/ui/badge"
+import { TableSkeleton } from "@/components/ui/skeleton"
 import { ConfirmDialog } from "@/components/confirm-dialog"
 import {
   Table,
@@ -118,7 +119,7 @@ export function ResearchManager({ isOrgAdmin, selfId }: { isOrgAdmin: boolean; s
       </div>
 
       {loading ? (
-        <p className="text-sm text-muted-foreground">{tc("loading")}</p>
+        <TableSkeleton />
       ) : items.length === 0 ? (
         <p className="text-sm text-muted-foreground">{t("empty")}</p>
       ) : (

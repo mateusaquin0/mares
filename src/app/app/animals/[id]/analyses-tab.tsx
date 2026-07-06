@@ -16,6 +16,7 @@ import type {
 } from "@/types/analysis"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
+import { TableSkeleton } from "@/components/ui/skeleton"
 import {
   Table,
   TableBody,
@@ -40,7 +41,6 @@ const keyOf = (sampleId: string, pathogenId: string, examTypeId: string) =>
 export function AnalysesTab({ animalId }: { animalId: string }) {
   const t = useTranslations("analyses")
   const ts = useTranslations("samples")
-  const tc = useTranslations("common")
   const locale = useLocale()
   const em = useErrorMessage()
 
@@ -99,7 +99,7 @@ export function AnalysesTab({ animalId }: { animalId: string }) {
     }
   }
 
-  if (loading) return <p className="text-sm text-muted-foreground">{tc("loading")}</p>
+  if (loading) return <TableSkeleton rows={4} />
   if (!grid) return null
   if (grid.protocol.length === 0)
     return <p className="text-sm text-muted-foreground">{t("noProtocol")}</p>

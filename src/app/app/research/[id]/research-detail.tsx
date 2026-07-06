@@ -26,6 +26,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Skeleton, TableSkeleton } from "@/components/ui/skeleton"
 import { Combobox, type ComboboxOption } from "@/components/ui/combobox"
 import {
   Table,
@@ -126,7 +127,13 @@ export function ResearchDetail({
   }
 
   if (researchQ.isLoading) {
-    return <p className="p-8 text-sm text-muted-foreground">{tc("loading")}</p>
+    return (
+      <div className="mx-auto max-w-6xl space-y-6 p-8">
+        <Skeleton className="h-8 w-64" />
+        <Skeleton className="h-4 w-96" />
+        <TableSkeleton rows={4} />
+      </div>
+    )
   }
   if (!research) {
     return <p className="p-8 text-sm text-muted-foreground">{t("notFound")}</p>

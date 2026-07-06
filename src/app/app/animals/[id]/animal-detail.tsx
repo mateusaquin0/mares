@@ -11,6 +11,7 @@ import { SEX_OPTIONS, LIFE_STAGE_OPTIONS } from "@/lib/animal-enums"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
+import { Skeleton, TableSkeleton } from "@/components/ui/skeleton"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { AnimalFormDialog } from "../animal-form"
 import { SamplesTab } from "./samples-tab"
@@ -40,7 +41,13 @@ export function AnimalDetail({ id, isOrgAdmin }: { id: string; isOrgAdmin: boole
   }
 
   if (loading) {
-    return <p className="p-8 text-sm text-muted-foreground">{tc("loading")}</p>
+    return (
+      <div className="mx-auto max-w-6xl space-y-6 p-8">
+        <Skeleton className="h-8 w-64" />
+        <Skeleton className="h-4 w-96" />
+        <TableSkeleton rows={4} />
+      </div>
+    )
   }
   if (!animal) {
     return <p className="p-8 text-sm text-muted-foreground">{t("notFound")}</p>

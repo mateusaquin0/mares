@@ -6,6 +6,7 @@ import { toast } from "sonner"
 import { MoreHorizontal } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
+import { TableSkeleton } from "@/components/ui/skeleton"
 import { useErrorMessage } from "@/lib/use-error-message"
 import { useAccessRequests, useActOnRequest } from "@/hooks/use-admin"
 import {
@@ -25,7 +26,6 @@ import {
 
 export default function AccessRequestsPage() {
   const t = useTranslations("adminRequests")
-  const tc = useTranslations("common")
   const em = useErrorMessage()
   const requestsQ = useAccessRequests()
   const requests = requestsQ.data ?? []
@@ -53,7 +53,7 @@ export default function AccessRequestsPage() {
       </div>
 
       {loading ? (
-        <p className="text-sm text-muted-foreground">{tc("loading")}</p>
+        <TableSkeleton />
       ) : requests.length === 0 ? (
         <p className="text-sm text-muted-foreground">{t("empty")}</p>
       ) : (

@@ -10,6 +10,7 @@ import { useAnimalMedia, useUploadAnimalMedia, useDeleteAnimalMedia } from "@/ho
 import type { AnimalMedia } from "@/types/animal"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { TableSkeleton } from "@/components/ui/skeleton"
 import { ConfirmDialog } from "@/components/confirm-dialog"
 
 export function MediaTab({ animalId, isOrgAdmin }: { animalId: string; isOrgAdmin: boolean }) {
@@ -85,7 +86,7 @@ export function MediaTab({ animalId, isOrgAdmin }: { animalId: string; isOrgAdmi
       </div>
 
       {loading ? (
-        <p className="text-sm text-muted-foreground">{tc("loading")}</p>
+        <TableSkeleton rows={3} />
       ) : items.length === 0 ? (
         <p className="text-sm text-muted-foreground">{t("empty")}</p>
       ) : (

@@ -22,6 +22,7 @@ import { useErrorMessage } from "@/lib/use-error-message"
 import { useTable } from "@/lib/use-table"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { TableSkeleton } from "@/components/ui/skeleton"
 import { Label } from "@/components/ui/label"
 import { ConfirmDialog } from "@/components/confirm-dialog"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -230,7 +231,7 @@ export function CatalogManager({
       </Tabs>
 
       {listQ.isLoading ? (
-        <p className="text-sm text-muted-foreground">{tc("loading")}</p>
+        <TableSkeleton />
       ) : (listQ.data?.length ?? 0) === 0 ? (
         <p className="text-sm text-muted-foreground">{t("empty")}</p>
       ) : (

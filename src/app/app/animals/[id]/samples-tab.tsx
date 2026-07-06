@@ -16,6 +16,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
+import { TableSkeleton } from "@/components/ui/skeleton"
 import { ConfirmDialog } from "@/components/confirm-dialog"
 import {
   Table,
@@ -182,7 +183,7 @@ export function SamplesTab({ animalId, isOrgAdmin }: { animalId: string; isOrgAd
       </div>
 
       {loading ? (
-        <p className="text-sm text-muted-foreground">{tc("loading")}</p>
+        <TableSkeleton rows={3} />
       ) : items.length === 0 ? (
         <p className="text-sm text-muted-foreground">{t("empty")}</p>
       ) : (

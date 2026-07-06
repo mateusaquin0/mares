@@ -10,6 +10,7 @@ import { useResearchList } from "@/hooks/use-research";
 import type { AnimalListItem } from "@/types/animal";
 import { useErrorMessage } from "@/lib/use-error-message";
 import { Button } from "@/components/ui/button";
+import { TableSkeleton } from "@/components/ui/skeleton";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { AnimalsTable } from "./animals-table";
 import { AnimalFormDialog } from "./animal-form";
@@ -62,7 +63,7 @@ export function AnimalsManager({ isOrgAdmin }: { isOrgAdmin: boolean }) {
       </div>
 
       {loading ? (
-        <p className="text-sm text-muted-foreground">{tc("loading")}</p>
+        <TableSkeleton />
       ) : noResearch ? (
         <p className="text-sm text-muted-foreground">{t("noResearch")}</p>
       ) : items.length === 0 ? (

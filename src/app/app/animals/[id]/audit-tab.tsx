@@ -7,11 +7,11 @@ import { pathogenName, txt } from "@/lib/catalog-i18n"
 import { useAnimalAudit } from "@/hooks/use-animals"
 import type { AuditEntry } from "@/types/animal"
 import { Badge } from "@/components/ui/badge"
+import { TableSkeleton } from "@/components/ui/skeleton"
 
 export function AuditTab({ animalId }: { animalId: string }) {
   const t = useTranslations("audit")
   const ta = useTranslations("analyses")
-  const tc = useTranslations("common")
   const locale = useLocale()
   const auditQ = useAnimalAudit(animalId)
   const items = auditQ.data ?? []
@@ -51,7 +51,7 @@ export function AuditTab({ animalId }: { animalId: string }) {
   const fmtDate = (iso: string) => new Date(iso).toLocaleDateString(locale, { day: "2-digit", month: "short", year: "numeric" })
   const fmtTime = (iso: string) => new Date(iso).toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" })
 
-  if (loading) return <p className="text-sm text-muted-foreground">{tc("loading")}</p>
+  if (loading) return <TableSkeleton rows={4} />
   if (items.length === 0) return <p className="text-sm text-muted-foreground">{t("empty")}</p>
 
   return (
