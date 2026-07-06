@@ -5,11 +5,18 @@
 
 import { NextRequest, NextResponse } from "next/server"
 import { Prisma } from "@prisma/client"
+import { getLocale } from "next-intl/server"
 import { prisma } from "@/lib/prisma"
 import { getAuthUser, getActiveOrgId, requireOrgRole, orgRole } from "@/lib/auth"
 import { apiError, unauthorized } from "@/lib/api"
 import { createAnimalSchema } from "@/schemas/animal.schema"
-import { animalData, animalDuplicateError, animalListSelect, assertResearchInOrg } from "@/lib/animals"
+import {
+  animalData,
+  animalDuplicateError,
+  animalListSelect,
+  assertResearchInOrg,
+  toAnimalListItem,
+} from "@/lib/animals"
 
 export async function GET(req: NextRequest) {
   try {
@@ -27,7 +34,8 @@ export async function GET(req: NextRequest) {
       select: animalListSelect,
     })
 
-    return NextResponse.json(animals)
+    const locale = await getLocale()
+    return NextResponse.json(animals.map((a) => toAnimalListItem(locale, a)))
   } catch (err) {
     return apiError(err)
   }

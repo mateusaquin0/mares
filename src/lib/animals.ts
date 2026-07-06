@@ -6,6 +6,7 @@ import { Prisma } from "@prisma/client"
 import { prisma } from "@/lib/prisma"
 import { ConflictError, NotFoundError } from "@/lib/errors"
 import { ERROR_CODES } from "@/lib/error-codes"
+import { pathogenName, type I18nText } from "@/lib/catalog-i18n"
 
 /**
  * Traduz a violação de unicidade (P2002) do animal no erro mais específico possível,
@@ -101,7 +102,9 @@ export function animalData(input: AnimalWritable) {
   }
 }
 
-// Campos retornados na listagem.
+// Campos retornados na listagem. Inclui as análises POSITIVAS (where embutido) para derivar
+// os patógenos positivos por animal — usado no filtro por patógeno da tabela — sem trazer a
+// grade inteira. `_count.samples` mantém a contagem exibida.
 export const animalListSelect = {
   id: true,
   controlId: true,
@@ -115,4 +118,34 @@ export const animalListSelect = {
   isPublic: true,
   research: { select: { id: true, name: true } },
   _count: { select: { samples: true } },
+  samples: {
+    select: {
+      analyses: {
+        where: { result: "POSITIVO" as const },
+        select: { pathogen: { select: { scientificName: true, name: true } } },
+      },
+    },
+  },
 } as const
+
+type RawListAnimal = Prisma.AnimalGetPayload<{ select: typeof animalListSelect }>
+
+// Serializa um animal da listagem: resolve os patógenos positivos (por locale) e remove a
+// árvore de samples/analyses do payload enviado ao cliente.
+export function toAnimalListItem(locale: string, a: RawListAnimal) {
+  const { samples, ...rest } = a
+  const names = new Set<string>()
+  for (const s of samples) {
+    for (const an of s.analyses) {
+      const label = pathogenName(locale, {
+        scientificName: an.pathogen.scientificName,
+        name: an.pathogen.name as I18nText | null,
+      })
+      if (label) names.add(label)
+    }
+  }
+  return {
+    ...rest,
+    positivePathogens: [...names].sort((x, y) => x.localeCompare(y, locale)),
+  }
+}

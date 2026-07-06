@@ -19,6 +19,8 @@ export type AnimalListItem = {
   isPublic: boolean
   research: { id: string; name: string }
   _count: { samples: number }
+  // Patógenos com ao menos um resultado POSITIVO (nomes já resolvidos por locale).
+  positivePathogens: string[]
 }
 
 // Detalhe completo de um animal (/api/animals/:id).
