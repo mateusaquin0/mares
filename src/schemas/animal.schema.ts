@@ -1,6 +1,7 @@
 import { z } from "zod"
 
 import { optionalText, optionalDate } from "@/schemas/common"
+import { SEX_VALUES, LIFE_STAGE_VALUES } from "@/lib/animal-enums"
 
 // Mensagens = chaves do namespace `validation` (resolvidas no componente). Ver docs/I18N.md.
 
@@ -23,8 +24,9 @@ export const animalBaseSchema = z.object({
   taxonOrder: optionalText(120),
   controlId: requiredText(120),
   simbaRecordNumber: optionalText(120),
-  sex: requiredText(40),
-  lifeStage: requiredText(60),
+  // Valores fixos do domínio (bloqueia texto livre); vazio/ inválido → "required".
+  sex: z.enum(SEX_VALUES, { error: "required" }),
+  lifeStage: z.enum(LIFE_STAGE_VALUES, { error: "required" }),
   bodyCondition: optionalText(60),
   decompositionStage: optionalText(60),
   deathCondition: optionalText(60),
