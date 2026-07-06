@@ -59,6 +59,7 @@ export async function POST(req: NextRequest) {
           isPublic,
           // Origem derivada do vínculo com o SIMBA (ver docs/MIGRACAO.md).
           source: data.simbaRecordNumber ? "simba" : "manual",
+          orgId, // denormalizado p/ unicidade do controlId por organização
           research: { connect: { id: data.researchId } },
         },
         select: { id: true, species: true },

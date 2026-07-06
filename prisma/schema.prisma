@@ -212,8 +212,8 @@ model ExamType {
 
 model Animal {
   id                 String        @id @default(uuid())
-  controlId          String?       @unique
-  simbaRecordNumber  String?       @unique
+  controlId          String? // ID de controle interno, único por organização (ver @@unique abaixo)
+  simbaRecordNumber  String?       @unique // Nº SIMBA: registro nacional, único globalmente
   species            String
   // Campos preenchidos via WoRMS após validação taxonômica
   wormsAphiaId       Int?
@@ -240,10 +240,14 @@ model Animal {
   isPublic           Boolean       @default(false)
   researchId         String
   research           Research      @relation(fields: [researchId], references: [id])
+  // Organização dona, denormalizada de research, para o controlId ser único POR ORG.
+  // Definida na criação; a pesquisa (e portanto a org) do animal não muda depois.
+  orgId              String
   samples            Sample[]
   media              AnimalMedia[]
   createdAt          DateTime      @default(now())
 
+  @@unique([orgId, controlId])
   @@index([researchId])
   @@index([species])
 }
