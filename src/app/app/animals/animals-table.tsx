@@ -8,6 +8,7 @@ import { Download, Globe, Lock, MoreHorizontal, X } from "lucide-react";
 
 import type { AnimalListItem } from "@/types/animal";
 import { useTable } from "@/lib/use-table";
+import { formatDateOnly } from "@/lib/date";
 import { SEX_OPTIONS, LIFE_STAGE_OPTIONS } from "@/lib/animal-enums";
 import { downloadAnimalsExport, type ExportFormat } from "@/lib/export-download";
 import { Badge } from "@/components/ui/badge";
@@ -68,11 +69,17 @@ export function AnimalsTable({
     a.controlId ?? a.simbaRecordNumber ?? "";
   const locationOf = (a: AnimalListItem) =>
     [a.municipality, a.state].filter(Boolean).join(", ");
-  const fmtDate = (iso: string | null) =>
-    iso ? new Date(iso).toLocaleDateString(locale) : "";
+  const fmtDate = (iso: string | null) => formatDateOnly(iso, locale);
   const sexLabel = (s: string | null) => {
     const o = SEX_OPTIONS.find((x) => x.value === s);
     return o ? t(o.key) : (s ?? "");
+  };
+  // Visibilidade pública EFETIVA: o animal só é público se ele E a pesquisa forem públicos.
+  const isEffectivePublic = (a: AnimalListItem) => a.isPublic && a.research.isPublic;
+  // Explica no tooltip por que o animal aparece (ou não) no mapa público.
+  const visibilityTooltip = (a: AnimalListItem) => {
+    if (!a.research.isPublic) return t("visMapResearchPrivate");
+    return a.isPublic ? t("visMapPublic") : t("visMapAnimalHidden");
   };
 
   // ── Filtros estruturados (multisseleção + selects), aplicados antes da busca/ordenação ──
@@ -105,7 +112,8 @@ export function AnimalsTable({
   );
   const researchOptions = useMemo<MultiSelectOption[]>(() => {
     const map = new Map<string, string>();
-    for (const a of items) map.set(a.research.id, a.research.name);
+    // Considera todas as pesquisas do indivíduo (primária + participações).
+    for (const a of items) for (const r of a.researches) map.set(r.id, r.name);
     return [...map.entries()]
       .map(([value, label]) => ({ value, label }))
       .sort((x, y) => x.label.localeCompare(y.label, locale));
@@ -132,11 +140,11 @@ export function AnimalsTable({
         if (fSex.length && !(a.sex && fSex.includes(a.sex))) return false;
         if (fLifeStage.length && !(a.lifeStage && fLifeStage.includes(a.lifeStage))) return false;
         if (fState.length && !(a.state && fState.includes(a.state))) return false;
-        if (fResearch.length && !fResearch.includes(a.research.id)) return false;
+        if (fResearch.length && !a.researches.some((r) => fResearch.includes(r.id))) return false;
         if (fPathogen.length && !fPathogen.some((p) => a.positivePathogens.includes(p)))
           return false;
-        if (fVisibility === "public" && !a.isPublic) return false;
-        if (fVisibility === "private" && a.isPublic) return false;
+        if (fVisibility === "public" && !isEffectivePublic(a)) return false;
+        if (fVisibility === "private" && isEffectivePublic(a)) return false;
         if (fSamples === "with" && a._count.samples === 0) return false;
         if (fSamples === "without" && a._count.samples > 0) return false;
         if (fFrom && (!a.eventDate || a.eventDate < fFrom)) return false;
@@ -194,7 +202,7 @@ export function AnimalsTable({
       location: locationOf,
       date: (a) => a.eventDate ?? "",
       research: (a) => a.research.name,
-      isPublic: (a) => a.isPublic ? "1" : "0",
+      isPublic: (a) => (isEffectivePublic(a) ? "1" : "0"),
       samples: (a) => a._count.samples,
     },
     search: (a) =>
@@ -245,8 +253,9 @@ export function AnimalsTable({
     }
   }
 
+  // Todos os campos de filtro têm a mesma largura (w-44); os controles preenchem o campo.
   const filterField = (label: string, control: React.ReactNode) => (
-    <label className="flex flex-col gap-1 text-xs">
+    <label className="flex w-44 flex-col gap-1 text-xs">
       <span className="font-semibold uppercase tracking-wide text-muted-foreground">{label}</span>
       {control}
     </label>
@@ -258,7 +267,7 @@ export function AnimalsTable({
       <div className="flex flex-wrap items-end gap-3 rounded-xl border bg-card p-3 shadow-card">
         {filterField(
           t("filterSpecies"),
-          <div className="w-44">
+          <div className="w-full">
             <MultiSelect
               options={speciesOptions}
               value={fSpecies}
@@ -272,7 +281,7 @@ export function AnimalsTable({
         {sexOptions.length > 0 &&
           filterField(
             t("colSex"),
-            <div className="w-36">
+            <div className="w-full">
               <MultiSelect
                 options={sexOptions}
                 value={fSex}
@@ -286,7 +295,7 @@ export function AnimalsTable({
         {lifeStageOptions.length > 0 &&
           filterField(
             t("colLifeStage"),
-            <div className="w-40">
+            <div className="w-full">
               <MultiSelect
                 options={lifeStageOptions}
                 value={fLifeStage}
@@ -300,7 +309,7 @@ export function AnimalsTable({
         {stateOptions.length > 0 &&
           filterField(
             t("filterState"),
-            <div className="w-40">
+            <div className="w-full">
               <MultiSelect
                 options={stateOptions}
                 value={fState}
@@ -314,7 +323,7 @@ export function AnimalsTable({
         {researchOptions.length > 1 &&
           filterField(
             t("colResearch"),
-            <div className="w-48">
+            <div className="w-full">
               <MultiSelect
                 options={researchOptions}
                 value={fResearch}
@@ -328,7 +337,7 @@ export function AnimalsTable({
         {pathogenOptions.length > 0 &&
           filterField(
             t("filterPathogen"),
-            <div className="w-48">
+            <div className="w-full">
               <MultiSelect
                 options={pathogenOptions}
                 value={fPathogen}
@@ -342,7 +351,7 @@ export function AnimalsTable({
         {filterField(
           t("colVisibility"),
           <Select value={fVisibility} onValueChange={setFVisibility}>
-            <SelectTrigger className="h-9 w-36">
+            <SelectTrigger className="h-9 w-full">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -355,7 +364,7 @@ export function AnimalsTable({
         {filterField(
           t("filterSamples"),
           <Select value={fSamples} onValueChange={setFSamples}>
-            <SelectTrigger className="h-9 w-40">
+            <SelectTrigger className="h-9 w-full">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -371,7 +380,7 @@ export function AnimalsTable({
             type="date"
             value={fFrom}
             onChange={(e) => setFFrom(e.target.value)}
-            className="h-9 w-40"
+            className="h-9 w-full"
           />
         )}
         {filterField(
@@ -380,7 +389,7 @@ export function AnimalsTable({
             type="date"
             value={fTo}
             onChange={(e) => setFTo(e.target.value)}
-            className="h-9 w-40"
+            className="h-9 w-full"
           />
         )}
         {hasFilters && (
@@ -469,13 +478,6 @@ export function AnimalsTable({
                 {t("colDate")}
               </SortableHead>
               <SortableHead
-                sortKey="research"
-                sort={table.sort}
-                onToggle={table.toggleSort}
-              >
-                {t("colResearch")}
-              </SortableHead>
-              <SortableHead
                 sortKey="isPublic"
                 sort={table.sort}
                 onToggle={table.toggleSort}
@@ -497,7 +499,7 @@ export function AnimalsTable({
             {table.rows.length === 0 ? (
               <TableRow>
                 <TableCell
-                  colSpan={10}
+                  colSpan={9}
                   className="text-center text-sm text-muted-foreground"
                 >
                   {tc("noResults")}
@@ -537,17 +539,14 @@ export function AnimalsTable({
                   <TableCell className="text-muted-foreground">
                     {fmtDate(a.eventDate)}
                   </TableCell>
-                  <TableCell className="text-muted-foreground">
-                    {a.research.name}
-                  </TableCell>
                   <TableCell>
-                    {a.isPublic ? (
-                      <Badge variant="public" className="gap-1">
+                    {isEffectivePublic(a) ? (
+                      <Badge variant="public" className="gap-1" title={visibilityTooltip(a)}>
                         <Globe className="size-3" />
                         {t("public")}
                       </Badge>
                     ) : (
-                      <Badge variant="private" className="gap-1">
+                      <Badge variant="private" className="gap-1" title={visibilityTooltip(a)}>
                         <Lock className="size-3" />
                         {t("private")}
                       </Badge>

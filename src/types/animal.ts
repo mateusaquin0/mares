@@ -17,7 +17,10 @@ export type AnimalListItem = {
   state: string | null
   eventDate: string | null
   isPublic: boolean
-  research: { id: string; name: string }
+  // isPublic da pesquisa primária: visibilidade pública efetiva = isPublic && research.isPublic.
+  research: { id: string; name: string; isPublic: boolean }
+  // Conjunto efetivo de pesquisas do indivíduo (primária + participações). Usado no filtro.
+  researches: { id: string; name: string }[]
   _count: { samples: number }
   // Patógenos com ao menos um resultado POSITIVO (nomes já resolvidos por locale).
   positivePathogens: string[]
@@ -47,6 +50,8 @@ export type AnimalDetail = {
   macroscopicNotes: string | null
   isPublic: boolean
   research: { id: string; name: string }
+  // Pesquisas adicionais (mesma org) que compartilham este indivíduo.
+  participations: { research: { id: string; name: string } }[]
   _count: { samples: number; media: number }
 }
 
