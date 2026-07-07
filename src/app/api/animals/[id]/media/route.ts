@@ -5,10 +5,11 @@ import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { createAdminClient } from "@/lib/supabase/admin"
 import { getAuthUser, requireOrgRole } from "@/lib/auth"
-import { apiError, unauthorized } from "@/lib/api"
+import { apiError, assertSameOrigin, unauthorized } from "@/lib/api"
 import { loadAnimalOrg } from "@/lib/animals"
 import {
   MEDIA_BUCKET,
+  assertValidContent,
   assertValidFile,
   ensureBucket,
   mediaPath,
@@ -43,6 +44,9 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    // Upload multipart não passa por preflight CORS → checagem anti-CSRF por origem.
+    assertSameOrigin(req)
+
     const user = await getAuthUser()
     if (!user) return unauthorized()
     const { id } = await params
@@ -61,16 +65,19 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     const path = mediaPath(id, file.name)
     const buffer = Buffer.from(await file.arrayBuffer())
 
+    // Valida o conteúdo real pelos magic bytes e usa o tipo DETECTADO (não o do cliente).
+    const contentType = assertValidContent(buffer)
+
     const admin = createAdminClient()
     const { error } = await admin.storage
       .from(MEDIA_BUCKET)
-      .upload(path, buffer, { contentType: file.type, upsert: false })
+      .upload(path, buffer, { contentType, upsert: false })
     if (error) {
       throw new ValidationError("Falha no upload", ERROR_CODES.mediaUploadFailed)
     }
 
     const media = await prisma.animalMedia.create({
-      data: { animalId: id, url: path, mimeType: file.type, label },
+      data: { animalId: id, url: path, mimeType: contentType, label },
       select: { id: true },
     })
     return NextResponse.json(media, { status: 201 })

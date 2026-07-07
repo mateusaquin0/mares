@@ -1,6 +1,6 @@
 // MARES — Utilitários para Route Handlers: mapeia erros de domínio em respostas HTTP.
 
-import { NextResponse } from "next/server"
+import { NextRequest, NextResponse } from "next/server"
 import { ZodError } from "zod"
 import {
   ConflictError,
@@ -39,6 +39,36 @@ export function unauthorized(): NextResponse {
     { error: "Não autenticado", code: ERROR_CODES.unauthenticated },
     { status: 401 }
   )
+}
+
+// Proteção CSRF para requisições que não passam por preflight CORS (ex.: uploads
+// multipart/form-data, que são "simple requests"). Exige que a origem da requisição
+// seja a própria aplicação. Requisições JSON já são protegidas pelo preflight que o
+// Content-Type: application/json força; o SameSite=Lax do cookie é a segunda barreira.
+export function assertSameOrigin(req: NextRequest) {
+  const origin = req.headers.get("origin")
+  const host = req.headers.get("host")
+  // Sem Origin (ex.: navegação same-origin antiga) cai para o Referer.
+  if (!origin) {
+    const referer = req.headers.get("referer")
+    if (referer && host) {
+      try {
+        if (new URL(referer).host === host) return
+      } catch {
+        /* referer malformado → bloqueia abaixo */
+      }
+    }
+    throw new ForbiddenError("Origem não permitida", ERROR_CODES.forbidden)
+  }
+  let originHost: string
+  try {
+    originHost = new URL(origin).host
+  } catch {
+    throw new ForbiddenError("Origem inválida", ERROR_CODES.forbidden)
+  }
+  if (originHost !== host) {
+    throw new ForbiddenError("Origem não permitida", ERROR_CODES.forbidden)
+  }
 }
 
 // 429 — cliente excedeu o limite de requisições (ver src/lib/rate-limit.ts).

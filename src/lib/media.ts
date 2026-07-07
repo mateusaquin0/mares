@@ -30,7 +30,7 @@ export function mediaPath(animalId: string, originalName: string) {
   return `${animalId}/${crypto.randomUUID()}_${safe}`
 }
 
-/** Valida tipo/tamanho do arquivo enviado. */
+/** Valida tipo (declarado) e tamanho do arquivo enviado. */
 export function assertValidFile(file: { size: number; type: string }) {
   if (!MEDIA_ALLOWED.includes(file.type)) {
     throw new ValidationError("Tipo de arquivo não suportado", ERROR_CODES.mediaInvalidType)
@@ -38,6 +38,44 @@ export function assertValidFile(file: { size: number; type: string }) {
   if (file.size > MEDIA_MAX_BYTES) {
     throw new ValidationError("Arquivo muito grande", ERROR_CODES.mediaTooLarge)
   }
+}
+
+/**
+ * Detecta o tipo real do arquivo pelos primeiros bytes (magic numbers), ignorando
+ * o `Content-Type` informado pelo cliente (que é forjável). Retorna o MIME detectado
+ * ou `null` se não bater com nenhum formato permitido.
+ */
+export function sniffMime(buf: Buffer): string | null {
+  const b = (i: number) => buf[i]
+  // JPEG: FF D8 FF
+  if (b(0) === 0xff && b(1) === 0xd8 && b(2) === 0xff) return "image/jpeg"
+  // PNG: 89 50 4E 47 0D 0A 1A 0A
+  if (b(0) === 0x89 && b(1) === 0x50 && b(2) === 0x4e && b(3) === 0x47) return "image/png"
+  // GIF: "GIF8"
+  if (b(0) === 0x47 && b(1) === 0x49 && b(2) === 0x46 && b(3) === 0x38) return "image/gif"
+  // WEBP: "RIFF"...."WEBP"
+  if (
+    b(0) === 0x52 && b(1) === 0x49 && b(2) === 0x46 && b(3) === 0x46 &&
+    b(8) === 0x57 && b(9) === 0x45 && b(10) === 0x42 && b(11) === 0x50
+  )
+    return "image/webp"
+  // PDF: "%PDF-"
+  if (b(0) === 0x25 && b(1) === 0x50 && b(2) === 0x44 && b(3) === 0x46 && b(4) === 0x2d)
+    return "application/pdf"
+  return null
+}
+
+/**
+ * Confere o conteúdo real do arquivo contra a allowlist e devolve o MIME detectado
+ * (a ser usado como `contentType` do upload, em vez do tipo enviado pelo cliente).
+ * @throws ValidationError se o conteúdo não corresponder a um formato permitido.
+ */
+export function assertValidContent(buf: Buffer): string {
+  const detected = sniffMime(buf)
+  if (!detected || !MEDIA_ALLOWED.includes(detected)) {
+    throw new ValidationError("Conteúdo do arquivo não corresponde a um tipo suportado", ERROR_CODES.mediaInvalidType)
+  }
+  return detected
 }
 
 /** Gera uma URL assinada para o caminho do objeto (ou null em caso de falha). */
