@@ -11,7 +11,7 @@ export const upsertAnalysisSchema = z.object({
   pathogenId: z.string().min(1, "required"),
   examTypeId: z.string().min(1, "required"),
   result: resultSchema.nullable().optional(),
-  ctValue: optionalNumber,
+  measureValue: optionalNumber,
   notes: optionalText(2000),
 })
 

@@ -22,6 +22,7 @@ import { useErrorMessage } from "@/lib/use-error-message"
 import { useTable } from "@/lib/use-table"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Checkbox } from "@/components/ui/checkbox"
 import { TableSkeleton } from "@/components/ui/skeleton"
 import { Label } from "@/components/ui/label"
 import { ConfirmDialog } from "@/components/confirm-dialog"
@@ -63,6 +64,10 @@ type FormShape = {
   sci?: string
   taxonFamily?: string
   taxonOrder?: string
+  // Só para exam-types: rótulo/unidade da medida quantitativa (Ct, Título...).
+  measurePt?: string
+  measureEn?: string
+  measureUnit?: string
 }
 
 const i18nPt = (v: string | I18nText | null | undefined) =>
@@ -88,7 +93,10 @@ export function CatalogManager({
   const [confirmRow, setConfirmRow] = useState<Row | null>(null)
   // Táxon NCBI selecionado para o patógeno (fora do react-hook-form por ser numérico).
   const [taxonId, setTaxonId] = useState<number | null>(null)
+  // Exam-types: o item tem uma leitura quantitativa (Ct, Título...)?
+  const [hasMeasure, setHasMeasure] = useState(false)
   const isPathogen = type === "pathogens"
+  const isExamType = type === "exam-types"
 
   const createM = useCreateCatalogItem(type)
   const updateM = useUpdateCatalogItem(type)
@@ -120,7 +128,17 @@ export function CatalogManager({
     setGroupId("")
     setGroupError(false)
     setTaxonId(null)
-    form.reset({ namePt: "", nameEn: "", sci: "", taxonFamily: "", taxonOrder: "" })
+    setHasMeasure(false)
+    form.reset({
+      namePt: "",
+      nameEn: "",
+      sci: "",
+      taxonFamily: "",
+      taxonOrder: "",
+      measurePt: "",
+      measureEn: "",
+      measureUnit: "",
+    })
     setDialog({ mode: "create" })
   }
   function openEdit(row: Row) {
@@ -129,6 +147,7 @@ export function CatalogManager({
       const p = row as PathogenRow
       setGroupId(p.group.id)
       setTaxonId(p.taxonId)
+      setHasMeasure(false)
       form.reset({
         sci: p.scientificName ?? "",
         namePt: i18nPt(p.name),
@@ -140,7 +159,15 @@ export function CatalogManager({
       setGroupId("")
       setTaxonId(null)
       const n = row as NamedRow
-      form.reset({ namePt: i18nPt(n.name), nameEn: i18nEn(n.name) })
+      const measured = isExamType && n.measureLabel != null
+      setHasMeasure(measured)
+      form.reset({
+        namePt: i18nPt(n.name),
+        nameEn: i18nEn(n.name),
+        measurePt: i18nPt(n.measureLabel),
+        measureEn: i18nEn(n.measureLabel),
+        measureUnit: n.measureUnit ?? "",
+      })
     }
     setDialog({ mode: "edit", row })
   }
@@ -161,7 +188,16 @@ export function CatalogManager({
           taxonOrder: data.taxonOrder,
           taxonId,
         }
-      : { namePt: data.namePt, nameEn: data.nameEn }
+      : isExamType
+        ? {
+            namePt: data.namePt,
+            nameEn: data.nameEn,
+            // hasMeasure desligado → envia vazio, e o servidor grava medida nula.
+            measurePt: hasMeasure ? data.measurePt : "",
+            measureEn: hasMeasure ? data.measureEn : "",
+            measureUnit: hasMeasure ? data.measureUnit : "",
+          }
+        : { namePt: data.namePt, nameEn: data.nameEn }
     try {
       if (isEdit) await updateM.mutateAsync({ id: dialog!.row!.id, body })
       else await createM.mutateAsync(body)
@@ -432,6 +468,62 @@ export function CatalogManager({
                     </p>
                   )}
                 </div>
+
+                {isExamType && (
+                  <div className="space-y-3 rounded-lg border border-dashed p-3">
+                    <div className="flex items-start gap-2">
+                      <Checkbox
+                        id="hasMeasure"
+                        checked={hasMeasure}
+                        onCheckedChange={(v) => setHasMeasure(v === true)}
+                        className="mt-0.5"
+                      />
+                      <Label htmlFor="hasMeasure" className="text-sm font-normal text-muted-foreground">
+                        {t("hasMeasure")}
+                      </Label>
+                    </div>
+                    {hasMeasure && (
+                      <div className="space-y-3">
+                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                          <div className="space-y-1">
+                            <Label htmlFor="measurePt">{t("measurePt")}</Label>
+                            <Input
+                              id="measurePt"
+                              placeholder={t("measurePlaceholder")}
+                              {...form.register("measurePt", { required: tval("required") })}
+                            />
+                            {form.formState.errors.measurePt && (
+                              <p className="text-xs text-destructive">
+                                {form.formState.errors.measurePt.message}
+                              </p>
+                            )}
+                          </div>
+                          <div className="space-y-1">
+                            <Label htmlFor="measureEn">{t("measureEn")}</Label>
+                            <Input
+                              id="measureEn"
+                              placeholder={t("measurePlaceholder")}
+                              {...form.register("measureEn", { required: tval("required") })}
+                            />
+                            {form.formState.errors.measureEn && (
+                              <p className="text-xs text-destructive">
+                                {form.formState.errors.measureEn.message}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                        <div className="space-y-1">
+                          <Label htmlFor="measureUnit">{t("measureUnit")}</Label>
+                          <Input
+                            id="measureUnit"
+                            placeholder={t("measureUnitPlaceholder")}
+                            {...form.register("measureUnit")}
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             )}
 

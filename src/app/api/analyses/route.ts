@@ -46,17 +46,17 @@ export async function PUT(req: NextRequest) {
     }
     const next = {
       result: data.result ?? null,
-      ctValue: data.ctValue ?? null,
+      measureValue: data.measureValue ?? null,
       notes: data.notes ?? null,
     }
 
     const existing = await prisma.analysis.findUnique({
       where: { sampleId_pathogenId_examTypeId: key },
-      select: { id: true, result: true, ctValue: true, notes: true },
+      select: { id: true, result: true, measureValue: true, notes: true },
     })
 
     // Nada a gravar: célula vazia e sem registro anterior.
-    if (!existing && next.result === null && next.ctValue === null && next.notes === null) {
+    if (!existing && next.result === null && next.measureValue === null && next.notes === null) {
       return NextResponse.json(null)
     }
 
@@ -64,14 +64,14 @@ export async function PUT(req: NextRequest) {
       where: { sampleId_pathogenId_examTypeId: key },
       create: { ...key, ...next },
       update: next,
-      select: { id: true, result: true, ctValue: true, notes: true },
+      select: { id: true, result: true, measureValue: true, notes: true },
     })
 
     // Registra em AuditLog apenas os campos que mudaram.
     const changed: { field: string; oldValue: string | null; newValue: string | null }[] = (
       [
         ["result", existing?.result ?? null, next.result],
-        ["ctValue", existing?.ctValue ?? null, next.ctValue],
+        ["measureValue", existing?.measureValue ?? null, next.measureValue],
         ["notes", existing?.notes ?? null, next.notes],
       ] as const
     )

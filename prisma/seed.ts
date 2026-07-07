@@ -79,18 +79,24 @@ const pathogens: Array<{
   { key: 'rede_pesca', groupKey: 'anthropogenic', namePt: 'Rede de pesca (captura acidental)', nameEn: 'Fishing net (bycatch)' },
 ]
 
-const examTypes = [
+const examTypes: {
+  key: string
+  namePt: string
+  nameEn: string
+  measurePt?: string
+  measureEn?: string
+}[] = [
   { key: 'npcr', namePt: 'nPCR', nameEn: 'nested PCR (nPCR)' },
   { key: 'pcr_convencional', namePt: 'PCR convencional', nameEn: 'Conventional PCR' },
-  { key: 'qpcr', namePt: 'qPCR (PCR em tempo real)', nameEn: 'qPCR (real-time PCR)' },
+  { key: 'qpcr', namePt: 'qPCR (PCR em tempo real)', nameEn: 'qPCR (real-time PCR)', measurePt: 'Ct', measureEn: 'Ct' },
   { key: 'histologia', namePt: 'Histologia', nameEn: 'Histology' },
   { key: 'ihq', namePt: 'Imunohistoquímica (IHQ)', nameEn: 'Immunohistochemistry (IHC)' },
   { key: 'cultura_bacteriana', namePt: 'Cultura bacteriana', nameEn: 'Bacterial culture' },
   { key: 'cultura_fungica', namePt: 'Cultura fúngica', nameEn: 'Fungal culture' },
-  { key: 'elisa', namePt: 'ELISA', nameEn: 'ELISA' },
-  { key: 'soroneutralizacao', namePt: 'Soroneutralização', nameEn: 'Serum neutralization' },
-  { key: 'ifi', namePt: 'Imunofluorescência Indireta (IFI)', nameEn: 'Indirect Immunofluorescence (IFA)' },
-  { key: 'hai', namePt: 'Hemaglutinação Indireta (HAI)', nameEn: 'Indirect Hemagglutination (IHA)' },
+  { key: 'elisa', namePt: 'ELISA', nameEn: 'ELISA', measurePt: 'OD / Título', measureEn: 'OD / titer' },
+  { key: 'soroneutralizacao', namePt: 'Soroneutralização', nameEn: 'Serum neutralization', measurePt: 'Título (1:)', measureEn: 'Titer (1:)' },
+  { key: 'ifi', namePt: 'Imunofluorescência Indireta (IFI)', nameEn: 'Indirect Immunofluorescence (IFA)', measurePt: 'Título (1:)', measureEn: 'Titer (1:)' },
+  { key: 'hai', namePt: 'Hemaglutinação Indireta (HAI)', nameEn: 'Indirect Hemagglutination (IHA)', measurePt: 'Título (1:)', measureEn: 'Titer (1:)' },
   { key: 'sanger', namePt: 'Sequenciamento Sanger', nameEn: 'Sanger sequencing' },
   { key: 'ngs', namePt: 'Sequenciamento NGS', nameEn: 'NGS sequencing' },
   { key: 'microscopia_eletronica', namePt: 'Microscopia eletrônica', nameEn: 'Electron microscopy' },
@@ -175,7 +181,11 @@ async function main() {
     await prisma.pathogen.upsert({ where: { key: p.key }, update: data, create: data })
   }
   for (const e of examTypes) {
-    const data = { key: e.key, name: { pt: e.namePt, en: e.nameEn } }
+    const data = {
+      key: e.key,
+      name: { pt: e.namePt, en: e.nameEn },
+      measureLabel: e.measurePt ? { pt: e.measurePt, en: e.measureEn! } : Prisma.DbNull,
+    }
     await prisma.examType.upsert({ where: { key: e.key }, update: data, create: data })
   }
   console.log(`Seed concluído: ${organs.length} órgãos, ${pathogens.length} patógenos, ${examTypes.length} tipos de exame.`)

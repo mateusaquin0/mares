@@ -6,11 +6,12 @@ import { NextRequest, NextResponse } from "next/server"
 import { Prisma } from "@prisma/client"
 import { getAuthUser } from "@/lib/auth"
 import { apiError, unauthorized } from "@/lib/api"
-import { isCatalogType, nameI18nSchema } from "@/schemas/catalog.schema"
+import { isCatalogType, nameI18nSchema, examTypeSchema } from "@/schemas/catalog.schema"
 import {
   updateNamed,
   updatePathogenEntry,
   resolvePathogen,
+  resolveMeasure,
   deleteCatalog,
   catalogUsage,
   catalogCreatedBy,
@@ -58,6 +59,17 @@ export async function PUT(
           name: p.name,
           taxon: p.taxon,
         })
+        return NextResponse.json(updated)
+      }
+
+      if (type === "exam-types") {
+        const data = examTypeSchema.parse(body)
+        const updated = await updateNamed(
+          type,
+          id,
+          { pt: data.namePt.trim(), en: data.nameEn.trim() },
+          resolveMeasure(data)
+        )
         return NextResponse.json(updated)
       }
 

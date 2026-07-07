@@ -18,7 +18,12 @@ export function AuditTab({ animalId }: { animalId: string }) {
   const loading = auditQ.isLoading
 
   const fieldLabel = (f: string) =>
-    ({ result: t("fieldResult"), ctValue: t("fieldCt"), notes: t("fieldNotes") })[f] ?? f
+    ({
+      result: t("fieldResult"),
+      measureValue: t("fieldMeasure"),
+      ctValue: t("fieldMeasure"), // legado: análises anteriores registravam "ctValue"
+      notes: t("fieldNotes"),
+    })[f] ?? f
 
   const valueLabel = (field: string, v: string | null) => {
     if (v == null || v === "") return t("emptyValue")

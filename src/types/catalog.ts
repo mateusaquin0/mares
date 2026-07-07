@@ -18,6 +18,9 @@ export type NamedRow = {
   id: string
   key: string
   name: string | I18nText
+  // Medida quantitativa (só exam-types; null para órgãos). Ver docs.
+  measureLabel: string | I18nText | null
+  measureUnit: string | null
   createdById: string | null
   inUse: boolean
 }

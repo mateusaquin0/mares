@@ -20,40 +20,102 @@ export type NamedRow = {
   key: string
   name: Prisma.JsonValue
   createdById: string | null
+  // Só faz sentido para exam-types; null para órgãos. Ver docs/BANCO_DE_DADOS.md.
+  measureLabel: Prisma.JsonValue | null
+  measureUnit: string | null
   inUse: boolean
 }
 
+// Medida quantitativa de um tipo de exame (Ct, Título...). label null = exame sem medida.
+export type Measure = { label: I18n | null; unit: string | null }
+
+// Deriva a Measure do corpo do formulário: só há rótulo se PT e EN vierem preenchidos.
+export function resolveMeasure(data: {
+  measurePt?: string
+  measureEn?: string
+  measureUnit?: string
+}): Measure {
+  const pt = data.measurePt?.trim()
+  const en = data.measureEn?.trim()
+  const label = pt && en ? { pt, en } : null
+  return { label, unit: label ? data.measureUnit?.trim() || null : null }
+}
+
 const namedSelect = { id: true, key: true, name: true, createdById: true }
+const examTypeSelect = { ...namedSelect, measureLabel: true, measureUnit: true }
+
+// Normaliza o retorno: órgãos não têm medida (null); exames trazem measureLabel/measureUnit.
+function toNamedRow(
+  r: {
+    id: string
+    key: string
+    name: Prisma.JsonValue
+    createdById: string | null
+    measureLabel?: Prisma.JsonValue | null
+    measureUnit?: string | null
+  },
+  inUse: boolean
+): NamedRow {
+  return {
+    id: r.id,
+    key: r.key,
+    name: r.name,
+    createdById: r.createdById,
+    measureLabel: r.measureLabel ?? null,
+    measureUnit: r.measureUnit ?? null,
+    inUse,
+  }
+}
+
+// Converte a Measure em campos gravaveis no Prisma (JSON null quando sem rótulo).
+function measureData(measure?: Measure) {
+  return {
+    measureLabel: measure?.label ? measure.label : Prisma.DbNull,
+    measureUnit: measure?.unit ?? null,
+  }
+}
 
 export async function listNamed(type: NamedType): Promise<NamedRow[]> {
   const rows =
     type === "organs"
       ? await prisma.organ.findMany({ orderBy: { key: "asc" }, select: namedSelect })
-      : await prisma.examType.findMany({ orderBy: { key: "asc" }, select: namedSelect })
+      : await prisma.examType.findMany({ orderBy: { key: "asc" }, select: examTypeSelect })
   const used = await catalogUsedIds(type)
-  return rows.map((r) => ({ ...r, inUse: used.has(r.id) }))
+  return rows.map((r) => toNamedRow(r, used.has(r.id)))
 }
 
 export async function createNamed(
   type: NamedType,
   key: string,
   name: I18n,
-  createdById: string
+  createdById: string,
+  measure?: Measure
 ): Promise<NamedRow> {
-  const data = { key, name, createdById }
   const row =
     type === "organs"
-      ? await prisma.organ.create({ data, select: namedSelect })
-      : await prisma.examType.create({ data, select: namedSelect })
-  return { ...row, inUse: false }
+      ? await prisma.organ.create({ data: { key, name, createdById }, select: namedSelect })
+      : await prisma.examType.create({
+          data: { key, name, createdById, ...measureData(measure) },
+          select: examTypeSelect,
+        })
+  return toNamedRow(row, false)
 }
 
-export async function updateNamed(type: NamedType, id: string, name: I18n): Promise<NamedRow> {
+export async function updateNamed(
+  type: NamedType,
+  id: string,
+  name: I18n,
+  measure?: Measure
+): Promise<NamedRow> {
   const row =
     type === "organs"
       ? await prisma.organ.update({ where: { id }, data: { name }, select: namedSelect })
-      : await prisma.examType.update({ where: { id }, data: { name }, select: namedSelect })
-  return { ...row, inUse: (await catalogUsage(type, id)) > 0 }
+      : await prisma.examType.update({
+          where: { id },
+          data: { name, ...measureData(measure) },
+          select: examTypeSelect,
+        })
+  return toNamedRow(row, (await catalogUsage(type, id)) > 0)
 }
 
 // ── Patógeno + Grupo ────────────────────────────────────────────────────────

@@ -6,13 +6,14 @@ import { NextRequest, NextResponse } from "next/server"
 import { Prisma } from "@prisma/client"
 import { getAuthUser, requireAnyOrgAdmin } from "@/lib/auth"
 import { apiError, unauthorized } from "@/lib/api"
-import { isCatalogType, nameI18nSchema } from "@/schemas/catalog.schema"
+import { isCatalogType, nameI18nSchema, examTypeSchema } from "@/schemas/catalog.schema"
 import {
   listNamed,
   listPathogens,
   createNamed,
   createPathogenEntry,
   resolvePathogen,
+  resolveMeasure,
   uniqueKey,
 } from "@/lib/catalog"
 import { ConflictError, NotFoundError } from "@/lib/errors"
@@ -54,6 +55,18 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ typ
           taxon: p.taxon,
           createdById: user.id,
         })
+        return NextResponse.json(created, { status: 201 })
+      }
+
+      if (type === "exam-types") {
+        const data = examTypeSchema.parse(body)
+        const created = await createNamed(
+          type,
+          await uniqueKey(type, data.namePt),
+          { pt: data.namePt.trim(), en: data.nameEn.trim() },
+          user.id,
+          resolveMeasure(data)
+        )
         return NextResponse.json(created, { status: 201 })
       }
 

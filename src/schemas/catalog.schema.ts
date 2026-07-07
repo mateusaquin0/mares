@@ -15,6 +15,14 @@ export const nameI18nSchema = z.object({
   nameEn: z.string().min(1, "required").max(255),
 })
 
+// Tipo de exame = nome + medida quantitativa opcional (Ct, Título, OD...). measurePt/measureEn
+// vazios = exame só qualitativo. measureUnit é uma anotação curta opcional.
+export const examTypeSchema = nameI18nSchema.extend({
+  measurePt: z.string().max(60).optional().or(z.literal("")),
+  measureEn: z.string().max(60).optional().or(z.literal("")),
+  measureUnit: z.string().max(30).optional().or(z.literal("")),
+})
+
 // Patógeno — grupo (FK) + nome científico OU nome comum (pt/en). O servidor valida quais
 // campos são obrigatórios conforme o grupo (usesScientificName).
 export const pathogenSchema = z.object({
@@ -33,4 +41,5 @@ export function catalogBodySchema(type: CatalogType) {
 }
 
 export type NameI18nData = z.infer<typeof nameI18nSchema>
+export type ExamTypeData = z.infer<typeof examTypeSchema>
 export type PathogenData = z.infer<typeof pathogenSchema>

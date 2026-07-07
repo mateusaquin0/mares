@@ -8,7 +8,7 @@ export type AnalysisUpsert = {
   pathogenId: string
   examTypeId: string
   result: ResultValue | null
-  ctValue: number | null
+  measureValue: number | null
   notes: string | null
 }
 
