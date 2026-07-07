@@ -88,8 +88,9 @@ npm run db:studio    # Prisma Studio
 
 ### ⏳ Pendente
 - **Testes automatizados** (Vitest para schemas/parsers, Playwright para fluxos críticos) —
-  estratégia descrita em [`docs/TESTES.md`](docs/TESTES.md), ainda não implementada
-- CI (lint + build + testes)
+  estratégia em [`docs/TESTES.md`](docs/TESTES.md) e plano de execução faseado em
+  [`docs/ROADMAP_TESTES.md`](docs/ROADMAP_TESTES.md); ainda não implementados
+- CI (lint + build + testes) — ver Fase 4 do roadmap
 
 ## Estrutura
 
