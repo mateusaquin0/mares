@@ -41,11 +41,18 @@ export default function HeatMap({ points }: Props) {
       heatRef.current = null
     }
     if (points.length === 0) return
-    const heatPoints = points.map(([lat, lon]) => [lat, lon, 0.6] as L.HeatLatLngTuple)
+    const heatPoints = points.map(([lat, lon]) => [lat, lon, 1] as L.HeatLatLngTuple)
+    // `maxZoom` baixo é essencial: o leaflet.heat escala a intensidade por
+    // 1/2^(maxZoom−zoom), então um valor alto some com a mancha nos zooms
+    // nacionais. Com maxZoom 3 a intensidade fica cheia em qualquer zoom ≥ 3.
+    // `minOpacity` garante que até um encalhe isolado apareça; `max` faz as
+    // concentrações escurecerem para o vermelho conforme os pontos se sobrepõem.
     const heat = L.heatLayer(heatPoints, {
-      radius: 25,
-      blur: 18,
-      maxZoom: 12,
+      radius: 28,
+      blur: 20,
+      minOpacity: 0.4,
+      maxZoom: 3,
+      max: 4,
     })
     heat.addTo(map)
     heatRef.current = heat

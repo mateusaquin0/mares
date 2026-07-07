@@ -76,3 +76,10 @@ input[type="number"]::-webkit-outer-spin-button {
   appearance: none;
   margin: 0;
 }
+
+/* Leaflet: os painéis/controles internos usam z-index altos (até ~700). Forçamos o
+   container a criar seu próprio contexto de empilhamento em z-index 0, para que o mapa
+   não "vaze" por cima de modais/overlays (Radix Dialog fica em z-50). */
+.leaflet-container {
+  z-index: 0;
+}
