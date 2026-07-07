@@ -20,6 +20,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     <div className="flex h-screen overflow-hidden">
       <Sidebar
         userName={user.name ?? user.email}
+        email={user.email}
         isSystemAdmin={user.isSystemAdmin}
         activeOrg={activeOrg}
         memberships={user.memberships}

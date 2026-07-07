@@ -21,7 +21,6 @@ import { cn } from "@/lib/utils"
 import type { AuthMembership } from "@/lib/auth"
 import { useSetActiveOrg } from "@/hooks/use-members"
 import { Logo } from "@/components/logo"
-import { LocaleSwitcher } from "@/components/locale-switcher"
 import {
   Select,
   SelectContent,
@@ -29,7 +28,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { SignOutButton } from "./sign-out-button"
+import { UserMenu } from "./user-menu"
 
 type NavItem = {
   href: string
@@ -40,11 +39,13 @@ type NavItem = {
 
 export function Sidebar({
   userName,
+  email,
   isSystemAdmin,
   activeOrg,
   memberships,
 }: {
   userName: string
+  email: string
   isSystemAdmin: boolean
   activeOrg: AuthMembership | null
   memberships: AuthMembership[]
@@ -97,14 +98,6 @@ export function Sidebar({
     }
     router.refresh()
   }
-
-  const initials = (userName || "?")
-    .split(" ")
-    .map((p) => p[0])
-    .filter(Boolean)
-    .slice(0, 2)
-    .join("")
-    .toUpperCase()
 
   const linkClass = (active: boolean) =>
     cn(
@@ -255,32 +248,9 @@ export function Sidebar({
       </nav>
 
       <div className={cn("border-t border-border py-3", collapsed ? "px-2" : "px-3")}>
-        <Link
-          href="/app/profile"
-          className={cn(
-            "flex items-center gap-3 rounded-lg py-2 transition-colors hover:bg-muted",
-            collapsed ? "justify-center" : "px-2",
-            pathname.startsWith("/app/profile") && "bg-accent"
-          )}
-          title={collapsed ? `${userName} — ${t("profile")}` : t("profile")}
-        >
-          <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground">
-            {initials}
-          </span>
-          {!collapsed && (
-            <div className="min-w-0">
-              <p className="truncate text-sm font-medium text-foreground">{userName}</p>
-              <p className="truncate text-xs text-muted-foreground">{roleLabel}</p>
-            </div>
-          )}
-        </Link>
-        {!collapsed && (
-          <div className="mb-1 px-2">
-            <LocaleSwitcher className="text-muted-foreground" />
-          </div>
-        )}
-        <SignOutButton collapsed={collapsed} />
+        <UserMenu userName={userName} email={email} roleLabel={roleLabel} collapsed={collapsed} />
       </div>
     </aside>
   )
 }
+ 
