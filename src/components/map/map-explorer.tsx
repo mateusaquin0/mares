@@ -7,7 +7,7 @@
 import { useMemo, useState } from "react"
 import dynamic from "next/dynamic"
 import { useTranslations, useLocale } from "next-intl"
-import { Globe, Lock, X } from "lucide-react"
+import { Download, Globe, Lock, X } from "lucide-react"
 
 import type { MapPoint } from "@/lib/map-points"
 import type { PopupLabels } from "@/components/map/leaflet-map"
@@ -30,6 +30,23 @@ function distinctSorted(values: (string | null)[], locale: string): string[] {
   return [...new Set(values.filter((v): v is string => !!v))].sort((a, b) =>
     a.localeCompare(b, locale)
   )
+}
+
+// Serializa uma matriz de células em CSV (RFC 4180): aspas quando há vírgula/aspas/quebra.
+function toCsv(rows: string[][]): string {
+  const esc = (v: string) => (/[",\r\n]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v)
+  return rows.map((r) => r.map(esc).join(",")).join("\r\n")
+}
+
+// Dispara o download de um texto como arquivo (client-only).
+function downloadText(filename: string, content: string, mime: string) {
+  const blob = new Blob([content], { type: mime })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement("a")
+  a.href = url
+  a.download = filename
+  a.click()
+  URL.revokeObjectURL(url)
 }
 
 // O mapa depende de `window` (Leaflet) — nunca renderiza no servidor.
@@ -162,6 +179,44 @@ export function MapExplorer({ points, linkBase, showVisibility }: Props) {
     setVisibility(ALL)
     setFrom("")
     setTo("")
+  }
+
+  // Exporta os pontos ATUALMENTE filtrados (todos, se não houver filtro) em CSV. Os dados já
+  // estão no cliente (`filtered`), então não há chamada ao servidor — respeita exatamente o
+  // que o usuário vê. `﻿` (BOM) faz o Excel abrir em UTF-8.
+  const exportCsv = () => {
+    const sexLabel = new Map<string, string>(SEX_OPTIONS.map((o) => [o.value, ta(o.key)]))
+    const stageLabel = new Map<string, string>(LIFE_STAGE_OPTIONS.map((o) => [o.value, ta(o.key)]))
+    const header = [
+      t("csvControlId"),
+      t("csvSpecies"),
+      t("csvSex"),
+      t("csvLifeStage"),
+      t("csvMunicipality"),
+      t("csvState"),
+      t("csvBeach"),
+      t("csvDate"),
+      t("csvLat"),
+      t("csvLon"),
+      t("csvResearch"),
+      t("csvPathogens"),
+    ]
+    const rows = filtered.map((p) => [
+      p.controlId ?? "",
+      p.species,
+      p.sex ? (sexLabel.get(p.sex) ?? p.sex) : "",
+      p.lifeStage ? (stageLabel.get(p.lifeStage) ?? p.lifeStage) : "",
+      p.municipality ?? "",
+      p.state ?? "",
+      p.beach ?? "",
+      p.eventDate ?? "",
+      p.lat != null ? String(p.lat) : "",
+      p.lon != null ? String(p.lon) : "",
+      p.researchName ?? "",
+      p.positivePathogens.join("; "),
+    ])
+    const stamp = new Date().toISOString().slice(0, 10)
+    downloadText(`MARES-mapa-${stamp}.csv`, "﻿" + toCsv([header, ...rows]), "text/csv;charset=utf-8")
   }
 
   return (
@@ -310,17 +365,27 @@ export function MapExplorer({ points, linkBase, showVisibility }: Props) {
           <span className="font-medium tabular-nums">
             {t("resultsCount", { count: filtered.length })}
           </span>
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-1"
+            onClick={exportCsv}
+            disabled={filtered.length === 0}
+          >
+            <Download className="size-3.5" />
+            {t("exportCsv")}
+          </Button>
         </div>
       </div>
 
-      {/* Mapa */}
+      {/* Mapa — sempre renderizado (mesmo sem pontos, exibe o mapa-base). Quando não há
+          nada a mostrar, um aviso flutuante e não-bloqueante aparece sobre o mapa. */}
       <div className="relative min-h-[420px] flex-1 overflow-hidden rounded-lg border shadow-sm">
-        {points.length === 0 ? (
-          <div className="flex h-full items-center justify-center p-8 text-center text-sm text-muted-foreground">
+        <LeafletMap points={filtered} labels={labels} linkBase={linkBase} locale={locale} />
+        {filtered.length === 0 && (
+          <div className="pointer-events-none absolute left-1/2 top-4 z-[1000] -translate-x-1/2 rounded-full border bg-card/95 px-4 py-2 text-sm text-muted-foreground shadow-sm backdrop-blur">
             {t("empty")}
           </div>
-        ) : (
-          <LeafletMap points={filtered} labels={labels} linkBase={linkBase} locale={locale} />
         )}
       </div>
     </div>
