@@ -79,5 +79,6 @@ export const sampleSelect = {
   notes: true,
   createdAt: true,
   organ: { select: { id: true, name: true } },
+  research: { select: { id: true, name: true } },
   _count: { select: { analyses: true } },
 } as const

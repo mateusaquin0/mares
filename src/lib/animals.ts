@@ -4,7 +4,7 @@
 
 import { Prisma } from "@prisma/client"
 import { prisma } from "@/lib/prisma"
-import { ConflictError, NotFoundError } from "@/lib/errors"
+import { ConflictError, NotFoundError, ValidationError } from "@/lib/errors"
 import { ERROR_CODES } from "@/lib/error-codes"
 import { pathogenName, type I18nText } from "@/lib/catalog-i18n"
 
@@ -17,7 +17,7 @@ export function animalDuplicateError(e: Prisma.PrismaClientKnownRequestError): C
     ? e.meta.target.join(",")
     : String(e.meta?.target ?? "")
   if (/simba/i.test(target)) {
-    return new ConflictError("Nº SIMBA já cadastrado", ERROR_CODES.animalSimbaDuplicate)
+    return new ConflictError("Identificador SIMBA já cadastrado", ERROR_CODES.animalSimbaDuplicate)
   }
   if (/control/i.test(target)) {
     return new ConflictError("ID de controle já cadastrado", ERROR_CODES.animalControlDuplicate)
@@ -116,7 +116,11 @@ export const animalListSelect = {
   state: true,
   eventDate: true,
   isPublic: true,
-  research: { select: { id: true, name: true } },
+  // isPublic da pesquisa: a visibilidade pública EFETIVA do animal é animal.isPublic E
+  // research.isPublic (ver publicMapPoints / docs/PERMISSOES.md).
+  research: { select: { id: true, name: true, isPublic: true } },
+  // Pesquisas adicionais que compartilham o indivíduo (para exibição e filtro por pesquisa).
+  participations: { select: { research: { select: { id: true, name: true } } } },
   _count: { select: { samples: true } },
   samples: {
     select: {
@@ -133,7 +137,7 @@ type RawListAnimal = Prisma.AnimalGetPayload<{ select: typeof animalListSelect }
 // Serializa um animal da listagem: resolve os patógenos positivos (por locale) e remove a
 // árvore de samples/analyses do payload enviado ao cliente.
 export function toAnimalListItem(locale: string, a: RawListAnimal) {
-  const { samples, ...rest } = a
+  const { samples, participations, ...rest } = a
   const names = new Set<string>()
   for (const s of samples) {
     for (const an of s.analyses) {
@@ -146,6 +150,81 @@ export function toAnimalListItem(locale: string, a: RawListAnimal) {
   }
   return {
     ...rest,
+    // Conjunto efetivo de pesquisas do indivíduo = primária + participações. Usado no
+    // filtro por pesquisa da listagem (ciente do compartilhamento).
+    researches: [rest.research, ...participations.map((p) => p.research)],
     positivePathogens: [...names].sort((x, y) => x.localeCompare(y, locale)),
+  }
+}
+
+// ── Compartilhamento de indivíduo entre pesquisas (participações) ──────────────
+
+/** Adiciona uma pesquisa (da mesma org) como participante do indivíduo. */
+export async function addAnimalResearch(animalId: string, orgId: string, researchId: string) {
+  const animal = await prisma.animal.findUnique({
+    where: { id: animalId },
+    select: { researchId: true },
+  })
+  if (!animal) throw new NotFoundError("Animal não encontrado", ERROR_CODES.animalNotFound)
+  if (animal.researchId === researchId) {
+    throw new ConflictError(
+      "Esta já é a pesquisa primária do indivíduo",
+      ERROR_CODES.animalResearchPrimary
+    )
+  }
+  // Garante que a pesquisa existe e pertence à mesma organização do indivíduo.
+  await assertResearchInOrg(researchId, orgId)
+  try {
+    await prisma.animalResearch.create({ data: { animalId, researchId } })
+  } catch (e) {
+    if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
+      throw new ConflictError(
+        "Esta pesquisa já compartilha o indivíduo",
+        ERROR_CODES.animalResearchExists
+      )
+    }
+    throw e
+  }
+}
+
+/**
+ * Garante que `researchId` é uma das pesquisas do indivíduo (primária OU participante).
+ * Usado ao atribuir a pesquisa dona de uma amostra (grade por pesquisa — Etapa 2).
+ */
+export async function assertResearchOnAnimal(animalId: string, researchId: string) {
+  const animal = await prisma.animal.findUnique({
+    where: { id: animalId },
+    select: {
+      researchId: true,
+      participations: { where: { researchId }, select: { researchId: true } },
+    },
+  })
+  if (!animal) throw new NotFoundError("Animal não encontrado", ERROR_CODES.animalNotFound)
+  if (animal.researchId === researchId || animal.participations.length > 0) return
+  throw new ValidationError(
+    "Pesquisa não vinculada a este indivíduo",
+    ERROR_CODES.animalResearchNotLinked
+  )
+}
+
+/** Remove a participação de uma pesquisa no indivíduo (idempotente). */
+export async function removeAnimalResearch(animalId: string, researchId: string) {
+  // Bloqueia se a pesquisa tem amostras neste indivíduo (perderiam a dona). O usuário deve
+  // remover/reatribuir as amostras antes de desvincular a pesquisa.
+  const samples = await prisma.sample.count({ where: { animalId, researchId } })
+  if (samples > 0) {
+    throw new ConflictError(
+      "A pesquisa possui amostras neste indivíduo",
+      ERROR_CODES.animalResearchHasData
+    )
+  }
+  try {
+    await prisma.animalResearch.delete({
+      where: { animalId_researchId: { animalId, researchId } },
+    })
+  } catch (e) {
+    // P2025 = registro inexistente: trata como sucesso (idempotente).
+    if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2025") return
+    throw e
   }
 }

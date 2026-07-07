@@ -2,11 +2,13 @@
 
 import { type ReactNode, useState } from "react"
 import Link from "next/link"
+import dynamic from "next/dynamic"
 import { useLocale, useTranslations } from "next-intl"
 import { ArrowLeft, Fish, Pencil } from "lucide-react"
 
 import { useAnimal } from "@/hooks/use-animals"
 import { useResearchList } from "@/hooks/use-research"
+import { formatDateOnly } from "@/lib/date"
 import { SEX_OPTIONS, LIFE_STAGE_OPTIONS } from "@/lib/animal-enums"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -14,10 +16,17 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Skeleton, TableSkeleton } from "@/components/ui/skeleton"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { AnimalFormDialog } from "../animal-form"
+import { ResearchShare } from "./research-share"
 import { SamplesTab } from "./samples-tab"
 import { AnalysesTab } from "./analyses-tab"
 import { MediaTab } from "./media-tab"
 import { AuditTab } from "./audit-tab"
+
+// Mapa depende de `window` (Leaflet) — nunca renderiza no servidor.
+const PointMap = dynamic(() => import("@/components/map/point-map"), {
+  ssr: false,
+  loading: () => <div className="h-full w-full animate-pulse bg-accent/40" />,
+})
 
 export function AnimalDetail({ id, isOrgAdmin }: { id: string; isOrgAdmin: boolean }) {
   const t = useTranslations("animals")
@@ -54,10 +63,11 @@ export function AnimalDetail({ id, isOrgAdmin }: { id: string; isOrgAdmin: boole
   }
 
   const na = t("notInformed")
-  const coords =
-    animal.strandingLat != null && animal.strandingLon != null
-      ? `${animal.strandingLat}, ${animal.strandingLon}`
-      : na
+  const hasCoords = animal.strandingLat != null && animal.strandingLon != null
+  const coords = hasCoords ? `${animal.strandingLat}, ${animal.strandingLon}` : na
+  const locationLabel =
+    [animal.strandingBeach, animal.municipality, animal.state].filter(Boolean).join(", ") ||
+    animal.species
   const rows: { label: string; value: ReactNode }[] = [
     { label: t("taxonFamily"), value: animal.taxonFamily ?? na },
     { label: t("taxonOrder"), value: animal.taxonOrder ?? na },
@@ -70,11 +80,11 @@ export function AnimalDetail({ id, isOrgAdmin }: { id: string; isOrgAdmin: boole
     { label: t("deathCondition"), value: animal.deathCondition ?? na },
     {
       label: t("eventDate"),
-      value: animal.eventDate ? new Date(animal.eventDate).toLocaleDateString(locale) : na,
+      value: animal.eventDate ? formatDateOnly(animal.eventDate, locale) : na,
     },
     {
       label: t("necropsyDate"),
-      value: animal.necropsyDate ? new Date(animal.necropsyDate).toLocaleDateString(locale) : na,
+      value: animal.necropsyDate ? formatDateOnly(animal.necropsyDate, locale) : na,
     },
     { label: t("strandingBeach"), value: animal.strandingBeach ?? na },
     { label: t("municipality"), value: animal.municipality ?? na },
@@ -152,6 +162,23 @@ export function AnimalDetail({ id, isOrgAdmin }: { id: string; isOrgAdmin: boole
                   </div>
                 ))}
               </dl>
+              <div className="border-t pt-4">
+                <ResearchShare animal={animal} />
+              </div>
+              {hasCoords && (
+                <div className="border-t pt-4">
+                  <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    {t("strandingLocationMap")}
+                  </p>
+                  <div className="h-[320px] overflow-hidden rounded-lg border">
+                    <PointMap
+                      lat={animal.strandingLat as number}
+                      lon={animal.strandingLon as number}
+                      label={locationLabel}
+                    />
+                  </div>
+                </div>
+              )}
               {animal.macroscopicNotes && (
                 <div className="border-t pt-4">
                   <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
@@ -167,7 +194,11 @@ export function AnimalDetail({ id, isOrgAdmin }: { id: string; isOrgAdmin: boole
         <TabsContent value="samples" className="mt-4">
           <Card>
             <CardContent className="pt-6">
-              <SamplesTab animalId={id} isOrgAdmin={isOrgAdmin} />
+              <SamplesTab
+                animalId={id}
+                isOrgAdmin={isOrgAdmin}
+                researches={[animal.research, ...animal.participations.map((p) => p.research)]}
+              />
             </CardContent>
           </Card>
         </TabsContent>

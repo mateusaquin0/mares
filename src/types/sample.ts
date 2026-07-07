@@ -18,5 +18,7 @@ export type Sample = {
   status: SampleStatus
   notes: string | null
   organ: OrganLite
+  // Pesquisa dona da amostra (uma das pesquisas do indivíduo).
+  research: { id: string; name: string }
   _count: { analyses: number }
 }

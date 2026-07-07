@@ -29,14 +29,15 @@ const exportSelect = {
   samples: {
     select: {
       identification: true,
+      research: { select: { name: true } },
       organ: { select: { name: true } },
       analyses: {
         select: {
           result: true,
-          ctValue: true,
+          measureValue: true,
           notes: true,
           pathogen: { select: { scientificName: true, name: true } },
-          examType: { select: { name: true } },
+          examType: { select: { name: true, measureLabel: true } },
         },
       },
     },

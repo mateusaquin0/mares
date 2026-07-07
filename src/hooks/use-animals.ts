@@ -81,6 +81,28 @@ export function useDeleteAnimal() {
   })
 }
 
+export function useAddAnimalResearch(animalId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (researchId: string) => animalsService.addResearch(animalId, researchId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: animalKeys.detail(animalId) })
+      qc.invalidateQueries({ queryKey: animalKeys.all })
+    },
+  })
+}
+
+export function useRemoveAnimalResearch(animalId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (researchId: string) => animalsService.removeResearch(animalId, researchId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: animalKeys.detail(animalId) })
+      qc.invalidateQueries({ queryKey: animalKeys.all })
+    },
+  })
+}
+
 // Busca no SIMBA sob demanda (ação imperativa) — sem cache.
 export function useSimbaLookup() {
   return useMutation({

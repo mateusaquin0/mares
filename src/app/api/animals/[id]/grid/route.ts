@@ -1,7 +1,8 @@
-// MARES — Dados da grade de análises de um animal (Fase 3).
-// Retorna o protocolo da pesquisa + as amostras do animal + as análises já preenchidas.
-// O cliente monta, por amostra (que tem um órgão), as linhas patógeno × exame do protocolo
-// cujo órgão corresponde ao da amostra, e busca o resultado existente por (sample, pathogen, exam).
+// MARES — Dados da grade de análises de um animal (Fase 3 / compartilhamento Etapa 2).
+// O indivíduo pode ser estudado por várias pesquisas; cada amostra pertence a UMA pesquisa.
+// A grade é retornada em SEÇÕES: uma por pesquisa que tem amostras no indivíduo, com o
+// PROTOCOLO daquela pesquisa aplicado às SUAS amostras. As análises já preenchidas vêm numa
+// lista plana (cada análise pertence a uma amostra → a uma pesquisa).
 
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
@@ -17,17 +18,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
     const animal = await loadAnimalOrg(id)
     requireOrgRole(user, animal.orgId, "RESEARCHER")
 
-    const [protocol, samples, analyses] = await Promise.all([
-      prisma.researchProtocol.findMany({
-        where: { researchId: animal.researchId },
-        select: {
-          organId: true,
-          pathogenId: true,
-          examTypeId: true,
-          pathogen: { select: { id: true, scientificName: true, name: true } },
-          examType: { select: { id: true, name: true } },
-        },
-      }),
+    const [samples, analyses] = await Promise.all([
       prisma.sample.findMany({
         where: { animalId: id },
         orderBy: { createdAt: "asc" },
@@ -35,6 +26,8 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
           id: true,
           sampleType: true,
           status: true,
+          researchId: true,
+          research: { select: { id: true, name: true } },
           organ: { select: { id: true, name: true } },
         },
       }),
@@ -45,13 +38,68 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
           pathogenId: true,
           examTypeId: true,
           result: true,
-          ctValue: true,
+          measureValue: true,
           notes: true,
         },
       }),
     ])
 
-    return NextResponse.json({ protocol, samples, analyses })
+    // Agrupa amostras por pesquisa dona, preservando a ordem de primeira aparição.
+    // Tipos vêm do Prisma (name como Json); o cliente reinterpreta como AnalysisGrid.
+    type SampleRow = (typeof samples)[number]
+    const order: string[] = []
+    const byResearch = new Map<
+      string,
+      { research: SampleRow["research"]; samples: SampleRow[] }
+    >()
+    for (const s of samples) {
+      let bucket = byResearch.get(s.researchId)
+      if (!bucket) {
+        bucket = { research: s.research, samples: [] }
+        byResearch.set(s.researchId, bucket)
+        order.push(s.researchId)
+      }
+      bucket.samples.push(s)
+    }
+
+    // Protocolos das pesquisas com amostras no indivíduo.
+    const protocols = order.length
+      ? await prisma.researchProtocol.findMany({
+          where: { researchId: { in: order } },
+          select: {
+            researchId: true,
+            organId: true,
+            pathogenId: true,
+            examTypeId: true,
+            pathogen: { select: { id: true, scientificName: true, name: true } },
+            examType: { select: { id: true, name: true, measureLabel: true, measureUnit: true } },
+          },
+        })
+      : []
+    const protoByResearch = new Map<string, typeof protocols>()
+    for (const p of protocols) {
+      const list = protoByResearch.get(p.researchId) ?? []
+      list.push(p)
+      protoByResearch.set(p.researchId, list)
+    }
+
+    const sections = order.map((rid) => {
+      const bucket = byResearch.get(rid)!
+      // Remove os campos internos (researchId/research) das amostras enviadas.
+      const samplesOut = bucket.samples.map((s) => ({
+        id: s.id,
+        sampleType: s.sampleType,
+        status: s.status,
+        organ: s.organ,
+      }))
+      return {
+        research: bucket.research,
+        protocol: protoByResearch.get(rid) ?? [],
+        samples: samplesOut,
+      }
+    })
+
+    return NextResponse.json({ sections, analyses })
   } catch (err) {
     return apiError(err)
   }

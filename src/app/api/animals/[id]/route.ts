@@ -26,6 +26,10 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
       where: { id },
       include: {
         research: { select: { id: true, name: true } },
+        participations: {
+          select: { research: { select: { id: true, name: true } } },
+          orderBy: { createdAt: "asc" },
+        },
         _count: { select: { samples: true, media: true } },
       },
     })

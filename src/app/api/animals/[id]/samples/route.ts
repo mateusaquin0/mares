@@ -7,7 +7,7 @@ import { prisma } from "@/lib/prisma"
 import { getAuthUser, requireOrgRole } from "@/lib/auth"
 import { apiError, unauthorized } from "@/lib/api"
 import { createSampleSchema } from "@/schemas/sample.schema"
-import { loadAnimalOrg } from "@/lib/animals"
+import { assertResearchOnAnimal, loadAnimalOrg } from "@/lib/animals"
 import { assertOrgan, sampleData, sampleDuplicateError, sampleSelect } from "@/lib/samples"
 
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -40,6 +40,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     const body = await req.json().catch(() => null)
     const data = createSampleSchema.parse(body)
     await assertOrgan(data.organId)
+    // A pesquisa dona da amostra tem de ser uma das pesquisas do indivíduo (primária/participante).
+    await assertResearchOnAnimal(id, data.researchId)
 
     try {
       const sample = await prisma.sample.create({
@@ -49,6 +51,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
           sampleType: data.sampleType.trim(),
           orgId: animal.orgId, // denormalizado p/ unicidade por organização
           animal: { connect: { id } },
+          research: { connect: { id: data.researchId } },
           organ: { connect: { id: data.organId } },
         },
         select: sampleSelect,

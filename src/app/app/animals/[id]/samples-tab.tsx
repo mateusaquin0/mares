@@ -6,6 +6,7 @@ import { toast } from "sonner"
 import { MoreHorizontal, Plus } from "lucide-react"
 
 import { txt } from "@/lib/catalog-i18n"
+import { formatDateOnly } from "@/lib/date"
 import { useErrorMessage } from "@/lib/use-error-message"
 import { type SamplePayload } from "@/services/samples"
 import { useSamples, useCreateSample, useUpdateSample, useDeleteSample } from "@/hooks/use-samples"
@@ -48,6 +49,7 @@ import {
 } from "@/components/ui/select"
 
 type FormState = {
+  researchId: string
   organId: string
   identification: string
   sampleType: string
@@ -59,6 +61,7 @@ type FormState = {
 }
 
 const emptyForm: FormState = {
+  researchId: "",
   organId: "",
   identification: "",
   sampleType: "",
@@ -77,7 +80,16 @@ const statusVariant: Record<SampleStatus, "default" | "secondary" | "destructive
   DEGRADED: "destructive",
 }
 
-export function SamplesTab({ animalId, isOrgAdmin }: { animalId: string; isOrgAdmin: boolean }) {
+export function SamplesTab({
+  animalId,
+  isOrgAdmin,
+  researches,
+}: {
+  animalId: string
+  isOrgAdmin: boolean
+  // Pesquisas do indivíduo (primária + participações). A amostra pertence a uma delas.
+  researches: { id: string; name: string }[]
+}) {
   const t = useTranslations("samples")
   const tc = useTranslations("common")
   const tval = useTranslations("validation")
@@ -100,6 +112,7 @@ export function SamplesTab({ animalId, isOrgAdmin }: { animalId: string; isOrgAd
     sampleType?: boolean
   }>({})
   const [confirm, setConfirm] = useState<Sample | null>(null)
+  const multiResearch = researches.length > 1
 
   const set = (patch: Partial<FormState>) => setForm((f) => ({ ...f, ...patch }))
   const statusLabel = (s: SampleStatus) =>
@@ -112,12 +125,15 @@ export function SamplesTab({ animalId, isOrgAdmin }: { animalId: string; isOrgAd
 
   function openCreate() {
     setErrors({})
-    setForm(emptyForm)
+    // Amostra nova pertence à pesquisa primária por padrão (researches[0]); o seletor só
+    // aparece quando há mais de uma pesquisa no indivíduo.
+    setForm({ ...emptyForm, researchId: researches[0]?.id ?? "" })
     setDialog({ mode: "create" })
   }
   function openEdit(row: Sample) {
     setErrors({})
     setForm({
+      researchId: row.research.id,
       organId: row.organ.id,
       identification: row.identification,
       sampleType: row.sampleType,
@@ -142,6 +158,7 @@ export function SamplesTab({ animalId, isOrgAdmin }: { animalId: string; isOrgAd
 
     const orNull = (v: string) => (v.trim() === "" ? null : v.trim())
     const payload: SamplePayload = {
+      researchId: form.researchId,
       organId: form.organId,
       identification: form.identification.trim(),
       sampleType: form.sampleType.trim(),
@@ -171,7 +188,7 @@ export function SamplesTab({ animalId, isOrgAdmin }: { animalId: string; isOrgAd
     }
   }
 
-  const fmtDate = (iso: string | null) => (iso ? new Date(iso).toLocaleDateString(locale) : "")
+  const fmtDate = (iso: string | null) => formatDateOnly(iso, locale)
 
   return (
     <div className="space-y-4">
@@ -192,6 +209,7 @@ export function SamplesTab({ animalId, isOrgAdmin }: { animalId: string; isOrgAd
             <TableHeader>
               <TableRow>
                 <TableHead>{t("colIdentification")}</TableHead>
+                {multiResearch && <TableHead>{t("colResearch")}</TableHead>}
                 <TableHead>{t("colOrgan")}</TableHead>
                 <TableHead>{t("colType")}</TableHead>
                 <TableHead>{t("colCollection")}</TableHead>
@@ -206,6 +224,11 @@ export function SamplesTab({ animalId, isOrgAdmin }: { animalId: string; isOrgAd
               {items.map((s) => (
                 <TableRow key={s.id}>
                   <TableCell className="font-medium">{s.identification}</TableCell>
+                  {multiResearch && (
+                    <TableCell>
+                      <Badge variant="outline">{s.research.name}</Badge>
+                    </TableCell>
+                  )}
                   <TableCell>{txt(locale, s.organ.name)}</TableCell>
                   <TableCell>{s.sampleType}</TableCell>
                   <TableCell className="text-muted-foreground">{fmtDate(s.collectionDate)}</TableCell>
@@ -275,6 +298,30 @@ export function SamplesTab({ animalId, isOrgAdmin }: { animalId: string; isOrgAd
                 <p className="text-xs text-destructive">{tval("required")}</p>
               )}
             </div>
+            {multiResearch && (
+              <div className="space-y-1">
+                <Label htmlFor="sample-research">{t("research")}</Label>
+                <Select
+                  value={form.researchId}
+                  onValueChange={(v) => set({ researchId: v })}
+                  disabled={dialog?.mode === "edit"}
+                >
+                  <SelectTrigger id="sample-research">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {researches.map((r) => (
+                      <SelectItem key={r.id} value={r.id}>
+                        {r.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {dialog?.mode === "edit" && (
+                  <p className="text-xs text-muted-foreground">{t("researchLockedHint")}</p>
+                )}
+              </div>
+            )}
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1">
                 <Label htmlFor="organ">{t("organ")}</Label>

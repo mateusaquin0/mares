@@ -11,15 +11,17 @@ type Result = "POSITIVO" | "NEGATIVO" | "INCONCLUSIVO"
 
 export type XlsxAnalysis = {
   result: Result | null
-  ctValue: number | null
+  measureValue: number | null
   notes: string | null
-  // `name` como unknown para aceitar o Prisma.JsonValue; convertido via txt/pathogenName.
+  // `name`/`measureLabel` como unknown para aceitar o Prisma.JsonValue; convertidos via txt.
   pathogen: { scientificName: string | null; name: unknown }
-  examType: { name: unknown }
+  examType: { name: unknown; measureLabel: unknown }
 }
 
 export type XlsxSample = {
   identification: string
+  // Pesquisa dona da amostra (pode diferir da pesquisa primária do indivíduo — compartilhamento).
+  research: { name: string }
   organ: { name: unknown }
   analyses: XlsxAnalysis[]
 }
@@ -90,7 +92,7 @@ const LIFE_STAGE: Record<LifeStageValue, { pt: string; en: string }> = {
 // Colunas da planilha: chave interna + cabeçalho por idioma + largura.
 const COLUMNS: { key: string; pt: string; en: string; width: number }[] = [
   { key: "controlId", pt: "ID de controle", en: "Control ID", width: 16 },
-  { key: "simba", pt: "Nº SIMBA", en: "SIMBA no.", width: 14 },
+  { key: "simba", pt: "Identificador SIMBA", en: "SIMBA identifier", width: 20 },
   { key: "species", pt: "Espécie", en: "Species", width: 24 },
   { key: "family", pt: "Família", en: "Family", width: 18 },
   { key: "order", pt: "Ordem", en: "Order", width: 18 },
@@ -118,11 +120,13 @@ const ANALYSIS_COLUMNS: { key: string; pt: string; en: string; width: number }[]
   { key: "animal", pt: "Animal", en: "Animal", width: 16 },
   { key: "species", pt: "Espécie", en: "Species", width: 24 },
   { key: "sample", pt: "Amostra", en: "Sample", width: 16 },
+  { key: "research", pt: "Pesquisa", en: "Research", width: 24 },
   { key: "organ", pt: "Órgão", en: "Organ", width: 18 },
   { key: "pathogen", pt: "Patógeno", en: "Pathogen", width: 24 },
   { key: "exam", pt: "Exame", en: "Exam", width: 18 },
   { key: "result", pt: "Resultado", en: "Result", width: 14 },
-  { key: "ct", pt: "Ct", en: "Ct", width: 8 },
+  { key: "measureLabel", pt: "Medida", en: "Measure", width: 12 },
+  { key: "measureValue", pt: "Valor", en: "Value", width: 10 },
   { key: "notes", pt: "Observações", en: "Notes", width: 40 },
 ]
 
@@ -181,11 +185,13 @@ export async function buildAnimalsXlsx(animals: XlsxAnimal[], locale: string): P
           animal: animalLabel,
           species: a.species,
           sample: s.identification,
+          research: s.research.name,
           organ: txt(loc, asI18n(s.organ.name)),
           pathogen: pathogenName(loc, { scientificName: an.pathogen.scientificName, name: asI18n(an.pathogen.name) }),
           exam: txt(loc, asI18n(an.examType.name)),
           result: an.result ? RESULT[an.result][loc] : "",
-          ct: an.ctValue ?? "",
+          measureLabel: an.examType.measureLabel ? txt(loc, asI18n(an.examType.measureLabel)) : "",
+          measureValue: an.measureValue ?? "",
           notes: an.notes ?? "",
         })
       }

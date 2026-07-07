@@ -28,8 +28,15 @@ export async function GET(req: NextRequest) {
 
     const researchId = req.nextUrl.searchParams.get("researchId") ?? undefined
 
+    // Escopo pela org (via pesquisa primária, sempre da mesma org). Ao filtrar por pesquisa,
+    // inclui o indivíduo tanto como primária quanto como participante (compartilhamento).
+    const where: Prisma.AnimalWhereInput = { research: { orgId } }
+    if (researchId) {
+      where.OR = [{ researchId }, { participations: { some: { researchId } } }]
+    }
+
     const animals = await prisma.animal.findMany({
-      where: { research: { orgId }, ...(researchId ? { researchId } : {}) },
+      where,
       orderBy: { createdAt: "desc" },
       select: animalListSelect,
     })

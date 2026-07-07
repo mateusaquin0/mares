@@ -9,7 +9,13 @@ export type ProtocolEntry = {
   pathogenId: string
   examTypeId: string
   pathogen: { id: string; scientificName: string | null; name: string | I18nText | null }
-  examType: { id: string; name: string | I18nText }
+  // measureLabel presente = o exame tem leitura quantitativa (ex.: Ct, Título); null = só qualitativo.
+  examType: {
+    id: string
+    name: string | I18nText
+    measureLabel: string | I18nText | null
+    measureUnit: string | null
+  }
 }
 
 export type SampleLite = {
@@ -19,11 +25,18 @@ export type SampleLite = {
   organ: { id: string; name: string | I18nText }
 }
 
-export type AnalysisCell = { result: ResultValue | null; ctValue: number | null; notes: string | null }
+export type AnalysisCell = { result: ResultValue | null; measureValue: number | null; notes: string | null }
+
+// Seção da grade referente a UMA pesquisa: seu protocolo aplicado às suas amostras no
+// indivíduo. Indivíduos compartilhados têm uma seção por pesquisa (Etapa 2).
+export type AnalysisSection = {
+  research: { id: string; name: string }
+  protocol: ProtocolEntry[]
+  samples: SampleLite[]
+}
 
 // Grade de análises (/api/animals/:id/grid).
 export type AnalysisGrid = {
-  protocol: ProtocolEntry[]
-  samples: SampleLite[]
+  sections: AnalysisSection[]
   analyses: (AnalysisCell & { sampleId: string; pathogenId: string; examTypeId: string })[]
 }

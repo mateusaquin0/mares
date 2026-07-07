@@ -124,6 +124,10 @@ model Research {
   createdBy    User?              @relation("ResearchCreator", fields: [createdById], references: [id], onDelete: SetNull)
   protocols    ResearchProtocol[]
   animals      Animal[]
+  // Indivíduos compartilhados de outra pesquisa que esta também estuda (ver AnimalResearch).
+  animalLinks  AnimalResearch[]
+  // Amostras coletadas por esta pesquisa (o indivíduo pode ter amostras de várias pesquisas).
+  samples      Sample[]
   createdAt    DateTime           @default(now())
 
   @@index([orgId])
@@ -203,6 +207,11 @@ model ExamType {
   id          String             @id @default(uuid())
   key         String             @unique // ex: "npcr"
   name        Json // { pt: "nPCR", en: "nested PCR (nPCR)" }
+  // Medida quantitativa opcional do exame (ex.: Ct no qPCR, Título nas serologias, OD no
+  // ELISA). measureLabel ausente = exame só qualitativo (sem valor). measureUnit é uma
+  // anotação curta opcional (ex.: "ciclos"). Ver docs/BANCO_DE_DADOS.md.
+  measureLabel Json? // { pt, en } — rótulo da coluna de valor na grade de análises
+  measureUnit  String? // unidade/anotação curta opcional
   createdById String?            @map("created_by_id")
   protocols   ResearchProtocol[]
   analyses    Analysis[]
@@ -217,7 +226,7 @@ model ExamType {
 model Animal {
   id                 String        @id @default(uuid())
   controlId          String? // ID de controle interno, único por organização (ver @@unique abaixo)
-  simbaRecordNumber  String?       @unique // Nº SIMBA: registro nacional, único globalmente
+  simbaRecordNumber  String? // Identificador SIMBA, único por organização (ver @@unique abaixo)
   species            String
   // Campos preenchidos via WoRMS após validação taxonômica
   wormsAphiaId       Int?
@@ -249,11 +258,33 @@ model Animal {
   orgId              String
   samples            Sample[]
   media              AnimalMedia[]
+  // Pesquisas ADICIONAIS que também estudam este indivíduo (mesma org). A pesquisa
+  // primária/criadora é `researchId`; o conjunto efetivo = {researchId} ∪ participations.
+  participations     AnimalResearch[]
   createdAt          DateTime      @default(now())
 
   @@unique([orgId, controlId])
+  @@unique([orgId, simbaRecordNumber])
   @@index([researchId])
   @@index([species])
+}
+
+// Participação de uma pesquisa em um indivíduo (Animal).
+//
+// O Animal representa o indivíduo FÍSICO (identidade compartilhada: SIMBA, espécie,
+// coordenadas, encalhe/necrópsia). Cada pesquisa que o estuda mantém suas próprias amostras
+// e análises. A pesquisa primária/criadora é `Animal.researchId`; esta tabela registra as
+// pesquisas ADICIONAIS (do MESMO grupo) que compartilham o indivíduo, sem duplicar a
+// identidade. Conjunto efetivo de pesquisas de um animal = {researchId} ∪ participations.
+model AnimalResearch {
+  animalId   String
+  animal     Animal   @relation(fields: [animalId], references: [id], onDelete: Cascade)
+  researchId String
+  research   Research @relation(fields: [researchId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+
+  @@id([animalId, researchId])
+  @@index([researchId])
 }
 
 // Amostra física coletada durante a necrópsia
@@ -261,6 +292,10 @@ model Sample {
   id              String       @id @default(uuid())
   animalId        String
   animal          Animal       @relation(fields: [animalId], references: [id], onDelete: Cascade)
+  // Pesquisa dona da amostra: UMA das pesquisas do indivíduo (primária ou participante).
+  // Escopa a grade de análises e os exports POR PESQUISA (indivíduo compartilhado — Etapa 2).
+  researchId      String
+  research        Research     @relation(fields: [researchId], references: [id])
   organId         String
   organ           Organ        @relation(fields: [organId], references: [id])
   // Organização dona, denormalizada de animal→pesquisa, para a unicidade da identificação
@@ -278,6 +313,7 @@ model Sample {
 
   @@unique([orgId, identification])
   @@index([animalId])
+  @@index([researchId])
 }
 
 model Analysis {
@@ -289,7 +325,9 @@ model Analysis {
   examTypeId String
   examType   ExamType @relation(fields: [examTypeId], references: [id])
   result     Result? // NULL = ainda não testado
-  ctValue    Float? // valor Ct do PCR (NULL quando não aplicável)
+  // Valor quantitativo conforme ExamType.measureLabel (ex.: Ct no qPCR, título nas
+  // serologias). NULL quando não aplicável ou não medido.
+  measureValue Float? @map("ctValue")
   notes      String?
   createdAt  DateTime @default(now())
 

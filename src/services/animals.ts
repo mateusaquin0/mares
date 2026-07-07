@@ -24,6 +24,12 @@ export const animalsService = {
     http.put<{ id: string; species: string }>(`/api/animals/${id}`, data),
   remove: (id: string) => http.del(`/api/animals/${id}`),
 
+  // Compartilhamento do indivíduo entre pesquisas (participações).
+  addResearch: (animalId: string, researchId: string) =>
+    http.post<void>(`/api/animals/${animalId}/researches`, { researchId }),
+  removeResearch: (animalId: string, researchId: string) =>
+    http.del(`/api/animals/${animalId}/researches/${researchId}`),
+
   // SIMBA — busca por número de registro (pré-preenchimento do formulário).
   lookupSimba: (recordNumber: string) =>
     http.get<SimbaLookup>(`/api/simba?record_number=${encodeURIComponent(recordNumber)}`),
