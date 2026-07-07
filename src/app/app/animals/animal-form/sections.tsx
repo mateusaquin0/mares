@@ -162,7 +162,11 @@ export function StrandingSection({ form, errors, set }: SectionProps) {
           type="date"
           value={form.eventDate}
           error={errors.eventDate}
-          onChange={(v) => set({ eventDate: v })}
+          // A necrópsia costuma ocorrer no dia do encalhe: reflete a data do encalhe na
+          // necrópsia enquanto esta estiver vazia (não sobrescreve um valor já informado).
+          onChange={(v) =>
+            set(form.necropsyDate ? { eventDate: v } : { eventDate: v, necropsyDate: v })
+          }
         />
         <TextField
           id="beach"
