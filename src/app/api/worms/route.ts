@@ -4,7 +4,8 @@
 
 import { NextRequest, NextResponse } from "next/server"
 import { getAuthUser } from "@/lib/auth"
-import { apiError, unauthorized } from "@/lib/api"
+import { apiError, tooManyRequests, unauthorized } from "@/lib/api"
+import { clientKey, rateLimit } from "@/lib/rate-limit"
 
 type AphiaRecord = {
   AphiaID: number
@@ -19,6 +20,10 @@ export async function GET(req: NextRequest) {
   try {
     const user = await getAuthUser()
     if (!user) return unauthorized()
+
+    // Proxy para API externa (WoRMS): limita para não abusar do serviço de terceiros.
+    const limit = rateLimit(clientKey(req, "worms"), { limit: 30, windowMs: 60 * 1000 })
+    if (!limit.ok) return tooManyRequests(limit.retryAfter)
 
     const q = req.nextUrl.searchParams.get("q")?.trim() ?? ""
     if (q.length < 3) return NextResponse.json([])

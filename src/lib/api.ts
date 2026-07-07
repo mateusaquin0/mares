@@ -40,3 +40,12 @@ export function unauthorized(): NextResponse {
     { status: 401 }
   )
 }
+
+// 429 — cliente excedeu o limite de requisições (ver src/lib/rate-limit.ts).
+// Inclui o header padrão `Retry-After` (em segundos).
+export function tooManyRequests(retryAfter: number): NextResponse {
+  return NextResponse.json(
+    { error: "Muitas requisições. Aguarde um momento.", code: ERROR_CODES.rateLimited },
+    { status: 429, headers: { "Retry-After": String(retryAfter) } }
+  )
+}

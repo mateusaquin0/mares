@@ -431,6 +431,7 @@
     "forbidden": "You don't have permission for this action",
     "validation": "Invalid data",
     "unauthenticated": "Session expired. Please sign in again.",
+    "rateLimited": "Too many requests in a short time. Please wait a moment and try again.",
     "internal": "Internal error. Please try again.",
     "notMember": "You don't belong to this research group",
     "orgNotFound": "Research group not found",

@@ -431,6 +431,7 @@
     "forbidden": "Você não tem permissão para esta ação",
     "validation": "Dados inválidos",
     "unauthenticated": "Sessão expirada. Entre novamente.",
+    "rateLimited": "Muitas requisições em pouco tempo. Aguarde um momento e tente novamente.",
     "internal": "Erro interno. Tente novamente.",
     "notMember": "Você não pertence a este grupo de pesquisa",
     "orgNotFound": "Grupo de pesquisa não encontrado",

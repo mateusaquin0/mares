@@ -9,6 +9,7 @@ export const ERROR_CODES = {
   forbidden: "forbidden",
   validation: "validation",
   unauthenticated: "unauthenticated",
+  rateLimited: "rateLimited",
   internal: "internal",
   // específicos
   notMember: "notMember",

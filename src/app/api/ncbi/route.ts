@@ -4,7 +4,8 @@
 
 import { NextRequest, NextResponse } from "next/server"
 import { getAuthUser } from "@/lib/auth"
-import { apiError, unauthorized } from "@/lib/api"
+import { apiError, tooManyRequests, unauthorized } from "@/lib/api"
+import { clientKey, rateLimit } from "@/lib/rate-limit"
 
 const EUTILS = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils"
 
@@ -48,6 +49,11 @@ export async function GET(req: NextRequest) {
   try {
     const user = await getAuthUser()
     if (!user) return unauthorized()
+
+    // Proxy para API externa (NCBI E-utilities): a política sem chave é de ~3 req/s.
+    // Limita por IP para respeitar a cota compartilhada do serviço.
+    const limit = rateLimit(clientKey(req, "ncbi"), { limit: 20, windowMs: 60 * 1000 })
+    if (!limit.ok) return tooManyRequests(limit.retryAfter)
 
     const q = req.nextUrl.searchParams.get("q")?.trim() ?? ""
     if (q.length < 3) return NextResponse.json([])
