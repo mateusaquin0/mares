@@ -57,40 +57,63 @@ npm run db:studio    # Prisma Studio
 
 ## Estado do desenvolvimento
 
-### ✅ Fase 1 — Fundação (concluída)
-- Setup Next.js + TypeScript + Tailwind + Prisma
-- Integração Supabase (DB + Auth) + políticas de RLS
-- Schema inicial, migrations e seed dos catálogos
+### ✅ Fase 1 — Fundação e acesso
+- Setup Next.js + TypeScript + Tailwind + Prisma; integração Supabase (DB + Auth) + RLS
+- Schema inicial, migrations versionadas e seed dos catálogos
 - **Identidade e acesso** (cadastro fechado, multi-organização): login, solicitação de
   acesso + aprovação pelo admin global, criação de pesquisadores por e-mail (convite Supabase),
   vínculos `Membership` (papel por org) e organização ativa — ver [`docs/CADASTRO_E_ACESSO.md`](docs/CADASTRO_E_ACESSO.md)
 - Middleware de proteção de rotas (`/app/*`, `/app/admin/*`) e tela "sem organização"
 
-### ⏳ Próximas fases
-- Fase 2 — Pesquisas e protocolos
-- Fase 3 — Animais e análises (+ importação SIMBA, migração do protótipo)
-- Fase 4 — Mapa interativo
-- Fase 5 — Dashboard e gráficos
-- Fase 6 — Exportação Darwin Core, visibilidade e testes
+### ✅ Fase 2 — Pesquisas, protocolos e catálogos
+- CRUD de pesquisas com protocolo flexível (patógeno × exame por pesquisa)
+- Glossários/catálogos por organização (patógenos, grupos, órgãos, tipos de exame) com i18n
+
+### ✅ Fase 3 — Animais, amostras e análises
+- Cadastro de animais (encalhe + necropsia), amostras e grade de análises
+- Compartilhamento de indivíduo entre pesquisas; mídia; `AuditLog` por animal
+- Autocomplete taxonômico (WoRMS/NCBI) e importação SIMBA (Darwin Core)
+
+### ✅ Fase 4 — Mapa interativo
+- Mapa por organização e **mapa público** (`/map`) com pontos de encalhe, heatmap,
+  clustering e filtros; export CSV dos pontos filtrados
+
+### ✅ Fase 5 — Dashboard e gráficos
+- Indicadores e gráficos (Recharts) sobre os registros da organização
+
+### ✅ Fase 6 — Exportação, visibilidade e segurança
+- Exportação **Darwin Core** por pesquisa e planilha XLSX de animais
+- Controle de visibilidade granular (público = `animal.isPublic AND research.isPublic`)
+- Rate limiting nas rotas públicas/proxies externos (ver `src/lib/rate-limit.ts`)
+
+### ⏳ Pendente
+- **Testes automatizados** (Vitest para schemas/parsers, Playwright para fluxos críticos) —
+  estratégia descrita em [`docs/TESTES.md`](docs/TESTES.md), ainda não implementada
+- CI (lint + build + testes)
 
 ## Estrutura
 
 ```
 src/
 ├── app/
-│   ├── (auth)/login, register      ← autenticação (URLs /login, /register)
-│   ├── onboarding/                 ← criação da organização (semi-protegida)
-│   ├── app/                        ← área protegida (/app/*) com sidebar
-│   │   └── dashboard/
-│   ├── auth/callback/              ← troca de código OAuth/e-mail
-│   └── api/auth/onboarding/        ← cria Organization + User
-├── components/ui/                  ← primitivos (button, input, card, ...)
-├── components/layout/              ← sidebar, sign-out
-├── lib/                            ← prisma, supabase, auth, errors, utils
-└── schemas/                        ← schemas Zod compartilhados
+│   ├── (auth)/login, request-access ← autenticação e solicitação de acesso
+│   ├── auth/                        ← callback OAuth/e-mail, set/forgot-password
+│   ├── map/                         ← mapa público (sem login)
+│   ├── app/                         ← área protegida (/app/*) com sidebar
+│   │   ├── dashboard, research, animals, samples-tab, map
+│   │   ├── catalogs, members, organizations, profile
+│   │   └── admin/                   ← admin global (usuários, orgs, solicitações)
+│   └── api/                         ← Route Handlers (auth nos próprios handlers)
+├── components/ui/                   ← primitivos (button, input, card, ...)
+├── components/{layout,form,map}/    ← sidebar, campos de formulário, Leaflet
+├── hooks/                           ← TanStack Query (use-animals, use-research, ...)
+├── services/                        ← regras de domínio consumidas pelas rotas
+├── lib/                             ← prisma, supabase, auth, errors, rate-limit, ...
+├── schemas/                         ← schemas Zod compartilhados
+└── i18n/                            ← next-intl (pt/en)
 
 prisma/
-├── schema.prisma
+├── schema.prisma                    ← 16 modelos (Organization … AuditLog)
 ├── seed.ts
-└── migrations/                     ← init + rls_policies
+└── migrations/                      ← migrations versionadas (init, RLS, ...)
 ```
