@@ -47,3 +47,6 @@ next-env.d.ts
 /docs
 /.agents
 /.claude
+
+# backups de banco (dados/PII — nunca commitar)
+/backups
