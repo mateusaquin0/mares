@@ -28,7 +28,8 @@
     "hidePassword": "Hide password",
     "search": "Search...",
     "noResults": "No results for your search.",
-    "optional": "optional"
+    "optional": "optional",
+    "reload": "Refresh"
   },
   "authPanel": {
     "brandTitle": "Collaborative monitoring of stranded marine fauna",
@@ -797,7 +798,9 @@
     "send": "Send",
     "cancel": "Cancel",
     "sent": "Feedback sent. Thank you!",
-    "sendError": "Could not send"
+    "sendError": "Could not send",
+    "titleLabel": "Title",
+    "titlePlaceholder": "One-line summary"
   },
   "adminFeedback": {
     "title": "Suggestions & bugs",
@@ -817,6 +820,18 @@
     "typeBug": "Bug",
     "setStatus": "Mark as {status}",
     "updated": "Status updated",
-    "opError": "Operation failed"
+    "opError": "Operation failed",
+    "colTitle": "Title",
+    "viewDetails": "View details",
+    "detailStatus": "Status",
+    "detailMessage": "Message",
+    "detailPage": "Page",
+    "detailAdminNote": "Admin note",
+    "detailTitle": "Title",
+    "detailAuthor": "Author",
+    "colDate": "Date",
+    "filterStatus": "Status",
+    "filterType": "Type",
+    "authorPlaceholder": "Filter by author (email)"
   }
 }

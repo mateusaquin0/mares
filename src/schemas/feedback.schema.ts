@@ -4,10 +4,15 @@ import { z } from "zod"
 export const feedbackTypeSchema = z.enum(["SUGGESTION", "BUG"])
 export const feedbackStatusSchema = z.enum(["NEW", "IN_REVIEW", "RESOLVED", "WONT_FIX"])
 
+// Limites de caracteres (também refletidos na UI: maxLength + contador).
+export const FEEDBACK_TITLE_MAX = 100
+export const FEEDBACK_MESSAGE_MAX = 500
+
 // Envio pelo usuário autenticado.
 export const createFeedbackSchema = z.object({
   type: feedbackTypeSchema,
-  message: z.string().trim().min(1, "required").max(2000),
+  title: z.string().trim().min(1, "required").max(FEEDBACK_TITLE_MAX),
+  message: z.string().trim().min(1, "required").max(FEEDBACK_MESSAGE_MAX),
   // De onde o usuário enviou (contexto). Opcional.
   pageUrl: z.string().max(500).optional().or(z.literal("")),
 })

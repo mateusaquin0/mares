@@ -6,6 +6,7 @@ export type { FeedbackType, FeedbackStatus }
 export type FeedbackItem = {
   id: string
   type: FeedbackType
+  title: string
   message: string
   pageUrl: string | null
   status: FeedbackStatus

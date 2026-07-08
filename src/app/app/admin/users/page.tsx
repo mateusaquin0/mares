@@ -21,6 +21,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { ReloadButton } from "@/components/ui/reload-button"
 import { SortableHead } from "@/components/ui/sortable-head"
 
 export default function AdminUsersPage() {
@@ -116,7 +117,9 @@ export default function AdminUsersPage() {
                   <SortableHead sortKey="status" sort={table.sort} onToggle={table.toggleSort}>
                     {t("colStatus")}
                   </SortableHead>
-                  <TableHead className="w-24 text-right">{t("colActions")}</TableHead>
+                  <TableHead className="w-24 text-right">
+                    <ReloadButton />
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>

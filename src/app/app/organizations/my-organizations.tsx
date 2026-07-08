@@ -19,6 +19,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { ReloadButton } from "@/components/ui/reload-button"
 
 export function MyOrganizations({
   selfId,
@@ -67,7 +68,9 @@ export function MyOrganizations({
               <TableRow>
                 <TableHead>{t("colOrg")}</TableHead>
                 <TableHead>{t("colRole")}</TableHead>
-                <TableHead className="w-24 text-right">{t("colActions")}</TableHead>
+                <TableHead className="w-24 text-right">
+                  <ReloadButton />
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>

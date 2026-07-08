@@ -17,6 +17,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { ReloadButton } from "@/components/ui/reload-button"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -64,7 +65,9 @@ export default function AccessRequestsPage() {
                 <TableHead>{t("colOrg")}</TableHead>
                 <TableHead>{t("colRequester")}</TableHead>
                 <TableHead>{t("colEmail")}</TableHead>
-                <TableHead className="w-48 text-right">{t("colActions")}</TableHead>
+                <TableHead className="w-48 text-right">
+                  <ReloadButton />
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>

@@ -25,6 +25,7 @@ export async function POST(req: NextRequest) {
     const created = await prisma.feedback.create({
       data: {
         type: data.type,
+        title: data.title.trim(),
         message: data.message.trim(),
         pageUrl: data.pageUrl?.trim() || null,
         createdById: user.id,
