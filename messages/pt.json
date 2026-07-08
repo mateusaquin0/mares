@@ -826,6 +826,8 @@
     "detailStatus": "Status",
     "detailMessage": "Mensagem",
     "detailPage": "Página",
-    "detailAdminNote": "Nota da administração"
+    "detailAdminNote": "Nota da administração",
+    "detailTitle": "Título",
+    "detailAuthor": "Autor"
   }
 }

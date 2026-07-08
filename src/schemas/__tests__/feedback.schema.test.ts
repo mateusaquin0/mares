@@ -21,8 +21,9 @@ describe("createFeedbackSchema", () => {
     expect(createFeedbackSchema.safeParse({ ...valid, title: "   " }).success).toBe(false)
   })
 
-  it("rejeita título acima de 120 caracteres", () => {
-    expect(createFeedbackSchema.safeParse({ ...valid, title: "a".repeat(121) }).success).toBe(false)
+  it("rejeita título acima de 100 caracteres", () => {
+    expect(createFeedbackSchema.safeParse({ ...valid, title: "a".repeat(101) }).success).toBe(false)
+    expect(createFeedbackSchema.safeParse({ ...valid, title: "a".repeat(100) }).success).toBe(true)
   })
 
   it("exige mensagem não vazia", () => {
@@ -30,9 +31,12 @@ describe("createFeedbackSchema", () => {
     expect(createFeedbackSchema.safeParse({ ...valid, message: "   " }).success).toBe(false)
   })
 
-  it("rejeita mensagem acima de 2000 caracteres", () => {
-    expect(createFeedbackSchema.safeParse({ ...valid, message: "a".repeat(2001) }).success).toBe(
+  it("rejeita mensagem acima de 500 caracteres", () => {
+    expect(createFeedbackSchema.safeParse({ ...valid, message: "a".repeat(501) }).success).toBe(
       false,
+    )
+    expect(createFeedbackSchema.safeParse({ ...valid, message: "a".repeat(500) }).success).toBe(
+      true,
     )
   })
 

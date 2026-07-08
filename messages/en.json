@@ -826,6 +826,8 @@
     "detailStatus": "Status",
     "detailMessage": "Message",
     "detailPage": "Page",
-    "detailAdminNote": "Admin note"
+    "detailAdminNote": "Admin note",
+    "detailTitle": "Title",
+    "detailAuthor": "Author"
   }
 }

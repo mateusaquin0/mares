@@ -183,7 +183,7 @@ export default function AdminFeedbackPage() {
         <DialogContent>
           {selected && (
             <>
-              <DialogHeader className="space-y-3">
+              <DialogHeader className="min-w-0">
                 {/* Badges de tipo e status, lado a lado, no topo. */}
                 <div className="flex flex-wrap items-center gap-2">
                   {typeBadge(selected.type)}
@@ -191,23 +191,37 @@ export default function AdminFeedbackPage() {
                     {t(`status_${selected.status}`)}
                   </Badge>
                 </div>
-                <DialogTitle className="break-words text-xl leading-snug">
-                  {selected.title}
-                </DialogTitle>
-                <DialogDescription className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5">
-                  <span className="font-medium text-foreground/80">{selected.createdByEmail}</span>
-                  <span aria-hidden>·</span>
-                  <span>{fmtDate(selected.createdAt)}</span>
-                </DialogDescription>
               </DialogHeader>
 
-              <div className="space-y-4">
-                {/* Mensagem: quebra palavras longas e rola se for muito grande. */}
+              <div className="min-w-0 space-y-4">
+                <section>
+                  <h3 className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    {t("detailTitle")}
+                  </h3>
+                  <DialogTitle className="text-lg font-semibold leading-snug [overflow-wrap:anywhere]">
+                    {selected.title}
+                  </DialogTitle>
+                </section>
+
+                <section>
+                  <h3 className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    {t("detailAuthor")}
+                  </h3>
+                  <DialogDescription className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-sm [overflow-wrap:anywhere]">
+                    <span className="font-medium text-foreground/80">
+                      {selected.createdByEmail}
+                    </span>
+                    <span aria-hidden>·</span>
+                    <span>{fmtDate(selected.createdAt)}</span>
+                  </DialogDescription>
+                </section>
+
+                {/* Mensagem: quebra palavras longas (mesmo sem espaços) e rola se for grande. */}
                 <section>
                   <h3 className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                     {t("detailMessage")}
                   </h3>
-                  <div className="max-h-72 overflow-y-auto whitespace-pre-wrap break-words rounded-lg border bg-muted/40 p-3 text-sm leading-relaxed">
+                  <div className="max-h-72 overflow-y-auto whitespace-pre-wrap rounded-lg border bg-muted/40 p-3 text-sm leading-relaxed [overflow-wrap:anywhere]">
                     {selected.message}
                   </div>
                 </section>
@@ -217,7 +231,7 @@ export default function AdminFeedbackPage() {
                     <h3 className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                       {t("detailAdminNote")}
                     </h3>
-                    <p className="whitespace-pre-wrap break-words text-sm leading-relaxed">
+                    <p className="whitespace-pre-wrap text-sm leading-relaxed [overflow-wrap:anywhere]">
                       {selected.adminNote}
                     </p>
                   </section>
@@ -228,7 +242,7 @@ export default function AdminFeedbackPage() {
                     <h3 className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                       {t("detailPage")}
                     </h3>
-                    <code className="inline-block max-w-full break-all rounded bg-muted px-1.5 py-0.5 font-mono text-xs text-muted-foreground">
+                    <code className="inline-block max-w-full rounded bg-muted px-1.5 py-0.5 font-mono text-xs text-muted-foreground [overflow-wrap:anywhere]">
                       {selected.pageUrl}
                     </code>
                   </section>

@@ -5,8 +5,8 @@ export const feedbackTypeSchema = z.enum(["SUGGESTION", "BUG"])
 export const feedbackStatusSchema = z.enum(["NEW", "IN_REVIEW", "RESOLVED", "WONT_FIX"])
 
 // Limites de caracteres (também refletidos na UI: maxLength + contador).
-export const FEEDBACK_TITLE_MAX = 120
-export const FEEDBACK_MESSAGE_MAX = 2000
+export const FEEDBACK_TITLE_MAX = 100
+export const FEEDBACK_MESSAGE_MAX = 500
 
 // Envio pelo usuário autenticado.
 export const createFeedbackSchema = z.object({
