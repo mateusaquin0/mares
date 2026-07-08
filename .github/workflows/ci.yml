@@ -84,3 +84,53 @@ jobs:
 
       - name: Testes de integração
         run: npm run test:integration
+
+  e2e:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: mares_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/mares_test
+      DIRECT_URL: postgresql://postgres:postgres@localhost:5432/mares_test
+      # Chaves públicas do Supabase são dummy: o smoke E2E é da superfície pública,
+      # que não faz round-trip ao Auth (sem cookie de sessão → sem chamada de rede).
+      NEXT_PUBLIC_SUPABASE_URL: https://dummy.supabase.co
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: dummy-anon-key
+      NEXT_PUBLIC_APP_URL: http://localhost:3100
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Instalar dependências
+        run: npm ci
+
+      - name: Gerar Prisma Client
+        run: npx prisma generate
+
+      - name: Preparar schema Supabase (shim)
+        run: psql "$DATABASE_URL" -f tests/integration/supabase-shim.sql
+
+      - name: Aplicar migrations
+        run: npx prisma migrate deploy
+
+      - name: Instalar navegador (Chromium)
+        run: npx playwright install --with-deps chromium
+
+      - name: Testes E2E (smoke público)
+        run: npm run test:e2e

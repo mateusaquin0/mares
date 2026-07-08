@@ -86,12 +86,18 @@ npm run db:studio    # Prisma Studio
 - Controle de visibilidade granular (público = `animal.isPublic AND research.isPublic`)
 - Rate limiting nas rotas públicas/proxies externos (ver `src/lib/rate-limit.ts`)
 
-### ⏳ Em andamento / pendente
-- **Testes automatizados** — ✅ Fase 1 (unitários) implementada: 104 testes com Vitest
-  cobrindo schemas Zod, parsers (Darwin Core/SIMBA, NCBI, WoRMS) e utilitários
-  (`npm test`). ⏳ Pendentes: integração com banco de teste (Fase 2) e E2E com Playwright
-  (Fase 3). Plano em [`docs/ROADMAP_TESTES.md`](docs/ROADMAP_TESTES.md).
-- **CI** — ✅ GitHub Actions (`.github/workflows/ci.yml`): typecheck + lint + testes unitários.
+### ✅ Testes automatizados
+- **Unitários** (Fase 1) — 104 testes com Vitest: schemas Zod, parsers (Darwin Core/SIMBA,
+  NCBI, WoRMS) e utilitários (`npm test`).
+- **Integração** (Fase 2) — Vitest contra Postgres real: isolamento multi-org (anti-IDOR),
+  unicidade por org e visibilidade de export (`npm run test:integration`).
+- **E2E** (Fase 3) — Playwright: smoke da superfície pública (landing + mapa) (`npm run test:e2e`).
+  Fluxos autenticados ficam como esqueleto até haver um Supabase de teste.
+- Plano completo em [`docs/ROADMAP_TESTES.md`](docs/ROADMAP_TESTES.md).
+
+### ✅ CI
+- GitHub Actions (`.github/workflows/ci.yml`): typecheck + lint + Prettier + unitários, mais
+  jobs de integração (Postgres) e E2E (Postgres + Chromium).
 
 ## Estrutura
 
