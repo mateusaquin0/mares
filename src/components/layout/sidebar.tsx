@@ -74,11 +74,11 @@ export function Sidebar({
     { href: "/app/map", label: t("map"), icon: Map },
     { href: "/app/animals", label: t("animals"), icon: Fish },
   ]
-  if (activeOrg?.role === "ORG_ADMIN") {
+  // Membros e glossário: pesquisador acessa em modo leitura (ações de escrita ficam
+  // ocultas nas próprias telas); admin gerencia. Ver docs/PERMISSOES.md.
+  if (activeOrg) {
     navItems.push({ href: "/app/members", label: t("members"), icon: Users })
     navItems.push({ href: "/app/catalogs", label: t("catalogs"), icon: Library })
-  }
-  if (activeOrg) {
     navItems.push({ href: "/app/organizations", label: t("myOrgs"), icon: Building2 })
   }
 

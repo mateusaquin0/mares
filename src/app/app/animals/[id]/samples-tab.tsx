@@ -7,6 +7,7 @@ import { MoreHorizontal, Plus, Search, X } from "lucide-react"
 
 import { txt } from "@/lib/catalog-i18n"
 import { formatDateOnly } from "@/lib/date"
+import { LIMITS } from "@/schemas/limits"
 import { useErrorMessage } from "@/lib/use-error-message"
 import { type SamplePayload } from "@/services/samples"
 import { useSamples, useCreateSample, useUpdateSample, useDeleteSample } from "@/hooks/use-samples"
@@ -17,6 +18,7 @@ import { Combobox } from "@/components/ui/combobox"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { CharCounter } from "@/components/ui/char-counter"
 import { Badge } from "@/components/ui/badge"
 import { TableSkeleton } from "@/components/ui/skeleton"
 import { ConfirmDialog } from "@/components/confirm-dialog"
@@ -425,6 +427,7 @@ export function SamplesTab({
                 name="sampleIdentification"
                 autoComplete="on"
                 placeholder={t("identificationPlaceholder")}
+                maxLength={LIMITS.name}
                 value={form.identification}
                 onChange={(e) => set({ identification: e.target.value })}
               />
@@ -495,6 +498,7 @@ export function SamplesTab({
                 name="sampleType"
                 autoComplete="on"
                 placeholder={t("sampleTypePlaceholder")}
+                maxLength={LIMITS.name}
                 value={form.sampleType}
                 onChange={(e) => set({ sampleType: e.target.value })}
               />
@@ -529,15 +533,20 @@ export function SamplesTab({
                 id="storageLocation"
                 name="sampleStorageLocation"
                 autoComplete="on"
+                maxLength={LIMITS.name}
                 value={form.storageLocation}
                 onChange={(e) => set({ storageLocation: e.target.value })}
               />
             </div>
             <div className="space-y-1">
-              <Label htmlFor="notes">{t("notes")}</Label>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="notes">{t("notes")}</Label>
+                <CharCounter value={form.notes} max={LIMITS.longText} />
+              </div>
               <Textarea
                 id="notes"
                 rows={2}
+                maxLength={LIMITS.longText}
                 value={form.notes}
                 onChange={(e) => set({ notes: e.target.value })}
               />

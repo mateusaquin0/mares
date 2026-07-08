@@ -1,5 +1,7 @@
 import { z } from "zod"
 
+import { LIMITS } from "@/schemas/limits"
+
 // As mensagens são CHAVES do namespace `validation` (i18n), resolvidas no componente.
 // Ver docs/I18N.md (§ validação).
 export const loginSchema = z.object({
@@ -35,7 +37,7 @@ export const changePasswordSchema = z
 
 // Edição dos próprios dados de perfil.
 export const updateProfileSchema = z.object({
-  name: z.string().min(2, "name").max(255),
+  name: z.string().min(2, "name").max(LIMITS.name),
 })
 
 export type LoginData = z.infer<typeof loginSchema>

@@ -10,6 +10,7 @@ import { ArrowRight, MailCheck } from "lucide-react"
 import { useTranslations } from "next-intl"
 
 import { accessRequestSchema, type AccessRequestData } from "@/schemas/organization.schema"
+import { LIMITS } from "@/schemas/limits"
 import { useCreateAccessRequest } from "@/hooks/use-access-requests"
 import { apiErrorBody } from "@/lib/http"
 import { Button } from "@/components/ui/button"
@@ -73,14 +74,25 @@ export default function RequestAccessPage() {
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <div className="space-y-2">
           <Label htmlFor="requesterName">{t("name")}</Label>
-          <Input id="requesterName" autoComplete="name" {...register("requesterName")} />
+          <Input
+            id="requesterName"
+            autoComplete="name"
+            maxLength={LIMITS.name}
+            {...register("requesterName")}
+          />
           {errors.requesterName && (
             <p className="text-sm text-destructive">{tval(errors.requesterName.message!)}</p>
           )}
         </div>
         <div className="space-y-2">
           <Label htmlFor="email">{tc("email")}</Label>
-          <Input id="email" type="email" autoComplete="email" {...register("email")} />
+          <Input
+            id="email"
+            type="email"
+            autoComplete="email"
+            maxLength={LIMITS.name}
+            {...register("email")}
+          />
           {errors.email && (
             <p className="text-sm text-destructive">{tval(errors.email.message!)}</p>
           )}
@@ -90,6 +102,7 @@ export default function RequestAccessPage() {
           <Input
             id="organizationName"
             placeholder={t("orgPlaceholder")}
+            maxLength={LIMITS.name}
             {...register("organizationName")}
           />
           {errors.organizationName && (

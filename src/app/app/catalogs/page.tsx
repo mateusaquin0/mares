@@ -11,14 +11,21 @@ export default async function CatalogsPage({
 }) {
   const user = await getAuthUser()
   if (!user) redirect("/login")
+  // Glossário é global e visível a qualquer membro (pesquisador lê; admin gerencia).
   // Admins de organização adicionam; admin global gerencia tudo; o criador edita/exclui
   // o próprio item enquanto não usado (a permissão por linha é resolvida no componente).
-  if (!isAnyOrgAdmin(user)) redirect("/app/dashboard")
+  if (!user.isSystemAdmin && user.memberships.length === 0) redirect("/app/dashboard")
+  const canManage = isAnyOrgAdmin(user)
 
   const { tab } = await searchParams
   const initialType = tab && isCatalogType(tab) ? tab : "organs"
 
   return (
-    <CatalogManager userId={user.id} isSystemAdmin={user.isSystemAdmin} initialType={initialType} />
+    <CatalogManager
+      userId={user.id}
+      isSystemAdmin={user.isSystemAdmin}
+      canManage={canManage}
+      initialType={initialType}
+    />
   )
 }

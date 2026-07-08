@@ -311,6 +311,7 @@
     "leaveDesc": "Deseja sair deste grupo de pesquisa? Se você for o último membro, o grupo será desativado (os dados públicos continuam visíveis).",
     "demoteTitle": "Deixar de ser administrador",
     "demoteDesc": "Deseja deixar de ser administrador e passar a pesquisador? Você perderá o acesso à gestão de membros.",
+    "lastAdminHint": "Você é o único administrador; promova outro antes de deixar de ser admin.",
     "promoteTitle": "Tornar administrador",
     "promoteDesc": "Tornar {email} administrador do grupo de pesquisa? Ele passará a gerenciar membros e dados do grupo de pesquisa.",
     "editOrg": "Editar grupo de pesquisa",

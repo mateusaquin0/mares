@@ -311,6 +311,7 @@
     "leaveDesc": "Do you want to leave this research group? If you are the last member, the group will be deactivated (its public data stays visible).",
     "demoteTitle": "Step down as administrator",
     "demoteDesc": "Do you want to step down from administrator to researcher? You will lose access to member management.",
+    "lastAdminHint": "You are the only administrator; promote another before stepping down.",
     "promoteTitle": "Make administrator",
     "promoteDesc": "Make {email} an administrator of the research group? They will manage members and research group data.",
     "editOrg": "Edit research group",
