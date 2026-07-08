@@ -183,46 +183,55 @@ export default function AdminFeedbackPage() {
         <DialogContent>
           {selected && (
             <>
-              <DialogHeader>
-                <DialogTitle className="flex items-center gap-2">
+              <DialogHeader className="space-y-3">
+                {/* Badges de tipo e status, lado a lado, no topo. */}
+                <div className="flex flex-wrap items-center gap-2">
                   {typeBadge(selected.type)}
-                  <span className="truncate">{selected.title}</span>
-                </DialogTitle>
-                <DialogDescription>
-                  {selected.createdByEmail} · {fmtDate(selected.createdAt)}
-                </DialogDescription>
-              </DialogHeader>
-
-              <div className="space-y-4 text-sm">
-                <div>
-                  <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                    {t("detailStatus")}
-                  </p>
                   <Badge variant={statusVariant[selected.status]}>
                     {t(`status_${selected.status}`)}
                   </Badge>
                 </div>
-                <div>
-                  <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                <DialogTitle className="break-words text-xl leading-snug">
+                  {selected.title}
+                </DialogTitle>
+                <DialogDescription className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5">
+                  <span className="font-medium text-foreground/80">{selected.createdByEmail}</span>
+                  <span aria-hidden>·</span>
+                  <span>{fmtDate(selected.createdAt)}</span>
+                </DialogDescription>
+              </DialogHeader>
+
+              <div className="space-y-4">
+                {/* Mensagem: quebra palavras longas e rola se for muito grande. */}
+                <section>
+                  <h3 className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                     {t("detailMessage")}
-                  </p>
-                  <p className="whitespace-pre-wrap">{selected.message}</p>
-                </div>
-                {selected.pageUrl && (
-                  <div>
-                    <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                      {t("detailPage")}
-                    </p>
-                    <p className="break-all text-muted-foreground">{selected.pageUrl}</p>
+                  </h3>
+                  <div className="max-h-72 overflow-y-auto whitespace-pre-wrap break-words rounded-lg border bg-muted/40 p-3 text-sm leading-relaxed">
+                    {selected.message}
                   </div>
-                )}
+                </section>
+
                 {selected.adminNote && (
-                  <div>
-                    <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  <section>
+                    <h3 className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                       {t("detailAdminNote")}
+                    </h3>
+                    <p className="whitespace-pre-wrap break-words text-sm leading-relaxed">
+                      {selected.adminNote}
                     </p>
-                    <p className="whitespace-pre-wrap">{selected.adminNote}</p>
-                  </div>
+                  </section>
+                )}
+
+                {selected.pageUrl && (
+                  <section>
+                    <h3 className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                      {t("detailPage")}
+                    </h3>
+                    <code className="inline-block max-w-full break-all rounded bg-muted px-1.5 py-0.5 font-mono text-xs text-muted-foreground">
+                      {selected.pageUrl}
+                    </code>
+                  </section>
                 )}
               </div>
             </>
