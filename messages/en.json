@@ -154,7 +154,8 @@
     "roleAdmin": "Global administrator",
     "globalAdminOrg": "Global administration",
     "collapse": "Collapse menu",
-    "expand": "Expand menu"
+    "expand": "Expand menu",
+    "adminFeedback": "Suggestions & bugs"
   },
   "dashboard": {
     "title": "Dashboard",
@@ -475,7 +476,8 @@
     "mediaTooLarge": "File too large (max. 10 MB)",
     "mediaUploadFailed": "Failed to upload the file",
     "simbaNotFound": "Record not found in SIMBA",
-    "simbaUnavailable": "SIMBA is unavailable right now. Please try again."
+    "simbaUnavailable": "SIMBA is unavailable right now. Please try again.",
+    "feedbackNotFound": "Feedback not found"
   },
   "location": {
     "country": "Country",
@@ -782,5 +784,39 @@
     "deleteError": "Could not remove",
     "deleteTitle": "Remove item",
     "deleteDesc": "Remove \"{name}\" from the glossary?"
+  },
+  "feedback": {
+    "trigger": "Suggestion / Bug",
+    "dialogTitle": "Send feedback",
+    "dialogDesc": "Your suggestion or bug report goes straight to the administrators.",
+    "typeLabel": "Type",
+    "typeSuggestion": "Suggestion",
+    "typeBug": "Bug",
+    "messageLabel": "Message",
+    "messagePlaceholder": "Describe your suggestion or the issue you found…",
+    "send": "Send",
+    "cancel": "Cancel",
+    "sent": "Feedback sent. Thank you!",
+    "sendError": "Could not send"
+  },
+  "adminFeedback": {
+    "title": "Suggestions & bugs",
+    "subtitle": "Feedback submitted by users.",
+    "empty": "No feedback yet.",
+    "filterAll": "All",
+    "status_NEW": "New",
+    "status_IN_REVIEW": "In review",
+    "status_RESOLVED": "Resolved",
+    "status_WONT_FIX": "Dismissed",
+    "colType": "Type",
+    "colMessage": "Message",
+    "colAuthor": "Author",
+    "colStatus": "Status",
+    "colActions": "Actions",
+    "typeSuggestion": "Suggestion",
+    "typeBug": "Bug",
+    "setStatus": "Mark as {status}",
+    "updated": "Status updated",
+    "opError": "Operation failed"
   }
 }

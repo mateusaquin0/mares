@@ -21,6 +21,7 @@ import { cn } from "@/lib/utils"
 import type { AuthMembership } from "@/lib/auth"
 import { useSetActiveOrg } from "@/hooks/use-members"
 import { Logo } from "@/components/logo"
+import { FeedbackDialog } from "@/components/feedback-dialog"
 import {
   Select,
   SelectContent,
@@ -230,6 +231,7 @@ export function Sidebar({
               { href: "/app/admin/access-requests", label: t("adminRequests") },
               { href: "/app/admin/organizations", label: t("adminOrgs") },
               { href: "/app/admin/users", label: t("adminUsers") },
+              { href: "/app/admin/feedback", label: t("adminFeedback") },
               { href: "/app/catalogs", label: t("catalogs") },
             ].map((item) => {
               const active = pathname.startsWith(item.href)
@@ -249,7 +251,8 @@ export function Sidebar({
         )}
       </nav>
 
-      <div className={cn("border-t border-border py-3", collapsed ? "px-2" : "px-3")}>
+      <div className={cn("space-y-1 border-t border-border py-3", collapsed ? "px-2" : "px-3")}>
+        <FeedbackDialog collapsed={collapsed} />
         <UserMenu userName={userName} email={email} roleLabel={roleLabel} collapsed={collapsed} />
       </div>
     </aside>

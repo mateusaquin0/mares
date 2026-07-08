@@ -154,7 +154,8 @@
     "roleAdmin": "Administrador global",
     "globalAdminOrg": "Administração global",
     "collapse": "Recolher menu",
-    "expand": "Expandir menu"
+    "expand": "Expandir menu",
+    "adminFeedback": "Sugestões e bugs"
   },
   "dashboard": {
     "title": "Dashboard",
@@ -475,7 +476,8 @@
     "mediaTooLarge": "Arquivo muito grande (máx. 10 MB)",
     "mediaUploadFailed": "Falha ao enviar o arquivo",
     "simbaNotFound": "Registro não encontrado no SIMBA",
-    "simbaUnavailable": "SIMBA indisponível no momento. Tente novamente."
+    "simbaUnavailable": "SIMBA indisponível no momento. Tente novamente.",
+    "feedbackNotFound": "Feedback não encontrado"
   },
   "location": {
     "country": "País",
@@ -782,5 +784,39 @@
     "deleteError": "Não foi possível remover",
     "deleteTitle": "Remover item",
     "deleteDesc": "Remover \"{name}\" do glossário?"
+  },
+  "feedback": {
+    "trigger": "Sugestão / Bug",
+    "dialogTitle": "Enviar feedback",
+    "dialogDesc": "Sua sugestão ou relato de bug vai direto para a administração.",
+    "typeLabel": "Tipo",
+    "typeSuggestion": "Sugestão",
+    "typeBug": "Bug",
+    "messageLabel": "Mensagem",
+    "messagePlaceholder": "Descreva sua sugestão ou o problema encontrado…",
+    "send": "Enviar",
+    "cancel": "Cancelar",
+    "sent": "Feedback enviado. Obrigado!",
+    "sendError": "Não foi possível enviar"
+  },
+  "adminFeedback": {
+    "title": "Sugestões e bugs",
+    "subtitle": "Feedback enviado pelos usuários.",
+    "empty": "Nenhum feedback por aqui.",
+    "filterAll": "Todos",
+    "status_NEW": "Novo",
+    "status_IN_REVIEW": "Em análise",
+    "status_RESOLVED": "Resolvido",
+    "status_WONT_FIX": "Descartado",
+    "colType": "Tipo",
+    "colMessage": "Mensagem",
+    "colAuthor": "Autor",
+    "colStatus": "Status",
+    "colActions": "Ações",
+    "typeSuggestion": "Sugestão",
+    "typeBug": "Bug",
+    "setStatus": "Marcar como {status}",
+    "updated": "Status atualizado",
+    "opError": "Falha na operação"
   }
 }
