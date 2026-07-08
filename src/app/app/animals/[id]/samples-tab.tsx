@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, type FormEvent } from "react"
+import { useRef, useState, type FormEvent } from "react"
 import { useLocale, useTranslations } from "next-intl"
 import { toast } from "sonner"
 import { MoreHorizontal, Plus, Search, X } from "lucide-react"
@@ -110,6 +110,8 @@ export function SamplesTab({
   const saving = createM.isPending || updateM.isPending
   const [dialog, setDialog] = useState<{ mode: "create" | "edit"; row?: Sample } | null>(null)
   const [form, setForm] = useState<FormState>(emptyForm)
+  const initialForm = useRef<FormState>(emptyForm)
+  const isDirty = JSON.stringify(form) !== JSON.stringify(initialForm.current)
   const [errors, setErrors] = useState<{
     organId?: boolean
     identification?: boolean
@@ -137,12 +139,14 @@ export function SamplesTab({
     setErrors({})
     // Amostra nova pertence à pesquisa primária por padrão (researches[0]); o seletor só
     // aparece quando há mais de uma pesquisa no indivíduo.
-    setForm({ ...emptyForm, researchId: researches[0]?.id ?? "" })
+    const init = { ...emptyForm, researchId: researches[0]?.id ?? "" }
+    setForm(init)
+    initialForm.current = init
     setDialog({ mode: "create" })
   }
   function openEdit(row: Sample) {
     setErrors({})
-    setForm({
+    const init: FormState = {
       researchId: row.research.id,
       organId: row.organ.id,
       identification: row.identification,
@@ -152,7 +156,9 @@ export function SamplesTab({
       storageTemp: row.storageTemp?.toString() ?? "",
       status: row.status,
       notes: row.notes ?? "",
-    })
+    }
+    setForm(init)
+    initialForm.current = init
     setDialog({ mode: "edit", row })
   }
 
@@ -407,7 +413,7 @@ export function SamplesTab({
       )}
 
       <Dialog open={!!dialog} onOpenChange={(o) => !o && setDialog(null)}>
-        <DialogContent className="max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-h-[90vh] overflow-y-auto" dirty={isDirty}>
           <DialogHeader>
             <DialogTitle>{dialog?.mode === "edit" ? t("editTitle") : t("addTitle")}</DialogTitle>
           </DialogHeader>

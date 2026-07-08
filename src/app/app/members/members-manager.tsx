@@ -443,7 +443,7 @@ export function MembersManager({
 
       {/* Modal: adicionar membro */}
       <Dialog open={addOpen} onOpenChange={setAddOpen}>
-        <DialogContent>
+        <DialogContent dirty={addForm.formState.isDirty}>
           <DialogHeader>
             <DialogTitle>{t("addMember")}</DialogTitle>
             <DialogDescription>{t("addMemberDesc")}</DialogDescription>
@@ -496,7 +496,7 @@ export function MembersManager({
 
       {/* Modal: editar organização */}
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
-        <DialogContent>
+        <DialogContent dirty={editForm.formState.isDirty}>
           <DialogHeader>
             <DialogTitle>{t("editOrg")}</DialogTitle>
             <DialogDescription>{t("editOrgDesc")}</DialogDescription>

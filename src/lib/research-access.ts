@@ -24,18 +24,20 @@ export const getResearchScope = cache(
     if (!role) throw new ForbiddenError()
     if (role === "ORG_ADMIN") return { all: true }
 
+    // Visibilidade = ser MEMBRO (ResearchMember). O criador é auto-vinculado na criação, mas
+    // pode ser removido pelo admin (a pesquisa pode ficar sem membros) — por isso o acesso NÃO
+    // depende mais de createdById.
     const rows = await prisma.research.findMany({
-      where: {
-        orgId,
-        OR: [{ members: { some: { userId: user.id } } }, { createdById: user.id }],
-      },
+      where: { orgId, members: { some: { userId: user.id } } },
       select: { id: true },
     })
     return { all: false, ids: rows.map((r) => r.id) }
   },
 )
 
-// Um pesquisador pode gerir a pesquisa (membros/edição) se for admin da org OU o criador dela.
+// Pode gerir a pesquisa (membros/edição) o admin da org OU o criador dela. Observação: o
+// criador só alcança a tela enquanto for membro (o acesso é por vínculo); um criador removido
+// pelo admin perde o acesso como qualquer outro.
 export function canManageResearch(
   user: AuthUser,
   orgId: string,

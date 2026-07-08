@@ -156,11 +156,7 @@ export function ResearchManager({ isOrgAdmin, selfId }: { isOrgAdmin: boolean; s
               {filtered.map((r) => (
                 <TableRow
                   key={r.id}
-                  className={
-                    r.isPublic
-                      ? "border-l-[3px] border-l-[hsl(var(--brand-cyan))]"
-                      : "border-l-[3px] border-l-primary"
-                  }
+
                 >
                   <TableCell className="font-medium">
                     <Link href={`/app/research/${r.id}`} className="hover:underline">
@@ -236,7 +232,7 @@ export function ResearchManager({ isOrgAdmin, selfId }: { isOrgAdmin: boolean; s
           if (!o) setEditing(null)
         }}
       >
-        <DialogContent>
+        <DialogContent dirty={form.formState.isDirty}>
           <DialogHeader>
             <DialogTitle>{editing ? t("editTitle") : t("createTitle")}</DialogTitle>
             <DialogDescription>{t("createDesc")}</DialogDescription>
