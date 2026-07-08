@@ -25,7 +25,12 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Badge } from "@/components/ui/badge"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion"
 import { Skeleton, TableSkeleton } from "@/components/ui/skeleton"
 import { Combobox, type ComboboxOption } from "@/components/ui/combobox"
 import { ResearchMembers } from "./research-members"
@@ -203,117 +208,121 @@ export function ResearchDetail({
         </div>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">{tp("title")}</CardTitle>
-          <p className="text-sm text-muted-foreground">{tp("subtitle")}</p>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          {isOrgAdmin && (
-            <div className="grid gap-2 rounded-lg border bg-muted/30 p-3 sm:grid-cols-[1fr_1fr_1fr_auto]">
-              <Combobox
-                options={opts(organsQ.data)}
-                value={organId}
-                onChange={setOrganId}
-                placeholder={tp("organ")}
-                searchPlaceholder={tc("search")}
-                emptyText={tp("selectEmpty")}
-                emptyAction={glossaryLink("organs")}
-                loading={organsQ.isLoading}
-              />
-              <Combobox
-                options={(pathogensQ.data ?? []).map((c) => ({
-                  value: c.id,
-                  label: pathogenName(locale, c),
-                }))}
-                value={pathogenId}
-                onChange={setPathogenId}
-                placeholder={tp("pathogen")}
-                searchPlaceholder={tc("search")}
-                emptyText={tp("selectEmpty")}
-                emptyAction={glossaryLink("pathogens")}
-                loading={pathogensQ.isLoading}
-              />
-              <Combobox
-                options={opts(examTypesQ.data)}
-                value={examTypeId}
-                onChange={setExamTypeId}
-                placeholder={tp("examType")}
-                searchPlaceholder={tc("search")}
-                emptyText={tp("selectEmpty")}
-                emptyAction={glossaryLink("exam-types")}
-                loading={examTypesQ.isLoading}
-              />
-              <Button
-                onClick={addEntry}
-                disabled={!organId || !pathogenId || !examTypeId}
-                loading={addM.isPending}
-              >
-                <Plus className="size-4" />
-                {tc("add")}
-              </Button>
-            </div>
-          )}
+      <Accordion type="single" collapsible defaultValue="protocol" className="space-y-3">
+        <AccordionItem value="protocol">
+          <AccordionTrigger>{tp("title")}</AccordionTrigger>
+          <AccordionContent className="space-y-3">
+            <p className="text-sm text-muted-foreground">{tp("subtitle")}</p>
+            {isOrgAdmin && (
+              <div className="grid gap-2 rounded-lg border bg-muted/30 p-3 sm:grid-cols-[1fr_1fr_1fr_auto]">
+                <Combobox
+                  options={opts(organsQ.data)}
+                  value={organId}
+                  onChange={setOrganId}
+                  placeholder={tp("organ")}
+                  searchPlaceholder={tc("search")}
+                  emptyText={tp("selectEmpty")}
+                  emptyAction={glossaryLink("organs")}
+                  loading={organsQ.isLoading}
+                />
+                <Combobox
+                  options={(pathogensQ.data ?? []).map((c) => ({
+                    value: c.id,
+                    label: pathogenName(locale, c),
+                  }))}
+                  value={pathogenId}
+                  onChange={setPathogenId}
+                  placeholder={tp("pathogen")}
+                  searchPlaceholder={tc("search")}
+                  emptyText={tp("selectEmpty")}
+                  emptyAction={glossaryLink("pathogens")}
+                  loading={pathogensQ.isLoading}
+                />
+                <Combobox
+                  options={opts(examTypesQ.data)}
+                  value={examTypeId}
+                  onChange={setExamTypeId}
+                  placeholder={tp("examType")}
+                  searchPlaceholder={tc("search")}
+                  emptyText={tp("selectEmpty")}
+                  emptyAction={glossaryLink("exam-types")}
+                  loading={examTypesQ.isLoading}
+                />
+                <Button
+                  onClick={addEntry}
+                  disabled={!organId || !pathogenId || !examTypeId}
+                  loading={addM.isPending}
+                >
+                  <Plus className="size-4" />
+                  {tc("add")}
+                </Button>
+              </div>
+            )}
 
-          <div className="relative max-w-sm">
-            <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              value={protocolQuery}
-              onChange={(e) => setProtocolQuery(e.target.value)}
-              placeholder={tp("searchPlaceholder")}
-              className="pl-9"
-            />
-          </div>
-          <div className="overflow-hidden rounded-lg border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>{tp("organ")}</TableHead>
-                  <TableHead>{tp("pathogen")}</TableHead>
-                  <TableHead>{tp("examType")}</TableHead>
-                  {isOrgAdmin && (
-                    <TableHead className="w-16 text-right">
-                      <ReloadButton />
-                    </TableHead>
-                  )}
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredProtocols.length === 0 && (
-                  <TableEmpty colSpan={isOrgAdmin ? 4 : 3}>
-                    {research.protocols.length === 0 ? tp("empty") : tc("noResults")}
-                  </TableEmpty>
-                )}
-                {filteredProtocols.map((p) => (
-                  <TableRow key={p.id}>
-                    <TableCell>{txt(locale, p.organ.name)}</TableCell>
-                    <TableCell>{pathogenName(locale, p.pathogen)}</TableCell>
-                    <TableCell>{txt(locale, p.examType.name)}</TableCell>
+            <div className="relative max-w-sm">
+              <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                value={protocolQuery}
+                onChange={(e) => setProtocolQuery(e.target.value)}
+                placeholder={tp("searchPlaceholder")}
+                className="pl-9"
+              />
+            </div>
+            <div className="overflow-hidden rounded-lg border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>{tp("organ")}</TableHead>
+                    <TableHead>{tp("pathogen")}</TableHead>
+                    <TableHead>{tp("examType")}</TableHead>
                     {isOrgAdmin && (
-                      <TableCell className="text-right">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="size-8 text-destructive"
-                          onClick={() => removeEntry(p.id)}
-                          aria-label={tc("remove")}
-                        >
-                          <Trash2 className="size-4" />
-                        </Button>
-                      </TableCell>
+                      <TableHead className="w-16 text-right">
+                        <ReloadButton />
+                      </TableHead>
                     )}
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        </CardContent>
-      </Card>
-
-      <ResearchMembers researchId={id} orgId={research.orgId} />
+                </TableHeader>
+                <TableBody>
+                  {filteredProtocols.length === 0 && (
+                    <TableEmpty colSpan={isOrgAdmin ? 4 : 3}>
+                      {research.protocols.length === 0 ? tp("empty") : tc("noResults")}
+                    </TableEmpty>
+                  )}
+                  {filteredProtocols.map((p) => (
+                    <TableRow key={p.id}>
+                      <TableCell>{txt(locale, p.organ.name)}</TableCell>
+                      <TableCell>{pathogenName(locale, p.pathogen)}</TableCell>
+                      <TableCell>{txt(locale, p.examType.name)}</TableCell>
+                      {isOrgAdmin && (
+                        <TableCell className="text-right">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="size-8 text-destructive"
+                            onClick={() => removeEntry(p.id)}
+                            aria-label={tc("remove")}
+                          >
+                            <Trash2 className="size-4" />
+                          </Button>
+                        </TableCell>
+                      )}
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </AccordionContent>
+        </AccordionItem>
+        <AccordionItem value="members">
+          <AccordionTrigger>{t("membersTitle")}</AccordionTrigger>
+          <AccordionContent>
+            <ResearchMembers researchId={id} orgId={research.orgId} />
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
 
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
-        <DialogContent>
+        <DialogContent dirty={editForm.formState.isDirty}>
           <DialogHeader>
             <DialogTitle>{t("editTitle")}</DialogTitle>
             <DialogDescription>{t("createDesc")}</DialogDescription>
