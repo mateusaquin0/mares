@@ -18,6 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useErrorMessage } from "@/lib/use-error-message"
 import { useFeedbackList, useUpdateFeedback } from "@/hooks/use-feedback"
 import type { FeedbackItem, FeedbackStatus, FeedbackType } from "@/types/feedback"
@@ -124,27 +125,23 @@ export default function AdminFeedbackPage() {
         <p className="text-sm text-muted-foreground">{t("empty")}</p>
       ) : (
         <>
-          {/* Barra de filtros (mesmo estilo das outras tabelas): selects + input */}
+          {/* Status: tabs (mesmo modelo da tela de glossário) */}
+          <Tabs
+            value={statusFilter}
+            onValueChange={(v) => setStatusFilter(v as FeedbackStatus | "ALL")}
+          >
+            <TabsList>
+              <TabsTrigger value="ALL">{t("filterAll")}</TabsTrigger>
+              {STATUSES.map((s) => (
+                <TabsTrigger key={s} value={s}>
+                  {t(`status_${s}`)}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </Tabs>
+
+          {/* Tipo (select) + autor (input), no estilo das outras tabelas */}
           <div className="flex flex-wrap items-end gap-3 rounded-xl border bg-card p-3 shadow-card">
-            {filterField(
-              t("filterStatus"),
-              <Select
-                value={statusFilter}
-                onValueChange={(v) => setStatusFilter(v as FeedbackStatus | "ALL")}
-              >
-                <SelectTrigger className="h-9">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="ALL">{t("filterAll")}</SelectItem>
-                  {STATUSES.map((s) => (
-                    <SelectItem key={s} value={s}>
-                      {t(`status_${s}`)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>,
-            )}
             {filterField(
               t("filterType"),
               <Select
