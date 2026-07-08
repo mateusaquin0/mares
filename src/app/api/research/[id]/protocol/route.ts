@@ -5,6 +5,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { Prisma } from "@prisma/client"
 import { prisma } from "@/lib/prisma"
 import { getAuthUser, requireOrgRole } from "@/lib/auth"
+import { assertResearchVisible } from "@/lib/research-access"
 import { apiError, unauthorized } from "@/lib/api"
 import { protocolEntriesSchema } from "@/schemas/research.schema"
 import { NotFoundError, ConflictError } from "@/lib/errors"
@@ -21,7 +22,9 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
     const user = await getAuthUser()
     if (!user) return unauthorized()
     const { id } = await params
-    requireOrgRole(user, await researchOrg(id), "RESEARCHER")
+    const orgId = await researchOrg(id)
+    requireOrgRole(user, orgId, "RESEARCHER")
+    await assertResearchVisible(user, orgId, id)
 
     const entries = await prisma.researchProtocol.findMany({
       where: { researchId: id },

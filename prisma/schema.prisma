@@ -89,6 +89,8 @@ model User {
   termsAcceptedAt DateTime?
   memberships   Membership[]
   researchesCreated Research[] @relation("ResearchCreator")
+  // Pesquisas às quais o usuário está vinculado como pesquisador (escopo de visibilidade).
+  researchMemberships ResearchMember[]
   feedbacks     Feedback[]   @relation("FeedbackAuthor")
   createdAt     DateTime     @default(now())
 }
@@ -135,6 +137,9 @@ model Research {
   // Autor (para a regra "pesquisador edita a própria criação"); SetNull se o usuário for removido.
   createdById  String?
   createdBy    User?              @relation("ResearchCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  // Pesquisadores vinculados a esta pesquisa (escopo de visibilidade). O criador e o admin
+  // da org têm acesso independentemente do vínculo (ver docs/PERMISSOES.md).
+  members      ResearchMember[]
   protocols    ResearchProtocol[]
   animals      Animal[]
   // Indivíduos compartilhados de outra pesquisa que esta também estuda (ver AnimalResearch).
@@ -145,6 +150,20 @@ model Research {
 
   @@index([orgId])
   @@index([createdById])
+}
+
+// Vínculo N:N entre pesquisador e pesquisa: define o ESCOPO DE VISIBILIDADE do pesquisador.
+// Um RESEARCHER só vê os dados das pesquisas às quais está vinculado (ou que criou); o
+// ORG_ADMIN vê todas as pesquisas da org. Ver docs/PERMISSOES.md §Escopo por pesquisa.
+model ResearchMember {
+  researchId String
+  research   Research @relation(fields: [researchId], references: [id], onDelete: Cascade)
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+
+  @@id([researchId, userId])
+  @@index([userId])
 }
 
 // Define quais exames/patógenos/órgãos compõem uma pesquisa

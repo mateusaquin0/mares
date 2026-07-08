@@ -8,6 +8,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { Prisma } from "@prisma/client"
 import { prisma } from "@/lib/prisma"
 import { getAuthUser, requireOrgRole, orgRole } from "@/lib/auth"
+import { assertAnimalVisible } from "@/lib/research-access"
 import { apiError, unauthorized } from "@/lib/api"
 import { updateAnimalSchema } from "@/schemas/animal.schema"
 import { animalData, animalDuplicateError, loadAnimalOrg } from "@/lib/animals"
@@ -21,6 +22,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
     const { id } = await params
     const base = await loadAnimalOrg(id)
     requireOrgRole(user, base.orgId, "RESEARCHER")
+    await assertAnimalVisible(user, base.orgId, id)
 
     const animal = await prisma.animal.findUnique({
       where: { id },
@@ -46,6 +48,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     const { id } = await params
     const base = await loadAnimalOrg(id)
     requireOrgRole(user, base.orgId, "RESEARCHER")
+    await assertAnimalVisible(user, base.orgId, id)
 
     const body = await req.json().catch(() => null)
     const data = updateAnimalSchema.parse(body)

@@ -5,6 +5,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { createAdminClient } from "@/lib/supabase/admin"
 import { getAuthUser, requireOrgRole } from "@/lib/auth"
+import { assertAnimalVisible } from "@/lib/research-access"
 import { apiError, assertSameOrigin, unauthorized } from "@/lib/api"
 import { loadAnimalOrg } from "@/lib/animals"
 import {
@@ -25,6 +26,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
     const { id } = await params
     const animal = await loadAnimalOrg(id)
     requireOrgRole(user, animal.orgId, "RESEARCHER")
+    await assertAnimalVisible(user, animal.orgId, id)
 
     const media = await prisma.animalMedia.findMany({
       where: { animalId: id },
@@ -52,6 +54,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     const { id } = await params
     const animal = await loadAnimalOrg(id)
     requireOrgRole(user, animal.orgId, "RESEARCHER")
+    await assertAnimalVisible(user, animal.orgId, id)
 
     const formData = await req.formData()
     const file = formData.get("file")

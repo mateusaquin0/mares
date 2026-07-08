@@ -28,6 +28,7 @@ import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton, TableSkeleton } from "@/components/ui/skeleton"
 import { Combobox, type ComboboxOption } from "@/components/ui/combobox"
+import { ResearchMembers } from "./research-members"
 import {
   Table,
   TableBody,
@@ -308,6 +309,8 @@ export function ResearchDetail({
           </div>
         </CardContent>
       </Card>
+
+      <ResearchMembers researchId={id} orgId={research.orgId} />
 
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
         <DialogContent>

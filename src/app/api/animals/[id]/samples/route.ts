@@ -5,6 +5,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { Prisma } from "@prisma/client"
 import { prisma } from "@/lib/prisma"
 import { getAuthUser, requireOrgRole } from "@/lib/auth"
+import { assertAnimalVisible, assertResearchVisible } from "@/lib/research-access"
 import { apiError, unauthorized } from "@/lib/api"
 import { createSampleSchema } from "@/schemas/sample.schema"
 import { assertResearchOnAnimal, loadAnimalOrg } from "@/lib/animals"
@@ -17,9 +18,10 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
     const { id } = await params
     const animal = await loadAnimalOrg(id)
     requireOrgRole(user, animal.orgId, "RESEARCHER")
+    const scope = await assertAnimalVisible(user, animal.orgId, id)
 
     const samples = await prisma.sample.findMany({
-      where: { animalId: id },
+      where: scope.all ? { animalId: id } : { animalId: id, researchId: { in: scope.ids } },
       orderBy: { createdAt: "asc" },
       select: sampleSelect,
     })
@@ -36,12 +38,15 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     const { id } = await params
     const animal = await loadAnimalOrg(id)
     requireOrgRole(user, animal.orgId, "RESEARCHER")
+    await assertAnimalVisible(user, animal.orgId, id)
 
     const body = await req.json().catch(() => null)
     const data = createSampleSchema.parse(body)
     await assertOrgan(data.organId)
     // A pesquisa dona da amostra tem de ser uma das pesquisas do indivíduo (primária/participante).
     await assertResearchOnAnimal(id, data.researchId)
+    // ...e o pesquisador só coleta amostra em pesquisa que enxerga.
+    await assertResearchVisible(user, animal.orgId, data.researchId)
 
     try {
       const sample = await prisma.sample.create({

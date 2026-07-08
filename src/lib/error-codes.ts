@@ -29,6 +29,10 @@ export const ERROR_CODES = {
   // Fase 2 — pesquisas, protocolos e catálogos
   researchNotFound: "researchNotFound",
   researchHasAnimals: "researchHasAnimals",
+  researchMemberExists: "researchMemberExists",
+  researchMemberNotFound: "researchMemberNotFound",
+  researchMemberIsCreator: "researchMemberIsCreator",
+  researchMemberNotResearcher: "researchMemberNotResearcher",
   protocolNotFound: "protocolNotFound",
   protocolDuplicate: "protocolDuplicate",
   protocolInUse: "protocolInUse",

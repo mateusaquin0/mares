@@ -6,6 +6,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { getAuthUser, requireOrgRole } from "@/lib/auth"
+import { assertResearchVisible } from "@/lib/research-access"
 import { apiError, unauthorized } from "@/lib/api"
 import { upsertAnalysisSchema } from "@/schemas/analysis.schema"
 import { loadSampleOrg } from "@/lib/samples"
@@ -24,6 +25,8 @@ export async function PUT(req: NextRequest) {
 
     const sample = await loadSampleOrg(data.sampleId)
     requireOrgRole(user, sample.orgId, "RESEARCHER")
+    // Só preenche análises de amostras de pesquisas que enxerga.
+    await assertResearchVisible(user, sample.orgId, sample.researchId)
 
     // A célula só é válida se o trio (órgão da amostra, patógeno, exame) estiver no protocolo.
     const combo = await prisma.researchProtocol.findFirst({

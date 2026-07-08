@@ -5,8 +5,10 @@
 // lista plana (cada análise pertence a uma amostra → a uma pesquisa).
 
 import { NextRequest, NextResponse } from "next/server"
+import { Prisma } from "@prisma/client"
 import { prisma } from "@/lib/prisma"
 import { getAuthUser, requireOrgRole } from "@/lib/auth"
+import { assertAnimalVisible } from "@/lib/research-access"
 import { apiError, unauthorized } from "@/lib/api"
 import { loadAnimalOrg } from "@/lib/animals"
 
@@ -17,10 +19,16 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
     const { id } = await params
     const animal = await loadAnimalOrg(id)
     requireOrgRole(user, animal.orgId, "RESEARCHER")
+    // Escopo por pesquisa: o pesquisador vê o indivíduo, mas só as amostras/análises das
+    // pesquisas às quais está vinculado (compartilhado → só a sua seção).
+    const scope = await assertAnimalVisible(user, animal.orgId, id)
+    const sampleScope: Prisma.SampleWhereInput = scope.all
+      ? { animalId: id }
+      : { animalId: id, researchId: { in: scope.ids } }
 
     const [samples, analyses] = await Promise.all([
       prisma.sample.findMany({
-        where: { animalId: id },
+        where: sampleScope,
         orderBy: { createdAt: "asc" },
         select: {
           id: true,
@@ -32,7 +40,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
         },
       }),
       prisma.analysis.findMany({
-        where: { sample: { animalId: id } },
+        where: { sample: sampleScope },
         select: {
           sampleId: true,
           pathogenId: true,

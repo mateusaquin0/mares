@@ -8,6 +8,9 @@ import { txt, type I18nText } from "@/lib/catalog-i18n"
 
 export type DashboardFilters = {
   researchId?: string
+  // Escopo de visibilidade por pesquisa (undefined = admin, sem restrição). Quando presente,
+  // o dashboard agrega apenas os animais cuja pesquisa primária está no conjunto.
+  researchIds?: string[]
   from?: string // ISO date (YYYY-MM-DD), inclusivo
   to?: string // ISO date (YYYY-MM-DD), inclusivo
 }
@@ -28,8 +31,15 @@ export type DashboardData = {
 
 // Monta o filtro Prisma dos animais a partir do escopo (org) + filtros globais.
 function animalWhere(orgId: string, f: DashboardFilters): Prisma.AnimalWhereInput {
+  // Filtro por pesquisa: o filtro explícito (dropdown) tem prioridade; senão, o escopo de
+  // visibilidade do pesquisador (researchIds). Admin sem escopo → todas as pesquisas da org.
+  const researchIdFilter = f.researchId
+    ? { id: f.researchId }
+    : f.researchIds
+      ? { id: { in: f.researchIds } }
+      : {}
   const where: Prisma.AnimalWhereInput = {
-    research: { orgId, ...(f.researchId ? { id: f.researchId } : {}) },
+    research: { orgId, ...researchIdFilter },
   }
   if (f.from || f.to) {
     where.eventDate = {

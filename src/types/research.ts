@@ -27,7 +27,24 @@ export type ResearchDetail = {
   name: string
   description: string | null
   isPublic: boolean
+  orgId: string
   createdById: string | null
   _count: { animals: number }
   protocols: ProtocolEntry[]
+}
+
+// Membro (pesquisador vinculado) de uma pesquisa.
+export type ResearchMemberItem = {
+  userId: string
+  name: string | null
+  email: string
+  status: string
+  isCreator: boolean
+}
+
+// Resposta de /api/research/:id/members.
+export type ResearchMembers = {
+  canManage: boolean
+  createdById: string | null
+  members: ResearchMemberItem[]
 }

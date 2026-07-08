@@ -4,6 +4,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { getAuthUser, requireOrgRole } from "@/lib/auth"
+import { assertAnimalVisible } from "@/lib/research-access"
 import { apiError, unauthorized } from "@/lib/api"
 import { loadAnimalOrg } from "@/lib/animals"
 
@@ -14,10 +15,13 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
     const { id } = await params
     const animal = await loadAnimalOrg(id)
     requireOrgRole(user, animal.orgId, "RESEARCHER")
+    const scope = await assertAnimalVisible(user, animal.orgId, id)
 
     // Análises deste animal + contexto (patógeno/exame/órgão) para exibir na linha do log.
     const analyses = await prisma.analysis.findMany({
-      where: { sample: { animalId: id } },
+      where: {
+        sample: scope.all ? { animalId: id } : { animalId: id, researchId: { in: scope.ids } },
+      },
       select: {
         id: true,
         pathogen: { select: { scientificName: true, name: true } },

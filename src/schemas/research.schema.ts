@@ -25,6 +25,11 @@ export const protocolEntriesSchema = z.object({
   entries: z.array(protocolEntrySchema).min(1),
 })
 
+// Vincula um pesquisador (já membro da org) à pesquisa.
+export const addResearchMemberSchema = z.object({
+  userId: z.string().min(1),
+})
+
 export type CreateResearchData = z.infer<typeof createResearchSchema>
 export type UpdateResearchData = z.infer<typeof updateResearchSchema>
 export type ProtocolEntry = z.infer<typeof protocolEntrySchema>

@@ -3,10 +3,12 @@
 // (só exporta animais cuja pesquisa pertence à org do usuário) e devolve o arquivo.
 
 import { NextRequest } from "next/server"
+import { Prisma } from "@prisma/client"
 import { z } from "zod"
 import { getLocale } from "next-intl/server"
 import { prisma } from "@/lib/prisma"
 import { getAuthUser, getActiveOrgId, requireOrgRole } from "@/lib/auth"
+import { getResearchScope } from "@/lib/research-access"
 import { apiError, unauthorized } from "@/lib/api"
 import { buildDarwinCoreXml, dwcAnimalSelect } from "@/lib/darwin-core"
 import { buildAnimalsXlsx } from "@/lib/animals-xlsx"
@@ -57,10 +59,27 @@ export async function POST(req: NextRequest) {
     const body = await req.json().catch(() => null)
     const { ids, format } = exportSchema.parse(body)
 
+    // Escopo por pesquisa: pesquisador só exporta animais visíveis, e apenas as amostras/
+    // análises das SUAS pesquisas (compartilhado → sem vazar dados de outra pesquisa).
+    const scope = await getResearchScope(user, orgId)
+    const animalWhere: Prisma.AnimalWhereInput = { id: { in: ids }, research: { orgId } }
+    if (!scope.all) {
+      animalWhere.OR = [
+        { researchId: { in: scope.ids } },
+        { participations: { some: { researchId: { in: scope.ids } } } },
+      ]
+    }
+
     const animals = await prisma.animal.findMany({
-      where: { id: { in: ids }, research: { orgId } },
+      where: animalWhere,
       orderBy: { eventDate: "asc" },
-      select: exportSelect,
+      select: {
+        ...exportSelect,
+        samples: {
+          where: scope.all ? undefined : { researchId: { in: scope.ids } },
+          select: exportSelect.samples.select,
+        },
+      },
     })
 
     const stamp = new Date().toISOString().slice(0, 10)
