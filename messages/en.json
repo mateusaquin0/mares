@@ -828,6 +828,10 @@
     "detailPage": "Page",
     "detailAdminNote": "Admin note",
     "detailTitle": "Title",
-    "detailAuthor": "Author"
+    "detailAuthor": "Author",
+    "colDate": "Date",
+    "filterStatus": "Status:",
+    "filterType": "Type:",
+    "authorPlaceholder": "Filter by author (email)"
   }
 }
