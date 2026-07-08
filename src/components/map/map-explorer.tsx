@@ -238,7 +238,7 @@ export function MapExplorer({ points, linkBase, showVisibility }: Props) {
   }
 
   return (
-    <div className="flex h-full flex-col gap-3">
+    <div className="flex h-full flex-col gap-3" data-testid="map-explorer">
       {/* Barra de filtros */}
       <div className="flex flex-wrap items-end gap-3 rounded-lg border bg-card p-3 shadow-sm">
         <Field label={t("filterSpecies")}>
