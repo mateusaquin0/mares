@@ -62,6 +62,17 @@ export const emptyForm: FormState = {
   isPublic: true, // visível por padrão; o admin pode ocultar (opt-out)
 }
 
+// Campos de encalhe que podem ser marcados como "sem informação" (desabilitados
+// individualmente). Obrigatórios por padrão no cliente; ao desabilitar, vão como null.
+export const STRANDING_TOGGLEABLE = [
+  "eventDate",
+  "municipality",
+  "state",
+  "strandingLat",
+  "strandingLon",
+] as const
+export type ToggleableField = (typeof STRANDING_TOGGLEABLE)[number]
+
 // ISO -> YYYY-MM-DD para <input type="date">.
 const toDateInput = (iso: string | null) => (iso ? iso.slice(0, 10) : "")
 
@@ -100,6 +111,9 @@ export type AnimalFormApi = {
   form: FormState
   errors: FieldErrors
   set: (patch: Partial<FormState>) => void
+  // Campos de encalhe marcados como "sem informação" (desabilitados).
+  disabled: Partial<Record<ToggleableField, boolean>>
+  toggleDisabled: (field: ToggleableField) => void
   saving: boolean
   isDirty: boolean
   fetchingSimba: boolean
@@ -127,7 +141,9 @@ export function useAnimalForm({
 
   const [form, setForm] = useState<FormState>(emptyForm)
   const [errors, setErrors] = useState<FieldErrors>({})
+  const [disabled, setDisabled] = useState<Partial<Record<ToggleableField, boolean>>>({})
   const initialForm = useRef<FormState>(emptyForm)
+  const initialDisabled = useRef<Partial<Record<ToggleableField, boolean>>>({})
 
   const createM = useCreateAnimal()
   const updateM = useUpdateAnimal(animalId ?? "")
@@ -147,15 +163,22 @@ export function useAnimalForm({
       const init = { ...emptyForm, researchId: defaultResearchId }
       setForm(init)
       initialForm.current = init
+      setDisabled({})
+      initialDisabled.current = {}
     }
   }, [open, mode, defaultResearchId])
 
-  // Editar: semeia o formulário quando o detalhe chega.
+  // Editar: semeia o formulário quando o detalhe chega. Campos de encalhe vazios entram
+  // como "sem informação" (desabilitados), refletindo registros sem esse dado.
   useEffect(() => {
     if (open && editing && animalQ.data) {
       const init = mapAnimalToForm(animalQ.data)
       setForm(init)
       initialForm.current = init
+      const initDisabled: Partial<Record<ToggleableField, boolean>> = {}
+      for (const f of STRANDING_TOGGLEABLE) if (!init[f].trim()) initDisabled[f] = true
+      setDisabled(initDisabled)
+      initialDisabled.current = initDisabled
     }
   }, [open, editing, animalQ.data])
 
@@ -168,6 +191,13 @@ export function useAnimalForm({
       for (const k of Object.keys(patch)) delete next[k]
       return next
     })
+  }
+
+  // Alterna "sem informação" de um campo de encalhe: ao desabilitar, limpa o valor e o erro.
+  const toggleDisabled = (field: ToggleableField) => {
+    const willDisable = !disabled[field]
+    setDisabled((d) => ({ ...d, [field]: willDisable }))
+    if (willDisable) set({ [field]: "" } as Partial<FormState>)
   }
 
   // Busca o registro no SIMBA e pré-preenche o formulário (o usuário revisa e salva).
@@ -194,6 +224,19 @@ export function useAnimalForm({
         // "Exame externo": só o SIMBA traz (occurrenceRemarks); preserva o texto
         // atual se o registro não tiver observações.
         macroscopicNotes: d.macroscopicNotes ?? form.macroscopicNotes,
+      })
+      // Reabilita os campos de encalhe que o SIMBA trouxe preenchidos.
+      const filled: Record<ToggleableField, string> = {
+        eventDate: d.eventDate ? d.eventDate.slice(0, 10) : "",
+        municipality: d.municipality ?? "",
+        state: d.state ?? "",
+        strandingLat: d.strandingLat?.toString() ?? "",
+        strandingLon: d.strandingLon?.toString() ?? "",
+      }
+      setDisabled((old) => {
+        const next = { ...old }
+        for (const f of STRANDING_TOGGLEABLE) if (filled[f].trim() !== "") next[f] = false
+        return next
       })
       toast.success(t("simbaFetched"))
     } catch (err) {
@@ -233,14 +276,22 @@ export function useAnimalForm({
     if (isOrgAdmin) payload.isPublic = form.isPublic
     if (!isEdit) payload.researchId = form.researchId
 
+    // Obrigatoriedade dos campos de encalhe é client-side: exigidos por padrão, mas
+    // dispensados quando marcados como "sem informação" (o schema os aceita nulos).
+    const fieldErrors: FieldErrors = {}
+    for (const f of STRANDING_TOGGLEABLE) {
+      if (!disabled[f] && form[f].trim() === "") fieldErrors[f] = "required"
+    }
+
     // Validação interna com o mesmo schema do servidor, antes do POST.
     const parsed = (isEdit ? updateAnimalSchema : createAnimalSchema).safeParse(payload)
     if (!parsed.success) {
-      const fieldErrors: FieldErrors = {}
       for (const issue of parsed.error.issues) {
         const key = String(issue.path[0] ?? "")
         if (key && !fieldErrors[key]) fieldErrors[key] = issue.message
       }
+    }
+    if (Object.keys(fieldErrors).length > 0 || !parsed.success) {
       setErrors(fieldErrors)
       return
     }
@@ -257,7 +308,20 @@ export function useAnimalForm({
     }
   }
 
-  const isDirty = JSON.stringify(form) !== JSON.stringify(initialForm.current)
+  const isDirty =
+    JSON.stringify(form) !== JSON.stringify(initialForm.current) ||
+    JSON.stringify(disabled) !== JSON.stringify(initialDisabled.current)
 
-  return { form, errors, set, saving, isDirty, fetchingSimba, fetchSimba, submit }
+  return {
+    form,
+    errors,
+    set,
+    disabled,
+    toggleDisabled,
+    saving,
+    isDirty,
+    fetchingSimba,
+    fetchSimba,
+    submit,
+  }
 }

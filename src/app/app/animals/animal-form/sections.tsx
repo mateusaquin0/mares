@@ -2,7 +2,7 @@
 
 import type { ComponentType, ReactNode } from "react"
 import { useTranslations } from "next-intl"
-import { Search, ChevronDown, Fish, MapPin, Stethoscope, FileText } from "lucide-react"
+import { Search, ChevronDown, Fish, MapPin, Stethoscope, FileText, Ban } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -148,19 +148,85 @@ export function IdentificationSection({
   )
 }
 
+// Campo de encalhe com botão "sem informação": desabilita e limpa o campo para casos
+// em que o dado é desconhecido (o valor vai como nulo). Reabilita ao clicar de novo.
+function StrandingField({
+  id,
+  label,
+  type,
+  step,
+  maxLength,
+  value,
+  error,
+  disabled,
+  onChange,
+  onToggle,
+}: {
+  id: string
+  label: string
+  type?: string
+  step?: string
+  maxLength?: number
+  value: string
+  error?: string
+  disabled: boolean
+  onChange: (value: string) => void
+  onToggle: () => void
+}) {
+  const t = useTranslations("animals")
+  return (
+    <Field htmlFor={id} label={label} error={disabled ? undefined : error}>
+      <div className="flex items-center gap-2">
+        <Input
+          id={id}
+          type={type}
+          step={step}
+          maxLength={maxLength}
+          value={disabled ? "" : value}
+          disabled={disabled}
+          placeholder={disabled ? t("noInfo") : undefined}
+          aria-invalid={!disabled && !!error ? true : undefined}
+          onChange={(e) => onChange(e.target.value)}
+        />
+        <Button
+          type="button"
+          variant={disabled ? "secondary" : "outline"}
+          size="icon"
+          className="shrink-0"
+          onClick={onToggle}
+          title={disabled ? t("noInfoEnable") : t("noInfoMark")}
+          aria-pressed={disabled}
+        >
+          <Ban className={disabled ? "size-4 text-destructive" : "size-4"} />
+        </Button>
+      </div>
+    </Field>
+  )
+}
+
 // ── Encalhe: data, praia, local e coordenadas ─────────────────────────────────
-export function StrandingSection({ form, errors, set }: SectionProps) {
+// Os campos obrigatórios de encalhe podem ser marcados como "sem informação" (botão ao
+// lado), para registros em que o dado não está disponível.
+export function StrandingSection({
+  form,
+  errors,
+  set,
+  disabled,
+  toggleDisabled,
+}: SectionProps & Pick<AnimalFormApi, "disabled" | "toggleDisabled">) {
   const t = useTranslations("animals")
 
   return (
     <Section title={t("sectionStranding")} icon={MapPin}>
       <div className="grid grid-cols-2 gap-3">
-        <TextField
+        <StrandingField
           id="eventDate"
           label={t("eventDate")}
           type="date"
           value={form.eventDate}
           error={errors.eventDate}
+          disabled={!!disabled.eventDate}
+          onToggle={() => toggleDisabled("eventDate")}
           // A necrópsia costuma ocorrer no dia do encalhe: reflete a data do encalhe na
           // necrópsia enquanto esta estiver vazia (não sobrescreve um valor já informado).
           onChange={(v) =>
@@ -176,38 +242,46 @@ export function StrandingSection({ form, errors, set }: SectionProps) {
           maxLength={LIMITS.name}
           onChange={(v) => set({ strandingBeach: v })}
         />
-        <TextField
+        <StrandingField
           id="municipality"
           label={t("municipality")}
           value={form.municipality}
           error={errors.municipality}
           maxLength={LIMITS.shortText}
+          disabled={!!disabled.municipality}
+          onToggle={() => toggleDisabled("municipality")}
           onChange={(v) => set({ municipality: v })}
         />
-        <TextField
+        <StrandingField
           id="state"
           label={t("state")}
           value={form.state}
           error={errors.state}
           maxLength={LIMITS.shortText}
+          disabled={!!disabled.state}
+          onToggle={() => toggleDisabled("state")}
           onChange={(v) => set({ state: v })}
         />
-        <TextField
+        <StrandingField
           id="lat"
           label={t("strandingLat")}
           type="number"
           step="any"
           value={form.strandingLat}
           error={errors.strandingLat}
+          disabled={!!disabled.strandingLat}
+          onToggle={() => toggleDisabled("strandingLat")}
           onChange={(v) => set({ strandingLat: v })}
         />
-        <TextField
+        <StrandingField
           id="lon"
           label={t("strandingLon")}
           type="number"
           step="any"
           value={form.strandingLon}
           error={errors.strandingLon}
+          disabled={!!disabled.strandingLon}
+          onToggle={() => toggleDisabled("strandingLon")}
           onChange={(v) => set({ strandingLon: v })}
         />
       </div>

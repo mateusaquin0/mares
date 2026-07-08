@@ -26,11 +26,24 @@ describe("createAnimalSchema", () => {
     expect(createAnimalSchema.safeParse(noResearch).success).toBe(false)
   })
 
-  it("exige campos obrigatórios (species, controlId, município, estado, data)", () => {
-    for (const field of ["species", "controlId", "municipality", "state", "eventDate"]) {
+  it("exige campos obrigatórios (species, controlId)", () => {
+    for (const field of ["species", "controlId"]) {
       const bad = { ...validAnimal, [field]: "" }
       expect(createAnimalSchema.safeParse(bad).success, `${field} vazio deveria falhar`).toBe(false)
     }
+  })
+
+  it("aceita campos de encalhe vazios/nulos (marcáveis como 'sem informação')", () => {
+    // A obrigatoriedade padrão desses campos é aplicada no cliente; o schema os aceita nulos.
+    const parsed = createAnimalSchema.safeParse({
+      ...validAnimal,
+      municipality: "",
+      state: "",
+      eventDate: "",
+      strandingLat: null,
+      strandingLon: null,
+    })
+    expect(parsed.success).toBe(true)
   })
 
   it("rejeita latitude fora do range [-90, 90]", () => {
