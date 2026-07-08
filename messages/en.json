@@ -830,8 +830,8 @@
     "detailTitle": "Title",
     "detailAuthor": "Author",
     "colDate": "Date",
-    "filterStatus": "Status:",
-    "filterType": "Type:",
+    "filterStatus": "Status",
+    "filterType": "Type",
     "authorPlaceholder": "Filter by author (email)"
   }
 }

@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { useTranslations, useLocale } from "next-intl"
 import { toast } from "sonner"
-import { MoreHorizontal, Lightbulb, Bug, Search } from "lucide-react"
+import { MoreHorizontal, Lightbulb, Bug } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -11,6 +11,13 @@ import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { TableSkeleton } from "@/components/ui/skeleton"
 import { ReloadButton } from "@/components/ui/reload-button"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { useErrorMessage } from "@/lib/use-error-message"
 import { useFeedbackList, useUpdateFeedback } from "@/hooks/use-feedback"
 import type { FeedbackItem, FeedbackStatus, FeedbackType } from "@/types/feedback"
@@ -96,6 +103,14 @@ export default function AdminFeedbackPage() {
 
   const fmtDate = (iso: string) => new Date(iso).toLocaleString(locale)
 
+  // Campo de filtro rotulado, no mesmo estilo das outras tabelas.
+  const filterField = (label: string, control: React.ReactNode, widthClass = "w-44") => (
+    <label className={cn("flex flex-col gap-1 text-xs", widthClass)}>
+      <span className="font-semibold uppercase tracking-wide text-muted-foreground">{label}</span>
+      {control}
+    </label>
+  )
+
   return (
     <div className="mx-auto max-w-6xl space-y-6 p-8">
       <div>
@@ -109,53 +124,56 @@ export default function AdminFeedbackPage() {
         <p className="text-sm text-muted-foreground">{t("empty")}</p>
       ) : (
         <>
-          {/* Filtros: busca por autor + chips de status e tipo */}
-          <div className="space-y-3">
-            <div className="relative max-w-sm">
-              <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+          {/* Barra de filtros (mesmo estilo das outras tabelas): selects + input */}
+          <div className="flex flex-wrap items-end gap-3 rounded-xl border bg-card p-3 shadow-card">
+            {filterField(
+              t("filterStatus"),
+              <Select
+                value={statusFilter}
+                onValueChange={(v) => setStatusFilter(v as FeedbackStatus | "ALL")}
+              >
+                <SelectTrigger className="h-9">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ALL">{t("filterAll")}</SelectItem>
+                  {STATUSES.map((s) => (
+                    <SelectItem key={s} value={s}>
+                      {t(`status_${s}`)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>,
+            )}
+            {filterField(
+              t("filterType"),
+              <Select
+                value={typeFilter}
+                onValueChange={(v) => setTypeFilter(v as FeedbackType | "ALL")}
+              >
+                <SelectTrigger className="h-9">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ALL">{t("filterAll")}</SelectItem>
+                  {TYPES.map((ty) => (
+                    <SelectItem key={ty} value={ty}>
+                      {t(ty === "BUG" ? "typeBug" : "typeSuggestion")}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>,
+            )}
+            {filterField(
+              t("colAuthor"),
               <Input
                 value={author}
                 onChange={(e) => setAuthor(e.target.value)}
                 placeholder={t("authorPlaceholder")}
-                className="pl-9"
-              />
-            </div>
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="text-xs font-medium text-muted-foreground">{t("filterStatus")}</span>
-              {(["ALL", ...STATUSES] as const).map((s) => (
-                <button
-                  key={s}
-                  type="button"
-                  onClick={() => setStatusFilter(s)}
-                  className={cn(
-                    "rounded-full border px-3 py-1 text-xs transition-colors",
-                    statusFilter === s
-                      ? "border-primary bg-accent font-medium text-accent-foreground"
-                      : "border-border text-foreground/70 hover:bg-muted",
-                  )}
-                >
-                  {s === "ALL" ? t("filterAll") : t(`status_${s}`)}
-                </button>
-              ))}
-            </div>
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="text-xs font-medium text-muted-foreground">{t("filterType")}</span>
-              {(["ALL", ...TYPES] as const).map((ty) => (
-                <button
-                  key={ty}
-                  type="button"
-                  onClick={() => setTypeFilter(ty)}
-                  className={cn(
-                    "rounded-full border px-3 py-1 text-xs transition-colors",
-                    typeFilter === ty
-                      ? "border-primary bg-accent font-medium text-accent-foreground"
-                      : "border-border text-foreground/70 hover:bg-muted",
-                  )}
-                >
-                  {ty === "ALL" ? t("filterAll") : t(ty === "BUG" ? "typeBug" : "typeSuggestion")}
-                </button>
-              ))}
-            </div>
+                className="h-9"
+              />,
+              "w-64",
+            )}
           </div>
 
           {items.length === 0 ? (
