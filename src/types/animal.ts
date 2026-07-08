@@ -65,8 +65,10 @@ export type AnimalMedia = {
 }
 
 // Entrada do histórico/auditoria (/api/animals/:id/audit).
+// `entity` distingue a origem: edição do animal, criação/edição de amostra ou análise.
 export type AuditEntry = {
   id: string
+  entity: "Animal" | "Sample" | "Analysis"
   changedAt: string
   field: string
   oldValue: string | null
@@ -75,6 +77,7 @@ export type AuditEntry = {
   pathogen: { scientificName: string | null; name: string | I18nText | null } | null
   examType: { name: string | I18nText } | null
   organ: { name: string | I18nText } | null
+  sample: { identification: string } | null
 }
 
 // Resposta do proxy do SIMBA (/api/simba) — usada no pré-preenchimento do formulário.

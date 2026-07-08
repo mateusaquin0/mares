@@ -6,7 +6,7 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useTranslations } from "next-intl"
 import { toast } from "sonner"
-import { MoreHorizontal, Pencil, UserPlus, Search, Users, Mail } from "lucide-react"
+import { MoreHorizontal, Pencil, UserPlus, Search, Users, Mail, Send } from "lucide-react"
 
 import {
   addMemberSchema,
@@ -21,7 +21,9 @@ import {
   useUpdateOrganization,
   useSetMemberRole,
   useRemoveMember,
+  useResendInvite,
 } from "@/hooks/use-members"
+import { useLookupUser } from "@/hooks/use-users"
 import type { Member } from "@/types/organization"
 import { LIMITS } from "@/schemas/limits"
 import { Button } from "@/components/ui/button"
@@ -69,6 +71,8 @@ type OrgData = z.infer<typeof updateOrganizationSchema>
 
 type Confirm = { kind: "remove" | "leave" | "demote" | "promote"; member: Member }
 
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
 export function MembersManager({
   orgId,
   orgName,
@@ -99,7 +103,12 @@ export function MembersManager({
   const updateOrgM = useUpdateOrganization(orgId)
   const roleM = useSetMemberRole(orgId)
   const removeM = useRemoveMember(orgId)
+  const resendM = useResendInvite(orgId)
+  const lookupM = useLookupUser()
   const orgQ = useOrganization(orgId, editOpen)
+  // Resultado da busca por e-mail (lupa): null = ainda não buscou; found = já existe na
+  // plataforma (nome preenchido e travado); notFound = novo usuário (exige nome).
+  const [lookup, setLookup] = useState<{ found: boolean } | null>(null)
 
   const addForm = useForm<AddMemberData>({
     resolver: zodResolver(addMemberSchema),
@@ -122,11 +131,35 @@ export function MembersManager({
     }
   }, [editOpen, orgQ.data, editForm])
 
+  function openAdd() {
+    setLookup(null)
+    addForm.reset({ email: "", name: "", role: "RESEARCHER" })
+    setAddOpen(true)
+  }
+
+  // Lupa: busca o e-mail na plataforma. Se existir, preenche o nome e trava o campo
+  // (reaproveita a conta); senão, libera o nome para convidar um novo usuário.
+  async function lookupEmail() {
+    const email = addForm.getValues("email").trim().toLowerCase()
+    if (!EMAIL_RE.test(email)) {
+      addForm.setError("email", { message: "email" })
+      return
+    }
+    try {
+      const res = await lookupM.mutateAsync(email)
+      setLookup({ found: res.exists })
+      addForm.setValue("name", res.exists ? (res.name ?? "") : "", { shouldValidate: true })
+    } catch (err) {
+      toast.error(t("lookupError"), { description: em(err) })
+    }
+  }
+
   async function onAdd(data: AddMemberData) {
     try {
       const result = await addM.mutateAsync(data)
       toast.success(result.invited ? t("invitedToast") : t("addedToast"))
       addForm.reset({ email: "", name: "", role: "RESEARCHER" })
+      setLookup(null)
       setAddOpen(false)
     } catch (err) {
       toast.error(t("addErrorTitle"), { description: em(err) })
@@ -164,6 +197,18 @@ export function MembersManager({
       router.push("/app/dashboard")
       router.refresh()
       return
+    }
+  }
+
+  async function resend(m: Member) {
+    setBusy(m.userId)
+    try {
+      await resendM.mutateAsync(m.userId)
+      toast.success(t("resendSuccess"))
+    } catch (err) {
+      toast.error(t("resendError"), { description: em(err) })
+    } finally {
+      setBusy(null)
     }
   }
 
@@ -249,7 +294,7 @@ export function MembersManager({
               <Pencil className="size-4" />
               {t("editOrg")}
             </Button>
-            <Button onClick={() => setAddOpen(true)}>
+            <Button onClick={openAdd}>
               <UserPlus className="size-4" />
               {t("addMember")}
             </Button>
@@ -430,10 +475,23 @@ export function MembersManager({
                         <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-semibold text-muted-foreground">
                           {initials(m.name ?? m.email)}
                         </span>
-                        <div className="min-w-0">
+                        <div className="min-w-0 flex-1">
                           <p className="truncate text-sm font-medium">{m.email}</p>
                           <p className="text-xs text-muted-foreground">{t("pendingLabel")}</p>
                         </div>
+                        {canManage && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="shrink-0 gap-1"
+                            loading={busy === m.userId}
+                            onClick={() => resend(m)}
+                            title={t("resendInvite")}
+                          >
+                            {busy !== m.userId && <Send className="size-3.5" />}
+                            {t("resend")}
+                          </Button>
+                        )}
                       </li>
                     ))}
                   </ul>
@@ -467,21 +525,58 @@ export function MembersManager({
           <form onSubmit={addForm.handleSubmit(onAdd)} className="space-y-4">
             <div className="space-y-1">
               <Label htmlFor="email">{t("emailLabel")}</Label>
-              <Input
-                id="email"
-                type="email"
-                maxLength={LIMITS.name}
-                {...addForm.register("email")}
-              />
+              <div className="flex items-center gap-2">
+                {(() => {
+                  const emailReg = addForm.register("email")
+                  return (
+                    <Input
+                      id="email"
+                      type="email"
+                      maxLength={LIMITS.name}
+                      placeholder={t("emailPlaceholder")}
+                      {...emailReg}
+                      onChange={(e) => {
+                        emailReg.onChange(e)
+                        // Editar o e-mail invalida a busca anterior.
+                        if (lookup) setLookup(null)
+                      }}
+                    />
+                  )
+                })()}
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  className="shrink-0"
+                  onClick={lookupEmail}
+                  loading={lookupM.isPending}
+                  title={t("lookupTitle")}
+                >
+                  {!lookupM.isPending && <Search className="size-4" />}
+                </Button>
+              </div>
               {addForm.formState.errors.email && (
                 <p className="text-xs text-destructive">
                   {tval(addForm.formState.errors.email.message!)}
                 </p>
               )}
+              {lookup?.found && <p className="text-xs text-bio">{t("lookupFound")}</p>}
             </div>
             <div className="space-y-1">
               <Label htmlFor="name">{t("nameLabel")}</Label>
-              <Input id="name" maxLength={LIMITS.name} {...addForm.register("name")} />
+              <Input
+                id="name"
+                maxLength={LIMITS.name}
+                readOnly={lookup?.found}
+                {...addForm.register("name")}
+              />
+              {lookup == null ? (
+                <p className="text-xs text-muted-foreground">{t("nameLookupHint")}</p>
+              ) : (
+                !lookup.found && (
+                  <p className="text-xs text-muted-foreground">{t("nameNewUserHint")}</p>
+                )
+              )}
               {addForm.formState.errors.name && (
                 <p className="text-xs text-destructive">
                   {tval(addForm.formState.errors.name.message!)}

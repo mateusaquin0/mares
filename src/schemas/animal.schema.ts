@@ -6,16 +6,14 @@ import { SEX_VALUES, LIFE_STAGE_VALUES } from "@/lib/animal-enums"
 
 // Mensagens = chaves do namespace `validation` (resolvidas no componente). Ver docs/I18N.md.
 
-// Coordenadas obrigatórias, dentro da faixa válida. Vazio (null) → "required".
-const latitude = z.number({ error: "required" }).min(-90, "latRange").max(90, "latRange")
-const longitude = z.number({ error: "required" }).min(-180, "lonRange").max(180, "lonRange")
-// Texto/data obrigatórios (não vazios após trim).
+// Campos de encalhe (data, local, coordenadas) são OPCIONAIS no servidor: podem ser
+// marcados como "sem informação" no formulário. A obrigatoriedade padrão é aplicada no
+// cliente (ver use-animal-form), permitindo pular cada campo individualmente. Quando
+// presentes, coordenadas são validadas na faixa.
+const latitude = z.number().min(-90, "latRange").max(90, "latRange").nullable().optional()
+const longitude = z.number().min(-180, "lonRange").max(180, "lonRange").nullable().optional()
+// Texto obrigatório (não vazio após trim).
 const requiredText = (max: number) => z.string().trim().min(1, "required").max(max)
-const requiredDate = z
-  .string()
-  .trim()
-  .min(1, "required")
-  .refine((v) => !Number.isNaN(Date.parse(v)), "invalidDate")
 
 export const animalBaseSchema = z.object({
   species: requiredText(LIMITS.name),
@@ -35,9 +33,9 @@ export const animalBaseSchema = z.object({
   strandingLat: latitude,
   strandingLon: longitude,
   strandingBeach: optionalText(LIMITS.name),
-  municipality: requiredText(LIMITS.shortText),
-  state: requiredText(LIMITS.shortText),
-  eventDate: requiredDate,
+  municipality: optionalText(LIMITS.shortText),
+  state: optionalText(LIMITS.shortText),
+  eventDate: optionalDate,
   macroscopicNotes: optionalText(LIMITS.hugeText),
   isPublic: z.boolean().optional(),
 })

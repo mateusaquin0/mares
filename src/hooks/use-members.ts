@@ -69,6 +69,13 @@ export function useRemoveMember(orgId: string) {
   })
 }
 
+// Reenvia o convite a um membro ainda não confirmado (novo link de definição de senha).
+export function useResendInvite(orgId: string) {
+  return useMutation({
+    mutationFn: (userId: string) => organizationsService.resendInvite(orgId, userId),
+  })
+}
+
 // Sair de uma organização (remove a si mesmo). Pode excluir a org (orgDeleted).
 export function useLeaveOrganization() {
   return useMutation({

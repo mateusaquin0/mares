@@ -71,7 +71,13 @@ export function AnimalFormDialog({
             fetchSimba={f.fetchSimba}
             fetchingSimba={f.fetchingSimba}
           />
-          <StrandingSection form={f.form} errors={f.errors} set={f.set} />
+          <StrandingSection
+            form={f.form}
+            errors={f.errors}
+            set={f.set}
+            disabled={f.disabled}
+            toggleDisabled={f.toggleDisabled}
+          />
           <ConditionSection form={f.form} errors={f.errors} set={f.set} />
           <NotesSection form={f.form} errors={f.errors} set={f.set} isOrgAdmin={isOrgAdmin} />
 

@@ -18,6 +18,8 @@ export const organizationsService = {
     http.put(`/api/organizations/${orgId}/members/${userId}`, { role }),
   removeMember: (orgId: string, userId: string) =>
     http.del<{ orgDeactivated?: boolean }>(`/api/organizations/${orgId}/members/${userId}`),
+  resendInvite: (orgId: string, userId: string) =>
+    http.post(`/api/organizations/${orgId}/members/${userId}/resend-invite`),
 
   // Define a organização ativa (cookie) para o usuário.
   setActive: (orgId: string) => http.post("/api/active-org", { orgId }),

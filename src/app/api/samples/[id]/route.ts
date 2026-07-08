@@ -16,8 +16,20 @@ import {
   sampleDuplicateError,
   sampleSelect,
 } from "@/lib/samples"
+import { diffFields, writeAudit } from "@/lib/audit"
 import { ConflictError } from "@/lib/errors"
 import { ERROR_CODES } from "@/lib/error-codes"
+
+// Campos escalares da amostra auditados na timeline (órgão/pesquisa ficam de fora).
+const SAMPLE_AUDIT_FIELDS = [
+  "identification",
+  "sampleType",
+  "collectionDate",
+  "storageLocation",
+  "storageTemp",
+  "status",
+  "notes",
+] as const
 
 export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -34,6 +46,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     if (data.organId) await assertOrgan(data.organId)
 
     try {
+      const before = await prisma.sample.findUnique({ where: { id }, select: sampleSelect })
       const updated = await prisma.sample.update({
         where: { id },
         data: {
@@ -42,6 +55,9 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
         },
         select: sampleSelect,
       })
+      if (before) {
+        await writeAudit("Sample", id, user.id, diffFields(before, updated, SAMPLE_AUDIT_FIELDS))
+      }
       return NextResponse.json(updated)
     } catch (e) {
       if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
