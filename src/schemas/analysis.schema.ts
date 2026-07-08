@@ -1,6 +1,7 @@
 import { z } from "zod"
 
 import { optionalNumber, optionalText } from "@/schemas/common"
+import { LIMITS } from "@/schemas/limits"
 
 // Resultado = enum Result do Prisma; null = "não testado" (limpa a célula).
 export const resultSchema = z.enum(["POSITIVO", "NEGATIVO", "INCONCLUSIVO"])
@@ -12,7 +13,7 @@ export const upsertAnalysisSchema = z.object({
   examTypeId: z.string().min(1, "required"),
   result: resultSchema.nullable().optional(),
   measureValue: optionalNumber,
-  notes: optionalText(2000),
+  notes: optionalText(LIMITS.longText),
 })
 
 export type UpsertAnalysisData = z.infer<typeof upsertAnalysisSchema>

@@ -7,6 +7,7 @@ import { toast } from "sonner"
 import { MoreHorizontal, Pencil, Plus, Trash2 } from "lucide-react"
 
 import type { CatalogType } from "@/schemas/catalog.schema"
+import { LIMITS } from "@/schemas/limits"
 import { useNcbiSearch } from "@/hooks/use-ncbi"
 import {
   useCatalogList,
@@ -79,10 +80,13 @@ const i18nEn = (v: string | I18nText | null | undefined) =>
 export function CatalogManager({
   userId,
   isSystemAdmin,
+  canManage,
   initialType = "organs",
 }: {
   userId: string
   isSystemAdmin: boolean
+  // Admin da org (ou global) pode adicionar itens; pesquisador só lê.
+  canManage: boolean
   initialType?: CatalogType
 }) {
   const t = useTranslations("catalogs")
@@ -254,10 +258,12 @@ export function CatalogManager({
           <h1 className="text-3xl font-semibold tracking-tight">{t("title")}</h1>
           <p className="mt-1 text-sm text-muted-foreground">{t("subtitle")}</p>
         </div>
-        <Button onClick={openCreate}>
-          <Plus className="size-4" />
-          {t("add")}
-        </Button>
+        {canManage && (
+          <Button onClick={openCreate}>
+            <Plus className="size-4" />
+            {t("add")}
+          </Button>
+        )}
       </div>
 
       <Tabs value={type} onValueChange={(v) => setType(v as CatalogType)}>
@@ -457,7 +463,11 @@ export function CatalogManager({
               <div className="space-y-3">
                 <div className="space-y-1">
                   <Label htmlFor="namePt">{t("namePt")}</Label>
-                  <Input id="namePt" {...form.register("namePt", { required: tval("required") })} />
+                  <Input
+                    id="namePt"
+                    maxLength={LIMITS.name}
+                    {...form.register("namePt", { required: tval("required") })}
+                  />
                   {form.formState.errors.namePt && (
                     <p className="text-xs text-destructive">
                       {form.formState.errors.namePt.message}
@@ -466,7 +476,11 @@ export function CatalogManager({
                 </div>
                 <div className="space-y-1">
                   <Label htmlFor="nameEn">{t("nameEn")}</Label>
-                  <Input id="nameEn" {...form.register("nameEn", { required: tval("required") })} />
+                  <Input
+                    id="nameEn"
+                    maxLength={LIMITS.name}
+                    {...form.register("nameEn", { required: tval("required") })}
+                  />
                   {form.formState.errors.nameEn && (
                     <p className="text-xs text-destructive">
                       {form.formState.errors.nameEn.message}
@@ -498,6 +512,7 @@ export function CatalogManager({
                             <Input
                               id="measurePt"
                               placeholder={t("measurePlaceholder")}
+                              maxLength={LIMITS.tinyText}
                               {...form.register("measurePt", { required: tval("required") })}
                             />
                             {form.formState.errors.measurePt && (
@@ -511,6 +526,7 @@ export function CatalogManager({
                             <Input
                               id="measureEn"
                               placeholder={t("measurePlaceholder")}
+                              maxLength={LIMITS.tinyText}
                               {...form.register("measureEn", { required: tval("required") })}
                             />
                             {form.formState.errors.measureEn && (
@@ -525,6 +541,7 @@ export function CatalogManager({
                           <Input
                             id="measureUnit"
                             placeholder={t("measureUnitPlaceholder")}
+                            maxLength={LIMITS.measureUnit}
                             {...form.register("measureUnit")}
                           />
                         </div>

@@ -13,6 +13,7 @@ import {
   type ChangePasswordData,
   type UpdateProfileData,
 } from "@/schemas/auth.schema"
+import { LIMITS } from "@/schemas/limits"
 import { updateProfileAction, changePasswordAction, deleteProfileAction } from "./actions"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -88,7 +89,7 @@ export function ProfileForm({ name, email }: { name: string; email: string }) {
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="name">{t("nameLabel")}</Label>
-              <Input id="name" {...nameForm.register("name")} />
+              <Input id="name" maxLength={LIMITS.name} {...nameForm.register("name")} />
               {nameForm.formState.errors.name && (
                 <p className="text-xs text-destructive">
                   {tval(nameForm.formState.errors.name.message!)}

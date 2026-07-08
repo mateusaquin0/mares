@@ -1,6 +1,7 @@
 import { z } from "zod"
 
 import { optionalText, optionalDate } from "@/schemas/common"
+import { LIMITS } from "@/schemas/limits"
 import { SEX_VALUES, LIFE_STAGE_VALUES } from "@/lib/animal-enums"
 
 // Mensagens = chaves do namespace `validation` (resolvidas no componente). Ver docs/I18N.md.
@@ -17,27 +18,27 @@ const requiredDate = z
   .refine((v) => !Number.isNaN(Date.parse(v)), "invalidDate")
 
 export const animalBaseSchema = z.object({
-  species: requiredText(255),
+  species: requiredText(LIMITS.name),
   // Preenchidos via WoRMS ao selecionar a espécie (opcionais; limpáveis).
   wormsAphiaId: z.number().int().nullable().optional(),
-  taxonFamily: optionalText(120),
-  taxonOrder: optionalText(120),
-  controlId: requiredText(120),
-  simbaRecordNumber: optionalText(120),
+  taxonFamily: optionalText(LIMITS.shortText),
+  taxonOrder: optionalText(LIMITS.shortText),
+  controlId: requiredText(LIMITS.shortText),
+  simbaRecordNumber: optionalText(LIMITS.shortText),
   // Valores fixos do domínio (bloqueia texto livre); vazio/ inválido → "required".
   sex: z.enum(SEX_VALUES, { error: "required" }),
   lifeStage: z.enum(LIFE_STAGE_VALUES, { error: "required" }),
-  bodyCondition: optionalText(60),
-  decompositionStage: optionalText(60),
-  deathCondition: optionalText(60),
+  bodyCondition: optionalText(LIMITS.tinyText),
+  decompositionStage: optionalText(LIMITS.tinyText),
+  deathCondition: optionalText(LIMITS.tinyText),
   necropsyDate: optionalDate,
   strandingLat: latitude,
   strandingLon: longitude,
-  strandingBeach: optionalText(255),
-  municipality: requiredText(120),
-  state: requiredText(120),
+  strandingBeach: optionalText(LIMITS.name),
+  municipality: requiredText(LIMITS.shortText),
+  state: requiredText(LIMITS.shortText),
   eventDate: requiredDate,
-  macroscopicNotes: optionalText(4000),
+  macroscopicNotes: optionalText(LIMITS.hugeText),
   isPublic: z.boolean().optional(),
 })
 

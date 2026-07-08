@@ -23,6 +23,7 @@ import {
   useRemoveMember,
 } from "@/hooks/use-members"
 import type { Member } from "@/types/organization"
+import { LIMITS } from "@/schemas/limits"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -72,10 +73,13 @@ export function MembersManager({
   orgId,
   orgName,
   selfId,
+  canManage,
 }: {
   orgId: string
   orgName: string
   selfId: string
+  // Admin da org gerencia; pesquisador vê a lista em modo leitura.
+  canManage: boolean
 }) {
   const router = useRouter()
   const t = useTranslations("members")
@@ -239,16 +243,18 @@ export function MembersManager({
           <h1 className="text-3xl font-semibold tracking-tight">{t("title")}</h1>
           <p className="mt-1 text-sm text-muted-foreground">{orgName}</p>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={openEdit}>
-            <Pencil className="size-4" />
-            {t("editOrg")}
-          </Button>
-          <Button onClick={() => setAddOpen(true)}>
-            <UserPlus className="size-4" />
-            {t("addMember")}
-          </Button>
-        </div>
+        {canManage && (
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={openEdit}>
+              <Pencil className="size-4" />
+              {t("editOrg")}
+            </Button>
+            <Button onClick={() => setAddOpen(true)}>
+              <UserPlus className="size-4" />
+              {t("addMember")}
+            </Button>
+          </div>
+        )}
       </div>
 
       {loading ? (
@@ -275,13 +281,17 @@ export function MembersManager({
                 <TableRow>
                   <TableHead>{t("colName")}</TableHead>
                   <TableHead>{t("colRole")}</TableHead>
-                  <TableHead className="w-16 text-right">
-                    <ReloadButton />
-                  </TableHead>
+                  {canManage && (
+                    <TableHead className="w-16 text-right">
+                      <ReloadButton />
+                    </TableHead>
+                  )}
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filtered.length === 0 && <TableEmpty colSpan={3}>{tc("noResults")}</TableEmpty>}
+                {filtered.length === 0 && (
+                  <TableEmpty colSpan={canManage ? 3 : 2}>{tc("noResults")}</TableEmpty>
+                )}
                 {filtered.map((m) => {
                   const isSelf = m.userId === selfId
                   const isAdmin = m.role === "ORG_ADMIN"
@@ -312,59 +322,65 @@ export function MembersManager({
                           <Badge variant="secondary">{tc("roleResearcher")}</Badge>
                         )}
                       </TableCell>
-                      <TableCell className="text-right">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="size-8"
-                              disabled={busy === m.userId}
-                            >
-                              <MoreHorizontal className="size-4" />
-                              <span className="sr-only">{t("colActions")}</span>
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            {isSelf ? (
-                              <>
-                                {isAdmin && (
+                      {canManage && (
+                        <TableCell className="text-right">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="size-8"
+                                disabled={busy === m.userId}
+                              >
+                                <MoreHorizontal className="size-4" />
+                                <span className="sr-only">{t("colActions")}</span>
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              {isSelf ? (
+                                <>
+                                  {isAdmin && (
+                                    // Último admin não pode se rebaixar (grupo ficaria sem admin):
+                                    // item desabilitado com dica; o backend também rejeita.
+                                    <DropdownMenuItem
+                                      disabled={adminCount <= 1}
+                                      title={adminCount <= 1 ? t("lastAdminHint") : undefined}
+                                      onSelect={() => setConfirm({ kind: "demote", member: m })}
+                                    >
+                                      {t("makeResearcher")}
+                                    </DropdownMenuItem>
+                                  )}
                                   <DropdownMenuItem
-                                    onSelect={() => setConfirm({ kind: "demote", member: m })}
+                                    className="text-destructive focus:text-destructive"
+                                    onSelect={() => setConfirm({ kind: "leave", member: m })}
                                   >
-                                    {t("makeResearcher")}
+                                    {tc("leave")}
                                   </DropdownMenuItem>
-                                )}
-                                <DropdownMenuItem
-                                  className="text-destructive focus:text-destructive"
-                                  onSelect={() => setConfirm({ kind: "leave", member: m })}
-                                >
-                                  {tc("leave")}
-                                </DropdownMenuItem>
-                              </>
-                            ) : (
-                              <>
-                                <DropdownMenuItem
-                                  // Não é possível alterar o papel de outro admin (visível,
-                                  // desabilitado). Promover pesquisador → admin passa por confirmação.
-                                  disabled={isAdmin}
-                                  onSelect={() => setConfirm({ kind: "promote", member: m })}
-                                >
-                                  {isAdmin ? t("makeResearcher") : t("makeAdmin")}
-                                </DropdownMenuItem>
-                                <DropdownMenuItem
-                                  className="text-destructive focus:text-destructive"
-                                  // Não é possível remover outro admin.
-                                  disabled={isAdmin}
-                                  onSelect={() => setConfirm({ kind: "remove", member: m })}
-                                >
-                                  {tc("remove")}
-                                </DropdownMenuItem>
-                              </>
-                            )}
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
+                                </>
+                              ) : (
+                                <>
+                                  <DropdownMenuItem
+                                    // Não é possível alterar o papel de outro admin (visível,
+                                    // desabilitado). Promover pesquisador → admin passa por confirmação.
+                                    disabled={isAdmin}
+                                    onSelect={() => setConfirm({ kind: "promote", member: m })}
+                                  >
+                                    {isAdmin ? t("makeResearcher") : t("makeAdmin")}
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem
+                                    className="text-destructive focus:text-destructive"
+                                    // Não é possível remover outro admin.
+                                    disabled={isAdmin}
+                                    onSelect={() => setConfirm({ kind: "remove", member: m })}
+                                  >
+                                    {tc("remove")}
+                                  </DropdownMenuItem>
+                                </>
+                              )}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
+                      )}
                     </TableRow>
                   )
                 })}
@@ -451,7 +467,12 @@ export function MembersManager({
           <form onSubmit={addForm.handleSubmit(onAdd)} className="space-y-4">
             <div className="space-y-1">
               <Label htmlFor="email">{t("emailLabel")}</Label>
-              <Input id="email" type="email" {...addForm.register("email")} />
+              <Input
+                id="email"
+                type="email"
+                maxLength={LIMITS.name}
+                {...addForm.register("email")}
+              />
               {addForm.formState.errors.email && (
                 <p className="text-xs text-destructive">
                   {tval(addForm.formState.errors.email.message!)}
@@ -460,7 +481,7 @@ export function MembersManager({
             </div>
             <div className="space-y-1">
               <Label htmlFor="name">{t("nameLabel")}</Label>
-              <Input id="name" {...addForm.register("name")} />
+              <Input id="name" maxLength={LIMITS.name} {...addForm.register("name")} />
               {addForm.formState.errors.name && (
                 <p className="text-xs text-destructive">
                   {tval(addForm.formState.errors.name.message!)}
@@ -504,7 +525,7 @@ export function MembersManager({
           <form onSubmit={editForm.handleSubmit(onEditOrg)} className="space-y-4">
             <div className="space-y-1">
               <Label htmlFor="orgName">{t("orgName")}</Label>
-              <Input id="orgName" {...editForm.register("name")} />
+              <Input id="orgName" maxLength={LIMITS.name} {...editForm.register("name")} />
               {editForm.formState.errors.name && (
                 <p className="text-xs text-destructive">
                   {tval(editForm.formState.errors.name.message!)}

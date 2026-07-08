@@ -1,5 +1,7 @@
 import { z } from "zod"
 
+import { LIMITS } from "@/schemas/limits"
+
 // Mensagens = chaves do namespace `validation` (resolvidas no componente). Ver docs/I18N.md.
 
 export const protocolEntrySchema = z.object({
@@ -9,15 +11,15 @@ export const protocolEntrySchema = z.object({
 })
 
 export const createResearchSchema = z.object({
-  name: z.string().min(3, "min3").max(255),
-  description: z.string().max(2000).optional().or(z.literal("")),
+  name: z.string().min(3, "min3").max(LIMITS.name),
+  description: z.string().max(LIMITS.longText).optional().or(z.literal("")),
   isPublic: z.boolean().optional(),
   protocols: z.array(protocolEntrySchema).optional(),
 })
 
 export const updateResearchSchema = z.object({
-  name: z.string().min(3, "min3").max(255).optional(),
-  description: z.string().max(2000).optional().or(z.literal("")),
+  name: z.string().min(3, "min3").max(LIMITS.name).optional(),
+  description: z.string().max(LIMITS.longText).optional().or(z.literal("")),
   isPublic: z.boolean().optional(),
 })
 

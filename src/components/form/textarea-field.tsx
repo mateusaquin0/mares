@@ -3,9 +3,11 @@
 import type { ComponentProps } from "react"
 
 import { Textarea } from "@/components/ui/textarea"
+import { CharCounter } from "@/components/ui/char-counter"
 import { Field } from "./field"
 
 // Campo de texto multilinha controlado: Label + Textarea + erro.
+// `max` (opcional): aplica `maxLength` e mostra um contador de caracteres.
 export function TextareaField({
   id,
   label,
@@ -13,6 +15,7 @@ export function TextareaField({
   onChange,
   error,
   optional,
+  max,
   ...props
 }: {
   id: string
@@ -21,16 +24,23 @@ export function TextareaField({
   onChange: (value: string) => void
   error?: string
   optional?: boolean
+  max?: number
 } & Omit<ComponentProps<typeof Textarea>, "id" | "value" | "onChange">) {
   return (
     <Field htmlFor={id} label={label} error={error} optional={optional}>
       <Textarea
         id={id}
         value={value}
+        maxLength={max}
         aria-invalid={!!error || undefined}
         onChange={(e) => onChange(e.target.value)}
         {...props}
       />
+      {max != null && (
+        <div className="text-right">
+          <CharCounter value={value} max={max} />
+        </div>
+      )}
     </Field>
   )
 }

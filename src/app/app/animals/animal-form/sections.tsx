@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
 import { SpeciesAutocomplete } from "@/components/species-autocomplete"
 import { Field, TextField, TextareaField, SelectField } from "@/components/form"
+import { LIMITS } from "@/schemas/limits"
 import { SEX_OPTIONS, LIFE_STAGE_OPTIONS } from "@/lib/animal-enums"
 import type { AnimalFormApi } from "./use-animal-form"
 import type { ResearchOption } from "."
@@ -111,6 +112,7 @@ export function IdentificationSection({
           label={t("controlId")}
           value={form.controlId}
           error={errors.controlId}
+          maxLength={LIMITS.shortText}
           onChange={(v) => set({ controlId: v })}
         />
         <Field
@@ -123,6 +125,7 @@ export function IdentificationSection({
             <Input
               id="simba"
               value={form.simbaRecordNumber}
+              maxLength={LIMITS.shortText}
               aria-invalid={!!errors.simbaRecordNumber || undefined}
               onChange={(e) => set({ simbaRecordNumber: e.target.value })}
             />
@@ -170,6 +173,7 @@ export function StrandingSection({ form, errors, set }: SectionProps) {
           optional
           value={form.strandingBeach}
           error={errors.strandingBeach}
+          maxLength={LIMITS.name}
           onChange={(v) => set({ strandingBeach: v })}
         />
         <TextField
@@ -177,6 +181,7 @@ export function StrandingSection({ form, errors, set }: SectionProps) {
           label={t("municipality")}
           value={form.municipality}
           error={errors.municipality}
+          maxLength={LIMITS.shortText}
           onChange={(v) => set({ municipality: v })}
         />
         <TextField
@@ -184,6 +189,7 @@ export function StrandingSection({ form, errors, set }: SectionProps) {
           label={t("state")}
           value={form.state}
           error={errors.state}
+          maxLength={LIMITS.shortText}
           onChange={(v) => set({ state: v })}
         />
         <TextField
@@ -244,6 +250,7 @@ export function ConditionSection({ form, errors, set }: SectionProps) {
           optional
           value={form.bodyCondition}
           error={errors.bodyCondition}
+          maxLength={LIMITS.tinyText}
           onChange={(v) => set({ bodyCondition: v })}
         />
         <TextField
@@ -252,6 +259,7 @@ export function ConditionSection({ form, errors, set }: SectionProps) {
           optional
           value={form.decompositionStage}
           error={errors.decompositionStage}
+          maxLength={LIMITS.tinyText}
           onChange={(v) => set({ decompositionStage: v })}
         />
         <TextField
@@ -260,6 +268,7 @@ export function ConditionSection({ form, errors, set }: SectionProps) {
           optional
           value={form.deathCondition}
           error={errors.deathCondition}
+          maxLength={LIMITS.tinyText}
           onChange={(v) => set({ deathCondition: v })}
         />
         <TextField
@@ -292,6 +301,7 @@ export function NotesSection({
         label={t("macroscopicNotes")}
         optional
         rows={3}
+        max={LIMITS.hugeText}
         value={form.macroscopicNotes}
         error={errors.macroscopicNotes}
         onChange={(v) => set({ macroscopicNotes: v })}

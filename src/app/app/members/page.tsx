@@ -10,11 +10,20 @@ export default async function MembersPage() {
   const activeOrgId = await getActiveOrgId(user)
   if (!activeOrgId) redirect("/app/dashboard")
 
-  // Somente administradores da organização gerenciam membros (o admin global não participa).
+  // Pesquisador vê a lista em modo leitura; só admin da org gerencia (o admin global não
+  // participa de organizações). Ver docs/PERMISSOES.md.
   const role = orgRole(user, activeOrgId)
-  if (role !== "ORG_ADMIN") redirect("/app/dashboard")
+  if (!role) redirect("/app/dashboard")
+  const canManage = role === "ORG_ADMIN"
 
   const activeOrg = user.memberships.find((m) => m.orgId === activeOrgId)
 
-  return <MembersManager orgId={activeOrgId} orgName={activeOrg?.orgName ?? ""} selfId={user.id} />
+  return (
+    <MembersManager
+      orgId={activeOrgId}
+      orgName={activeOrg?.orgName ?? ""}
+      selfId={user.id}
+      canManage={canManage}
+    />
+  )
 }

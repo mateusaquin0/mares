@@ -9,6 +9,7 @@ import { toast } from "sonner"
 import { MoreHorizontal, Plus, Search, Globe, Lock } from "lucide-react"
 
 import { createResearchSchema, type CreateResearchData } from "@/schemas/research.schema"
+import { LIMITS } from "@/schemas/limits"
 import {
   useResearchList,
   useCreateResearch,
@@ -21,6 +22,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { CharCounter } from "@/components/ui/char-counter"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Badge } from "@/components/ui/badge"
 import { TableSkeleton } from "@/components/ui/skeleton"
@@ -240,7 +242,7 @@ export function ResearchManager({ isOrgAdmin, selfId }: { isOrgAdmin: boolean; s
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <div className="space-y-1">
               <Label htmlFor="name">{t("nameLabel")}</Label>
-              <Input id="name" {...form.register("name")} />
+              <Input id="name" maxLength={LIMITS.name} {...form.register("name")} />
               {form.formState.errors.name && (
                 <p className="text-xs text-destructive">
                   {tval(form.formState.errors.name.message!)}
@@ -248,8 +250,16 @@ export function ResearchManager({ isOrgAdmin, selfId }: { isOrgAdmin: boolean; s
               )}
             </div>
             <div className="space-y-1">
-              <Label htmlFor="description">{t("descriptionLabel")}</Label>
-              <Textarea id="description" rows={3} {...form.register("description")} />
+              <div className="flex items-center justify-between">
+                <Label htmlFor="description">{t("descriptionLabel")}</Label>
+                <CharCounter value={form.watch("description")} max={LIMITS.longText} />
+              </div>
+              <Textarea
+                id="description"
+                rows={3}
+                maxLength={LIMITS.longText}
+                {...form.register("description")}
+              />
             </div>
             {isOrgAdmin && (
               <div className="flex items-start gap-2">

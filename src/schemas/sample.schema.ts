@@ -1,6 +1,7 @@
 import { z } from "zod"
 
 import { optionalDate, optionalNumber, optionalText } from "@/schemas/common"
+import { LIMITS } from "@/schemas/limits"
 
 // Mensagens = chaves do namespace `validation`. Valores de status = enum SampleStatus do Prisma.
 
@@ -10,13 +11,13 @@ export const createSampleSchema = z.object({
   // Pesquisa dona da amostra (uma das pesquisas do indivíduo). Ver docs/BANCO_DE_DADOS.md.
   researchId: z.string().min(1, "required"),
   organId: z.string().min(1, "required"),
-  identification: z.string().min(1, "required").max(255),
-  sampleType: z.string().min(1, "required").max(255),
+  identification: z.string().min(1, "required").max(LIMITS.name),
+  sampleType: z.string().min(1, "required").max(LIMITS.name),
   collectionDate: optionalDate,
-  storageLocation: optionalText(255),
+  storageLocation: optionalText(LIMITS.name),
   storageTemp: optionalNumber,
   status: sampleStatusSchema.optional(),
-  notes: optionalText(2000),
+  notes: optionalText(LIMITS.longText),
 })
 
 export const updateSampleSchema = createSampleSchema.partial()
