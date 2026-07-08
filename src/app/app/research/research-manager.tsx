@@ -33,6 +33,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { ReloadButton } from "@/components/ui/reload-button"
 import {
   Dialog,
   DialogContent,
@@ -142,7 +143,9 @@ export function ResearchManager({ isOrgAdmin, selfId }: { isOrgAdmin: boolean; s
                 <TableHead>{t("colVisibility")}</TableHead>
                 <TableHead className="text-right">{t("colProtocols")}</TableHead>
                 <TableHead className="text-right">{t("colAnimals")}</TableHead>
-                <TableHead className="w-24 text-right">{t("colActions")}</TableHead>
+                <TableHead className="w-24 text-right">
+                  <ReloadButton />
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>

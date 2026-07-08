@@ -9,9 +9,10 @@ import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { TableSkeleton } from "@/components/ui/skeleton"
+import { ReloadButton } from "@/components/ui/reload-button"
 import { useErrorMessage } from "@/lib/use-error-message"
 import { useFeedbackList, useUpdateFeedback } from "@/hooks/use-feedback"
-import type { FeedbackStatus, FeedbackType } from "@/types/feedback"
+import type { FeedbackItem, FeedbackStatus, FeedbackType } from "@/types/feedback"
 import {
   Table,
   TableBody,
@@ -20,6 +21,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -46,6 +54,7 @@ export default function AdminFeedbackPage() {
   const items = listQ.data ?? []
   const updateM = useUpdateFeedback()
   const [busy, setBusy] = useState<string | null>(null)
+  const [selected, setSelected] = useState<FeedbackItem | null>(null)
 
   async function setStatus(id: string, status: FeedbackStatus) {
     setBusy(id)
@@ -68,6 +77,8 @@ export default function AdminFeedbackPage() {
       </Badge>
     )
   }
+
+  const fmtDate = (iso: string) => new Date(iso).toLocaleString(locale)
 
   return (
     <div className="mx-auto max-w-6xl space-y-6 p-8">
@@ -105,22 +116,28 @@ export default function AdminFeedbackPage() {
             <TableHeader>
               <TableRow>
                 <TableHead className="w-32">{t("colType")}</TableHead>
-                <TableHead>{t("colMessage")}</TableHead>
+                <TableHead>{t("colTitle")}</TableHead>
                 <TableHead className="w-56">{t("colAuthor")}</TableHead>
                 <TableHead className="w-28">{t("colStatus")}</TableHead>
-                <TableHead className="w-16 text-right">{t("colActions")}</TableHead>
+                <TableHead className="w-16 text-right">
+                  <ReloadButton
+                    onReload={async () => {
+                      await listQ.refetch()
+                    }}
+                  />
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {items.map((f) => (
-                <TableRow key={f.id}>
+                <TableRow
+                  key={f.id}
+                  onClick={() => setSelected(f)}
+                  className="cursor-pointer"
+                  title={t("viewDetails")}
+                >
                   <TableCell>{typeBadge(f.type)}</TableCell>
-                  <TableCell>
-                    <p className="whitespace-pre-wrap text-sm">{f.message}</p>
-                    {f.pageUrl && (
-                      <p className="mt-1 truncate text-xs text-muted-foreground">{f.pageUrl}</p>
-                    )}
-                  </TableCell>
+                  <TableCell className="font-medium">{f.title}</TableCell>
                   <TableCell>
                     <span className="text-sm">{f.createdByEmail}</span>
                     <span className="mt-0.5 block text-xs text-muted-foreground">
@@ -130,7 +147,8 @@ export default function AdminFeedbackPage() {
                   <TableCell>
                     <Badge variant={statusVariant[f.status]}>{t(`status_${f.status}`)}</Badge>
                   </TableCell>
-                  <TableCell className="text-right">
+                  {/* stopPropagation: o menu de ações não deve abrir o modal de detalhes. */}
+                  <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button
@@ -159,6 +177,58 @@ export default function AdminFeedbackPage() {
           </Table>
         </div>
       )}
+
+      {/* Modal de detalhes (clique na linha) */}
+      <Dialog open={!!selected} onOpenChange={(o) => !o && setSelected(null)}>
+        <DialogContent>
+          {selected && (
+            <>
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  {typeBadge(selected.type)}
+                  <span className="truncate">{selected.title}</span>
+                </DialogTitle>
+                <DialogDescription>
+                  {selected.createdByEmail} · {fmtDate(selected.createdAt)}
+                </DialogDescription>
+              </DialogHeader>
+
+              <div className="space-y-4 text-sm">
+                <div>
+                  <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    {t("detailStatus")}
+                  </p>
+                  <Badge variant={statusVariant[selected.status]}>
+                    {t(`status_${selected.status}`)}
+                  </Badge>
+                </div>
+                <div>
+                  <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    {t("detailMessage")}
+                  </p>
+                  <p className="whitespace-pre-wrap">{selected.message}</p>
+                </div>
+                {selected.pageUrl && (
+                  <div>
+                    <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                      {t("detailPage")}
+                    </p>
+                    <p className="break-all text-muted-foreground">{selected.pageUrl}</p>
+                  </div>
+                )}
+                {selected.adminNote && (
+                  <div>
+                    <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                      {t("detailAdminNote")}
+                    </p>
+                    <p className="whitespace-pre-wrap">{selected.adminNote}</p>
+                  </div>
+                )}
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

@@ -32,6 +32,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { ReloadButton } from "@/components/ui/reload-button"
 
 // Gestão de membros de um grupo pelo admin global (adicionar, mudar papel, remover).
 export function OrgMembers({ org }: { org: AdminOrg }) {
@@ -94,7 +95,9 @@ export function OrgMembers({ org }: { org: AdminOrg }) {
                 <TableRow>
                   <TableHead>{t("colUserName")}</TableHead>
                   <TableHead className="w-40">{t("colUserRole")}</TableHead>
-                  <TableHead className="w-12 text-right">{tc("actions")}</TableHead>
+                  <TableHead className="w-12 text-right">
+                    <ReloadButton />
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>

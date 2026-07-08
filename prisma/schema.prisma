@@ -379,6 +379,7 @@ model AuditLog {
 model Feedback {
   id             String         @id @default(uuid())
   type           FeedbackType
+  title          String // título curto (resumo)
   message        String
   pageUrl        String? // de onde o usuário enviou (contexto)
   status         FeedbackStatus @default(NEW)

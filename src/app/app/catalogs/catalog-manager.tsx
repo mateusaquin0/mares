@@ -43,6 +43,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { ReloadButton } from "@/components/ui/reload-button"
 import {
   Dialog,
   DialogContent,
@@ -300,7 +301,9 @@ export function CatalogManager({
                       </SortableHead>
                     </>
                   )}
-                  <TableHead className="w-32 text-right">{tc("actions")}</TableHead>
+                  <TableHead className="w-32 text-right">
+                    <ReloadButton />
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>

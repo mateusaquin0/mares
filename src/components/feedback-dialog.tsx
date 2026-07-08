@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils"
 import { useCreateFeedback } from "@/hooks/use-feedback"
 import { useErrorMessage } from "@/lib/use-error-message"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import {
@@ -21,7 +22,11 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import type { FeedbackTypeValue } from "@/schemas/feedback.schema"
+import {
+  FEEDBACK_MESSAGE_MAX,
+  FEEDBACK_TITLE_MAX,
+  type FeedbackTypeValue,
+} from "@/schemas/feedback.schema"
 
 // Botão + diálogo para enviar sugestão ou relatar bug (usuário autenticado).
 // Fica no rodapé da sidebar; `collapsed` esconde o rótulo.
@@ -33,18 +38,27 @@ export function FeedbackDialog({ collapsed }: { collapsed?: boolean }) {
 
   const [open, setOpen] = useState(false)
   const [type, setType] = useState<FeedbackTypeValue>("SUGGESTION")
+  const [title, setTitle] = useState("")
   const [message, setMessage] = useState("")
 
   function reset() {
     setType("SUGGESTION")
+    setTitle("")
     setMessage("")
   }
 
+  const canSubmit = !!title.trim() && !!message.trim()
+
   async function submit(e: React.FormEvent) {
     e.preventDefault()
-    if (!message.trim()) return
+    if (!canSubmit) return
     try {
-      await createM.mutateAsync({ type, message: message.trim(), pageUrl: pathname })
+      await createM.mutateAsync({
+        type,
+        title: title.trim(),
+        message: message.trim(),
+        pageUrl: pathname,
+      })
       toast.success(t("sent"))
       setOpen(false)
       reset()
@@ -110,13 +124,35 @@ export function FeedbackDialog({ collapsed }: { collapsed?: boolean }) {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="feedback-message">{t("messageLabel")}</Label>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="feedback-title">{t("titleLabel")}</Label>
+              <span className="text-xs text-muted-foreground">
+                {title.length}/{FEEDBACK_TITLE_MAX}
+              </span>
+            </div>
+            <Input
+              id="feedback-title"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder={t("titlePlaceholder")}
+              maxLength={FEEDBACK_TITLE_MAX}
+              required
+            />
+          </div>
+
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <Label htmlFor="feedback-message">{t("messageLabel")}</Label>
+              <span className="text-xs text-muted-foreground">
+                {message.length}/{FEEDBACK_MESSAGE_MAX}
+              </span>
+            </div>
             <Textarea
               id="feedback-message"
               value={message}
               onChange={(e) => setMessage(e.target.value)}
               placeholder={t("messagePlaceholder")}
-              maxLength={2000}
+              maxLength={FEEDBACK_MESSAGE_MAX}
               rows={5}
               required
             />
@@ -131,7 +167,7 @@ export function FeedbackDialog({ collapsed }: { collapsed?: boolean }) {
             >
               {t("cancel")}
             </Button>
-            <Button type="submit" loading={createM.isPending} disabled={!message.trim()}>
+            <Button type="submit" loading={createM.isPending} disabled={!canSubmit}>
               {t("send")}
             </Button>
           </DialogFooter>

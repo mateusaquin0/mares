@@ -31,6 +31,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { ReloadButton } from "@/components/ui/reload-button"
 import { SortableHead } from "@/components/ui/sortable-head"
 import {
   DropdownMenu,
@@ -477,7 +478,9 @@ export function AnimalsTable({
               >
                 {t("colSamples")}
               </SortableHead>
-              <TableHead className="w-16 text-right">{tc("actions")}</TableHead>
+              <TableHead className="w-16 text-right">
+                <ReloadButton />
+              </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>

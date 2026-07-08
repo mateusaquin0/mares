@@ -36,6 +36,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { ReloadButton } from "@/components/ui/reload-button"
 import {
   Dialog,
   DialogContent,
@@ -242,7 +243,9 @@ export function ResearchDetail({
                     <TableHead>{tp("pathogen")}</TableHead>
                     <TableHead>{tp("examType")}</TableHead>
                     {isOrgAdmin && (
-                      <TableHead className="w-16 text-right">{tc("actions")}</TableHead>
+                      <TableHead className="w-16 text-right">
+                        <ReloadButton />
+                      </TableHead>
                     )}
                   </TableRow>
                 </TableHeader>

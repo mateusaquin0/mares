@@ -27,6 +27,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { ReloadButton } from "@/components/ui/reload-button"
 import {
   Dialog,
   DialogContent,
@@ -217,7 +218,9 @@ export function SamplesTab({
                 <TableHead className="text-right">{t("colTemp")}</TableHead>
                 <TableHead>{t("colStatus")}</TableHead>
                 <TableHead className="text-right">{t("colAnalyses")}</TableHead>
-                <TableHead className="w-12 text-right">{tc("actions")}</TableHead>
+                <TableHead className="w-12 text-right">
+                  <ReloadButton />
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>

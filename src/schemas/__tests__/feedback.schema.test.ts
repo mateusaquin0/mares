@@ -1,39 +1,44 @@
 import { describe, it, expect } from "vitest"
 import { createFeedbackSchema, updateFeedbackSchema } from "@/schemas/feedback.schema"
 
+const valid = { type: "SUGGESTION" as const, title: "Ideia", message: "ótima ideia" }
+
 describe("createFeedbackSchema", () => {
-  it("aceita sugestão/bug com mensagem", () => {
+  it("aceita sugestão/bug com título e mensagem", () => {
+    expect(createFeedbackSchema.safeParse(valid).success).toBe(true)
     expect(
-      createFeedbackSchema.safeParse({ type: "SUGGESTION", message: "ótima ideia" }).success,
+      createFeedbackSchema.safeParse({ type: "BUG", title: "Erro", message: "quebrou aqui" })
+        .success,
     ).toBe(true)
-    expect(createFeedbackSchema.safeParse({ type: "BUG", message: "quebrou aqui" }).success).toBe(
-      true,
-    )
   })
 
   it("rejeita tipo fora do domínio", () => {
-    expect(createFeedbackSchema.safeParse({ type: "OUTRO", message: "x" }).success).toBe(false)
+    expect(createFeedbackSchema.safeParse({ ...valid, type: "OUTRO" }).success).toBe(false)
+  })
+
+  it("exige título não vazio", () => {
+    expect(createFeedbackSchema.safeParse({ ...valid, title: "" }).success).toBe(false)
+    expect(createFeedbackSchema.safeParse({ ...valid, title: "   " }).success).toBe(false)
+  })
+
+  it("rejeita título acima de 120 caracteres", () => {
+    expect(createFeedbackSchema.safeParse({ ...valid, title: "a".repeat(121) }).success).toBe(false)
   })
 
   it("exige mensagem não vazia", () => {
-    expect(createFeedbackSchema.safeParse({ type: "BUG", message: "" }).success).toBe(false)
-    expect(createFeedbackSchema.safeParse({ type: "BUG", message: "   " }).success).toBe(false)
+    expect(createFeedbackSchema.safeParse({ ...valid, message: "" }).success).toBe(false)
+    expect(createFeedbackSchema.safeParse({ ...valid, message: "   " }).success).toBe(false)
   })
 
   it("rejeita mensagem acima de 2000 caracteres", () => {
-    expect(createFeedbackSchema.safeParse({ type: "BUG", message: "a".repeat(2001) }).success).toBe(
+    expect(createFeedbackSchema.safeParse({ ...valid, message: "a".repeat(2001) }).success).toBe(
       false,
     )
   })
 
   it("aceita pageUrl opcional (inclusive vazia)", () => {
-    expect(createFeedbackSchema.safeParse({ type: "BUG", message: "x", pageUrl: "" }).success).toBe(
-      true,
-    )
-    expect(
-      createFeedbackSchema.safeParse({ type: "BUG", message: "x", pageUrl: "/app/animals" })
-        .success,
-    ).toBe(true)
+    expect(createFeedbackSchema.safeParse({ ...valid, pageUrl: "" }).success).toBe(true)
+    expect(createFeedbackSchema.safeParse({ ...valid, pageUrl: "/app/animals" }).success).toBe(true)
   })
 })
 

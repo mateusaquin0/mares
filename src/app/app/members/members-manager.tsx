@@ -47,6 +47,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { ReloadButton } from "@/components/ui/reload-button"
 import {
   Dialog,
   DialogContent,
@@ -273,7 +274,9 @@ export function MembersManager({
                 <TableRow>
                   <TableHead>{t("colName")}</TableHead>
                   <TableHead>{t("colRole")}</TableHead>
-                  <TableHead className="w-16 text-right">{t("colActions")}</TableHead>
+                  <TableHead className="w-16 text-right">
+                    <ReloadButton />
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
