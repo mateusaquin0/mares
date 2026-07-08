@@ -7,7 +7,6 @@ CREATE TYPE "FeedbackStatus" AS ENUM ('NEW', 'IN_REVIEW', 'RESOLVED', 'WONT_FIX'
 CREATE TABLE "Feedback" (
     "id"             TEXT NOT NULL,
     "type"           "FeedbackType" NOT NULL,
-    "title"          TEXT NOT NULL,
     "message"        TEXT NOT NULL,
     "pageUrl"        TEXT,
     "status"         "FeedbackStatus" NOT NULL DEFAULT 'NEW',
