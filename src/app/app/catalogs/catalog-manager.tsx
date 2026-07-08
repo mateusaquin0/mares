@@ -380,7 +380,7 @@ export function CatalogManager({
       )}
 
       <Dialog open={!!dialog} onOpenChange={(o) => !o && setDialog(null)}>
-        <DialogContent>
+        <DialogContent dirty={form.formState.isDirty}>
           <DialogHeader>
             <DialogTitle>{dialog?.mode === "edit" ? t("editTitle") : t("addTitle")}</DialogTitle>
             <DialogDescription>

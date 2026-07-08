@@ -51,6 +51,7 @@ export function AnimalFormDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
+        dirty={f.isDirty}
         className="max-h-[90vh] max-w-2xl overflow-y-auto"
         // Na edição, a "pesquisa" é um input desabilitado, então o foco automático
         // do Radix cairia na espécie. Evita focar qualquer campo ao abrir.

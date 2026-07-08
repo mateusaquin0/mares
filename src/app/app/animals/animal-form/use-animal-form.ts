@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, type FormEvent } from "react"
+import { useEffect, useRef, useState, type FormEvent } from "react"
 import { useTranslations } from "next-intl"
 import { toast } from "sonner"
 
@@ -101,6 +101,7 @@ export type AnimalFormApi = {
   errors: FieldErrors
   set: (patch: Partial<FormState>) => void
   saving: boolean
+  isDirty: boolean
   fetchingSimba: boolean
   fetchSimba: () => Promise<void>
   submit: (e: FormEvent) => Promise<void>
@@ -126,6 +127,7 @@ export function useAnimalForm({
 
   const [form, setForm] = useState<FormState>(emptyForm)
   const [errors, setErrors] = useState<FieldErrors>({})
+  const initialForm = useRef<FormState>(emptyForm)
 
   const createM = useCreateAnimal()
   const updateM = useUpdateAnimal(animalId ?? "")
@@ -141,12 +143,20 @@ export function useAnimalForm({
   useEffect(() => {
     if (!open) return
     setErrors({})
-    if (mode === "create") setForm({ ...emptyForm, researchId: defaultResearchId })
+    if (mode === "create") {
+      const init = { ...emptyForm, researchId: defaultResearchId }
+      setForm(init)
+      initialForm.current = init
+    }
   }, [open, mode, defaultResearchId])
 
   // Editar: semeia o formulário quando o detalhe chega.
   useEffect(() => {
-    if (open && editing && animalQ.data) setForm(mapAnimalToForm(animalQ.data))
+    if (open && editing && animalQ.data) {
+      const init = mapAnimalToForm(animalQ.data)
+      setForm(init)
+      initialForm.current = init
+    }
   }, [open, editing, animalQ.data])
 
   const set = (patch: Partial<FormState>) => {
@@ -247,5 +257,7 @@ export function useAnimalForm({
     }
   }
 
-  return { form, errors, set, saving, fetchingSimba, fetchSimba, submit }
+  const isDirty = JSON.stringify(form) !== JSON.stringify(initialForm.current)
+
+  return { form, errors, set, saving, isDirty, fetchingSimba, fetchSimba, submit }
 }
