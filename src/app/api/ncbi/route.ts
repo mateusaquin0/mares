@@ -6,44 +6,9 @@ import { NextRequest, NextResponse } from "next/server"
 import { getAuthUser } from "@/lib/auth"
 import { apiError, tooManyRequests, unauthorized } from "@/lib/api"
 import { clientKey, rateLimit } from "@/lib/rate-limit"
+import { parseNcbiTaxa } from "@/lib/ncbi"
 
 const EUTILS = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils"
-
-// Primeiro valor de uma tag simples.
-function firstTag(xml: string, tag: string): string | null {
-  const m = xml.match(new RegExp(`<${tag}>([\\s\\S]*?)</${tag}>`, "i"))
-  return m ? m[1].trim() : null
-}
-
-// Nome científico de um Rank dentro do LineageEx (ex.: family, order).
-function lineageName(xml: string, rank: string): string | null {
-  const m = xml.match(
-    new RegExp(`<ScientificName>([^<]+)</ScientificName>\\s*<Rank>${rank}</Rank>`, "i")
-  )
-  return m ? m[1].trim() : null
-}
-
-// Divide o TaxaSet nos blocos <Taxon> de nível superior (ignora os aninhados no LineageEx).
-function topLevelTaxa(xml: string): string[] {
-  const out: string[] = []
-  let depth = 0
-  let start = -1
-  const re = /<\/?Taxon>/g
-  let m: RegExpExecArray | null
-  while ((m = re.exec(xml))) {
-    if (m[0] === "<Taxon>") {
-      if (depth === 0) start = m.index + m[0].length
-      depth++
-    } else {
-      depth--
-      if (depth === 0 && start >= 0) {
-        out.push(xml.slice(start, m.index))
-        start = -1
-      }
-    }
-  }
-  return out
-}
 
 export async function GET(req: NextRequest) {
   try {
@@ -76,17 +41,7 @@ export async function GET(req: NextRequest) {
     if (!fres.ok) return NextResponse.json([])
     const xml = await fres.text()
 
-    const results = topLevelTaxa(xml)
-      .map((block) => ({
-        key: Number(firstTag(block, "TaxId")),
-        scientificName: firstTag(block, "ScientificName") ?? "",
-        rank: firstTag(block, "Rank"),
-        family: lineageName(block, "family"),
-        order: lineageName(block, "order"),
-      }))
-      .filter((r) => r.scientificName && Number.isFinite(r.key) && r.key > 0)
-
-    return NextResponse.json(results)
+    return NextResponse.json(parseNcbiTaxa(xml))
   } catch (err) {
     return apiError(err)
   }
