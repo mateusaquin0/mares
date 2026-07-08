@@ -31,9 +31,5 @@ export function UsaFlag({ className }: { className?: string }) {
 }
 
 export function LocaleFlag({ locale, className }: { locale: Locale; className?: string }) {
-  return locale === "pt" ? (
-    <BrazilFlag className={className} />
-  ) : (
-    <UsaFlag className={className} />
-  )
+  return locale === "pt" ? <BrazilFlag className={className} /> : <UsaFlag className={className} />
 }

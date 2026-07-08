@@ -25,12 +25,19 @@ import type { CatalogType } from "@/schemas/catalog.schema"
 async function assertCanModify(
   user: { id: string; isSystemAdmin: boolean },
   type: CatalogType,
-  id: string
+  id: string,
 ): Promise<number> {
   const row = await catalogCreatedBy(type, id)
   if (!row) throw new NotFoundError("Entrada não encontrada", ERROR_CODES.catalogNotFound)
   const usage = await catalogUsage(type, id)
-  if (!canModifyCatalog({ isSystemAdmin: user.isSystemAdmin, createdById: row.createdById, userId: user.id, usage })) {
+  if (
+    !canModifyCatalog({
+      isSystemAdmin: user.isSystemAdmin,
+      createdById: row.createdById,
+      userId: user.id,
+      usage,
+    })
+  ) {
     throw new ForbiddenError("Sem permissão para alterar este item", ERROR_CODES.forbidden)
   }
   return usage
@@ -38,14 +45,15 @@ async function assertCanModify(
 
 export async function PUT(
   req: NextRequest,
-  { params }: { params: Promise<{ type: string; id: string }> }
+  { params }: { params: Promise<{ type: string; id: string }> },
 ) {
   try {
     const user = await getAuthUser()
     if (!user) return unauthorized()
 
     const { type, id } = await params
-    if (!isCatalogType(type)) throw new NotFoundError("Catálogo inválido", ERROR_CODES.catalogNotFound)
+    if (!isCatalogType(type))
+      throw new NotFoundError("Catálogo inválido", ERROR_CODES.catalogNotFound)
     await assertCanModify(user, type, id)
 
     const body = await req.json().catch(() => null)
@@ -68,13 +76,16 @@ export async function PUT(
           type,
           id,
           { pt: data.namePt.trim(), en: data.nameEn.trim() },
-          resolveMeasure(data)
+          resolveMeasure(data),
         )
         return NextResponse.json(updated)
       }
 
       const data = nameI18nSchema.parse(body)
-      const updated = await updateNamed(type, id, { pt: data.namePt.trim(), en: data.nameEn.trim() })
+      const updated = await updateNamed(type, id, {
+        pt: data.namePt.trim(),
+        en: data.nameEn.trim(),
+      })
       return NextResponse.json(updated)
     } catch (e) {
       if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
@@ -89,14 +100,15 @@ export async function PUT(
 
 export async function DELETE(
   _req: NextRequest,
-  { params }: { params: Promise<{ type: string; id: string }> }
+  { params }: { params: Promise<{ type: string; id: string }> },
 ) {
   try {
     const user = await getAuthUser()
     if (!user) return unauthorized()
 
     const { type, id } = await params
-    if (!isCatalogType(type)) throw new NotFoundError("Catálogo inválido", ERROR_CODES.catalogNotFound)
+    if (!isCatalogType(type))
+      throw new NotFoundError("Catálogo inválido", ERROR_CODES.catalogNotFound)
     const usage = await assertCanModify(user, type, id)
 
     // Bloqueio adicional: mesmo o admin global não remove um item em uso.

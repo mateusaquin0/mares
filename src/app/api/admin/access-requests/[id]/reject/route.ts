@@ -15,7 +15,8 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
 
     const { id } = await params
     const joinRequest = await prisma.joinRequest.findUnique({ where: { id } })
-    if (!joinRequest) throw new NotFoundError("Solicitação não encontrada", ERROR_CODES.requestNotFound)
+    if (!joinRequest)
+      throw new NotFoundError("Solicitação não encontrada", ERROR_CODES.requestNotFound)
     if (joinRequest.status !== "PENDING") {
       throw new ConflictError("Solicitação já foi processada", ERROR_CODES.requestProcessed)
     }

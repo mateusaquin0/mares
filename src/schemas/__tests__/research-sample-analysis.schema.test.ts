@@ -9,7 +9,7 @@ describe("createResearchSchema", () => {
       createResearchSchema.safeParse({
         name: "Toxoplasmose em cetáceos",
         protocols: [{ organId: "o1", pathogenId: "p1", examTypeId: "e1" }],
-      }).success
+      }).success,
     ).toBe(true)
   })
 
@@ -22,7 +22,7 @@ describe("createResearchSchema", () => {
       createResearchSchema.safeParse({
         name: "Pesquisa X",
         protocols: [{ organId: "o1", pathogenId: "", examTypeId: "e1" }],
-      }).success
+      }).success,
     ).toBe(false)
   })
 })
@@ -31,7 +31,9 @@ describe("protocolEntriesSchema", () => {
   it("exige ao menos uma entrada", () => {
     expect(protocolEntriesSchema.safeParse({ entries: [] }).success).toBe(false)
     expect(
-      protocolEntriesSchema.safeParse({ entries: [{ organId: "o", pathogenId: "p", examTypeId: "e" }] }).success
+      protocolEntriesSchema.safeParse({
+        entries: [{ organId: "o", pathogenId: "p", examTypeId: "e" }],
+      }).success,
     ).toBe(true)
   })
 })

@@ -13,7 +13,13 @@ export type DashboardFilters = {
 }
 
 export type DashboardData = {
-  totals: { animals: number; samples: number; analyses: number; positive: number; positivity: number }
+  totals: {
+    animals: number
+    samples: number
+    analyses: number
+    positive: number
+    positivity: number
+  }
   species: { name: string; count: number }[]
   positivityByExam: { label: string; total: number; positives: number; pct: number }[]
   timeline: { month: string; count: number }[] // YYYY-MM → nº de encalhes (por eventDate)
@@ -38,7 +44,7 @@ function animalWhere(orgId: string, f: DashboardFilters): Prisma.AnimalWhereInpu
 export async function getDashboardData(
   orgId: string,
   locale: string,
-  filters: DashboardFilters = {}
+  filters: DashboardFilters = {},
 ): Promise<DashboardData> {
   const aWhere = animalWhere(orgId, filters)
   const analysisScope = { sample: { animal: aWhere } }
@@ -91,7 +97,11 @@ export async function getDashboardData(
   // Positividade por exame (top 6 por volume de resultados).
   const positivesById = new Map(examPositivesRaw.map((e) => [e.examTypeId, e._count._all]))
   const examStats = examTotalsRaw
-    .map((e) => ({ id: e.examTypeId, total: e._count._all, positives: positivesById.get(e.examTypeId) ?? 0 }))
+    .map((e) => ({
+      id: e.examTypeId,
+      total: e._count._all,
+      positives: positivesById.get(e.examTypeId) ?? 0,
+    }))
     .sort((a, b) => b.total - a.total)
     .slice(0, 6)
   const examTypes = examStats.length
@@ -119,7 +129,9 @@ export async function getDashboardData(
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([month, count]) => ({ month, count }))
 
-  const heat = coords.map((c) => [c.strandingLat as number, c.strandingLon as number] as [number, number])
+  const heat = coords.map(
+    (c) => [c.strandingLat as number, c.strandingLon as number] as [number, number],
+  )
 
   return {
     totals: {

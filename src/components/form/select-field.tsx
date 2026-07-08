@@ -1,4 +1,4 @@
-"use client";
+"use client"
 
 import {
   Select,
@@ -6,10 +6,10 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { Field } from "./field";
+} from "@/components/ui/select"
+import { Field } from "./field"
 
-export type SelectOption = { value: string; label: string };
+export type SelectOption = { value: string; label: string }
 
 // Campo de seleção controlado: Label + Select + erro. As opções vêm como dados
 // (não JSX), o que mantém o campo declarativo e reutilizável.
@@ -23,14 +23,14 @@ export function SelectField({
   error,
   optional,
 }: {
-  id: string;
-  label: string;
-  value: string;
-  onValueChange: (value: string) => void;
-  options: SelectOption[];
-  placeholder?: string;
-  error?: string;
-  optional?: boolean;
+  id: string
+  label: string
+  value: string
+  onValueChange: (value: string) => void
+  options: SelectOption[]
+  placeholder?: string
+  error?: string
+  optional?: boolean
 }) {
   return (
     <Field htmlFor={id} label={label} error={error} optional={optional}>
@@ -47,5 +47,5 @@ export function SelectField({
         </SelectContent>
       </Select>
     </Field>
-  );
+  )
 }

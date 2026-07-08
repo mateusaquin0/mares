@@ -9,7 +9,7 @@ import { ERROR_CODES } from "@/lib/error-codes"
 
 export async function DELETE(
   _req: NextRequest,
-  { params }: { params: Promise<{ id: string; protocolId: string }> }
+  { params }: { params: Promise<{ id: string; protocolId: string }> },
 ) {
   try {
     const user = await getAuthUser()

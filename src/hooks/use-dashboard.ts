@@ -7,7 +7,8 @@ import type { DashboardFilters } from "@/lib/dashboard"
 
 export const dashboardKeys = {
   all: ["dashboard"] as const,
-  data: (f: DashboardFilters) => ["dashboard", f.researchId ?? null, f.from ?? null, f.to ?? null] as const,
+  data: (f: DashboardFilters) =>
+    ["dashboard", f.researchId ?? null, f.from ?? null, f.to ?? null] as const,
 }
 
 export function useDashboard(filters: DashboardFilters) {

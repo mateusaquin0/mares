@@ -9,12 +9,7 @@ import { pathogenName, txt } from "@/lib/catalog-i18n"
 import { useErrorMessage } from "@/lib/use-error-message"
 import { useAnimalGrid } from "@/hooks/use-animals"
 import { useUpsertAnalysis } from "@/hooks/use-analyses"
-import type {
-  AnalysisCell as Cell,
-  ProtocolEntry,
-  ResultValue,
-  SampleLite,
-} from "@/types/analysis"
+import type { AnalysisCell as Cell, ProtocolEntry, ResultValue, SampleLite } from "@/types/analysis"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { TableSkeleton } from "@/components/ui/skeleton"
@@ -119,109 +114,111 @@ export function AnalysesTab({ animalId }: { animalId: string }) {
             {section.samples.map((sample) => {
               const entries = section.protocol.filter((p) => p.organId === sample.organ.id)
               return (
-          <div key={sample.id} className="space-y-2">
-            <div className="flex flex-wrap items-center gap-2">
-              <h3 className="text-sm font-semibold">
-                {sample.sampleType} — {txt(locale, sample.organ.name)}
-              </h3>
-              <Badge variant="secondary">{statusLabel(sample.status)}</Badge>
-            </div>
+                <div key={sample.id} className="space-y-2">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h3 className="text-sm font-semibold">
+                      {sample.sampleType} — {txt(locale, sample.organ.name)}
+                    </h3>
+                    <Badge variant="secondary">{statusLabel(sample.status)}</Badge>
+                  </div>
 
-            {entries.length === 0 ? (
-              <p className="text-sm text-muted-foreground">{t("noApplicable")}</p>
-            ) : (
-              <div className="rounded-md border">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>{t("colPathogen")}</TableHead>
-                      <TableHead>{t("colExam")}</TableHead>
-                      <TableHead className="w-44">{t("colResult")}</TableHead>
-                      <TableHead className="w-32">{t("colMeasure")}</TableHead>
-                      <TableHead>{t("colNotes")}</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {entries.map((entry) => {
-                      const k = keyOf(sample.id, entry.pathogenId, entry.examTypeId)
-                      const cell = getCell(k)
-                      return (
-                        <TableRow key={k}>
-                          <TableCell className="font-medium">
-                            {pathogenName(locale, entry.pathogen)}
-                          </TableCell>
-                          <TableCell className="text-muted-foreground">
-                            {txt(locale, entry.examType.name)}
-                          </TableCell>
-                          <TableCell>
-                            <Select
-                              value={cell.result ?? UNTESTED}
-                              onValueChange={(v) =>
-                                save(sample, entry, {
-                                  result: v === UNTESTED ? null : (v as ResultValue),
-                                })
-                              }
-                            >
-                              <SelectTrigger className="h-8">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value={UNTESTED}>{t("resultUntested")}</SelectItem>
-                                <SelectItem value="POSITIVO">
-                                  <span className="flex items-center gap-2">
-                                    <span className="size-2 rounded-full bg-[hsl(123_41%_45%)]" />
-                                    {t("resultPositive")}
-                                  </span>
-                                </SelectItem>
-                                <SelectItem value="NEGATIVO">
-                                  <span className="flex items-center gap-2">
-                                    <span className="size-2 rounded-full bg-muted-foreground/40" />
-                                    {t("resultNegative")}
-                                  </span>
-                                </SelectItem>
-                                <SelectItem value="INCONCLUSIVO">
-                                  <span className="flex items-center gap-2">
-                                    <span className="size-2 rounded-full bg-[hsl(35_80%_50%)]" />
-                                    {t("resultInconclusive")}
-                                  </span>
-                                </SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </TableCell>
-                          <TableCell>
-                            {entry.examType.measureLabel ? (
-                              <MeasureInput
-                                value={cell.measureValue}
-                                placeholder={txt(locale, entry.examType.measureLabel)}
-                                unit={entry.examType.measureUnit}
-                                onCommit={(n) => {
-                                  if (n !== cell.measureValue)
-                                    save(sample, entry, { measureValue: n })
-                                }}
-                              />
-                            ) : (
-                              <span className="text-sm text-muted-foreground">—</span>
-                            )}
-                          </TableCell>
-                          <TableCell>
-                            <NotesInput
-                              value={cell.notes}
-                              placeholder={t("notesPlaceholder")}
-                              onCommit={(s) => {
-                                if (s !== cell.notes) save(sample, entry, { notes: s })
-                              }}
-                            />
-                          </TableCell>
-                        </TableRow>
-                      )
-                    })}
-                  </TableBody>
-                </Table>
-              </div>
-            )}
-          </div>
-        )
-      })}
+                  {entries.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">{t("noApplicable")}</p>
+                  ) : (
+                    <div className="rounded-md border">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>{t("colPathogen")}</TableHead>
+                            <TableHead>{t("colExam")}</TableHead>
+                            <TableHead className="w-44">{t("colResult")}</TableHead>
+                            <TableHead className="w-32">{t("colMeasure")}</TableHead>
+                            <TableHead>{t("colNotes")}</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {entries.map((entry) => {
+                            const k = keyOf(sample.id, entry.pathogenId, entry.examTypeId)
+                            const cell = getCell(k)
+                            return (
+                              <TableRow key={k}>
+                                <TableCell className="font-medium">
+                                  {pathogenName(locale, entry.pathogen)}
+                                </TableCell>
+                                <TableCell className="text-muted-foreground">
+                                  {txt(locale, entry.examType.name)}
+                                </TableCell>
+                                <TableCell>
+                                  <Select
+                                    value={cell.result ?? UNTESTED}
+                                    onValueChange={(v) =>
+                                      save(sample, entry, {
+                                        result: v === UNTESTED ? null : (v as ResultValue),
+                                      })
+                                    }
+                                  >
+                                    <SelectTrigger className="h-8">
+                                      <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value={UNTESTED}>
+                                        {t("resultUntested")}
+                                      </SelectItem>
+                                      <SelectItem value="POSITIVO">
+                                        <span className="flex items-center gap-2">
+                                          <span className="size-2 rounded-full bg-[hsl(123_41%_45%)]" />
+                                          {t("resultPositive")}
+                                        </span>
+                                      </SelectItem>
+                                      <SelectItem value="NEGATIVO">
+                                        <span className="flex items-center gap-2">
+                                          <span className="size-2 rounded-full bg-muted-foreground/40" />
+                                          {t("resultNegative")}
+                                        </span>
+                                      </SelectItem>
+                                      <SelectItem value="INCONCLUSIVO">
+                                        <span className="flex items-center gap-2">
+                                          <span className="size-2 rounded-full bg-[hsl(35_80%_50%)]" />
+                                          {t("resultInconclusive")}
+                                        </span>
+                                      </SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                </TableCell>
+                                <TableCell>
+                                  {entry.examType.measureLabel ? (
+                                    <MeasureInput
+                                      value={cell.measureValue}
+                                      placeholder={txt(locale, entry.examType.measureLabel)}
+                                      unit={entry.examType.measureUnit}
+                                      onCommit={(n) => {
+                                        if (n !== cell.measureValue)
+                                          save(sample, entry, { measureValue: n })
+                                      }}
+                                    />
+                                  ) : (
+                                    <span className="text-sm text-muted-foreground">—</span>
+                                  )}
+                                </TableCell>
+                                <TableCell>
+                                  <NotesInput
+                                    value={cell.notes}
+                                    placeholder={t("notesPlaceholder")}
+                                    onCommit={(s) => {
+                                      if (s !== cell.notes) save(sample, entry, { notes: s })
+                                    }}
+                                  />
+                                </TableCell>
+                              </TableRow>
+                            )
+                          })}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  )}
+                </div>
+              )
+            })}
           </div>
         </div>
       ))}

@@ -4,10 +4,7 @@
 
 export type I18nText = { pt?: string | null; en?: string | null }
 
-export function txt(
-  locale: string,
-  value: string | I18nText | null | undefined
-): string {
+export function txt(locale: string, value: string | I18nText | null | undefined): string {
   if (value == null) return ""
   if (typeof value === "string") return value
   return (locale === "en" ? value.en || value.pt : value.pt || value.en) ?? ""
@@ -17,7 +14,7 @@ export function txt(
 // traduzido. Ver docs/I18N.md §catálogos.
 export function pathogenName(
   locale: string,
-  p: { scientificName?: string | null; name?: string | I18nText | null }
+  p: { scientificName?: string | null; name?: string | I18nText | null },
 ): string {
   return p.scientificName || txt(locale, p.name)
 }

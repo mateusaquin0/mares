@@ -1,53 +1,53 @@
-"use client";
+"use client"
 
-import { useState } from "react";
-import { useTranslations } from "next-intl";
-import { toast } from "sonner";
-import { Plus } from "lucide-react";
+import { useState } from "react"
+import { useTranslations } from "next-intl"
+import { toast } from "sonner"
+import { Plus } from "lucide-react"
 
-import { useAnimals, useDeleteAnimal } from "@/hooks/use-animals";
-import { useResearchList } from "@/hooks/use-research";
-import type { AnimalListItem } from "@/types/animal";
-import { useErrorMessage } from "@/lib/use-error-message";
-import { Button } from "@/components/ui/button";
-import { TableSkeleton } from "@/components/ui/skeleton";
-import { ConfirmDialog } from "@/components/confirm-dialog";
-import { AnimalsTable } from "./animals-table";
-import { AnimalFormDialog } from "./animal-form";
+import { useAnimals, useDeleteAnimal } from "@/hooks/use-animals"
+import { useResearchList } from "@/hooks/use-research"
+import type { AnimalListItem } from "@/types/animal"
+import { useErrorMessage } from "@/lib/use-error-message"
+import { Button } from "@/components/ui/button"
+import { TableSkeleton } from "@/components/ui/skeleton"
+import { ConfirmDialog } from "@/components/confirm-dialog"
+import { AnimalsTable } from "./animals-table"
+import { AnimalFormDialog } from "./animal-form"
 
 export function AnimalsManager({ isOrgAdmin }: { isOrgAdmin: boolean }) {
-  const t = useTranslations("animals");
-  const tc = useTranslations("common");
-  const em = useErrorMessage();
+  const t = useTranslations("animals")
+  const tc = useTranslations("common")
+  const em = useErrorMessage()
 
-  const animalsQ = useAnimals();
-  const researchQ = useResearchList();
-  const items = animalsQ.data ?? [];
+  const animalsQ = useAnimals()
+  const researchQ = useResearchList()
+  const items = animalsQ.data ?? []
   const researches = (researchQ.data ?? []).map((r) => ({
     id: r.id,
     name: r.name,
-  }));
-  const loading = animalsQ.isLoading || researchQ.isLoading;
-  const deleteM = useDeleteAnimal();
+  }))
+  const loading = animalsQ.isLoading || researchQ.isLoading
+  const deleteM = useDeleteAnimal()
 
   // Diálogo de criar/editar e confirmação de exclusão.
   const [dialog, setDialog] = useState<{
-    mode: "create" | "edit";
-    id?: string;
-  } | null>(null);
-  const [confirm, setConfirm] = useState<AnimalListItem | null>(null);
+    mode: "create" | "edit"
+    id?: string
+  } | null>(null)
+  const [confirm, setConfirm] = useState<AnimalListItem | null>(null)
 
   async function remove(a: AnimalListItem) {
     try {
-      await deleteM.mutateAsync(a.id);
-      toast.success(t("deleted"));
+      await deleteM.mutateAsync(a.id)
+      toast.success(t("deleted"))
     } catch (err) {
-      toast.error(t("deleteError"), { description: em(err) });
+      toast.error(t("deleteError"), { description: em(err) })
     }
   }
 
-  const noResearch = researches.length === 0;
-  const defaultResearchId = researches.length === 1 ? researches[0].id : "";
+  const noResearch = researches.length === 0
+  const defaultResearchId = researches.length === 1 ? researches[0].id : ""
 
   return (
     <div className="mx-auto max-w-6xl space-y-6 p-8">
@@ -98,10 +98,10 @@ export function AnimalsManager({ isOrgAdmin }: { isOrgAdmin: boolean }) {
         isOrgAdmin={isOrgAdmin}
         onOpenChange={(o) => !o && setDialog(null)}
         onSaved={() => {
-          setDialog(null);
-          animalsQ.refetch();
+          setDialog(null)
+          animalsQ.refetch()
         }}
       />
     </div>
-  );
+  )
 }

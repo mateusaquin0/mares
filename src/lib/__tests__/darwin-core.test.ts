@@ -62,10 +62,10 @@ describe("buildDarwinCoreXml", () => {
 
   it("usa o controlId como occurrenceID (ou o id como fallback)", () => {
     expect(buildDarwinCoreXml([animal({ controlId: "CTRL-9" })])).toContain(
-      "<dwc:occurrenceID>CTRL-9</dwc:occurrenceID>"
+      "<dwc:occurrenceID>CTRL-9</dwc:occurrenceID>",
     )
     expect(buildDarwinCoreXml([animal({ controlId: null, id: "fallback-id" })])).toContain(
-      "<dwc:occurrenceID>fallback-id</dwc:occurrenceID>"
+      "<dwc:occurrenceID>fallback-id</dwc:occurrenceID>",
     )
   })
 

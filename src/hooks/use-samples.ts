@@ -11,10 +11,7 @@ export const sampleKeys = {
 
 // Amostras mudam as colunas da grade de análises E o contador de amostras da aba
 // (animal._count.samples, vindo de animalKeys.detail) — invalida os três.
-function invalidateSamples(
-  qc: ReturnType<typeof useQueryClient>,
-  animalId: string
-) {
+function invalidateSamples(qc: ReturnType<typeof useQueryClient>, animalId: string) {
   qc.invalidateQueries({ queryKey: sampleKeys.byAnimal(animalId) })
   qc.invalidateQueries({ queryKey: animalKeys.grid(animalId) })
   qc.invalidateQueries({ queryKey: animalKeys.detail(animalId) })

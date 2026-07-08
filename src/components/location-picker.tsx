@@ -36,7 +36,7 @@ export function LocationPicker({
         label: c.name,
         icon: <CountryFlag iso2={c.iso2} />,
       })),
-    [locale]
+    [locale],
   )
 
   const statesQuery = useGeoStates(value.country)

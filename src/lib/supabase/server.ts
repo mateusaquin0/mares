@@ -18,7 +18,7 @@ export async function createClient() {
         setAll(cookiesToSet) {
           try {
             cookiesToSet.forEach(({ name, value, options }) =>
-              cookieStore.set(name, value, options)
+              cookieStore.set(name, value, options),
             )
           } catch {
             // Chamado a partir de um Server Component — pode ser ignorado se houver
@@ -26,7 +26,7 @@ export async function createClient() {
           }
         },
       },
-    }
+    },
   )
 }
 
@@ -38,6 +38,6 @@ export function createAdminClient() {
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
     {
       cookies: { getAll: () => [], setAll: () => {} },
-    }
+    },
   )
 }

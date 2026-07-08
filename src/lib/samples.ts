@@ -9,7 +9,7 @@ import { ERROR_CODES } from "@/lib/error-codes"
 export function sampleDuplicateError(): ConflictError {
   return new ConflictError(
     "Identificação de amostra já cadastrada",
-    ERROR_CODES.sampleIdentificationDuplicate
+    ERROR_CODES.sampleIdentificationDuplicate,
   )
 }
 

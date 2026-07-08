@@ -80,7 +80,12 @@ export async function PUT(req: NextRequest) {
 
     if (changed.length > 0) {
       await prisma.auditLog.createMany({
-        data: changed.map((c) => ({ ...c, userId: user.id, entity: "Analysis", entityId: saved.id })),
+        data: changed.map((c) => ({
+          ...c,
+          userId: user.id,
+          entity: "Analysis",
+          entityId: saved.id,
+        })),
       })
     }
 

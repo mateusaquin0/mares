@@ -1,7 +1,7 @@
-import type { NextConfig } from "next";
-import createNextIntlPlugin from "next-intl/plugin";
+import type { NextConfig } from "next"
+import createNextIntlPlugin from "next-intl/plugin"
 
-const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");
+const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts")
 
 // Cabeçalhos de segurança aplicados a todas as respostas (ver auditoria de segurança).
 // - frame-ancestors/X-Frame-Options: impedem que o app (inclusive o mapa público) seja
@@ -24,12 +24,12 @@ const securityHeaders = [
     key: "Strict-Transport-Security",
     value: "max-age=63072000; includeSubDomains; preload",
   },
-];
+]
 
 const nextConfig: NextConfig = {
   async headers() {
-    return [{ source: "/:path*", headers: securityHeaders }];
+    return [{ source: "/:path*", headers: securityHeaders }]
   },
-};
+}
 
-export default withNextIntl(nextConfig);
+export default withNextIntl(nextConfig)

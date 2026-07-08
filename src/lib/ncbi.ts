@@ -19,7 +19,7 @@ export function firstTag(xml: string, tag: string): string | null {
 /** Nome científico de um Rank dentro do LineageEx (ex.: family, order). */
 export function lineageName(xml: string, rank: string): string | null {
   const m = xml.match(
-    new RegExp(`<ScientificName>([^<]+)</ScientificName>\\s*<Rank>${rank}</Rank>`, "i")
+    new RegExp(`<ScientificName>([^<]+)</ScientificName>\\s*<Rank>${rank}</Rank>`, "i"),
   )
   return m ? m[1].trim() : null
 }

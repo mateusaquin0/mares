@@ -1,4 +1,4 @@
-import type { Config } from "tailwindcss";
+import type { Config } from "tailwindcss"
 
 export default {
   content: [
@@ -53,7 +53,7 @@ export default {
         },
       },
       borderRadius: {
-        xl: "calc(var(--radius) + 8px)", /* 1rem — cards e seções grandes */
+        xl: "calc(var(--radius) + 8px)" /* 1rem — cards e seções grandes */,
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
@@ -69,4 +69,4 @@ export default {
     },
   },
   plugins: [require("tailwindcss-animate")],
-} satisfies Config;
+} satisfies Config

@@ -32,7 +32,7 @@ export function SignOutButton({ collapsed = false }: { collapsed?: boolean }) {
       title={collapsed ? t("signOut") : undefined}
       className={cn(
         "w-full text-muted-foreground hover:bg-muted hover:text-foreground",
-        collapsed ? "justify-center px-0" : "justify-start"
+        collapsed ? "justify-center px-0" : "justify-start",
       )}
     >
       {!loading && <LogOut className="size-4" />}

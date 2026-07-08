@@ -1,28 +1,28 @@
-"use client";
+"use client"
 
-import { useMemo, useState } from "react";
-import Link from "next/link";
-import { useLocale, useTranslations } from "next-intl";
-import { toast } from "sonner";
-import { Download, Globe, Lock, MoreHorizontal, X } from "lucide-react";
+import { useMemo, useState } from "react"
+import Link from "next/link"
+import { useLocale, useTranslations } from "next-intl"
+import { toast } from "sonner"
+import { Download, Globe, Lock, MoreHorizontal, X } from "lucide-react"
 
-import type { AnimalListItem } from "@/types/animal";
-import { useTable } from "@/lib/use-table";
-import { formatDateOnly } from "@/lib/date";
-import { SEX_OPTIONS, LIFE_STAGE_OPTIONS } from "@/lib/animal-enums";
-import { downloadAnimalsExport, type ExportFormat } from "@/lib/export-download";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Input } from "@/components/ui/input";
-import { MultiSelect, type MultiSelectOption } from "@/components/ui/multi-select";
+import type { AnimalListItem } from "@/types/animal"
+import { useTable } from "@/lib/use-table"
+import { formatDateOnly } from "@/lib/date"
+import { SEX_OPTIONS, LIFE_STAGE_OPTIONS } from "@/lib/animal-enums"
+import { downloadAnimalsExport, type ExportFormat } from "@/lib/export-download"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Checkbox } from "@/components/ui/checkbox"
+import { Input } from "@/components/ui/input"
+import { MultiSelect, type MultiSelectOption } from "@/components/ui/multi-select"
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from "@/components/ui/select"
 import {
   Table,
   TableBody,
@@ -30,22 +30,22 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
-import { SortableHead } from "@/components/ui/sortable-head";
+} from "@/components/ui/table"
+import { SortableHead } from "@/components/ui/sortable-head"
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from "@/components/ui/dropdown-menu"
 
-const ALL = "__all__";
+const ALL = "__all__"
 
 // Valores distintos, não-nulos, ordenados por locale — base das opções de filtro.
 function distinctSorted(values: (string | null)[], locale: string): string[] {
   return [...new Set(values.filter((v): v is string => !!v))].sort((a, b) =>
-    a.localeCompare(b, locale)
-  );
+    a.localeCompare(b, locale),
+  )
 }
 
 // Tabela de animais: busca, ordenação e ações (ver/editar/excluir). O estado dos
@@ -56,100 +56,109 @@ export function AnimalsTable({
   onEdit,
   onDelete,
 }: {
-  items: AnimalListItem[];
-  isOrgAdmin: boolean;
-  onEdit: (a: AnimalListItem) => void;
-  onDelete: (a: AnimalListItem) => void;
+  items: AnimalListItem[]
+  isOrgAdmin: boolean
+  onEdit: (a: AnimalListItem) => void
+  onDelete: (a: AnimalListItem) => void
 }) {
-  const t = useTranslations("animals");
-  const tc = useTranslations("common");
-  const locale = useLocale();
+  const t = useTranslations("animals")
+  const tc = useTranslations("common")
+  const locale = useLocale()
 
-  const controlOf = (a: AnimalListItem) =>
-    a.controlId ?? a.simbaRecordNumber ?? "";
-  const locationOf = (a: AnimalListItem) =>
-    [a.municipality, a.state].filter(Boolean).join(", ");
-  const fmtDate = (iso: string | null) => formatDateOnly(iso, locale);
+  const controlOf = (a: AnimalListItem) => a.controlId ?? a.simbaRecordNumber ?? ""
+  const locationOf = (a: AnimalListItem) => [a.municipality, a.state].filter(Boolean).join(", ")
+  const fmtDate = (iso: string | null) => formatDateOnly(iso, locale)
   const sexLabel = (s: string | null) => {
-    const o = SEX_OPTIONS.find((x) => x.value === s);
-    return o ? t(o.key) : (s ?? "");
-  };
+    const o = SEX_OPTIONS.find((x) => x.value === s)
+    return o ? t(o.key) : (s ?? "")
+  }
   // Visibilidade pública EFETIVA: o animal só é público se ele E a pesquisa forem públicos.
-  const isEffectivePublic = (a: AnimalListItem) => a.isPublic && a.research.isPublic;
+  const isEffectivePublic = (a: AnimalListItem) => a.isPublic && a.research.isPublic
   // Explica no tooltip por que o animal aparece (ou não) no mapa público.
   const visibilityTooltip = (a: AnimalListItem) => {
-    if (!a.research.isPublic) return t("visMapResearchPrivate");
-    return a.isPublic ? t("visMapPublic") : t("visMapAnimalHidden");
-  };
+    if (!a.research.isPublic) return t("visMapResearchPrivate")
+    return a.isPublic ? t("visMapPublic") : t("visMapAnimalHidden")
+  }
 
   // ── Filtros estruturados (multisseleção + selects), aplicados antes da busca/ordenação ──
-  const [fSpecies, setFSpecies] = useState<string[]>([]);
-  const [fSex, setFSex] = useState<string[]>([]);
-  const [fLifeStage, setFLifeStage] = useState<string[]>([]);
-  const [fState, setFState] = useState<string[]>([]);
-  const [fResearch, setFResearch] = useState<string[]>([]);
-  const [fPathogen, setFPathogen] = useState<string[]>([]);
-  const [fVisibility, setFVisibility] = useState(ALL);
-  const [fSamples, setFSamples] = useState(ALL);
-  const [fFrom, setFFrom] = useState("");
-  const [fTo, setFTo] = useState("");
+  const [fSpecies, setFSpecies] = useState<string[]>([])
+  const [fSex, setFSex] = useState<string[]>([])
+  const [fLifeStage, setFLifeStage] = useState<string[]>([])
+  const [fState, setFState] = useState<string[]>([])
+  const [fResearch, setFResearch] = useState<string[]>([])
+  const [fPathogen, setFPathogen] = useState<string[]>([])
+  const [fVisibility, setFVisibility] = useState(ALL)
+  const [fSamples, setFSamples] = useState(ALL)
+  const [fFrom, setFFrom] = useState("")
+  const [fTo, setFTo] = useState("")
 
   const speciesOptions = useMemo<MultiSelectOption[]>(
-    () => distinctSorted(items.map((a) => a.species), locale).map((s) => ({ value: s, label: s })),
-    [items, locale]
-  );
+    () =>
+      distinctSorted(
+        items.map((a) => a.species),
+        locale,
+      ).map((s) => ({ value: s, label: s })),
+    [items, locale],
+  )
   const stateOptions = useMemo<MultiSelectOption[]>(
-    () => distinctSorted(items.map((a) => a.state), locale).map((s) => ({ value: s, label: s })),
-    [items, locale]
-  );
+    () =>
+      distinctSorted(
+        items.map((a) => a.state),
+        locale,
+      ).map((s) => ({ value: s, label: s })),
+    [items, locale],
+  )
   const pathogenOptions = useMemo<MultiSelectOption[]>(
     () =>
-      distinctSorted(items.flatMap((a) => a.positivePathogens), locale).map((p) => ({
+      distinctSorted(
+        items.flatMap((a) => a.positivePathogens),
+        locale,
+      ).map((p) => ({
         value: p,
         label: p,
       })),
-    [items, locale]
-  );
+    [items, locale],
+  )
   const researchOptions = useMemo<MultiSelectOption[]>(() => {
-    const map = new Map<string, string>();
+    const map = new Map<string, string>()
     // Considera todas as pesquisas do indivíduo (primária + participações).
-    for (const a of items) for (const r of a.researches) map.set(r.id, r.name);
+    for (const a of items) for (const r of a.researches) map.set(r.id, r.name)
     return [...map.entries()]
       .map(([value, label]) => ({ value, label }))
-      .sort((x, y) => x.label.localeCompare(y.label, locale));
-  }, [items, locale]);
+      .sort((x, y) => x.label.localeCompare(y.label, locale))
+  }, [items, locale])
   const sexOptions = useMemo<MultiSelectOption[]>(() => {
-    const present = new Set(items.map((a) => a.sex));
+    const present = new Set(items.map((a) => a.sex))
     return SEX_OPTIONS.filter((o) => present.has(o.value)).map((o) => ({
       value: o.value,
       label: t(o.key),
-    }));
-  }, [items, t]);
+    }))
+  }, [items, t])
   const lifeStageOptions = useMemo<MultiSelectOption[]>(() => {
-    const present = new Set(items.map((a) => a.lifeStage));
+    const present = new Set(items.map((a) => a.lifeStage))
     return LIFE_STAGE_OPTIONS.filter((o) => present.has(o.value)).map((o) => ({
       value: o.value,
       label: t(o.key),
-    }));
-  }, [items, t]);
+    }))
+  }, [items, t])
 
   const filteredItems = useMemo(
     () =>
       items.filter((a) => {
-        if (fSpecies.length && !fSpecies.includes(a.species)) return false;
-        if (fSex.length && !(a.sex && fSex.includes(a.sex))) return false;
-        if (fLifeStage.length && !(a.lifeStage && fLifeStage.includes(a.lifeStage))) return false;
-        if (fState.length && !(a.state && fState.includes(a.state))) return false;
-        if (fResearch.length && !a.researches.some((r) => fResearch.includes(r.id))) return false;
+        if (fSpecies.length && !fSpecies.includes(a.species)) return false
+        if (fSex.length && !(a.sex && fSex.includes(a.sex))) return false
+        if (fLifeStage.length && !(a.lifeStage && fLifeStage.includes(a.lifeStage))) return false
+        if (fState.length && !(a.state && fState.includes(a.state))) return false
+        if (fResearch.length && !a.researches.some((r) => fResearch.includes(r.id))) return false
         if (fPathogen.length && !fPathogen.some((p) => a.positivePathogens.includes(p)))
-          return false;
-        if (fVisibility === "public" && !isEffectivePublic(a)) return false;
-        if (fVisibility === "private" && isEffectivePublic(a)) return false;
-        if (fSamples === "with" && a._count.samples === 0) return false;
-        if (fSamples === "without" && a._count.samples > 0) return false;
-        if (fFrom && (!a.eventDate || a.eventDate < fFrom)) return false;
-        if (fTo && (!a.eventDate || a.eventDate > fTo)) return false;
-        return true;
+          return false
+        if (fVisibility === "public" && !isEffectivePublic(a)) return false
+        if (fVisibility === "private" && isEffectivePublic(a)) return false
+        if (fSamples === "with" && a._count.samples === 0) return false
+        if (fSamples === "without" && a._count.samples > 0) return false
+        if (fFrom && (!a.eventDate || a.eventDate < fFrom)) return false
+        if (fTo && (!a.eventDate || a.eventDate > fTo)) return false
+        return true
       }),
     [
       items,
@@ -163,8 +172,8 @@ export function AnimalsTable({
       fSamples,
       fFrom,
       fTo,
-    ]
-  );
+    ],
+  )
 
   const hasFilters =
     fSpecies.length > 0 ||
@@ -176,20 +185,20 @@ export function AnimalsTable({
     fVisibility !== ALL ||
     fSamples !== ALL ||
     fFrom !== "" ||
-    fTo !== "";
+    fTo !== ""
 
   const clearFilters = () => {
-    setFSpecies([]);
-    setFSex([]);
-    setFLifeStage([]);
-    setFState([]);
-    setFResearch([]);
-    setFPathogen([]);
-    setFVisibility(ALL);
-    setFSamples(ALL);
-    setFFrom("");
-    setFTo("");
-  };
+    setFSpecies([])
+    setFSex([])
+    setFLifeStage([])
+    setFState([])
+    setFResearch([])
+    setFPathogen([])
+    setFVisibility(ALL)
+    setFSamples(ALL)
+    setFFrom("")
+    setFTo("")
+  }
 
   const table = useTable(filteredItems, {
     locale,
@@ -214,42 +223,42 @@ export function AnimalsTable({
         locationOf(a),
         a.research.name,
       ].join(" "),
-  });
+  })
 
   // Seleção para exportação (ids acumulados; a seleção "todos" age sobre as linhas filtradas).
-  const [selected, setSelected] = useState<Set<string>>(new Set());
-  const [exporting, setExporting] = useState(false);
-  const rowIds = table.rows.map((a) => a.id);
-  const allSelected = rowIds.length > 0 && rowIds.every((id) => selected.has(id));
-  const someSelected = rowIds.some((id) => selected.has(id));
+  const [selected, setSelected] = useState<Set<string>>(new Set())
+  const [exporting, setExporting] = useState(false)
+  const rowIds = table.rows.map((a) => a.id)
+  const allSelected = rowIds.length > 0 && rowIds.every((id) => selected.has(id))
+  const someSelected = rowIds.some((id) => selected.has(id))
 
   const toggleRow = (id: string, on: boolean) =>
     setSelected((prev) => {
-      const next = new Set(prev);
-      if (on) next.add(id);
-      else next.delete(id);
-      return next;
-    });
+      const next = new Set(prev)
+      if (on) next.add(id)
+      else next.delete(id)
+      return next
+    })
 
   const toggleAll = (on: boolean) =>
     setSelected((prev) => {
-      const next = new Set(prev);
+      const next = new Set(prev)
       for (const id of rowIds) {
-        if (on) next.add(id);
-        else next.delete(id);
+        if (on) next.add(id)
+        else next.delete(id)
       }
-      return next;
-    });
+      return next
+    })
 
   async function exportAs(format: ExportFormat) {
-    if (selected.size === 0) return;
-    setExporting(true);
+    if (selected.size === 0) return
+    setExporting(true)
     try {
-      await downloadAnimalsExport([...selected], format);
+      await downloadAnimalsExport([...selected], format)
     } catch {
-      toast.error(t("exportError"));
+      toast.error(t("exportError"))
     } finally {
-      setExporting(false);
+      setExporting(false)
     }
   }
 
@@ -259,7 +268,7 @@ export function AnimalsTable({
       <span className="font-semibold uppercase tracking-wide text-muted-foreground">{label}</span>
       {control}
     </label>
-  );
+  )
 
   return (
     <div className="space-y-3">
@@ -276,7 +285,7 @@ export function AnimalsTable({
               searchPlaceholder={t("filterSpecies")}
               emptyText={tc("noResults")}
             />
-          </div>
+          </div>,
         )}
         {sexOptions.length > 0 &&
           filterField(
@@ -290,7 +299,7 @@ export function AnimalsTable({
                 emptyText={tc("noResults")}
                 searchable={false}
               />
-            </div>
+            </div>,
           )}
         {lifeStageOptions.length > 0 &&
           filterField(
@@ -304,7 +313,7 @@ export function AnimalsTable({
                 emptyText={tc("noResults")}
                 searchable={false}
               />
-            </div>
+            </div>,
           )}
         {stateOptions.length > 0 &&
           filterField(
@@ -318,7 +327,7 @@ export function AnimalsTable({
                 searchPlaceholder={t("filterState")}
                 emptyText={tc("noResults")}
               />
-            </div>
+            </div>,
           )}
         {researchOptions.length > 1 &&
           filterField(
@@ -332,7 +341,7 @@ export function AnimalsTable({
                 searchPlaceholder={t("colResearch")}
                 emptyText={tc("noResults")}
               />
-            </div>
+            </div>,
           )}
         {pathogenOptions.length > 0 &&
           filterField(
@@ -346,7 +355,7 @@ export function AnimalsTable({
                 searchPlaceholder={t("filterPathogen")}
                 emptyText={tc("noResults")}
               />
-            </div>
+            </div>,
           )}
         {filterField(
           t("colVisibility"),
@@ -359,7 +368,7 @@ export function AnimalsTable({
               <SelectItem value="public">{t("public")}</SelectItem>
               <SelectItem value="private">{t("private")}</SelectItem>
             </SelectContent>
-          </Select>
+          </Select>,
         )}
         {filterField(
           t("filterSamples"),
@@ -372,7 +381,7 @@ export function AnimalsTable({
               <SelectItem value="with">{t("withSamples")}</SelectItem>
               <SelectItem value="without">{t("withoutSamples")}</SelectItem>
             </SelectContent>
-          </Select>
+          </Select>,
         )}
         {filterField(
           t("filterFrom"),
@@ -381,7 +390,7 @@ export function AnimalsTable({
             value={fFrom}
             onChange={(e) => setFFrom(e.target.value)}
             className="h-9 w-full"
-          />
+          />,
         )}
         {filterField(
           t("filterTo"),
@@ -390,7 +399,7 @@ export function AnimalsTable({
             value={fTo}
             onChange={(e) => setFTo(e.target.value)}
             className="h-9 w-full"
-          />
+          />,
         )}
         {hasFilters && (
           <Button variant="ghost" size="sm" onClick={clearFilters} className="gap-1">
@@ -442,46 +451,22 @@ export function AnimalsTable({
                   onCheckedChange={(v) => toggleAll(v === true)}
                 />
               </TableHead>
-              <SortableHead
-                sortKey="control"
-                sort={table.sort}
-                onToggle={table.toggleSort}
-              >
+              <SortableHead sortKey="control" sort={table.sort} onToggle={table.toggleSort}>
                 {t("colControl")}
               </SortableHead>
-              <SortableHead
-                sortKey="species"
-                sort={table.sort}
-                onToggle={table.toggleSort}
-              >
+              <SortableHead sortKey="species" sort={table.sort} onToggle={table.toggleSort}>
                 {t("colSpecies")}
               </SortableHead>
-              <SortableHead
-                sortKey="sex"
-                sort={table.sort}
-                onToggle={table.toggleSort}
-              >
+              <SortableHead sortKey="sex" sort={table.sort} onToggle={table.toggleSort}>
                 {t("colSex")}
               </SortableHead>
-              <SortableHead
-                sortKey="location"
-                sort={table.sort}
-                onToggle={table.toggleSort}
-              >
+              <SortableHead sortKey="location" sort={table.sort} onToggle={table.toggleSort}>
                 {t("colLocation")}
               </SortableHead>
-              <SortableHead
-                sortKey="date"
-                sort={table.sort}
-                onToggle={table.toggleSort}
-              >
+              <SortableHead sortKey="date" sort={table.sort} onToggle={table.toggleSort}>
                 {t("colDate")}
               </SortableHead>
-              <SortableHead
-                sortKey="isPublic"
-                sort={table.sort}
-                onToggle={table.toggleSort}
-              >
+              <SortableHead sortKey="isPublic" sort={table.sort} onToggle={table.toggleSort}>
                 {t("colVisibility")}
               </SortableHead>
               <SortableHead
@@ -498,10 +483,7 @@ export function AnimalsTable({
           <TableBody>
             {table.rows.length === 0 ? (
               <TableRow>
-                <TableCell
-                  colSpan={9}
-                  className="text-center text-sm text-muted-foreground"
-                >
+                <TableCell colSpan={9} className="text-center text-sm text-muted-foreground">
                   {tc("noResults")}
                 </TableCell>
               </TableRow>
@@ -516,29 +498,18 @@ export function AnimalsTable({
                     />
                   </TableCell>
                   <TableCell className="font-medium">
-                    <Link
-                      href={`/app/animals/${a.id}`}
-                      className="hover:underline"
-                    >
+                    <Link href={`/app/animals/${a.id}`} className="hover:underline">
                       {controlOf(a) || (
-                        <span className="text-muted-foreground">
-                          {t("notInformed")}
-                        </span>
+                        <span className="text-muted-foreground">{t("notInformed")}</span>
                       )}
                     </Link>
                   </TableCell>
                   <TableCell>
                     <span className="italic">{a.species}</span>
                   </TableCell>
-                  <TableCell className="text-muted-foreground">
-                    {sexLabel(a.sex)}
-                  </TableCell>
-                  <TableCell className="text-muted-foreground">
-                    {locationOf(a)}
-                  </TableCell>
-                  <TableCell className="text-muted-foreground">
-                    {fmtDate(a.eventDate)}
-                  </TableCell>
+                  <TableCell className="text-muted-foreground">{sexLabel(a.sex)}</TableCell>
+                  <TableCell className="text-muted-foreground">{locationOf(a)}</TableCell>
+                  <TableCell className="text-muted-foreground">{fmtDate(a.eventDate)}</TableCell>
                   <TableCell>
                     {isEffectivePublic(a) ? (
                       <Badge variant="public" className="gap-1" title={visibilityTooltip(a)}>
@@ -552,9 +523,7 @@ export function AnimalsTable({
                       </Badge>
                     )}
                   </TableCell>
-                  <TableCell className="text-right">
-                    {a._count.samples}
-                  </TableCell>
+                  <TableCell className="text-right">{a._count.samples}</TableCell>
                   <TableCell className="text-right">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -567,9 +536,7 @@ export function AnimalsTable({
                         <DropdownMenuItem asChild>
                           <Link href={`/app/animals/${a.id}`}>{t("view")}</Link>
                         </DropdownMenuItem>
-                        <DropdownMenuItem onSelect={() => onEdit(a)}>
-                          {tc("edit")}
-                        </DropdownMenuItem>
+                        <DropdownMenuItem onSelect={() => onEdit(a)}>{tc("edit")}</DropdownMenuItem>
                         {isOrgAdmin && (
                           <DropdownMenuItem
                             className="text-destructive focus:text-destructive"
@@ -588,5 +555,5 @@ export function AnimalsTable({
         </Table>
       </div>
     </div>
-  );
+  )
 }

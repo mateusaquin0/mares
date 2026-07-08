@@ -84,7 +84,7 @@ export function MultiSelect({
                         "flex size-4 shrink-0 items-center justify-center rounded border",
                         checked
                           ? "border-primary bg-primary text-primary-foreground"
-                          : "border-input"
+                          : "border-input",
                       )}
                     >
                       {checked && <Check className="size-3" />}

@@ -4,11 +4,7 @@ import { prisma } from "@/lib/prisma"
 import { getAuthUser, orgRole } from "@/lib/auth"
 import { ResearchDetail } from "./research-detail"
 
-export default async function ResearchDetailPage({
-  params,
-}: {
-  params: Promise<{ id: string }>
-}) {
+export default async function ResearchDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const user = await getAuthUser()
   if (!user) redirect("/login")

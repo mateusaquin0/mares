@@ -69,7 +69,7 @@ export function UserMenu({
           type="button"
           className={cn(
             "group flex w-full items-center gap-3 rounded-lg py-2 text-left transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-            collapsed ? "justify-center px-0" : "px-2"
+            collapsed ? "justify-center px-0" : "px-2",
           )}
           title={collapsed ? `${userName} — ${email}` : undefined}
         >
@@ -107,11 +107,7 @@ export function UserMenu({
           {t("language")}
         </DropdownMenuLabel>
         {locales.map((l) => (
-          <DropdownMenuItem
-            key={l}
-            disabled={pending}
-            onSelect={() => changeLocale(l)}
-          >
+          <DropdownMenuItem key={l} disabled={pending} onSelect={() => changeLocale(l)}>
             <LocaleFlag locale={l} />
             <span>{localeNames[l]}</span>
             {l === active && <Check className="ml-auto size-4 text-accent-foreground" />}

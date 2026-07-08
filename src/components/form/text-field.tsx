@@ -1,9 +1,9 @@
-"use client";
+"use client"
 
-import type { ComponentProps } from "react";
+import type { ComponentProps } from "react"
 
-import { Input } from "@/components/ui/input";
-import { Field } from "./field";
+import { Input } from "@/components/ui/input"
+import { Field } from "./field"
 
 // Campo de texto controlado: Label + Input + erro. `onChange` recebe o valor (string).
 // Aceita as demais props do Input (type, step, placeholder, className…).
@@ -16,12 +16,12 @@ export function TextField({
   optional,
   ...inputProps
 }: {
-  id: string;
-  label: string;
-  value: string;
-  onChange: (value: string) => void;
-  error?: string;
-  optional?: boolean;
+  id: string
+  label: string
+  value: string
+  onChange: (value: string) => void
+  error?: string
+  optional?: boolean
 } & Omit<ComponentProps<typeof Input>, "id" | "value" | "onChange">) {
   return (
     <Field htmlFor={id} label={label} error={error} optional={optional}>
@@ -33,5 +33,5 @@ export function TextField({
         {...inputProps}
       />
     </Field>
-  );
+  )
 }

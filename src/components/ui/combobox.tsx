@@ -64,10 +64,7 @@ export function Combobox({
           )}
         </Button>
       </PopoverTrigger>
-      <PopoverContent
-        className="w-[var(--radix-popover-trigger-width)] p-0"
-        align="start"
-      >
+      <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
         <Command>
           <CommandInput placeholder={searchPlaceholder} />
           <CommandList>
@@ -87,7 +84,7 @@ export function Combobox({
                   <Check
                     className={cn(
                       "ml-auto size-4",
-                      value === o.value ? "opacity-100" : "opacity-0"
+                      value === o.value ? "opacity-100" : "opacity-0",
                     )}
                   />
                 </CommandItem>

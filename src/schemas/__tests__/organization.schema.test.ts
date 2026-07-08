@@ -40,8 +40,12 @@ describe("addMemberSchema", () => {
   })
 
   it("aceita papel válido e rejeita papel desconhecido", () => {
-    expect(addMemberSchema.safeParse({ email: "user@example.com", role: "RESEARCHER" }).success).toBe(true)
-    expect(addMemberSchema.safeParse({ email: "user@example.com", role: "SUPERUSER" }).success).toBe(false)
+    expect(
+      addMemberSchema.safeParse({ email: "user@example.com", role: "RESEARCHER" }).success,
+    ).toBe(true)
+    expect(
+      addMemberSchema.safeParse({ email: "user@example.com", role: "SUPERUSER" }).success,
+    ).toBe(false)
   })
 })
 

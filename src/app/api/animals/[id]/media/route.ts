@@ -34,7 +34,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
 
     // Substitui o caminho do objeto por uma URL assinada temporária.
     const withUrls = await Promise.all(
-      media.map(async (m) => ({ ...m, url: await signMediaUrl(m.url) }))
+      media.map(async (m) => ({ ...m, url: await signMediaUrl(m.url) })),
     )
     return NextResponse.json(withUrls)
   } catch (err) {

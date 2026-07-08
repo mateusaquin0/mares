@@ -43,9 +43,7 @@ export async function getStates(ciso: string): Promise<CscState[]> {
 export async function getCities(ciso: string, siso: string): Promise<CscCity[]> {
   if (!isoParam.test(ciso) || !isoParam.test(siso)) return []
   const data = await cscFetch<CscCity[]>(
-    `/countries/${ciso.toUpperCase()}/states/${siso.toUpperCase()}/cities`
+    `/countries/${ciso.toUpperCase()}/states/${siso.toUpperCase()}/cities`,
   )
-  return data
-    .map((c) => ({ id: c.id, name: c.name }))
-    .sort((a, b) => a.name.localeCompare(b.name))
+  return data.map((c) => ({ id: c.id, name: c.name })).sort((a, b) => a.name.localeCompare(b.name))
 }

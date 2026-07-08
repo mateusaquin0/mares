@@ -41,7 +41,7 @@ export default function AdminUsersPage() {
         ACTIVE: t("statusActive"),
         DELETION_REQUESTED: t("statusDeletionRequested"),
       })[s] ?? s,
-    [t]
+    [t],
   )
 
   const orgsText = useCallback(
@@ -51,12 +51,10 @@ export default function AdminUsersPage() {
         : u.memberships
             .map(
               (m) =>
-                `${m.orgName} (${
-                  m.role === "ORG_ADMIN" ? tc("roleAdmin") : tc("roleResearcher")
-                })`
+                `${m.orgName} (${m.role === "ORG_ADMIN" ? tc("roleAdmin") : tc("roleResearcher")})`,
             )
             .join(" · "),
-    [t, tc]
+    [t, tc],
   )
 
   const table = useTable(users, {
@@ -130,41 +128,41 @@ export default function AdminUsersPage() {
                   </TableRow>
                 ) : (
                   table.rows.map((u) => (
-                <TableRow key={u.id}>
-                  <TableCell className="font-medium">
-                    <span className="flex items-center gap-2">
-                      {u.name ?? "—"}
-                      {u.isSystemAdmin && (
-                        <Badge className="bg-amber-100 text-amber-800 hover:bg-amber-100">
-                          {t("globalAdmin")}
-                        </Badge>
-                      )}
-                    </span>
-                  </TableCell>
-                  <TableCell className="text-muted-foreground">{u.email}</TableCell>
-                  <TableCell className="text-sm text-muted-foreground">{orgsText(u)}</TableCell>
-                  <TableCell>
-                    <Badge variant="secondary">{statusLabel(u.status)}</Badge>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <ConfirmDialog
-                      title={t("deleteTitle")}
-                      description={t("deleteDesc", { email: u.email })}
-                      confirmLabel={tc("delete")}
-                      destructive
-                      onConfirm={() => remove(u)}
-                      trigger={
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          disabled={busy === u.id || u.isSystemAdmin}
-                        >
-                          {tc("delete")}
-                        </Button>
-                      }
-                    />
-                  </TableCell>
-                </TableRow>
+                    <TableRow key={u.id}>
+                      <TableCell className="font-medium">
+                        <span className="flex items-center gap-2">
+                          {u.name ?? "—"}
+                          {u.isSystemAdmin && (
+                            <Badge className="bg-amber-100 text-amber-800 hover:bg-amber-100">
+                              {t("globalAdmin")}
+                            </Badge>
+                          )}
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">{u.email}</TableCell>
+                      <TableCell className="text-sm text-muted-foreground">{orgsText(u)}</TableCell>
+                      <TableCell>
+                        <Badge variant="secondary">{statusLabel(u.status)}</Badge>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <ConfirmDialog
+                          title={t("deleteTitle")}
+                          description={t("deleteDesc", { email: u.email })}
+                          confirmLabel={tc("delete")}
+                          destructive
+                          onConfirm={() => remove(u)}
+                          trigger={
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              disabled={busy === u.id || u.isSystemAdmin}
+                            >
+                              {tc("delete")}
+                            </Button>
+                          }
+                        />
+                      </TableCell>
+                    </TableRow>
                   ))
                 )}
               </TableBody>

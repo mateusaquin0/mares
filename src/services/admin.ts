@@ -12,8 +12,7 @@ export const adminService = {
   listUsers: () => http.get<AdminUser[]>("/api/admin/users"),
   removeUser: (id: string) => http.del(`/api/admin/users/${id}`),
 
-  listPendingRequests: () =>
-    http.get<JoinRequest[]>("/api/admin/access-requests?status=PENDING"),
+  listPendingRequests: () => http.get<JoinRequest[]>("/api/admin/access-requests?status=PENDING"),
   actOnRequest: (id: string, action: "approve" | "reject") =>
     http.post(`/api/admin/access-requests/${id}/${action}`),
 
@@ -25,7 +24,5 @@ export const adminService = {
   setOrgMemberRole: (orgId: string, userId: string, role: OrgMemberRole) =>
     http.put(`/api/admin/organizations/${orgId}/members/${userId}`, { role }),
   removeOrgMember: (orgId: string, userId: string) =>
-    http.del<{ orgDeactivated?: boolean }>(
-      `/api/admin/organizations/${orgId}/members/${userId}`
-    ),
+    http.del<{ orgDeactivated?: boolean }>(`/api/admin/organizations/${orgId}/members/${userId}`),
 }

@@ -36,7 +36,7 @@ export function ResearchShare({ animal }: { animal: AnimalDetail }) {
   // IDs já vinculados (primária + participações) — excluídos das opções de adicionar.
   const linkedIds = useMemo(
     () => new Set([animal.research.id, ...participations.map((r) => r.id)]),
-    [animal.research.id, participations]
+    [animal.research.id, participations],
   )
   const available = (researchQ.data ?? []).filter((r) => !linkedIds.has(r.id))
 

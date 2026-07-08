@@ -15,7 +15,7 @@ import type { AnalysisGrid } from "@/types/analysis"
 export const animalsService = {
   list: (researchId?: string) =>
     http.get<AnimalListItem[]>(
-      `/api/animals${researchId ? `?researchId=${encodeURIComponent(researchId)}` : ""}`
+      `/api/animals${researchId ? `?researchId=${encodeURIComponent(researchId)}` : ""}`,
     ),
   get: (id: string) => http.get<AnimalDetail>(`/api/animals/${id}`),
   create: (data: CreateAnimalData) =>

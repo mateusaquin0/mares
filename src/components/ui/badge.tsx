@@ -8,8 +8,7 @@ const badgeVariants = cva(
   {
     variants: {
       variant: {
-        default:
-          "border-transparent bg-primary text-primary-foreground hover:bg-primary/80",
+        default: "border-transparent bg-primary text-primary-foreground hover:bg-primary/80",
         secondary:
           "border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80",
         destructive:
@@ -18,27 +17,22 @@ const badgeVariants = cva(
         // Variantes semânticas do design MARES (ver design.md §Chips/Badges).
         public: "border-transparent bg-accent text-accent-foreground",
         private: "border-transparent bg-primary/10 text-primary",
-        positive:
-          "border-[hsl(var(--bio)/0.35)] bg-[hsl(var(--bio)/0.14)] text-[hsl(123_44%_30%)]",
+        positive: "border-[hsl(var(--bio)/0.35)] bg-[hsl(var(--bio)/0.14)] text-[hsl(123_44%_30%)]",
         negative: "border-transparent bg-secondary text-muted-foreground",
-        inconclusive:
-          "border-[hsl(35_80%_78%)] bg-[hsl(35_92%_92%)] text-[hsl(28_80%_34%)]",
+        inconclusive: "border-[hsl(35_80%_78%)] bg-[hsl(35_92%_92%)] text-[hsl(28_80%_34%)]",
       },
     },
     defaultVariants: {
       variant: "default",
     },
-  }
+  },
 )
 
 export interface BadgeProps
-  extends React.HTMLAttributes<HTMLDivElement>,
-    VariantProps<typeof badgeVariants> {}
+  extends React.HTMLAttributes<HTMLDivElement>, VariantProps<typeof badgeVariants> {}
 
 function Badge({ className, variant, ...props }: BadgeProps) {
-  return (
-    <div className={cn(badgeVariants({ variant }), className)} {...props} />
-  )
+  return <div className={cn(badgeVariants({ variant }), className)} {...props} />
 }
 
 export { Badge, badgeVariants }

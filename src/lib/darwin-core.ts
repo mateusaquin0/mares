@@ -92,7 +92,7 @@ function recordXml(a: DwcAnimal): string {
     tag("dwc:order", a.taxonOrder ?? ""),
     tag(
       "dwc:taxonConceptID",
-      a.wormsAphiaId ? `urn:lsid:marinespecies.org:taxname:${a.wormsAphiaId}` : ""
+      a.wormsAphiaId ? `urn:lsid:marinespecies.org:taxname:${a.wormsAphiaId}` : "",
     ),
     tag("dwc:eventDate", a.eventDate ? a.eventDate.toISOString().slice(0, 10) : ""),
     tag("dwc:decimalLatitude", lat),

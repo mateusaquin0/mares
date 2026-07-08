@@ -85,7 +85,7 @@ export function ConfirmDialog({
             onClick={handleConfirm}
             className={cn(
               buttonVariants(),
-              destructive && "bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              destructive && "bg-destructive text-destructive-foreground hover:bg-destructive/90",
             )}
           >
             {pending && <Loader2 className="animate-spin" aria-hidden />}

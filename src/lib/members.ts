@@ -31,7 +31,7 @@ export async function provisionMembership(params: {
     if (existing.isSystemAdmin) {
       throw new ConflictError(
         "Administradores globais não participam de organizações",
-        ERROR_CODES.systemAdminNoOrg
+        ERROR_CODES.systemAdminNoOrg,
       )
     }
 
@@ -50,7 +50,7 @@ export async function provisionMembership(params: {
   if (!params.name || params.name.trim().length < 2) {
     throw new ValidationError(
       "Nome é obrigatório para convidar um novo usuário",
-      ERROR_CODES.nameRequired
+      ERROR_CODES.nameRequired,
     )
   }
 

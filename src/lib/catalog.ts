@@ -54,7 +54,7 @@ function toNamedRow(
     measureLabel?: Prisma.JsonValue | null
     measureUnit?: string | null
   },
-  inUse: boolean
+  inUse: boolean,
 ): NamedRow {
   return {
     id: r.id,
@@ -89,7 +89,7 @@ export async function createNamed(
   key: string,
   name: I18n,
   createdById: string,
-  measure?: Measure
+  measure?: Measure,
 ): Promise<NamedRow> {
   const row =
     type === "organs"
@@ -105,7 +105,7 @@ export async function updateNamed(
   type: NamedType,
   id: string,
   name: I18n,
-  measure?: Measure
+  measure?: Measure,
 ): Promise<NamedRow> {
   const row =
     type === "organs"
@@ -159,7 +159,7 @@ export async function listPathogenGroups(): Promise<PathogenGroupRow[]> {
 }
 
 export async function findPathogenGroup(
-  id: string
+  id: string,
 ): Promise<{ id: string; usesScientificName: boolean } | null> {
   return prisma.pathogenGroup.findUnique({
     where: { id },
@@ -209,7 +209,7 @@ export async function createPathogenEntry(data: {
 
 export async function updatePathogenEntry(
   id: string,
-  data: { groupId: string; scientificName: string | null; name: I18n | null; taxon: PathogenTaxon }
+  data: { groupId: string; scientificName: string | null; name: I18n | null; taxon: PathogenTaxon },
 ): Promise<PathogenRow> {
   const row = await prisma.pathogen.update({
     where: { id },
@@ -245,7 +245,8 @@ export async function resolvePathogen(body: unknown): Promise<{
 
   if (group.usesScientificName) {
     const sci = data.scientificName?.trim()
-    if (!sci) throw new ValidationError("Nome científico é obrigatório", ERROR_CODES.catalogNameRequired)
+    if (!sci)
+      throw new ValidationError("Nome científico é obrigatório", ERROR_CODES.catalogNameRequired)
     const taxon: PathogenTaxon = {
       taxonFamily: data.taxonFamily?.trim() || null,
       taxonOrder: data.taxonOrder?.trim() || null,
@@ -255,9 +256,16 @@ export async function resolvePathogen(body: unknown): Promise<{
   }
   const pt = data.namePt?.trim()
   const en = data.nameEn?.trim()
-  if (!pt || !en) throw new ValidationError("Nome (PT e EN) é obrigatório", ERROR_CODES.catalogNameRequired)
+  if (!pt || !en)
+    throw new ValidationError("Nome (PT e EN) é obrigatório", ERROR_CODES.catalogNameRequired)
   const emptyTaxon: PathogenTaxon = { taxonFamily: null, taxonOrder: null, taxonId: null }
-  return { groupId: group.id, scientificName: null, name: { pt, en }, taxon: emptyTaxon, keySource: pt }
+  return {
+    groupId: group.id,
+    scientificName: null,
+    name: { pt, en },
+    taxon: emptyTaxon,
+    keySource: pt,
+  }
 }
 
 // ── Genéricos (todos os tipos) ──────────────────────────────────────────────
@@ -343,7 +351,7 @@ export async function catalogUsedIds(type: CatalogType): Promise<Set<string>> {
 /** Autor do item (para checagem de permissão). null = existe sem autor; undefined = não existe. */
 export async function catalogCreatedBy(
   type: CatalogType,
-  id: string
+  id: string,
 ): Promise<{ createdById: string | null } | null> {
   const args = { where: { id }, select: { createdById: true } }
   if (type === "organs") return prisma.organ.findUnique(args)

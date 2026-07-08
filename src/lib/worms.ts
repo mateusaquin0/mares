@@ -30,7 +30,7 @@ export async function matchWormsSpecies(name: string): Promise<WormsMatch | null
   if (scientific.length < 3) return null
 
   const url = `https://www.marinespecies.org/rest/AphiaRecordsByMatchNames?scientificnames[]=${encodeURIComponent(
-    scientific
+    scientific,
   )}&marine_only=false`
 
   try {

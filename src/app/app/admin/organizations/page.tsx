@@ -12,13 +12,7 @@ import { Badge } from "@/components/ui/badge"
 import { TableSkeleton } from "@/components/ui/skeleton"
 import { Input } from "@/components/ui/input"
 import { OrgMembers } from "./org-members"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
+import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/components/ui/table"
 import { SortableHead } from "@/components/ui/sortable-head"
 import {
   Dialog,
@@ -44,7 +38,7 @@ export default function AdminOrganizationsPage() {
   const locationText = useCallback(
     (o: Pick<AdminOrg, "city" | "state" | "country">) =>
       [o.city, o.state, getCountryName(o.country, locale)].filter(Boolean).join(", "),
-    [locale]
+    [locale],
   )
 
   // Renderiza a localização com bandeira + nome do país (traduzido a partir do ISO2).
@@ -59,7 +53,7 @@ export default function AdminOrganizationsPage() {
         </span>
       )
     },
-    [locationText, t]
+    [locationText, t],
   )
 
   const fmtDate = (iso: string) => new Date(iso).toLocaleDateString(locale)
@@ -151,9 +145,7 @@ export default function AdminOrganizationsPage() {
                           )}
                         </span>
                       </TableCell>
-                      <TableCell className="text-muted-foreground">
-                        {renderLocation(o)}
-                      </TableCell>
+                      <TableCell className="text-muted-foreground">{renderLocation(o)}</TableCell>
                       <TableCell className="text-right">{o.members.length}</TableCell>
                       <TableCell className="text-right">{o.researchCount}</TableCell>
                       <TableCell className="text-muted-foreground">

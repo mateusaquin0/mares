@@ -9,10 +9,7 @@ import { apiError, unauthorized } from "@/lib/api"
 import { NotFoundError, ForbiddenError } from "@/lib/errors"
 import { ERROR_CODES } from "@/lib/error-codes"
 
-export async function DELETE(
-  _req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const user = await getAuthUser()
     if (!user) return unauthorized()

@@ -94,7 +94,10 @@ export function MediaTab({ animalId, isOrgAdmin }: { animalId: string; isOrgAdmi
           {items.map((m) => {
             const isImage = m.mimeType.startsWith("image/")
             return (
-              <div key={m.id} className="group relative overflow-hidden rounded-xl border bg-card shadow-card transition-all duration-150 hover:-translate-y-0.5 hover:shadow-card-hover">
+              <div
+                key={m.id}
+                className="group relative overflow-hidden rounded-xl border bg-card shadow-card transition-all duration-150 hover:-translate-y-0.5 hover:shadow-card-hover"
+              >
                 <a
                   href={m.url ?? "#"}
                   target="_blank"
@@ -116,7 +119,9 @@ export function MediaTab({ animalId, isOrgAdmin }: { animalId: string; isOrgAdmi
                     <p className="truncate text-xs font-medium" title={m.label ?? ""}>
                       {m.label || t("noLabel")}
                     </p>
-                    <p className="mt-0.5 text-[10px] text-muted-foreground">{fmtDate(m.createdAt)}</p>
+                    <p className="mt-0.5 text-[10px] text-muted-foreground">
+                      {fmtDate(m.createdAt)}
+                    </p>
                   </div>
                   {isOrgAdmin && (
                     <Button

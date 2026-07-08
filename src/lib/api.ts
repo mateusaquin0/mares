@@ -13,7 +13,10 @@ import { ERROR_CODES } from "@/lib/error-codes"
 
 export function apiError(err: unknown): NextResponse {
   if (err instanceof ZodError) {
-    return NextResponse.json({ error: err.flatten(), code: ERROR_CODES.validation }, { status: 422 })
+    return NextResponse.json(
+      { error: err.flatten(), code: ERROR_CODES.validation },
+      { status: 422 },
+    )
   }
   if (err instanceof ValidationError) {
     return NextResponse.json({ error: err.message, code: err.code }, { status: 422 })
@@ -37,7 +40,7 @@ export function apiError(err: unknown): NextResponse {
 export function unauthorized(): NextResponse {
   return NextResponse.json(
     { error: "Não autenticado", code: ERROR_CODES.unauthenticated },
-    { status: 401 }
+    { status: 401 },
   )
 }
 
@@ -76,6 +79,6 @@ export function assertSameOrigin(req: NextRequest) {
 export function tooManyRequests(retryAfter: number): NextResponse {
   return NextResponse.json(
     { error: "Muitas requisições. Aguarde um momento.", code: ERROR_CODES.rateLimited },
-    { status: 429, headers: { "Retry-After": String(retryAfter) } }
+    { status: 429, headers: { "Retry-After": String(retryAfter) } },
   )
 }

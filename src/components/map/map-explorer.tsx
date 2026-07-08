@@ -28,7 +28,7 @@ const ALL = "__all__"
 // Valores distintos, não-nulos, ordenados por locale — base das opções de filtro.
 function distinctSorted(values: (string | null)[], locale: string): string[] {
   return [...new Set(values.filter((v): v is string => !!v))].sort((a, b) =>
-    a.localeCompare(b, locale)
+    a.localeCompare(b, locale),
   )
 }
 
@@ -89,28 +89,42 @@ export function MapExplorer({ points, linkBase, showVisibility }: Props) {
 
   // Opções derivadas dos pontos carregados.
   const speciesOptions = useMemo<MultiSelectOption[]>(
-    () => distinctSorted(points.map((p) => p.species), locale).map((s) => ({ value: s, label: s })),
-    [points, locale]
+    () =>
+      distinctSorted(
+        points.map((p) => p.species),
+        locale,
+      ).map((s) => ({ value: s, label: s })),
+    [points, locale],
   )
   const pathogenOptions = useMemo<MultiSelectOption[]>(
     () =>
-      distinctSorted(points.flatMap((p) => p.positivePathogens), locale).map((p) => ({
+      distinctSorted(
+        points.flatMap((p) => p.positivePathogens),
+        locale,
+      ).map((p) => ({
         value: p,
         label: p,
       })),
-    [points, locale]
+    [points, locale],
   )
   const stateOptions = useMemo<MultiSelectOption[]>(
-    () => distinctSorted(points.map((p) => p.state), locale).map((s) => ({ value: s, label: s })),
-    [points, locale]
+    () =>
+      distinctSorted(
+        points.map((p) => p.state),
+        locale,
+      ).map((s) => ({ value: s, label: s })),
+    [points, locale],
   )
   const researchOptions = useMemo<MultiSelectOption[]>(
     () =>
-      distinctSorted(points.map((p) => p.researchName), locale).map((r) => ({
+      distinctSorted(
+        points.map((p) => p.researchName),
+        locale,
+      ).map((r) => ({
         value: r,
         label: r,
       })),
-    [points, locale]
+    [points, locale],
   )
   const sexOptions = useMemo<MultiSelectOption[]>(() => {
     const present = new Set(points.map((p) => p.sex))
@@ -142,7 +156,7 @@ export function MapExplorer({ points, linkBase, showVisibility }: Props) {
         if (to && (!p.eventDate || p.eventDate > to)) return false
         return true
       }),
-    [points, species, pathogen, sex, lifeStage, state, research, visibility, from, to]
+    [points, species, pathogen, sex, lifeStage, state, research, visibility, from, to],
   )
 
   const labels: PopupLabels = useMemo(
@@ -155,7 +169,7 @@ export function MapExplorer({ points, linkBase, showVisibility }: Props) {
       viewDetails: t("popupViewDetails"),
       hidden: t("legendHidden"),
     }),
-    [t]
+    [t],
   )
 
   const hasFilters =
@@ -216,7 +230,11 @@ export function MapExplorer({ points, linkBase, showVisibility }: Props) {
       p.positivePathogens.join("; "),
     ])
     const stamp = new Date().toISOString().slice(0, 10)
-    downloadText(`MARES-mapa-${stamp}.csv`, "﻿" + toCsv([header, ...rows]), "text/csv;charset=utf-8")
+    downloadText(
+      `MARES-mapa-${stamp}.csv`,
+      "﻿" + toCsv([header, ...rows]),
+      "text/csv;charset=utf-8",
+    )
   }
 
   return (

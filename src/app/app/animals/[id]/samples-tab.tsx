@@ -231,7 +231,9 @@ export function SamplesTab({
                   )}
                   <TableCell>{txt(locale, s.organ.name)}</TableCell>
                   <TableCell>{s.sampleType}</TableCell>
-                  <TableCell className="text-muted-foreground">{fmtDate(s.collectionDate)}</TableCell>
+                  <TableCell className="text-muted-foreground">
+                    {fmtDate(s.collectionDate)}
+                  </TableCell>
                   <TableCell className="text-muted-foreground">{s.storageLocation ?? ""}</TableCell>
                   <TableCell className="text-right text-muted-foreground">
                     {s.storageTemp ?? ""}
@@ -249,7 +251,9 @@ export function SamplesTab({
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem onSelect={() => openEdit(s)}>{tc("edit")}</DropdownMenuItem>
+                        <DropdownMenuItem onSelect={() => openEdit(s)}>
+                          {tc("edit")}
+                        </DropdownMenuItem>
                         {isOrgAdmin && (
                           <DropdownMenuItem
                             className="text-destructive focus:text-destructive"

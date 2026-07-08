@@ -47,7 +47,7 @@ export async function POST(req: NextRequest) {
 
     // Visibilidade pública só pode ser definida por admin da organização.
     const isOrgAdmin = orgRole(user, orgId) === "ORG_ADMIN"
-    const isPublic = isOrgAdmin ? data.isPublic ?? false : false
+    const isPublic = isOrgAdmin ? (data.isPublic ?? false) : false
 
     const research = await prisma.research.create({
       data: {

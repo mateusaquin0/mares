@@ -9,7 +9,13 @@ import { ERROR_CODES } from "@/lib/error-codes"
 
 export const MEDIA_BUCKET = "animal-media"
 export const MEDIA_MAX_BYTES = 10 * 1024 * 1024 // 10 MB
-export const MEDIA_ALLOWED = ["image/jpeg", "image/png", "image/webp", "image/gif", "application/pdf"]
+export const MEDIA_ALLOWED = [
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/gif",
+  "application/pdf",
+]
 const SIGNED_TTL = 60 * 60 // 1h
 
 /** Cria o bucket se ainda não existir (idempotente). */
@@ -55,8 +61,14 @@ export function sniffMime(buf: Buffer): string | null {
   if (b(0) === 0x47 && b(1) === 0x49 && b(2) === 0x46 && b(3) === 0x38) return "image/gif"
   // WEBP: "RIFF"...."WEBP"
   if (
-    b(0) === 0x52 && b(1) === 0x49 && b(2) === 0x46 && b(3) === 0x46 &&
-    b(8) === 0x57 && b(9) === 0x45 && b(10) === 0x42 && b(11) === 0x50
+    b(0) === 0x52 &&
+    b(1) === 0x49 &&
+    b(2) === 0x46 &&
+    b(3) === 0x46 &&
+    b(8) === 0x57 &&
+    b(9) === 0x45 &&
+    b(10) === 0x42 &&
+    b(11) === 0x50
   )
     return "image/webp"
   // PDF: "%PDF-"
@@ -73,7 +85,10 @@ export function sniffMime(buf: Buffer): string | null {
 export function assertValidContent(buf: Buffer): string {
   const detected = sniffMime(buf)
   if (!detected || !MEDIA_ALLOWED.includes(detected)) {
-    throw new ValidationError("Conteúdo do arquivo não corresponde a um tipo suportado", ERROR_CODES.mediaInvalidType)
+    throw new ValidationError(
+      "Conteúdo do arquivo não corresponde a um tipo suportado",
+      ERROR_CODES.mediaInvalidType,
+    )
   }
   return detected
 }

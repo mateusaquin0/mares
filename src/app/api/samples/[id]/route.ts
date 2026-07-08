@@ -8,7 +8,13 @@ import { prisma } from "@/lib/prisma"
 import { getAuthUser, requireOrgRole } from "@/lib/auth"
 import { apiError, unauthorized } from "@/lib/api"
 import { updateSampleSchema } from "@/schemas/sample.schema"
-import { assertOrgan, loadSampleOrg, sampleData, sampleDuplicateError, sampleSelect } from "@/lib/samples"
+import {
+  assertOrgan,
+  loadSampleOrg,
+  sampleData,
+  sampleDuplicateError,
+  sampleSelect,
+} from "@/lib/samples"
 import { ConflictError } from "@/lib/errors"
 import { ERROR_CODES } from "@/lib/error-codes"
 
@@ -57,7 +63,7 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
     if (analyses > 0) {
       throw new ConflictError(
         "A amostra possui análises e não pode ser excluída",
-        ERROR_CODES.sampleHasAnalyses
+        ERROR_CODES.sampleHasAnalyses,
       )
     }
 

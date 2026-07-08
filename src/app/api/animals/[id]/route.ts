@@ -52,7 +52,10 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
 
     const isOrgAdmin = orgRole(user, base.orgId) === "ORG_ADMIN"
     if (data.isPublic !== undefined && !isOrgAdmin) {
-      throw new ForbiddenError("Apenas administradores alteram a visibilidade", ERROR_CODES.forbidden)
+      throw new ForbiddenError(
+        "Apenas administradores alteram a visibilidade",
+        ERROR_CODES.forbidden,
+      )
     }
 
     try {
@@ -86,7 +89,10 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
 
     const samples = await prisma.sample.count({ where: { animalId: id } })
     if (samples > 0) {
-      throw new ConflictError("O animal possui amostras e não pode ser excluído", ERROR_CODES.animalHasSamples)
+      throw new ConflictError(
+        "O animal possui amostras e não pode ser excluído",
+        ERROR_CODES.animalHasSamples,
+      )
     }
 
     await prisma.animal.delete({ where: { id } })

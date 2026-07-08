@@ -20,7 +20,7 @@ export function useTable<T>(
     initialSort?: { key: string; dir?: SortDir }
     /** Ao mudar (ex.: troca de aba), reinicia busca e ordenação para o estado inicial. */
     resetKey?: string
-  }
+  },
 ) {
   const initial: SortState = opts.initialSort
     ? { key: opts.initialSort.key, dir: opts.initialSort.dir ?? "asc" }
@@ -38,7 +38,7 @@ export function useTable<T>(
 
   function toggleSort(key: string) {
     setSort((prev) =>
-      prev?.key === key ? { key, dir: prev.dir === "asc" ? "desc" : "asc" } : { key, dir: "asc" }
+      prev?.key === key ? { key, dir: prev.dir === "asc" ? "desc" : "asc" } : { key, dir: "asc" },
     )
   }
 
@@ -53,7 +53,10 @@ export function useTable<T>(
       const cmp =
         typeof av === "number" && typeof bv === "number"
           ? av - bv
-          : String(av).localeCompare(String(bv), opts.locale, { numeric: true, sensitivity: "base" })
+          : String(av).localeCompare(String(bv), opts.locale, {
+              numeric: true,
+              sensitivity: "base",
+            })
       return sort.dir === "asc" ? cmp : -cmp
     })
   }

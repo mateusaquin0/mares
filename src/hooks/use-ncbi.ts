@@ -15,8 +15,8 @@ export function useNcbiSearch() {
           rank: r.rank,
           family: r.family,
           order: r.order,
-        }))
+        })),
       ),
-    []
+    [],
   )
 }

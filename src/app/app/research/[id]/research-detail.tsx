@@ -75,7 +75,7 @@ export function ResearchDetail({
   const [editOpen, setEditOpen] = useState(false)
 
   const research = researchQ.data
-  const canEditContent = isOrgAdmin || (research?.createdById === selfId)
+  const canEditContent = isOrgAdmin || research?.createdById === selfId
 
   const opts = (list: CatalogItem[] | undefined): ComboboxOption[] =>
     (list ?? []).map((c) => ({ value: c.id, label: txt(locale, c.name) }))
@@ -158,9 +158,7 @@ export function ResearchDetail({
             </Badge>
           </div>
           {research.description && (
-            <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
-              {research.description}
-            </p>
+            <p className="mt-1 max-w-2xl text-sm text-muted-foreground">{research.description}</p>
           )}
           <p className="mt-1 text-xs text-muted-foreground">
             {t("animalsCount", { count: research._count.animals })}
@@ -191,86 +189,88 @@ export function ResearchDetail({
         </CardHeader>
         <CardContent className="space-y-3">
           {isOrgAdmin && (
-          <div className="grid gap-2 rounded-lg border bg-muted/30 p-3 sm:grid-cols-[1fr_1fr_1fr_auto]">
-            <Combobox
-              options={opts(organsQ.data)}
-              value={organId}
-              onChange={setOrganId}
-              placeholder={tp("organ")}
-              searchPlaceholder={tc("loading")}
-              emptyText={tc("loading")}
-              loading={organsQ.isLoading}
-            />
-            <Combobox
-              options={(pathogensQ.data ?? []).map((c) => ({
-                value: c.id,
-                label: pathogenName(locale, c),
-              }))}
-              value={pathogenId}
-              onChange={setPathogenId}
-              placeholder={tp("pathogen")}
-              searchPlaceholder={tc("loading")}
-              emptyText={tc("loading")}
-              loading={pathogensQ.isLoading}
-            />
-            <Combobox
-              options={opts(examTypesQ.data)}
-              value={examTypeId}
-              onChange={setExamTypeId}
-              placeholder={tp("examType")}
-              searchPlaceholder={tc("loading")}
-              emptyText={tc("loading")}
-              loading={examTypesQ.isLoading}
-            />
-            <Button
-              onClick={addEntry}
-              disabled={!organId || !pathogenId || !examTypeId}
-              loading={addM.isPending}
-            >
-              <Plus className="size-4" />
-              {tc("add")}
-            </Button>
-          </div>
-        )}
+            <div className="grid gap-2 rounded-lg border bg-muted/30 p-3 sm:grid-cols-[1fr_1fr_1fr_auto]">
+              <Combobox
+                options={opts(organsQ.data)}
+                value={organId}
+                onChange={setOrganId}
+                placeholder={tp("organ")}
+                searchPlaceholder={tc("loading")}
+                emptyText={tc("loading")}
+                loading={organsQ.isLoading}
+              />
+              <Combobox
+                options={(pathogensQ.data ?? []).map((c) => ({
+                  value: c.id,
+                  label: pathogenName(locale, c),
+                }))}
+                value={pathogenId}
+                onChange={setPathogenId}
+                placeholder={tp("pathogen")}
+                searchPlaceholder={tc("loading")}
+                emptyText={tc("loading")}
+                loading={pathogensQ.isLoading}
+              />
+              <Combobox
+                options={opts(examTypesQ.data)}
+                value={examTypeId}
+                onChange={setExamTypeId}
+                placeholder={tp("examType")}
+                searchPlaceholder={tc("loading")}
+                emptyText={tc("loading")}
+                loading={examTypesQ.isLoading}
+              />
+              <Button
+                onClick={addEntry}
+                disabled={!organId || !pathogenId || !examTypeId}
+                loading={addM.isPending}
+              >
+                <Plus className="size-4" />
+                {tc("add")}
+              </Button>
+            </div>
+          )}
 
           {research.protocols.length === 0 ? (
-          <p className="text-sm text-muted-foreground">{tp("empty")}</p>
-        ) : (
-          <div className="overflow-hidden rounded-lg border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>{tp("organ")}</TableHead>
-                  <TableHead>{tp("pathogen")}</TableHead>
-                  <TableHead>{tp("examType")}</TableHead>
-                  {isOrgAdmin && <TableHead className="w-16 text-right">{tc("actions")}</TableHead>}
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {research.protocols.map((p) => (
-                  <TableRow key={p.id}>
-                    <TableCell>{txt(locale, p.organ.name)}</TableCell>
-                    <TableCell>{pathogenName(locale, p.pathogen)}</TableCell>
-                    <TableCell>{txt(locale, p.examType.name)}</TableCell>
+            <p className="text-sm text-muted-foreground">{tp("empty")}</p>
+          ) : (
+            <div className="overflow-hidden rounded-lg border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>{tp("organ")}</TableHead>
+                    <TableHead>{tp("pathogen")}</TableHead>
+                    <TableHead>{tp("examType")}</TableHead>
                     {isOrgAdmin && (
-                      <TableCell className="text-right">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="size-8 text-destructive"
-                          onClick={() => removeEntry(p.id)}
-                          aria-label={tc("remove")}
-                        >
-                          <Trash2 className="size-4" />
-                        </Button>
-                      </TableCell>
+                      <TableHead className="w-16 text-right">{tc("actions")}</TableHead>
                     )}
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        )}
+                </TableHeader>
+                <TableBody>
+                  {research.protocols.map((p) => (
+                    <TableRow key={p.id}>
+                      <TableCell>{txt(locale, p.organ.name)}</TableCell>
+                      <TableCell>{pathogenName(locale, p.pathogen)}</TableCell>
+                      <TableCell>{txt(locale, p.examType.name)}</TableCell>
+                      {isOrgAdmin && (
+                        <TableCell className="text-right">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="size-8 text-destructive"
+                            onClick={() => removeEntry(p.id)}
+                            aria-label={tc("remove")}
+                          >
+                            <Trash2 className="size-4" />
+                          </Button>
+                        </TableCell>
+                      )}
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
         </CardContent>
       </Card>
 

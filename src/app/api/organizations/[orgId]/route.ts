@@ -8,10 +8,7 @@ import { updateOrganizationSchema } from "@/schemas/organization.schema"
 import { NotFoundError } from "@/lib/errors"
 import { ERROR_CODES } from "@/lib/error-codes"
 
-export async function GET(
-  _req: NextRequest,
-  { params }: { params: Promise<{ orgId: string }> }
-) {
+export async function GET(_req: NextRequest, { params }: { params: Promise<{ orgId: string }> }) {
   try {
     const user = await getAuthUser()
     if (!user) return unauthorized()
@@ -30,10 +27,7 @@ export async function GET(
   }
 }
 
-export async function PATCH(
-  req: NextRequest,
-  { params }: { params: Promise<{ orgId: string }> }
-) {
+export async function PATCH(req: NextRequest, { params }: { params: Promise<{ orgId: string }> }) {
   try {
     const user = await getAuthUser()
     if (!user) return unauthorized()

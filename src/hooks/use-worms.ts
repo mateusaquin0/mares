@@ -15,8 +15,8 @@ export function useWormsSearch() {
           rank: r.rank,
           family: r.family,
           order: r.order,
-        }))
+        })),
       ),
-    []
+    [],
   )
 }

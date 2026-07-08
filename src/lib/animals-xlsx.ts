@@ -67,7 +67,10 @@ function positivePathogens(a: XlsxAnimal, loc: Loc): string {
   for (const s of a.samples) {
     for (const an of s.analyses) {
       if (an.result === "POSITIVO") {
-        const label = pathogenName(loc, { scientificName: an.pathogen.scientificName, name: asI18n(an.pathogen.name) })
+        const label = pathogenName(loc, {
+          scientificName: an.pathogen.scientificName,
+          name: asI18n(an.pathogen.name),
+        })
         if (label) names.add(label)
       }
     }
@@ -134,8 +137,11 @@ const isoDate = (d: Date | null) => (d ? d.toISOString().slice(0, 10) : "")
 
 function rowFor(a: XlsxAnimal, loc: Loc): Record<string, string | number> {
   const sex = a.sex ? (SEX[a.sex as SexValue]?.[loc] ?? a.sex) : ""
-  const lifeStage = a.lifeStage ? (LIFE_STAGE[a.lifeStage as LifeStageValue]?.[loc] ?? a.lifeStage) : ""
-  const visible = loc === "en" ? (a.isPublic ? "Public" : "Hidden") : a.isPublic ? "Público" : "Oculto"
+  const lifeStage = a.lifeStage
+    ? (LIFE_STAGE[a.lifeStage as LifeStageValue]?.[loc] ?? a.lifeStage)
+    : ""
+  const visible =
+    loc === "en" ? (a.isPublic ? "Public" : "Hidden") : a.isPublic ? "Público" : "Oculto"
   return {
     controlId: a.controlId ?? "",
     simba: a.simbaRecordNumber ?? "",
@@ -187,7 +193,10 @@ export async function buildAnimalsXlsx(animals: XlsxAnimal[], locale: string): P
           sample: s.identification,
           research: s.research.name,
           organ: txt(loc, asI18n(s.organ.name)),
-          pathogen: pathogenName(loc, { scientificName: an.pathogen.scientificName, name: asI18n(an.pathogen.name) }),
+          pathogen: pathogenName(loc, {
+            scientificName: an.pathogen.scientificName,
+            name: asI18n(an.pathogen.name),
+          }),
           exam: txt(loc, asI18n(an.examType.name)),
           result: an.result ? RESULT[an.result][loc] : "",
           measureLabel: an.examType.measureLabel ? txt(loc, asI18n(an.examType.measureLabel)) : "",

@@ -35,7 +35,16 @@ import {
 } from "@/components/ui/select"
 
 const ALL = "__all__"
-const SPECIES_COLORS = ["#003366", "#006876", "#43A047", "#0f6f8a", "#7a8794", "#B45309", "#8b5cf6", "#0ea5e9"]
+const SPECIES_COLORS = [
+  "#003366",
+  "#006876",
+  "#43A047",
+  "#0f6f8a",
+  "#7a8794",
+  "#B45309",
+  "#8b5cf6",
+  "#0ea5e9",
+]
 const NAVY = "#003366"
 const TEAL = "#006876"
 
@@ -53,8 +62,12 @@ export function DashboardClient() {
   const [to, setTo] = useState("")
 
   const filters = useMemo(
-    () => ({ researchId: research === ALL ? undefined : research, from: from || undefined, to: to || undefined }),
-    [research, from, to]
+    () => ({
+      researchId: research === ALL ? undefined : research,
+      from: from || undefined,
+      to: to || undefined,
+    }),
+    [research, from, to],
   )
   const { data, isLoading } = useDashboard(filters)
   const { data: researches } = useResearchList()
@@ -69,7 +82,7 @@ export function DashboardClient() {
   const numberFmt = useMemo(() => new Intl.NumberFormat(locale), [locale])
   const monthFmt = useMemo(
     () => new Intl.DateTimeFormat(locale, { month: "short", year: "2-digit" }),
-    [locale]
+    [locale],
   )
   const pctFmt = (n: number) => `${n.toFixed(1).replace(".", ",")}%`
   const fmtMonth = (m: string) => monthFmt.format(new Date(`${m}-01T12:00:00Z`))
@@ -77,13 +90,21 @@ export function DashboardClient() {
   const totals = data?.totals
   const stats = [
     { label: t("statAnimals"), value: totals ? numberFmt.format(totals.animals) : "—", icon: Fish },
-    { label: t("statSamples"), value: totals ? numberFmt.format(totals.samples) : "—", icon: TestTubes },
+    {
+      label: t("statSamples"),
+      value: totals ? numberFmt.format(totals.samples) : "—",
+      icon: TestTubes,
+    },
     {
       label: t("statPositivity"),
       value: totals && totals.analyses > 0 ? pctFmt(totals.positivity) : "—",
       icon: Activity,
     },
-    { label: t("statPositives"), value: totals ? numberFmt.format(totals.positive) : "—", icon: Biohazard },
+    {
+      label: t("statPositives"),
+      value: totals ? numberFmt.format(totals.positive) : "—",
+      icon: Biohazard,
+    },
   ]
 
   const species = data?.species ?? []
@@ -117,13 +138,23 @@ export function DashboardClient() {
           <span className="font-semibold uppercase tracking-wide text-muted-foreground">
             {t("filterFrom")}
           </span>
-          <Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className="h-9 w-40" />
+          <Input
+            type="date"
+            value={from}
+            onChange={(e) => setFrom(e.target.value)}
+            className="h-9 w-40"
+          />
         </label>
         <label className="flex flex-col gap-1 text-xs">
           <span className="font-semibold uppercase tracking-wide text-muted-foreground">
             {t("filterTo")}
           </span>
-          <Input type="date" value={to} onChange={(e) => setTo(e.target.value)} className="h-9 w-40" />
+          <Input
+            type="date"
+            value={to}
+            onChange={(e) => setTo(e.target.value)}
+            className="h-9 w-40"
+          />
         </label>
         {hasFilters && (
           <Button variant="ghost" size="sm" onClick={clear} className="gap-1">
@@ -163,7 +194,9 @@ export function DashboardClient() {
           </CardHeader>
           <CardContent>
             {species.length === 0 ? (
-              <p className="py-16 text-center text-sm text-muted-foreground">{t("chartSpeciesEmpty")}</p>
+              <p className="py-16 text-center text-sm text-muted-foreground">
+                {t("chartSpeciesEmpty")}
+              </p>
             ) : (
               <ResponsiveContainer width="100%" height={Math.max(160, species.length * 42)}>
                 <BarChart layout="vertical" data={species} margin={{ left: 8, right: 24 }}>
@@ -196,7 +229,9 @@ export function DashboardClient() {
           </CardHeader>
           <CardContent>
             {positivity.length === 0 ? (
-              <p className="py-16 text-center text-sm text-muted-foreground">{t("chartPositivityEmpty")}</p>
+              <p className="py-16 text-center text-sm text-muted-foreground">
+                {t("chartPositivityEmpty")}
+              </p>
             ) : (
               <div className="flex flex-col gap-4 py-2">
                 {positivity.map((r, i) => {
@@ -215,7 +250,10 @@ export function DashboardClient() {
                         </span>
                       </div>
                       <div className="h-2.5 overflow-hidden rounded bg-secondary">
-                        <div className="h-full rounded" style={{ width: `${r.pct}%`, background: color }} />
+                        <div
+                          className="h-full rounded"
+                          style={{ width: `${r.pct}%`, background: color }}
+                        />
                       </div>
                     </div>
                   )
@@ -233,7 +271,9 @@ export function DashboardClient() {
         </CardHeader>
         <CardContent>
           {timeline.length === 0 ? (
-            <p className="py-16 text-center text-sm text-muted-foreground">{t("chartTimelineEmpty")}</p>
+            <p className="py-16 text-center text-sm text-muted-foreground">
+              {t("chartTimelineEmpty")}
+            </p>
           ) : (
             <ResponsiveContainer width="100%" height={260}>
               <AreaChart data={timeline} margin={{ left: 0, right: 16, top: 8 }}>
@@ -244,7 +284,12 @@ export function DashboardClient() {
                   </linearGradient>
                 </defs>
                 <CartesianGrid stroke="#e2e8f0" vertical={false} />
-                <XAxis dataKey="month" tickFormatter={fmtMonth} tick={{ fontSize: 12 }} minTickGap={16} />
+                <XAxis
+                  dataKey="month"
+                  tickFormatter={fmtMonth}
+                  tick={{ fontSize: 12 }}
+                  minTickGap={16}
+                />
                 <YAxis allowDecimals={false} tick={{ fontSize: 12 }} width={32} />
                 <Tooltip
                   labelFormatter={(m) => fmtMonth(String(m))}

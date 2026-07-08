@@ -6,10 +6,7 @@ import { getAuthUser } from "@/lib/auth"
 import { apiError, unauthorized } from "@/lib/api"
 import { getStates } from "@/lib/csc"
 
-export async function GET(
-  _req: NextRequest,
-  { params }: { params: Promise<{ ciso: string }> }
-) {
+export async function GET(_req: NextRequest, { params }: { params: Promise<{ ciso: string }> }) {
   try {
     const user = await getAuthUser()
     if (!user) return unauthorized()

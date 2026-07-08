@@ -13,7 +13,7 @@ import { ERROR_CODES } from "@/lib/error-codes"
 
 export async function PUT(
   req: NextRequest,
-  { params }: { params: Promise<{ orgId: string; userId: string }> }
+  { params }: { params: Promise<{ orgId: string; userId: string }> },
 ) {
   try {
     const user = await getAuthUser()
@@ -42,7 +42,7 @@ export async function PUT(
 
 export async function DELETE(
   _req: NextRequest,
-  { params }: { params: Promise<{ orgId: string; userId: string }> }
+  { params }: { params: Promise<{ orgId: string; userId: string }> },
 ) {
   try {
     const user = await getAuthUser()

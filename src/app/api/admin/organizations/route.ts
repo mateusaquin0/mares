@@ -50,7 +50,7 @@ export async function GET() {
           status: m.user.status,
           role: m.role,
         })),
-      }))
+      })),
     )
   } catch (err) {
     return apiError(err)

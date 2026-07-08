@@ -12,8 +12,7 @@ import { NotFoundError, ServiceUnavailableError } from "@/lib/errors"
 import { ERROR_CODES } from "@/lib/error-codes"
 import type { SexValue, LifeStageValue } from "@/lib/animal-enums"
 
-const DEFAULT_SIMBA_URL =
-  "https://simba.petrobras.com.br/simba/web/api/v1/occurrences/public"
+const DEFAULT_SIMBA_URL = "https://simba.petrobras.com.br/simba/web/api/v1/occurrences/public"
 
 // Timeout defensivo para não prender o request caso o SIMBA demore.
 const TIMEOUT_MS = 15_000
@@ -63,7 +62,7 @@ function decodeEntities(s: string): string {
 function term(xml: string, localName: string): string | null {
   const re = new RegExp(
     `<(?:[A-Za-z0-9_]+:)?${localName}\\b[^>]*>([\\s\\S]*?)</(?:[A-Za-z0-9_]+:)?${localName}>`,
-    "i"
+    "i",
   )
   const m = xml.match(re)
   if (!m) return null
@@ -82,7 +81,7 @@ function firstTerm(xml: string, names: string[]): string | null {
 /** Isola o primeiro <SimpleDarwinRecord> do set (a busca por record_number retorna um). */
 function firstRecordBlock(xml: string): string {
   const m = xml.match(
-    /<(?:[A-Za-z0-9_]+:)?SimpleDarwinRecord\b[^>]*>([\s\S]*?)<\/(?:[A-Za-z0-9_]+:)?SimpleDarwinRecord>/i
+    /<(?:[A-Za-z0-9_]+:)?SimpleDarwinRecord\b[^>]*>([\s\S]*?)<\/(?:[A-Za-z0-9_]+:)?SimpleDarwinRecord>/i,
   )
   return m ? m[1] : xml
 }
@@ -138,7 +137,8 @@ export function parseDarwinCore(xml: string, recordNumber: string): SimbaRecord 
   // No SIMBA, recordNumber é o identificador; occurrenceID é uma URN longa.
   const r = firstRecordBlock(xml)
   return {
-    simbaRecordNumber: firstTerm(r, ["recordNumber", "catalogNumber", "occurrenceID"]) ?? recordNumber,
+    simbaRecordNumber:
+      firstTerm(r, ["recordNumber", "catalogNumber", "occurrenceID"]) ?? recordNumber,
     species: firstTerm(r, ["scientificName"]),
     eventDate: toEventDate(firstTerm(r, ["eventDate"])),
     necropsyDate: toBrDate(firstTerm(r, ["measurementDeterminedDate"])),

@@ -24,7 +24,8 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ typ
     const user = await getAuthUser()
     if (!user) return unauthorized()
     const { type } = await params
-    if (!isCatalogType(type)) throw new NotFoundError("Catálogo inválido", ERROR_CODES.catalogNotFound)
+    if (!isCatalogType(type))
+      throw new NotFoundError("Catálogo inválido", ERROR_CODES.catalogNotFound)
 
     const rows = type === "pathogens" ? await listPathogens() : await listNamed(type)
     return NextResponse.json(rows)
@@ -40,7 +41,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ typ
     requireAnyOrgAdmin(user)
 
     const { type } = await params
-    if (!isCatalogType(type)) throw new NotFoundError("Catálogo inválido", ERROR_CODES.catalogNotFound)
+    if (!isCatalogType(type))
+      throw new NotFoundError("Catálogo inválido", ERROR_CODES.catalogNotFound)
 
     const body = await req.json().catch(() => null)
 
@@ -65,7 +67,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ typ
           await uniqueKey(type, data.namePt),
           { pt: data.namePt.trim(), en: data.nameEn.trim() },
           user.id,
-          resolveMeasure(data)
+          resolveMeasure(data),
         )
         return NextResponse.json(created, { status: 201 })
       }
@@ -75,7 +77,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ typ
         type,
         await uniqueKey(type, data.namePt),
         { pt: data.namePt.trim(), en: data.nameEn.trim() },
-        user.id
+        user.id,
       )
       return NextResponse.json(created, { status: 201 })
     } catch (e) {

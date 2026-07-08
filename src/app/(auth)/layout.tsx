@@ -12,8 +12,7 @@ export default async function AuthLayout({ children }: { children: React.ReactNo
       <aside
         className="relative hidden flex-col justify-between overflow-hidden p-12 text-white lg:flex lg:w-[46%]"
         style={{
-          background:
-            "linear-gradient(160deg, #002147 0%, #003366 60%, #006876 140%)",
+          background: "linear-gradient(160deg, #002147 0%, #003366 60%, #006876 140%)",
         }}
       >
         <Link href="/" className="flex items-center gap-3">
@@ -24,9 +23,7 @@ export default async function AuthLayout({ children }: { children: React.ReactNo
         </Link>
 
         <div className="max-w-md">
-          <h1 className="text-4xl font-bold leading-tight tracking-tight">
-            {t("brandTitle")}
-          </h1>
+          <h1 className="text-4xl font-bold leading-tight tracking-tight">{t("brandTitle")}</h1>
           <p className="mt-4 text-base leading-relaxed text-white/80">{t("brandDesc")}</p>
         </div>
 

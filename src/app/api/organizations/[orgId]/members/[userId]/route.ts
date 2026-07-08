@@ -30,7 +30,7 @@ async function orgHasData(orgId: string) {
 
 export async function PUT(
   req: NextRequest,
-  { params }: { params: Promise<{ orgId: string; userId: string }> }
+  { params }: { params: Promise<{ orgId: string; userId: string }> },
 ) {
   try {
     const user = await getAuthUser()
@@ -53,7 +53,7 @@ export async function PUT(
       if (membership.role === "ORG_ADMIN") {
         throw new ForbiddenError(
           "Não é possível alterar o papel de outro administrador",
-          ERROR_CODES.changeOtherAdmin
+          ERROR_CODES.changeOtherAdmin,
         )
       }
       // Pesquisador → pode ser promovido a admin (ou manter pesquisador).
@@ -63,7 +63,7 @@ export async function PUT(
         if ((await orgAdminCount(orgId)) <= 1) {
           throw new ConflictError(
             "Você é o único administrador; promova outro antes de deixar de ser admin",
-            ERROR_CODES.lastAdminDemote
+            ERROR_CODES.lastAdminDemote,
           )
         }
       }
@@ -82,7 +82,7 @@ export async function PUT(
 
 export async function DELETE(
   _req: NextRequest,
-  { params }: { params: Promise<{ orgId: string; userId: string }> }
+  { params }: { params: Promise<{ orgId: string; userId: string }> },
 ) {
   try {
     const user = await getAuthUser()
@@ -101,7 +101,7 @@ export async function DELETE(
       if (membership.role === "ORG_ADMIN") {
         throw new ForbiddenError(
           "Não é possível remover outro administrador",
-          ERROR_CODES.removeOtherAdmin
+          ERROR_CODES.removeOtherAdmin,
         )
       }
       await prisma.membership.delete({ where: { userId_orgId: { userId, orgId } } })
@@ -126,7 +126,7 @@ export async function DELETE(
       if ((await orgHasData(orgId)) && (await orgMemberCount(orgId)) > 1) {
         throw new ConflictError(
           "A organização possui dados; promova outro administrador antes de sair",
-          ERROR_CODES.lastAdminHasData
+          ERROR_CODES.lastAdminHasData,
         )
       }
       await prisma.membership.delete({ where: { userId_orgId: { userId, orgId } } })

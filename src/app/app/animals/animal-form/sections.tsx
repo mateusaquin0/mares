@@ -1,21 +1,21 @@
-"use client";
+"use client"
 
-import type { ComponentType, ReactNode } from "react";
-import { useTranslations } from "next-intl";
-import { Search, ChevronDown, Fish, MapPin, Stethoscope, FileText } from "lucide-react";
+import type { ComponentType, ReactNode } from "react"
+import { useTranslations } from "next-intl"
+import { Search, ChevronDown, Fish, MapPin, Stethoscope, FileText } from "lucide-react"
 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
-import { SpeciesAutocomplete } from "@/components/species-autocomplete";
-import { Field, TextField, TextareaField, SelectField } from "@/components/form";
-import { SEX_OPTIONS, LIFE_STAGE_OPTIONS } from "@/lib/animal-enums";
-import type { AnimalFormApi } from "./use-animal-form";
-import type { ResearchOption } from ".";
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Checkbox } from "@/components/ui/checkbox"
+import { SpeciesAutocomplete } from "@/components/species-autocomplete"
+import { Field, TextField, TextareaField, SelectField } from "@/components/form"
+import { SEX_OPTIONS, LIFE_STAGE_OPTIONS } from "@/lib/animal-enums"
+import type { AnimalFormApi } from "./use-animal-form"
+import type { ResearchOption } from "."
 
 // Props comuns a todas as seções: a fatia de estado/erros/mutação do formulário.
-type SectionProps = Pick<AnimalFormApi, "form" | "errors" | "set">;
+type SectionProps = Pick<AnimalFormApi, "form" | "errors" | "set">
 
 // Seção colapsável (accordion) com cabeçalho de ícone + título + chevron.
 // Usa <details> nativo (acessível); aberta por padrão para não esconder campos.
@@ -24,9 +24,9 @@ function Section({
   icon: Icon,
   children,
 }: {
-  title: string;
-  icon: ComponentType<{ className?: string }>;
-  children: ReactNode;
+  title: string
+  icon: ComponentType<{ className?: string }>
+  children: ReactNode
 }) {
   return (
     <details open className="group rounded-xl border bg-card">
@@ -39,7 +39,7 @@ function Section({
       </summary>
       <div className="space-y-3 border-t px-4 py-4">{children}</div>
     </details>
-  );
+  )
 }
 
 // ── Identificação: pesquisa, espécie (WoRMS), IDs de controle/SIMBA ────────────
@@ -52,21 +52,18 @@ export function IdentificationSection({
   fetchSimba,
   fetchingSimba,
 }: SectionProps & {
-  mode: "create" | "edit";
-  researches: ResearchOption[];
-  fetchSimba: () => void;
-  fetchingSimba: boolean;
+  mode: "create" | "edit"
+  researches: ResearchOption[]
+  fetchSimba: () => void
+  fetchingSimba: boolean
 }) {
-  const t = useTranslations("animals");
+  const t = useTranslations("animals")
 
   return (
     <Section title={t("sectionIdentification")} icon={Fish}>
       {mode === "edit" ? (
         <Field htmlFor="research" label={t("research")} error={errors.researchId}>
-          <Input
-            disabled
-            value={researches.find((r) => r.id === form.researchId)?.name ?? ""}
-          />
+          <Input disabled value={researches.find((r) => r.id === form.researchId)?.name ?? ""} />
         </Field>
       ) : (
         <SelectField
@@ -102,8 +99,7 @@ export function IdentificationSection({
             {t("wormsLinked", {
               aphiaId: form.wormsAphiaId,
               taxon:
-                [form.taxonFamily, form.taxonOrder].filter(Boolean).join(" · ") ||
-                t("notInformed"),
+                [form.taxonFamily, form.taxonOrder].filter(Boolean).join(" · ") || t("notInformed"),
             })}
           </p>
         )}
@@ -146,12 +142,12 @@ export function IdentificationSection({
         </Field>
       </div>
     </Section>
-  );
+  )
 }
 
 // ── Encalhe: data, praia, local e coordenadas ─────────────────────────────────
 export function StrandingSection({ form, errors, set }: SectionProps) {
-  const t = useTranslations("animals");
+  const t = useTranslations("animals")
 
   return (
     <Section title={t("sectionStranding")} icon={MapPin}>
@@ -210,16 +206,16 @@ export function StrandingSection({ form, errors, set }: SectionProps) {
         />
       </div>
     </Section>
-  );
+  )
 }
 
 // ── Condição: sexo, estágio de vida, condição corporal e decomposição ─────────
 export function ConditionSection({ form, errors, set }: SectionProps) {
-  const t = useTranslations("animals");
+  const t = useTranslations("animals")
 
   // Valores canônicos em src/lib/animal-enums.ts; aqui só resolvemos o rótulo i18n.
-  const sexOptions = SEX_OPTIONS.map((o) => ({ value: o.value, label: t(o.key) }));
-  const lifeStageOptions = LIFE_STAGE_OPTIONS.map((o) => ({ value: o.value, label: t(o.key) }));
+  const sexOptions = SEX_OPTIONS.map((o) => ({ value: o.value, label: t(o.key) }))
+  const lifeStageOptions = LIFE_STAGE_OPTIONS.map((o) => ({ value: o.value, label: t(o.key) }))
 
   return (
     <Section title={t("sectionCondition")} icon={Stethoscope}>
@@ -277,7 +273,7 @@ export function ConditionSection({ form, errors, set }: SectionProps) {
         />
       </div>
     </Section>
-  );
+  )
 }
 
 // ── Observações: notas macroscópicas e visibilidade (admin) ───────────────────
@@ -287,7 +283,7 @@ export function NotesSection({
   set,
   isOrgAdmin,
 }: SectionProps & { isOrgAdmin: boolean }) {
-  const t = useTranslations("animals");
+  const t = useTranslations("animals")
 
   return (
     <Section title={t("sectionNotes")} icon={FileText}>
@@ -308,14 +304,11 @@ export function NotesSection({
             onCheckedChange={(v) => set({ isPublic: v !== true })}
             className="mt-0.5"
           />
-          <Label
-            htmlFor="isHidden"
-            className="text-sm font-normal text-muted-foreground"
-          >
+          <Label htmlFor="isHidden" className="text-sm font-normal text-muted-foreground">
             {t("isHiddenHint")}
           </Label>
         </div>
       )}
     </Section>
-  );
+  )
 }

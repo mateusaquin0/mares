@@ -9,7 +9,8 @@ export type ProtocolEntryInput = { organId: string; pathogenId: string; examType
 export const researchService = {
   list: () => http.get<ResearchListItem[]>("/api/research"),
   get: (id: string) => http.get<ResearchDetail>(`/api/research/${id}`),
-  create: (data: CreateResearchData) => http.post<{ id: string; name: string }>("/api/research", data),
+  create: (data: CreateResearchData) =>
+    http.post<{ id: string; name: string }>("/api/research", data),
   update: (id: string, data: UpdateResearchData) => http.put(`/api/research/${id}`, data),
   remove: (id: string) => http.del(`/api/research/${id}`),
 

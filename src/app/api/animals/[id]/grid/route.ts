@@ -48,10 +48,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
     // Tipos vêm do Prisma (name como Json); o cliente reinterpreta como AnalysisGrid.
     type SampleRow = (typeof samples)[number]
     const order: string[] = []
-    const byResearch = new Map<
-      string,
-      { research: SampleRow["research"]; samples: SampleRow[] }
-    >()
+    const byResearch = new Map<string, { research: SampleRow["research"]; samples: SampleRow[] }>()
     for (const s of samples) {
       let bucket = byResearch.get(s.researchId)
       if (!bucket) {

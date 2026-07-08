@@ -33,7 +33,7 @@ export function SortableHead({
         onClick={() => onToggle(sortKey)}
         className={cn(
           "-mx-1 inline-flex cursor-pointer items-center gap-1 rounded px-1 py-0.5 select-none transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-          active ? "text-foreground" : "text-muted-foreground"
+          active ? "text-foreground" : "text-muted-foreground",
         )}
       >
         {children}

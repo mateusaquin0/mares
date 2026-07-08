@@ -34,7 +34,7 @@ export async function GET() {
           orgName: m.organization.name,
           role: m.role,
         })),
-      }))
+      })),
     )
   } catch (err) {
     return apiError(err)

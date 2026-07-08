@@ -32,7 +32,12 @@ export async function loadAnimalOrg(id: string) {
     select: { id: true, isPublic: true, researchId: true, research: { select: { orgId: true } } },
   })
   if (!animal) throw new NotFoundError("Animal não encontrado", ERROR_CODES.animalNotFound)
-  return { id: animal.id, isPublic: animal.isPublic, researchId: animal.researchId, orgId: animal.research.orgId }
+  return {
+    id: animal.id,
+    isPublic: animal.isPublic,
+    researchId: animal.researchId,
+    orgId: animal.research.orgId,
+  }
 }
 
 /** Confere que a pesquisa existe e pertence à organização informada. */
@@ -91,7 +96,11 @@ export function animalData(input: AnimalWritable) {
     municipality: input.municipality,
     state: input.state,
     eventDate:
-      input.eventDate === undefined ? undefined : input.eventDate === null ? null : new Date(input.eventDate),
+      input.eventDate === undefined
+        ? undefined
+        : input.eventDate === null
+          ? null
+          : new Date(input.eventDate),
     necropsyDate:
       input.necropsyDate === undefined
         ? undefined
@@ -169,7 +178,7 @@ export async function addAnimalResearch(animalId: string, orgId: string, researc
   if (animal.researchId === researchId) {
     throw new ConflictError(
       "Esta já é a pesquisa primária do indivíduo",
-      ERROR_CODES.animalResearchPrimary
+      ERROR_CODES.animalResearchPrimary,
     )
   }
   // Garante que a pesquisa existe e pertence à mesma organização do indivíduo.
@@ -180,7 +189,7 @@ export async function addAnimalResearch(animalId: string, orgId: string, researc
     if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
       throw new ConflictError(
         "Esta pesquisa já compartilha o indivíduo",
-        ERROR_CODES.animalResearchExists
+        ERROR_CODES.animalResearchExists,
       )
     }
     throw e
@@ -203,7 +212,7 @@ export async function assertResearchOnAnimal(animalId: string, researchId: strin
   if (animal.researchId === researchId || animal.participations.length > 0) return
   throw new ValidationError(
     "Pesquisa não vinculada a este indivíduo",
-    ERROR_CODES.animalResearchNotLinked
+    ERROR_CODES.animalResearchNotLinked,
   )
 }
 
@@ -215,7 +224,7 @@ export async function removeAnimalResearch(animalId: string, researchId: string)
   if (samples > 0) {
     throw new ConflictError(
       "A pesquisa possui amostras neste indivíduo",
-      ERROR_CODES.animalResearchHasData
+      ERROR_CODES.animalResearchHasData,
     )
   }
   try {

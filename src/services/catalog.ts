@@ -25,8 +25,7 @@ export const catalogService = {
   // Gestão genérica de catálogos (CatalogManager).
   list: (type: CatalogType) => http.get<CatalogRow[]>(`/api/catalog/${type}`),
   listPathogenGroups: () => http.get<GroupLite[]>("/api/catalog/pathogen-groups"),
-  create: (type: CatalogType, body: CatalogItemPayload) =>
-    http.post(`/api/catalog/${type}`, body),
+  create: (type: CatalogType, body: CatalogItemPayload) => http.post(`/api/catalog/${type}`, body),
   update: (type: CatalogType, id: string, body: CatalogItemPayload) =>
     http.put(`/api/catalog/${type}/${id}`, body),
   remove: (type: CatalogType, id: string) => http.del(`/api/catalog/${type}/${id}`),

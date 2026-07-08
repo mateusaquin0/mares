@@ -10,9 +10,10 @@ import { ApiError } from "@/lib/http"
 export function useErrorMessage() {
   const te = useTranslations("errors")
   return (input: unknown): string | undefined => {
-    const b = (input instanceof ApiError ? input.body : input) as
-      | { code?: string; error?: unknown }
-      | null
+    const b = (input instanceof ApiError ? input.body : input) as {
+      code?: string
+      error?: unknown
+    } | null
     if (b?.code && KNOWN_ERROR_CODES.has(b.code)) return te(b.code)
     return typeof b?.error === "string" ? b.error : undefined
   }

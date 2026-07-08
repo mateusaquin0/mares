@@ -9,7 +9,7 @@ import { loadAnimalOrg, removeAnimalResearch } from "@/lib/animals"
 
 export async function DELETE(
   _req: NextRequest,
-  { params }: { params: Promise<{ id: string; researchId: string }> }
+  { params }: { params: Promise<{ id: string; researchId: string }> },
 ) {
   try {
     const user = await getAuthUser()

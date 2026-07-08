@@ -105,14 +105,14 @@ export function Sidebar({
       collapsed && "justify-center px-0",
       active
         ? "bg-accent font-semibold text-accent-foreground"
-        : "text-foreground/70 hover:bg-muted hover:text-foreground"
+        : "text-foreground/70 hover:bg-muted hover:text-foreground",
     )
 
   return (
     <aside
       className={cn(
         "flex h-screen shrink-0 flex-col border-r border-border transition-[width,background-color] duration-300 ease-in-out",
-        collapsed ? "w-16 bg-secondary" : "w-64 bg-card"
+        collapsed ? "w-16 bg-secondary" : "w-64 bg-card",
       )}
     >
       <div className={cn("flex flex-col gap-3 py-5", collapsed ? "items-center px-2" : "px-5")}>
@@ -121,7 +121,7 @@ export function Sidebar({
             href="/"
             className={cn(
               "flex items-center gap-3 transition-opacity hover:opacity-80",
-              !collapsed && "min-w-0 flex-1"
+              !collapsed && "min-w-0 flex-1",
             )}
             title="MARES"
           >
@@ -130,7 +130,9 @@ export function Sidebar({
             </span>
             {!collapsed && (
               <span className="flex min-w-0 flex-1 flex-col overflow-hidden leading-tight">
-                <span className="truncate text-lg font-bold tracking-tight text-primary">MARES</span>
+                <span className="truncate text-lg font-bold tracking-tight text-primary">
+                  MARES
+                </span>
               </span>
             )}
           </Link>
@@ -192,7 +194,7 @@ export function Sidebar({
                   key={item.href}
                   className={cn(
                     "flex cursor-not-allowed items-center gap-3 rounded-lg px-3 py-2 text-sm text-muted-foreground/50",
-                    collapsed && "justify-center px-0"
+                    collapsed && "justify-center px-0",
                   )}
                   title={collapsed ? `${item.label} — ${t("comingSoon")}` : t("comingSoon")}
                 >
@@ -253,4 +255,3 @@ export function Sidebar({
     </aside>
   )
 }
- 

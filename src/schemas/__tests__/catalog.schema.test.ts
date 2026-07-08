@@ -19,14 +19,22 @@ describe("examTypeSchema", () => {
   it("aceita medida quantitativa opcional (vazia = qualitativo)", () => {
     expect(examTypeSchema.safeParse({ namePt: "PCR", nameEn: "PCR" }).success).toBe(true)
     expect(
-      examTypeSchema.safeParse({ namePt: "PCR", nameEn: "PCR", measurePt: "Ct", measureEn: "Ct", measureUnit: "" }).success
+      examTypeSchema.safeParse({
+        namePt: "PCR",
+        nameEn: "PCR",
+        measurePt: "Ct",
+        measureEn: "Ct",
+        measureUnit: "",
+      }).success,
     ).toBe(true)
   })
 })
 
 describe("pathogenSchema", () => {
   it("aceita grupo + nomes opcionais (regra fina fica no servidor)", () => {
-    expect(pathogenSchema.safeParse({ groupId: "g1", scientificName: "Toxoplasma gondii" }).success).toBe(true)
+    expect(
+      pathogenSchema.safeParse({ groupId: "g1", scientificName: "Toxoplasma gondii" }).success,
+    ).toBe(true)
   })
 
   it("exige groupId", () => {

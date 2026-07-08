@@ -71,9 +71,9 @@ type FormShape = {
 }
 
 const i18nPt = (v: string | I18nText | null | undefined) =>
-  v == null ? "" : typeof v === "string" ? v : v.pt ?? ""
+  v == null ? "" : typeof v === "string" ? v : (v.pt ?? "")
 const i18nEn = (v: string | I18nText | null | undefined) =>
-  v == null ? "" : typeof v === "string" ? v : v.en ?? ""
+  v == null ? "" : typeof v === "string" ? v : (v.en ?? "")
 
 export function CatalogManager({
   userId,
@@ -103,8 +103,7 @@ export function CatalogManager({
   const deleteM = useDeleteCatalogItem(type)
 
   // Editar/excluir: admin global sempre; senão, o criador enquanto o item não estiver em uso.
-  const canModify = (r: Row) =>
-    isSystemAdmin || (r.createdById === userId && !r.inUse)
+  const canModify = (r: Row) => isSystemAdmin || (r.createdById === userId && !r.inUse)
 
   const taxonSearch = useNcbiSearch()
 
@@ -307,55 +306,54 @@ export function CatalogManager({
               <TableBody>
                 {table.rows.length === 0 ? (
                   <TableRow>
-                    <TableCell
-                      colSpan={3}
-                      className="text-center text-sm text-muted-foreground"
-                    >
+                    <TableCell colSpan={3} className="text-center text-sm text-muted-foreground">
                       {tc("noResults")}
                     </TableCell>
                   </TableRow>
                 ) : (
                   table.rows.map((r) => (
-                <TableRow key={r.id}>
-                  {isPathogen ? (
-                    <>
-                      <TableCell className="font-medium">{display(r)}</TableCell>
-                      <TableCell className="text-muted-foreground">
-                        {txt(locale, (r as PathogenRow).group.name)}
+                    <TableRow key={r.id}>
+                      {isPathogen ? (
+                        <>
+                          <TableCell className="font-medium">{display(r)}</TableCell>
+                          <TableCell className="text-muted-foreground">
+                            {txt(locale, (r as PathogenRow).group.name)}
+                          </TableCell>
+                        </>
+                      ) : (
+                        <>
+                          <TableCell className="font-medium">
+                            {i18nPt((r as NamedRow).name)}
+                          </TableCell>
+                          <TableCell>{i18nEn((r as NamedRow).name)}</TableCell>
+                        </>
+                      )}
+                      <TableCell className="text-right">
+                        {canModify(r) && (
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon" className="size-8">
+                                <MoreHorizontal className="size-4" />
+                                <span className="sr-only">{tc("actions")}</span>
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onSelect={() => openEdit(r)}>
+                                <Pencil className="size-4" />
+                                {tc("edit")}
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                className="text-destructive focus:text-destructive"
+                                onSelect={() => setConfirmRow(r)}
+                              >
+                                <Trash2 className="size-4" />
+                                {tc("delete")}
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        )}
                       </TableCell>
-                    </>
-                  ) : (
-                    <>
-                      <TableCell className="font-medium">{i18nPt((r as NamedRow).name)}</TableCell>
-                      <TableCell>{i18nEn((r as NamedRow).name)}</TableCell>
-                    </>
-                  )}
-                  <TableCell className="text-right">
-                    {canModify(r) && (
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="size-8">
-                            <MoreHorizontal className="size-4" />
-                            <span className="sr-only">{tc("actions")}</span>
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onSelect={() => openEdit(r)}>
-                            <Pencil className="size-4" />
-                            {tc("edit")}
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            className="text-destructive focus:text-destructive"
-                            onSelect={() => setConfirmRow(r)}
-                          >
-                            <Trash2 className="size-4" />
-                            {tc("delete")}
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    )}
-                  </TableCell>
-                </TableRow>
+                    </TableRow>
                   ))
                 )}
               </TableBody>
@@ -380,7 +378,9 @@ export function CatalogManager({
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{dialog?.mode === "edit" ? t("editTitle") : t("addTitle")}</DialogTitle>
-            <DialogDescription>{isPathogen ? t("addDescPathogen") : t("addDesc")}</DialogDescription>
+            <DialogDescription>
+              {isPathogen ? t("addDescPathogen") : t("addDesc")}
+            </DialogDescription>
           </DialogHeader>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             {isPathogen && (
@@ -478,7 +478,10 @@ export function CatalogManager({
                         onCheckedChange={(v) => setHasMeasure(v === true)}
                         className="mt-0.5"
                       />
-                      <Label htmlFor="hasMeasure" className="text-sm font-normal text-muted-foreground">
+                      <Label
+                        htmlFor="hasMeasure"
+                        className="text-sm font-normal text-muted-foreground"
+                      >
                         {t("hasMeasure")}
                       </Label>
                     </div>

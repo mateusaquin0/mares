@@ -29,19 +29,30 @@ export function AuditTab({ animalId }: { animalId: string }) {
     if (v == null || v === "") return t("emptyValue")
     if (field === "result") {
       return (
-        {
-          POSITIVO: ta("resultPositive"),
-          NEGATIVO: ta("resultNegative"),
-          INCONCLUSIVO: ta("resultInconclusive"),
-        } as Record<string, string>
-      )[v] ?? v
+        (
+          {
+            POSITIVO: ta("resultPositive"),
+            NEGATIVO: ta("resultNegative"),
+            INCONCLUSIVO: ta("resultInconclusive"),
+          } as Record<string, string>
+        )[v] ?? v
+      )
     }
     return v
   }
 
-  const resultVariant = (field: string, v: string | null): "positive" | "negative" | "inconclusive" | "secondary" => {
+  const resultVariant = (
+    field: string,
+    v: string | null,
+  ): "positive" | "negative" | "inconclusive" | "secondary" => {
     if (field !== "result" || !v) return "secondary"
-    return v === "POSITIVO" ? "positive" : v === "NEGATIVO" ? "negative" : v === "INCONCLUSIVO" ? "inconclusive" : "secondary"
+    return v === "POSITIVO"
+      ? "positive"
+      : v === "NEGATIVO"
+        ? "negative"
+        : v === "INCONCLUSIVO"
+          ? "inconclusive"
+          : "secondary"
   }
 
   const contextOf = (r: AuditEntry) =>
@@ -53,8 +64,10 @@ export function AuditTab({ animalId }: { animalId: string }) {
       .filter(Boolean)
       .join(" · ")
 
-  const fmtDate = (iso: string) => new Date(iso).toLocaleDateString(locale, { day: "2-digit", month: "short", year: "numeric" })
-  const fmtTime = (iso: string) => new Date(iso).toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" })
+  const fmtDate = (iso: string) =>
+    new Date(iso).toLocaleDateString(locale, { day: "2-digit", month: "short", year: "numeric" })
+  const fmtTime = (iso: string) =>
+    new Date(iso).toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" })
 
   if (loading) return <TableSkeleton rows={4} />
   if (items.length === 0) return <p className="text-sm text-muted-foreground">{t("empty")}</p>
@@ -84,9 +97,7 @@ export function AuditTab({ animalId }: { animalId: string }) {
               </div>
 
               {/* Context (organ · pathogen · exam) */}
-              {contextOf(r) && (
-                <p className="mt-1 text-xs text-muted-foreground">{contextOf(r)}</p>
-              )}
+              {contextOf(r) && <p className="mt-1 text-xs text-muted-foreground">{contextOf(r)}</p>}
 
               {/* Change detail */}
               <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">

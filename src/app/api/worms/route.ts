@@ -29,7 +29,7 @@ export async function GET(req: NextRequest) {
     if (q.length < 3) return NextResponse.json([])
 
     const url = `https://www.marinespecies.org/rest/AphiaRecordsByName/${encodeURIComponent(
-      q
+      q,
     )}?like=true&marine_only=false&offset=1`
 
     const res = await fetch(url, { headers: { Accept: "application/json" } })

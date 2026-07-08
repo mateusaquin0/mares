@@ -25,7 +25,11 @@ export type SampleLite = {
   organ: { id: string; name: string | I18nText }
 }
 
-export type AnalysisCell = { result: ResultValue | null; measureValue: number | null; notes: string | null }
+export type AnalysisCell = {
+  result: ResultValue | null
+  measureValue: number | null
+  notes: string | null
+}
 
 // Seção da grade referente a UMA pesquisa: seu protocolo aplicado às suas amostras no
 // indivíduo. Indivíduos compartilhados têm uma seção por pesquisa (Etapa 2).

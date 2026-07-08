@@ -74,7 +74,10 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
 
     // Só admin altera visibilidade.
     if (data.isPublic !== undefined && !isOrgAdmin) {
-      throw new ForbiddenError("Apenas administradores alteram a visibilidade", ERROR_CODES.forbidden)
+      throw new ForbiddenError(
+        "Apenas administradores alteram a visibilidade",
+        ERROR_CODES.forbidden,
+      )
     }
     // Pesquisador só edita nome/descrição da própria pesquisa.
     const editsContent = data.name !== undefined || data.description !== undefined
@@ -86,8 +89,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
       where: { id },
       data: {
         name: data.name?.trim(),
-        description:
-          data.description === undefined ? undefined : data.description.trim() || null,
+        description: data.description === undefined ? undefined : data.description.trim() || null,
         isPublic: isOrgAdmin ? data.isPublic : undefined,
       },
       select: { id: true, name: true, description: true, isPublic: true },
@@ -111,7 +113,7 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
     if (animals > 0) {
       throw new ConflictError(
         "A pesquisa possui animais e não pode ser excluída",
-        ERROR_CODES.researchHasAnimals
+        ERROR_CODES.researchHasAnimals,
       )
     }
 

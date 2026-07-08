@@ -9,10 +9,7 @@ import { reactivateOrg } from "@/lib/org-lifecycle"
 import { apiError, unauthorized } from "@/lib/api"
 import { addMemberSchema } from "@/schemas/organization.schema"
 
-export async function POST(
-  req: NextRequest,
-  { params }: { params: Promise<{ orgId: string }> }
-) {
+export async function POST(req: NextRequest, { params }: { params: Promise<{ orgId: string }> }) {
   try {
     const user = await getAuthUser()
     if (!user) return unauthorized()

@@ -7,10 +7,7 @@ import { provisionMembership } from "@/lib/members"
 import { apiError, unauthorized } from "@/lib/api"
 import { addMemberSchema } from "@/schemas/organization.schema"
 
-export async function GET(
-  _req: NextRequest,
-  { params }: { params: Promise<{ orgId: string }> }
-) {
+export async function GET(_req: NextRequest, { params }: { params: Promise<{ orgId: string }> }) {
   try {
     const user = await getAuthUser()
     if (!user) return unauthorized()
@@ -34,17 +31,14 @@ export async function GET(
         email: m.user.email,
         status: m.user.status,
         role: m.role,
-      }))
+      })),
     )
   } catch (err) {
     return apiError(err)
   }
 }
 
-export async function POST(
-  req: NextRequest,
-  { params }: { params: Promise<{ orgId: string }> }
-) {
+export async function POST(req: NextRequest, { params }: { params: Promise<{ orgId: string }> }) {
   try {
     const user = await getAuthUser()
     if (!user) return unauthorized()

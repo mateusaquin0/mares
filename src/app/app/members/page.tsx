@@ -16,7 +16,5 @@ export default async function MembersPage() {
 
   const activeOrg = user.memberships.find((m) => m.orgId === activeOrgId)
 
-  return (
-    <MembersManager orgId={activeOrgId} orgName={activeOrg?.orgName ?? ""} selfId={user.id} />
-  )
+  return <MembersManager orgId={activeOrgId} orgName={activeOrg?.orgName ?? ""} selfId={user.id} />
 }

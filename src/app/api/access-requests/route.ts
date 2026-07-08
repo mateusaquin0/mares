@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
     if (pending) {
       return NextResponse.json(
         { error: "Já existe uma solicitação pendente para este e-mail" },
-        { status: 409 }
+        { status: 409 },
       )
     }
 

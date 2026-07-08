@@ -3,7 +3,9 @@ import { loginSchema, setPasswordSchema, changePasswordSchema } from "@/schemas/
 
 describe("loginSchema", () => {
   it("aceita e-mail válido e senha com 6+ caracteres", () => {
-    expect(loginSchema.safeParse({ email: "user@example.com", password: "secret" }).success).toBe(true)
+    expect(loginSchema.safeParse({ email: "user@example.com", password: "secret" }).success).toBe(
+      true,
+    )
   })
 
   it("rejeita e-mail inválido", () => {
@@ -11,7 +13,9 @@ describe("loginSchema", () => {
   })
 
   it("rejeita senha com menos de 6 caracteres", () => {
-    expect(loginSchema.safeParse({ email: "user@example.com", password: "123" }).success).toBe(false)
+    expect(loginSchema.safeParse({ email: "user@example.com", password: "123" }).success).toBe(
+      false,
+    )
   })
 })
 
@@ -23,7 +27,9 @@ describe("setPasswordSchema", () => {
   })
 
   it("rejeita senha com menos de 8 caracteres", () => {
-    expect(setPasswordSchema.safeParse({ ...valid, password: "curta1", confirm: "curta1" }).success).toBe(false)
+    expect(
+      setPasswordSchema.safeParse({ ...valid, password: "curta1", confirm: "curta1" }).success,
+    ).toBe(false)
   })
 
   it("rejeita quando a confirmação não bate", () => {
@@ -41,7 +47,11 @@ describe("setPasswordSchema", () => {
 
 describe("changePasswordSchema", () => {
   it("valida confirmação sem exigir termos", () => {
-    expect(changePasswordSchema.safeParse({ password: "novasenha8", confirm: "novasenha8" }).success).toBe(true)
-    expect(changePasswordSchema.safeParse({ password: "novasenha8", confirm: "x" }).success).toBe(false)
+    expect(
+      changePasswordSchema.safeParse({ password: "novasenha8", confirm: "novasenha8" }).success,
+    ).toBe(true)
+    expect(changePasswordSchema.safeParse({ password: "novasenha8", confirm: "x" }).success).toBe(
+      false,
+    )
   })
 })

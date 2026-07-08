@@ -8,12 +8,7 @@ import { cn } from "@/lib/utils"
 import { locales, localeNames, type Locale } from "@/i18n/config"
 import { setLocale } from "@/i18n/actions"
 import { LocaleFlag } from "@/components/flags"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-} from "@/components/ui/select"
+import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/ui/select"
 
 // Seletor de idioma customizado (shadcn/Radix) com bandeiras. Grava o cookie via server
 // action e recarrega os dados do servidor.
@@ -35,7 +30,7 @@ export function LocaleSwitcher({ className }: { className?: string }) {
       <SelectTrigger
         className={cn(
           "h-8 w-auto gap-1 border-transparent px-2 shadow-none [&>svg]:opacity-60",
-          className
+          className,
         )}
         aria-label={localeNames[active]}
       >

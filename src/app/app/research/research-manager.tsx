@@ -147,7 +147,14 @@ export function ResearchManager({ isOrgAdmin, selfId }: { isOrgAdmin: boolean; s
             </TableHeader>
             <TableBody>
               {filtered.map((r) => (
-                <TableRow key={r.id} className={r.isPublic ? "border-l-[3px] border-l-[hsl(var(--brand-cyan))]" : "border-l-[3px] border-l-primary"}>
+                <TableRow
+                  key={r.id}
+                  className={
+                    r.isPublic
+                      ? "border-l-[3px] border-l-[hsl(var(--brand-cyan))]"
+                      : "border-l-[3px] border-l-primary"
+                  }
+                >
                   <TableCell className="font-medium">
                     <Link href={`/app/research/${r.id}`} className="hover:underline">
                       {r.name}

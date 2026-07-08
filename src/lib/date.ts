@@ -9,7 +9,7 @@
 export function formatDateOnly(
   value: string | Date | null | undefined,
   locale: string,
-  options?: Intl.DateTimeFormatOptions
+  options?: Intl.DateTimeFormatOptions,
 ): string {
   if (!value) return ""
   const d = typeof value === "string" ? new Date(value) : value

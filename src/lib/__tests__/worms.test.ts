@@ -21,8 +21,22 @@ describe("matchWormsSpecies", () => {
   it("prioriza o registro com status 'accepted'", async () => {
     mockFetch(200, [
       [
-        { AphiaID: 1, scientificname: "Sotalia fluviatilis", status: "unaccepted", family: "Delphinidae", order: "Artiodactyla" },
-        { AphiaID: 2, scientificname: "Sotalia guianensis", status: "accepted", family: "Delphinidae", order: "Artiodactyla", valid_AphiaID: 2, valid_name: "Sotalia guianensis" },
+        {
+          AphiaID: 1,
+          scientificname: "Sotalia fluviatilis",
+          status: "unaccepted",
+          family: "Delphinidae",
+          order: "Artiodactyla",
+        },
+        {
+          AphiaID: 2,
+          scientificname: "Sotalia guianensis",
+          status: "accepted",
+          family: "Delphinidae",
+          order: "Artiodactyla",
+          valid_AphiaID: 2,
+          valid_name: "Sotalia guianensis",
+        },
       ],
     ])
     const m = await matchWormsSpecies("Sotalia guianensis")
@@ -33,7 +47,17 @@ describe("matchWormsSpecies", () => {
 
   it("usa valid_AphiaID/valid_name quando o nome consultado é sinônimo", async () => {
     mockFetch(200, [
-      [{ AphiaID: 10, scientificname: "nome antigo", status: "unaccepted", family: null, order: null, valid_AphiaID: 99, valid_name: "Nome Aceito" }],
+      [
+        {
+          AphiaID: 10,
+          scientificname: "nome antigo",
+          status: "unaccepted",
+          family: null,
+          order: null,
+          valid_AphiaID: 99,
+          valid_name: "Nome Aceito",
+        },
+      ],
     ])
     const m = await matchWormsSpecies("nome antigo")
     expect(m?.wormsAphiaId).toBe(99)

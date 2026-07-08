@@ -27,7 +27,7 @@ export async function GET(req: NextRequest) {
 
     // 1) esearch: nomes que começam com o termo (truncamento *).
     const esearch = `${EUTILS}/esearch.fcgi?db=taxonomy&retmax=10&retmode=json&term=${encodeURIComponent(
-      `${q}*`
+      `${q}*`,
     )}${auth}`
     const sres = await fetch(esearch, { headers: { Accept: "application/json" } })
     if (!sres.ok) return NextResponse.json([])

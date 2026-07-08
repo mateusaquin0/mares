@@ -8,7 +8,7 @@ import { getCities } from "@/lib/csc"
 
 export async function GET(
   _req: NextRequest,
-  { params }: { params: Promise<{ ciso: string; siso: string }> }
+  { params }: { params: Promise<{ ciso: string; siso: string }> },
 ) {
   try {
     const user = await getAuthUser()

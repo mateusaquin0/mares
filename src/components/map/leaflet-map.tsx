@@ -51,8 +51,9 @@ function pinIcon(color: string) {
 }
 
 function esc(s: string): string {
-  return s.replace(/[&<>"']/g, (c) =>
-    ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!
+  return s.replace(
+    /[&<>"']/g,
+    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!,
   )
 }
 
@@ -71,16 +72,18 @@ function popupHtml(p: MapPoint, labels: PopupLabels, locale: string, linkBase?: 
   const rows: string[] = []
   rows.push(`<div><span style="color:#64748b">${esc(labels.date)}:</span> ${esc(date)}</div>`)
   if (location)
-    rows.push(`<div><span style="color:#64748b">${esc(labels.location)}:</span> ${esc(location)}</div>`)
+    rows.push(
+      `<div><span style="color:#64748b">${esc(labels.location)}:</span> ${esc(location)}</div>`,
+    )
   if (p.researchName)
     rows.push(
-      `<div><span style="color:#64748b">${esc(labels.research)}:</span> ${esc(p.researchName)}</div>`
+      `<div><span style="color:#64748b">${esc(labels.research)}:</span> ${esc(p.researchName)}</div>`,
     )
   const positives = p.positivePathogens.length
     ? `<div style="margin-top:6px"><span style="color:#64748b">${esc(labels.positive)}:</span><br/>${p.positivePathogens
         .map(
           (n) =>
-            `<span style="display:inline-block;margin:2px 3px 0 0;padding:1px 6px;border-radius:9999px;background:#fee2e2;color:#991b1b;font-size:11px">${esc(n)}</span>`
+            `<span style="display:inline-block;margin:2px 3px 0 0;padding:1px 6px;border-radius:9999px;background:#fee2e2;color:#991b1b;font-size:11px">${esc(n)}</span>`,
         )
         .join("")}</div>`
     : `<div style="margin-top:6px;color:#64748b">${esc(labels.noPositive)}</div>`

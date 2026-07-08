@@ -225,7 +225,7 @@ export function MembersManager({
       .toUpperCase()
   const q = query.trim().toLowerCase()
   const filtered = members.filter(
-    (m) => (m.name ?? "").toLowerCase().includes(q) || m.email.toLowerCase().includes(q)
+    (m) => (m.name ?? "").toLowerCase().includes(q) || m.email.toLowerCase().includes(q),
   )
   const adminCount = members.filter((m) => m.role === "ORG_ADMIN").length
   const pending = members.filter((m) => m.status === "INVITED")
@@ -466,9 +466,7 @@ export function MembersManager({
               <Label>{t("roleLabel")}</Label>
               <Select
                 value={addForm.watch("role") ?? "RESEARCHER"}
-                onValueChange={(v) =>
-                  addForm.setValue("role", v as AddMemberData["role"])
-                }
+                onValueChange={(v) => addForm.setValue("role", v as AddMemberData["role"])}
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -480,11 +478,7 @@ export function MembersManager({
               </Select>
             </div>
             <DialogFooter>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setAddOpen(false)}
-              >
+              <Button type="button" variant="outline" onClick={() => setAddOpen(false)}>
                 {tc("cancel")}
               </Button>
               <Button type="submit" loading={addForm.formState.isSubmitting}>
@@ -525,11 +519,7 @@ export function MembersManager({
               }}
             />
             <DialogFooter>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setEditOpen(false)}
-              >
+              <Button type="button" variant="outline" onClick={() => setEditOpen(false)}>
                 {tc("cancel")}
               </Button>
               <Button type="submit" loading={editForm.formState.isSubmitting}>

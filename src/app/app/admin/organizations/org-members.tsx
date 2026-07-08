@@ -154,14 +154,18 @@ export function OrgMembers({ org }: { org: AdminOrg }) {
             <Label htmlFor="add-email">{t("addEmailLabel")}</Label>
             <Input id="add-email" type="email" {...form.register("email")} />
             {form.formState.errors.email && (
-              <p className="text-xs text-destructive">{tval(form.formState.errors.email.message!)}</p>
+              <p className="text-xs text-destructive">
+                {tval(form.formState.errors.email.message!)}
+              </p>
             )}
           </div>
           <div className="space-y-1">
             <Label htmlFor="add-name">{t("addNameLabel")}</Label>
             <Input id="add-name" {...form.register("name")} />
             {form.formState.errors.name && (
-              <p className="text-xs text-destructive">{tval(form.formState.errors.name.message!)}</p>
+              <p className="text-xs text-destructive">
+                {tval(form.formState.errors.name.message!)}
+              </p>
             )}
           </div>
         </div>

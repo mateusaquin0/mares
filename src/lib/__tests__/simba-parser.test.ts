@@ -52,7 +52,7 @@ describe("parseDarwinCore", () => {
   it("cai para o recordNumber informado quando o XML não traz um", () => {
     const semNumero = parseDarwinCore(
       `<SimpleDarwinRecord><scientificName>Tursiops truncatus</scientificName></SimpleDarwinRecord>`,
-      "FALLBACK-9"
+      "FALLBACK-9",
     )
     expect(semNumero.simbaRecordNumber).toBe("FALLBACK-9")
     expect(semNumero.species).toBe("Tursiops truncatus")
@@ -61,7 +61,7 @@ describe("parseDarwinCore", () => {
   it("usa 'U'/'UNDETERMINED' quando sexo/estágio ausentes", () => {
     const vazio = parseDarwinCore(
       `<SimpleDarwinRecord><scientificName>X</scientificName></SimpleDarwinRecord>`,
-      "R"
+      "R",
     )
     expect(vazio.sex).toBe("U")
     expect(vazio.lifeStage).toBe("UNDETERMINED")
