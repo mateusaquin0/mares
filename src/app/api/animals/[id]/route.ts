@@ -12,8 +12,32 @@ import { assertAnimalVisible } from "@/lib/research-access"
 import { apiError, unauthorized } from "@/lib/api"
 import { updateAnimalSchema } from "@/schemas/animal.schema"
 import { animalData, animalDuplicateError, loadAnimalOrg } from "@/lib/animals"
+import { diffFields, writeAudit } from "@/lib/audit"
 import { ConflictError, ForbiddenError } from "@/lib/errors"
 import { ERROR_CODES } from "@/lib/error-codes"
+
+// Campos do animal auditados na timeline (escalares editáveis pelo usuário).
+const ANIMAL_AUDIT_FIELDS = [
+  "species",
+  "controlId",
+  "simbaRecordNumber",
+  "taxonFamily",
+  "taxonOrder",
+  "sex",
+  "lifeStage",
+  "bodyCondition",
+  "decompositionStage",
+  "deathCondition",
+  "necropsyDate",
+  "strandingLat",
+  "strandingLon",
+  "strandingBeach",
+  "municipality",
+  "state",
+  "eventDate",
+  "macroscopicNotes",
+  "isPublic",
+] as const
 
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -62,15 +86,19 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     }
 
     try {
+      // Estado anterior (banco) para diferença de auditoria.
+      const before = await prisma.animal.findUnique({ where: { id } })
       const animal = await prisma.animal.update({
         where: { id },
         data: {
           ...animalData(data),
           isPublic: isOrgAdmin ? data.isPublic : undefined,
         },
-        select: { id: true, species: true },
       })
-      return NextResponse.json(animal)
+      if (before) {
+        await writeAudit("Animal", id, user.id, diffFields(before, animal, ANIMAL_AUDIT_FIELDS))
+      }
+      return NextResponse.json({ id: animal.id, species: animal.species })
     } catch (e) {
       if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
         throw animalDuplicateError(e)

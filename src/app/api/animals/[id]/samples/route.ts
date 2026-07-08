@@ -10,6 +10,7 @@ import { apiError, unauthorized } from "@/lib/api"
 import { createSampleSchema } from "@/schemas/sample.schema"
 import { assertResearchOnAnimal, loadAnimalOrg } from "@/lib/animals"
 import { assertOrgan, sampleData, sampleDuplicateError, sampleSelect } from "@/lib/samples"
+import { writeAudit } from "@/lib/audit"
 
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -61,6 +62,10 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
         },
         select: sampleSelect,
       })
+      // Evento de criação na timeline do animal (identificação como rótulo).
+      await writeAudit("Sample", sample.id, user.id, [
+        { field: "created", oldValue: null, newValue: sample.identification },
+      ])
       return NextResponse.json(sample, { status: 201 })
     } catch (e) {
       if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {

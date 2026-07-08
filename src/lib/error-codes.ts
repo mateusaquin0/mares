@@ -26,6 +26,7 @@ export const ERROR_CODES = {
   systemAdminNoOrg: "systemAdminNoOrg",
   alreadyMember: "alreadyMember",
   nameRequired: "nameRequired",
+  notInvited: "notInvited",
   // Fase 2 — pesquisas, protocolos e catálogos
   researchNotFound: "researchNotFound",
   researchHasAnimals: "researchHasAnimals",
