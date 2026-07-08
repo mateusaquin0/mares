@@ -86,11 +86,12 @@ npm run db:studio    # Prisma Studio
 - Controle de visibilidade granular (público = `animal.isPublic AND research.isPublic`)
 - Rate limiting nas rotas públicas/proxies externos (ver `src/lib/rate-limit.ts`)
 
-### ⏳ Pendente
-- **Testes automatizados** (Vitest para schemas/parsers, Playwright para fluxos críticos) —
-  estratégia em [`docs/TESTES.md`](docs/TESTES.md) e plano de execução faseado em
-  [`docs/ROADMAP_TESTES.md`](docs/ROADMAP_TESTES.md); ainda não implementados
-- CI (lint + build + testes) — ver Fase 4 do roadmap
+### ⏳ Em andamento / pendente
+- **Testes automatizados** — ✅ Fase 1 (unitários) implementada: 104 testes com Vitest
+  cobrindo schemas Zod, parsers (Darwin Core/SIMBA, NCBI, WoRMS) e utilitários
+  (`npm test`). ⏳ Pendentes: integração com banco de teste (Fase 2) e E2E com Playwright
+  (Fase 3). Plano em [`docs/ROADMAP_TESTES.md`](docs/ROADMAP_TESTES.md).
+- **CI** — ✅ GitHub Actions (`.github/workflows/ci.yml`): typecheck + lint + testes unitários.
 
 ## Estrutura
 
