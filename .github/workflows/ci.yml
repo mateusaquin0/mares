@@ -1,8 +1,9 @@
 name: CI
 
-# Verificação de qualidade em cada push/PR (Fase 4 do docs/ROADMAP_TESTES.md).
-# Cobre typecheck, lint e os testes unitários (sem banco). Integração e E2E entram
-# em jobs próprios quando as Fases 2–3 forem implementadas.
+# Verificação de qualidade em cada push/PR (Fases 4 e 2 do docs/ROADMAP_TESTES.md).
+# Job 1 (build-and-test): typecheck, lint, formatação e testes unitários (sem banco).
+# Job 2 (integration): testes de integração contra um Postgres real (serviço do CI).
+# E2E (Fase 3) entra num job próprio quando implementada.
 
 on:
   push:
@@ -38,3 +39,48 @@ jobs:
 
       - name: Testes unitários
         run: npm test
+
+  integration:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: mares_test
+        ports:
+          - 5432:5432
+        # Espera o banco ficar pronto antes dos steps.
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/mares_test
+      DIRECT_URL: postgresql://postgres:postgres@localhost:5432/mares_test
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Instalar dependências
+        run: npm ci
+
+      - name: Gerar Prisma Client
+        run: npx prisma generate
+
+      # As migrations assumem o ambiente Supabase (schema auth, roles anon/authenticated).
+      # O shim cria esses objetos como stubs para que `migrate deploy` rode num Postgres puro.
+      - name: Preparar schema Supabase (shim)
+        run: psql "$DATABASE_URL" -f tests/integration/supabase-shim.sql
+
+      - name: Aplicar migrations
+        run: npx prisma migrate deploy
+
+      - name: Testes de integração
+        run: npm run test:integration
