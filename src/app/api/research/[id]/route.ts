@@ -8,6 +8,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { getAuthUser, requireOrgRole, orgRole } from "@/lib/auth"
+import { assertResearchVisible } from "@/lib/research-access"
 import { apiError, unauthorized } from "@/lib/api"
 import { updateResearchSchema } from "@/schemas/research.schema"
 import { NotFoundError, ForbiddenError, ConflictError } from "@/lib/errors"
@@ -29,6 +30,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
     const { id } = await params
     const base = await loadResearch(id)
     requireOrgRole(user, base.orgId, "RESEARCHER")
+    await assertResearchVisible(user, base.orgId, id)
 
     const research = await prisma.research.findUnique({
       where: { id },
@@ -66,6 +68,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     const { id } = await params
     const research = await loadResearch(id)
     requireOrgRole(user, research.orgId, "RESEARCHER")
+    await assertResearchVisible(user, research.orgId, id)
 
     const body = await req.json().catch(() => null)
     const data = updateResearchSchema.parse(body)

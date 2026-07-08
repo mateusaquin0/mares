@@ -6,6 +6,7 @@
 import { NextRequest } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { getAuthUser, requireOrgRole } from "@/lib/auth"
+import { assertResearchVisible } from "@/lib/research-access"
 import { apiError, unauthorized } from "@/lib/api"
 import { NotFoundError } from "@/lib/errors"
 import { ERROR_CODES } from "@/lib/error-codes"
@@ -30,6 +31,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
     })
     if (!research) throw new NotFoundError("Pesquisa não encontrada", ERROR_CODES.researchNotFound)
     requireOrgRole(user, research.orgId, "RESEARCHER")
+    await assertResearchVisible(user, research.orgId, id)
 
     const animals = await prisma.animal.findMany({
       where: { researchId: id, ...(research.isPublic ? { isPublic: true } : {}) },

@@ -4,6 +4,7 @@
 
 import { NextRequest, NextResponse } from "next/server"
 import { getAuthUser, requireOrgRole } from "@/lib/auth"
+import { assertAnimalVisible, assertResearchVisible } from "@/lib/research-access"
 import { apiError, unauthorized } from "@/lib/api"
 import { loadAnimalOrg, removeAnimalResearch } from "@/lib/animals"
 
@@ -17,6 +18,8 @@ export async function DELETE(
     const { id, researchId } = await params
     const animal = await loadAnimalOrg(id)
     requireOrgRole(user, animal.orgId, "RESEARCHER")
+    await assertAnimalVisible(user, animal.orgId, id)
+    await assertResearchVisible(user, animal.orgId, researchId)
 
     await removeAnimalResearch(id, researchId)
     return new NextResponse(null, { status: 204 })

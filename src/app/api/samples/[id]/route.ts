@@ -6,6 +6,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { Prisma } from "@prisma/client"
 import { prisma } from "@/lib/prisma"
 import { getAuthUser, requireOrgRole } from "@/lib/auth"
+import { assertResearchVisible } from "@/lib/research-access"
 import { apiError, unauthorized } from "@/lib/api"
 import { updateSampleSchema } from "@/schemas/sample.schema"
 import {
@@ -25,6 +26,8 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     const { id } = await params
     const sample = await loadSampleOrg(id)
     requireOrgRole(user, sample.orgId, "RESEARCHER")
+    // Só edita amostra de pesquisa que enxerga.
+    await assertResearchVisible(user, sample.orgId, sample.researchId)
 
     const body = await req.json().catch(() => null)
     const data = updateSampleSchema.parse(body)

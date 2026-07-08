@@ -6,6 +6,7 @@
 // A positividade (patógenos com resultado POSITIVO) é pré-computada para alimentar o filtro
 // por patógeno e o popup do marcador sem consultas adicionais no cliente.
 
+import type { Prisma } from "@prisma/client"
 import { prisma } from "@/lib/prisma"
 import { pathogenName, type I18nText } from "@/lib/catalog-i18n"
 
@@ -113,10 +114,25 @@ export async function publicMapPoints(locale: string): Promise<MapPoint[]> {
   return rows.map((r) => toMapPoint(locale, r as RawPoint))
 }
 
-/** Pontos da organização (mapa privado): todos os animais da org com coordenadas. */
-export async function orgMapPoints(orgId: string, locale: string): Promise<MapPoint[]> {
+/**
+ * Pontos da organização (mapa privado). Admin: todos os animais da org com coordenadas.
+ * Pesquisador: apenas os animais cujas pesquisas (primária ∪ participações) ele enxerga
+ * (`researchIds`). `undefined` = sem restrição por pesquisa (admin).
+ */
+export async function orgMapPoints(
+  orgId: string,
+  locale: string,
+  researchIds?: string[],
+): Promise<MapPoint[]> {
+  const where: Prisma.AnimalWhereInput = { ...HAS_COORDS, research: { orgId } }
+  if (researchIds) {
+    where.OR = [
+      { researchId: { in: researchIds } },
+      { participations: { some: { researchId: { in: researchIds } } } },
+    ]
+  }
   const rows = await prisma.animal.findMany({
-    where: { ...HAS_COORDS, research: { orgId } },
+    where,
     select: mapPointSelect,
     orderBy: { eventDate: "desc" },
   })

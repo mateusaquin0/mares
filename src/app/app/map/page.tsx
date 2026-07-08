@@ -2,6 +2,7 @@ import { redirect } from "next/navigation"
 import { getTranslations, getLocale } from "next-intl/server"
 
 import { getAuthUser, getActiveOrgId } from "@/lib/auth"
+import { getResearchScope } from "@/lib/research-access"
 import { orgMapPoints } from "@/lib/map-points"
 import { MapExplorer } from "@/components/map/map-explorer"
 
@@ -14,7 +15,11 @@ export default async function MapPage() {
   const t = await getTranslations("map")
   const locale = await getLocale()
   const orgId = await getActiveOrgId(user)
-  const points = orgId ? await orgMapPoints(orgId, locale) : []
+  // Escopo por pesquisa: admin vê todos os pontos da org; pesquisador só os das suas pesquisas.
+  const scope = orgId ? await getResearchScope(user, orgId) : null
+  const points = orgId
+    ? await orgMapPoints(orgId, locale, scope && !scope.all ? scope.ids : undefined)
+    : []
 
   return (
     <div className="flex h-full flex-col px-8 py-8">

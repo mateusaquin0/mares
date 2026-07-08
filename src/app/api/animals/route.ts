@@ -8,6 +8,7 @@ import { Prisma } from "@prisma/client"
 import { getLocale } from "next-intl/server"
 import { prisma } from "@/lib/prisma"
 import { getAuthUser, getActiveOrgId, requireOrgRole, orgRole } from "@/lib/auth"
+import { getResearchScope, assertResearchVisible } from "@/lib/research-access"
 import { apiError, unauthorized } from "@/lib/api"
 import { createAnimalSchema } from "@/schemas/animal.schema"
 import {
@@ -28,11 +29,24 @@ export async function GET(req: NextRequest) {
 
     const researchId = req.nextUrl.searchParams.get("researchId") ?? undefined
 
+    // Escopo por pesquisa: admin vê todas as pesquisas da org; pesquisador só as
+    // vinculadas/criadas. O conjunto efetivo de pesquisas do animal (primária ∪ participações)
+    // precisa interceptar o escopo.
+    const scope = await getResearchScope(user, orgId)
+    if (!scope.all && researchId && !scope.ids.includes(researchId)) {
+      return NextResponse.json([])
+    }
+    // IDs de pesquisa efetivamente usados no filtro: o filtro explícito (se houver) ou o escopo.
+    const scopeIds = researchId ? [researchId] : scope.all ? undefined : scope.ids
+
     // Escopo pela org (via pesquisa primária, sempre da mesma org). Ao filtrar por pesquisa,
     // inclui o indivíduo tanto como primária quanto como participante (compartilhamento).
     const where: Prisma.AnimalWhereInput = { research: { orgId } }
-    if (researchId) {
-      where.OR = [{ researchId }, { participations: { some: { researchId } } }]
+    if (scopeIds) {
+      where.OR = [
+        { researchId: { in: scopeIds } },
+        { participations: { some: { researchId: { in: scopeIds } } } },
+      ]
     }
 
     const animals = await prisma.animal.findMany({
@@ -60,6 +74,8 @@ export async function POST(req: NextRequest) {
     const data = createAnimalSchema.parse(body)
 
     await assertResearchInOrg(data.researchId, orgId)
+    // Pesquisador só cria animal em pesquisa que enxerga (vinculada/criada); admin, em qualquer.
+    await assertResearchVisible(user, orgId, data.researchId)
 
     // Visibilidade: animais são públicos por padrão (visíveis quando a pesquisa é
     // pública). Só o admin da org pode ocultar um animal (data.isPublic = false).

@@ -1,8 +1,10 @@
 // MARES — Pesquisas da organização ativa: listar e criar.
 
 import { NextRequest, NextResponse } from "next/server"
+import { Prisma } from "@prisma/client"
 import { prisma } from "@/lib/prisma"
 import { getAuthUser, getActiveOrgId, requireOrgRole, orgRole } from "@/lib/auth"
+import { getResearchScope } from "@/lib/research-access"
 import { apiError, unauthorized } from "@/lib/api"
 import { createResearchSchema } from "@/schemas/research.schema"
 
@@ -14,8 +16,14 @@ export async function GET() {
     if (!orgId) return NextResponse.json([])
     requireOrgRole(user, orgId, "RESEARCHER")
 
+    // Escopo por pesquisa: admin vê todas; pesquisador só as vinculadas/criadas.
+    const scope = await getResearchScope(user, orgId)
+    const where: Prisma.ResearchWhereInput = scope.all
+      ? { orgId }
+      : { orgId, id: { in: scope.ids } }
+
     const research = await prisma.research.findMany({
-      where: { orgId },
+      where,
       orderBy: { createdAt: "desc" },
       select: {
         id: true,
@@ -56,6 +64,8 @@ export async function POST(req: NextRequest) {
         isPublic,
         orgId,
         createdById: user.id,
+        // O criador entra automaticamente como membro (escopo de visibilidade).
+        members: { create: { userId: user.id } },
         protocols: data.protocols?.length
           ? { createMany: { data: data.protocols, skipDuplicates: true } }
           : undefined,
