@@ -17,10 +17,11 @@ export const orgKeys = {
   detail: (orgId: string) => ["organization", orgId] as const,
 }
 
-export function useMembers(orgId: string) {
+export function useMembers(orgId: string, enabled = true) {
   return useQuery({
     queryKey: memberKeys.byOrg(orgId),
     queryFn: () => organizationsService.getMembers(orgId),
+    enabled: enabled && !!orgId,
   })
 }
 

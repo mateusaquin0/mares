@@ -2,7 +2,7 @@
 
 import { http } from "@/lib/http"
 import type { CreateResearchData, UpdateResearchData } from "@/schemas/research.schema"
-import type { ResearchDetail, ResearchListItem } from "@/types/research"
+import type { ResearchDetail, ResearchListItem, ResearchMembers } from "@/types/research"
 
 export type ProtocolEntryInput = { organId: string; pathogenId: string; examTypeId: string }
 
@@ -18,4 +18,8 @@ export const researchService = {
     http.post(`/api/research/${id}/protocol`, { entries }),
   removeProtocol: (id: string, entryId: string) =>
     http.del(`/api/research/${id}/protocol/${entryId}`),
+
+  members: (id: string) => http.get<ResearchMembers>(`/api/research/${id}/members`),
+  addMember: (id: string, userId: string) => http.post(`/api/research/${id}/members`, { userId }),
+  removeMember: (id: string, userId: string) => http.del(`/api/research/${id}/members/${userId}`),
 }

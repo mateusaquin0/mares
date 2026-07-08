@@ -9,6 +9,7 @@ export const researchKeys = {
   all: ["research"] as const,
   list: () => ["research"] as const,
   detail: (id: string) => ["research", id] as const,
+  members: (id: string) => ["research", id, "members"] as const,
 }
 
 export function useResearchList() {
@@ -67,5 +68,30 @@ export function useRemoveProtocol(researchId: string) {
   return useMutation({
     mutationFn: (entryId: string) => researchService.removeProtocol(researchId, entryId),
     onSuccess: () => qc.invalidateQueries({ queryKey: researchKeys.detail(researchId) }),
+  })
+}
+
+// ── Membros da pesquisa ──────────────────────────────────────────────────────
+
+export function useResearchMembers(id: string) {
+  return useQuery({
+    queryKey: researchKeys.members(id),
+    queryFn: () => researchService.members(id),
+  })
+}
+
+export function useAddResearchMember(researchId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (userId: string) => researchService.addMember(researchId, userId),
+    onSuccess: () => qc.invalidateQueries({ queryKey: researchKeys.members(researchId) }),
+  })
+}
+
+export function useRemoveResearchMember(researchId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (userId: string) => researchService.removeMember(researchId, userId),
+    onSuccess: () => qc.invalidateQueries({ queryKey: researchKeys.members(researchId) }),
   })
 }
