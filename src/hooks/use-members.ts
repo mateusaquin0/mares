@@ -78,7 +78,12 @@ export function useLeaveOrganization() {
 
 // Define a organização ativa (cookie).
 export function useSetActiveOrg() {
+  const qc = useQueryClient()
   return useMutation({
     mutationFn: (orgId: string) => organizationsService.setActive(orgId),
+    // Trocar a org ativa muda TODOS os dados escopados por organização (animais,
+    // pesquisas, membros...). Como as chaves de query NÃO incluem o orgId, invalidamos
+    // tudo para o cache não continuar exibindo dados da organização anterior.
+    onSuccess: () => qc.invalidateQueries(),
   })
 }
