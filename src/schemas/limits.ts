@@ -12,9 +12,9 @@ export const LIMITS = {
   // Unidade de medida (ex.: "cópias/mL").
   measureUnit: 30,
   // Observações e descrições longas (notas de amostra/análise, descrição de pesquisa).
-  longText: 2000,
+  longText: 500,
   // Notas macroscópicas do animal (texto livre extenso).
-  hugeText: 4000,
+  hugeText: 1000,
 } as const
 
 // Feedback tem limites próprios (já refletidos na UI com contador) — reexportados aqui

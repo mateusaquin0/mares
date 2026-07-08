@@ -115,7 +115,7 @@ const COLUMNS: { key: string; pt: string; en: string; width: number }[] = [
   { key: "visibility", pt: "Visibilidade", en: "Visibility", width: 12 },
   { key: "samples", pt: "Amostras", en: "Samples", width: 10 },
   { key: "positives", pt: "Patógenos positivos", en: "Positive pathogens", width: 32 },
-  { key: "notes", pt: "Exame externo", en: "External exam", width: 40 },
+  { key: "notes", pt: "Observações", en: "Observations", width: 40 },
 ]
 
 // Colunas da aba de análises (uma linha por análise).
