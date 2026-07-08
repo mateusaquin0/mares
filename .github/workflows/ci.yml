@@ -33,5 +33,8 @@ jobs:
       - name: Lint
         run: npm run lint
 
+      - name: Formatação (Prettier)
+        run: npm run format:check
+
       - name: Testes unitários
         run: npm test
