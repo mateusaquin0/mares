@@ -26,6 +26,7 @@ import {
   Table,
   TableBody,
   TableCell,
+  TableEmpty,
   TableHead,
   TableHeader,
   TableRow,
@@ -173,74 +174,71 @@ export default function AdminFeedbackPage() {
             )}
           </div>
 
-          {items.length === 0 ? (
-            <p className="text-sm text-muted-foreground">{tc("noResults")}</p>
-          ) : (
-            <div className="overflow-hidden rounded-xl border bg-card shadow-card">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-32">{t("colType")}</TableHead>
-                    <TableHead>{t("colTitle")}</TableHead>
-                    <TableHead className="w-56">{t("colAuthor")}</TableHead>
-                    <TableHead className="w-36">{t("colDate")}</TableHead>
-                    <TableHead className="w-28">{t("colStatus")}</TableHead>
-                    <TableHead className="w-16 text-right">
-                      <ReloadButton
-                        onReload={async () => {
-                          await listQ.refetch()
-                        }}
-                      />
-                    </TableHead>
+          <div className="overflow-hidden rounded-xl border bg-card shadow-card">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-32">{t("colType")}</TableHead>
+                  <TableHead>{t("colTitle")}</TableHead>
+                  <TableHead className="w-56">{t("colAuthor")}</TableHead>
+                  <TableHead className="w-36">{t("colDate")}</TableHead>
+                  <TableHead className="w-28">{t("colStatus")}</TableHead>
+                  <TableHead className="w-16 text-right">
+                    <ReloadButton
+                      onReload={async () => {
+                        await listQ.refetch()
+                      }}
+                    />
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {items.length === 0 && <TableEmpty colSpan={6}>{tc("noResults")}</TableEmpty>}
+                {items.map((f) => (
+                  <TableRow
+                    key={f.id}
+                    onClick={() => setSelected(f)}
+                    className="cursor-pointer"
+                    title={t("viewDetails")}
+                  >
+                    <TableCell>{typeBadge(f.type)}</TableCell>
+                    <TableCell className="font-medium">{f.title}</TableCell>
+                    <TableCell className="text-sm">{f.createdByEmail}</TableCell>
+                    <TableCell className="whitespace-nowrap text-sm text-muted-foreground">
+                      {new Date(f.createdAt).toLocaleDateString(locale)}
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={statusVariant[f.status]}>{t(`status_${f.status}`)}</Badge>
+                    </TableCell>
+                    {/* stopPropagation: o menu de ações não deve abrir o modal de detalhes. */}
+                    <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="size-8"
+                            disabled={busy === f.id}
+                            loading={busy === f.id}
+                          >
+                            {busy !== f.id && <MoreHorizontal className="size-4" />}
+                            <span className="sr-only">{t("colActions")}</span>
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          {STATUSES.filter((s) => s !== f.status).map((s) => (
+                            <DropdownMenuItem key={s} onSelect={() => setStatus(f.id, s)}>
+                              {t("setStatus", { status: t(`status_${s}`) })}
+                            </DropdownMenuItem>
+                          ))}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
                   </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {items.map((f) => (
-                    <TableRow
-                      key={f.id}
-                      onClick={() => setSelected(f)}
-                      className="cursor-pointer"
-                      title={t("viewDetails")}
-                    >
-                      <TableCell>{typeBadge(f.type)}</TableCell>
-                      <TableCell className="font-medium">{f.title}</TableCell>
-                      <TableCell className="text-sm">{f.createdByEmail}</TableCell>
-                      <TableCell className="whitespace-nowrap text-sm text-muted-foreground">
-                        {new Date(f.createdAt).toLocaleDateString(locale)}
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={statusVariant[f.status]}>{t(`status_${f.status}`)}</Badge>
-                      </TableCell>
-                      {/* stopPropagation: o menu de ações não deve abrir o modal de detalhes. */}
-                      <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="size-8"
-                              disabled={busy === f.id}
-                              loading={busy === f.id}
-                            >
-                              {busy !== f.id && <MoreHorizontal className="size-4" />}
-                              <span className="sr-only">{t("colActions")}</span>
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            {STATUSES.filter((s) => s !== f.status).map((s) => (
-                              <DropdownMenuItem key={s} onSelect={() => setStatus(f.id, s)}>
-                                {t("setStatus", { status: t(`status_${s}`) })}
-                              </DropdownMenuItem>
-                            ))}
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          )}
+                ))}
+              </TableBody>
+            </Table>
+          </div>
         </>
       )}
 

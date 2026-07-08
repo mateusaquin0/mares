@@ -43,6 +43,7 @@ import {
   Table,
   TableBody,
   TableCell,
+  TableEmpty,
   TableHead,
   TableHeader,
   TableRow,
@@ -280,6 +281,7 @@ export function MembersManager({
                 </TableRow>
               </TableHeader>
               <TableBody>
+                {filtered.length === 0 && <TableEmpty colSpan={3}>{tc("noResults")}</TableEmpty>}
                 {filtered.map((m) => {
                   const isSelf = m.userId === selfId
                   const isAdmin = m.role === "ORG_ADMIN"

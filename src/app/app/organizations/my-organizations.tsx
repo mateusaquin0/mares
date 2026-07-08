@@ -15,6 +15,7 @@ import {
   Table,
   TableBody,
   TableCell,
+  TableEmpty,
   TableHead,
   TableHeader,
   TableRow,
@@ -59,53 +60,50 @@ export function MyOrganizations({
         <p className="mt-1 text-sm text-muted-foreground">{t("subtitle")}</p>
       </div>
 
-      {list.length === 0 ? (
-        <p className="text-sm text-muted-foreground">{t("empty")}</p>
-      ) : (
-        <div className="max-w-3xl overflow-hidden rounded-xl border bg-card shadow-card">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>{t("colOrg")}</TableHead>
-                <TableHead>{t("colRole")}</TableHead>
-                <TableHead className="w-24 text-right">
-                  <ReloadButton />
-                </TableHead>
+      <div className="max-w-3xl overflow-hidden rounded-xl border bg-card shadow-card">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>{t("colOrg")}</TableHead>
+              <TableHead>{t("colRole")}</TableHead>
+              <TableHead className="w-24 text-right">
+                <ReloadButton />
+              </TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {list.length === 0 && <TableEmpty colSpan={3}>{t("empty")}</TableEmpty>}
+            {list.map((m) => (
+              <TableRow key={m.orgId}>
+                <TableCell className="font-medium">{m.orgName}</TableCell>
+                <TableCell>
+                  <Badge variant={m.role === "ORG_ADMIN" ? "default" : "secondary"}>
+                    {m.role === "ORG_ADMIN" ? tc("roleAdmin") : tc("roleResearcher")}
+                  </Badge>
+                </TableCell>
+                <TableCell className="text-right">
+                  <ConfirmDialog
+                    title={t("leaveTitle")}
+                    description={
+                      m.role === "ORG_ADMIN"
+                        ? t("leaveDescAdmin")
+                        : t("leaveDesc", { org: m.orgName })
+                    }
+                    confirmLabel={tc("leave")}
+                    destructive
+                    onConfirm={() => leave(m)}
+                    trigger={
+                      <Button variant="outline" size="sm" disabled={busy === m.orgId}>
+                        {tc("leave")}
+                      </Button>
+                    }
+                  />
+                </TableCell>
               </TableRow>
-            </TableHeader>
-            <TableBody>
-              {list.map((m) => (
-                <TableRow key={m.orgId}>
-                  <TableCell className="font-medium">{m.orgName}</TableCell>
-                  <TableCell>
-                    <Badge variant={m.role === "ORG_ADMIN" ? "default" : "secondary"}>
-                      {m.role === "ORG_ADMIN" ? tc("roleAdmin") : tc("roleResearcher")}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <ConfirmDialog
-                      title={t("leaveTitle")}
-                      description={
-                        m.role === "ORG_ADMIN"
-                          ? t("leaveDescAdmin")
-                          : t("leaveDesc", { org: m.orgName })
-                      }
-                      confirmLabel={tc("leave")}
-                      destructive
-                      onConfirm={() => leave(m)}
-                      trigger={
-                        <Button variant="outline" size="sm" disabled={busy === m.orgId}>
-                          {tc("leave")}
-                        </Button>
-                      }
-                    />
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-      )}
+            ))}
+          </TableBody>
+        </Table>
+      </div>
     </div>
   )
 }

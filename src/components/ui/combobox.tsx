@@ -25,6 +25,7 @@ export function Combobox({
   placeholder,
   searchPlaceholder,
   emptyText,
+  emptyAction,
   disabled,
   loading,
 }: {
@@ -34,6 +35,8 @@ export function Combobox({
   placeholder: string
   searchPlaceholder: string
   emptyText: string
+  // Conteúdo extra renderizado no estado vazio (ex.: link para cadastrar o item em outra tela).
+  emptyAction?: React.ReactNode
   disabled?: boolean
   loading?: boolean
 }) {
@@ -68,7 +71,10 @@ export function Combobox({
         <Command>
           <CommandInput placeholder={searchPlaceholder} />
           <CommandList>
-            <CommandEmpty>{emptyText}</CommandEmpty>
+            <CommandEmpty>
+              <span className="block px-1">{emptyText}</span>
+              {emptyAction && <div className="mt-2">{emptyAction}</div>}
+            </CommandEmpty>
             <CommandGroup>
               {options.map((o) => (
                 <CommandItem

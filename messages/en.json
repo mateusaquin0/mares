@@ -648,6 +648,11 @@
   "samples": {
     "new": "New sample",
     "empty": "No samples recorded.",
+    "searchPlaceholder": "Search by identification, type, organ...",
+    "allStatuses": "All statuses",
+    "allOrgans": "All organs",
+    "allResearch": "All research",
+    "clearFilters": "Clear filters",
     "colIdentification": "Identification",
     "colResearch": "Research",
     "colOrgan": "Organ",
@@ -701,7 +706,11 @@
     "ctPlaceholder": "Ct",
     "notesPlaceholder": "Notes",
     "saved": "Result saved",
-    "saveError": "Could not save the result"
+    "saveError": "Could not save the result",
+    "searchPlaceholder": "Search by pathogen or exam...",
+    "allResults": "All results",
+    "noMatch": "No results for the filters.",
+    "entryCount": "{count, plural, =0 {no items} one {# item} other {# items}}"
   },
   "media": {
     "empty": "No files uploaded.",
@@ -738,6 +747,9 @@
     "pathogen": "Pathogen",
     "examType": "Exam",
     "empty": "No protocol entries.",
+    "searchPlaceholder": "Search by organ, pathogen or exam...",
+    "selectEmpty": "No items registered.",
+    "goToGlossary": "Add in the glossary",
     "added": "Entry added",
     "addError": "Could not add",
     "removed": "Entry removed",

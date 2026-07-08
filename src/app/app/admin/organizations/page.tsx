@@ -12,7 +12,14 @@ import { Badge } from "@/components/ui/badge"
 import { TableSkeleton } from "@/components/ui/skeleton"
 import { Input } from "@/components/ui/input"
 import { OrgMembers } from "./org-members"
-import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/components/ui/table"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableEmpty,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
 import { SortableHead } from "@/components/ui/sortable-head"
 import {
   Dialog,
@@ -81,8 +88,6 @@ export default function AdminOrganizationsPage() {
 
       {loading ? (
         <TableSkeleton />
-      ) : orgs.length === 0 ? (
-        <p className="text-sm text-muted-foreground">{t("empty")}</p>
       ) : (
         <>
           <p className="text-xs text-muted-foreground">{t("hint")}</p>
@@ -125,11 +130,9 @@ export default function AdminOrganizationsPage() {
               </TableHeader>
               <TableBody>
                 {table.rows.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={5} className="text-center text-sm text-muted-foreground">
-                      {tc("noResults")}
-                    </TableCell>
-                  </TableRow>
+                  <TableEmpty colSpan={5}>
+                    {orgs.length === 0 ? t("empty") : tc("noResults")}
+                  </TableEmpty>
                 ) : (
                   table.rows.map((o) => (
                     <TableRow

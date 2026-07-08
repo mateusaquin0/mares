@@ -6,7 +6,7 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useLocale, useTranslations } from "next-intl"
 import { toast } from "sonner"
-import { ArrowLeft, Download, Pencil, Plus, Trash2 } from "lucide-react"
+import { ArrowLeft, Download, Pencil, Plus, Search, Trash2 } from "lucide-react"
 
 import { updateResearchSchema, type UpdateResearchData } from "@/schemas/research.schema"
 import {
@@ -32,6 +32,7 @@ import {
   Table,
   TableBody,
   TableCell,
+  TableEmpty,
   TableHead,
   TableHeader,
   TableRow,
@@ -74,12 +75,30 @@ export function ResearchDetail({
   const [pathogenId, setPathogenId] = useState<string>()
   const [examTypeId, setExamTypeId] = useState<string>()
   const [editOpen, setEditOpen] = useState(false)
+  const [protocolQuery, setProtocolQuery] = useState("")
 
   const research = researchQ.data
   const canEditContent = isOrgAdmin || research?.createdById === selfId
 
   const opts = (list: CatalogItem[] | undefined): ComboboxOption[] =>
     (list ?? []).map((c) => ({ value: c.id, label: txt(locale, c.name) }))
+
+  // Estado vazio do select de protocolo: leva o admin ao glossário já na aba certa.
+  const glossaryLink = (tab: "organs" | "pathogens" | "exam-types") => (
+    <Link href={`/app/catalogs?tab=${tab}`} className="text-sm font-medium text-primary underline">
+      {tp("goToGlossary")}
+    </Link>
+  )
+
+  const protocolSearch = protocolQuery.trim().toLowerCase()
+  const filteredProtocols = (research?.protocols ?? []).filter((p) => {
+    if (!protocolSearch) return true
+    return (
+      txt(locale, p.organ.name).toLowerCase().includes(protocolSearch) ||
+      pathogenName(locale, p.pathogen).toLowerCase().includes(protocolSearch) ||
+      txt(locale, p.examType.name).toLowerCase().includes(protocolSearch)
+    )
+  })
 
   const editForm = useForm<UpdateResearchData>({
     resolver: zodResolver(updateResearchSchema),
@@ -196,8 +215,9 @@ export function ResearchDetail({
                 value={organId}
                 onChange={setOrganId}
                 placeholder={tp("organ")}
-                searchPlaceholder={tc("loading")}
-                emptyText={tc("loading")}
+                searchPlaceholder={tc("search")}
+                emptyText={tp("selectEmpty")}
+                emptyAction={glossaryLink("organs")}
                 loading={organsQ.isLoading}
               />
               <Combobox
@@ -208,8 +228,9 @@ export function ResearchDetail({
                 value={pathogenId}
                 onChange={setPathogenId}
                 placeholder={tp("pathogen")}
-                searchPlaceholder={tc("loading")}
-                emptyText={tc("loading")}
+                searchPlaceholder={tc("search")}
+                emptyText={tp("selectEmpty")}
+                emptyAction={glossaryLink("pathogens")}
                 loading={pathogensQ.isLoading}
               />
               <Combobox
@@ -217,8 +238,9 @@ export function ResearchDetail({
                 value={examTypeId}
                 onChange={setExamTypeId}
                 placeholder={tp("examType")}
-                searchPlaceholder={tc("loading")}
-                emptyText={tc("loading")}
+                searchPlaceholder={tc("search")}
+                emptyText={tp("selectEmpty")}
+                emptyAction={glossaryLink("exam-types")}
                 loading={examTypesQ.isLoading}
               />
               <Button
@@ -232,48 +254,58 @@ export function ResearchDetail({
             </div>
           )}
 
-          {research.protocols.length === 0 ? (
-            <p className="text-sm text-muted-foreground">{tp("empty")}</p>
-          ) : (
-            <div className="overflow-hidden rounded-lg border">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>{tp("organ")}</TableHead>
-                    <TableHead>{tp("pathogen")}</TableHead>
-                    <TableHead>{tp("examType")}</TableHead>
+          <div className="relative max-w-sm">
+            <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={protocolQuery}
+              onChange={(e) => setProtocolQuery(e.target.value)}
+              placeholder={tp("searchPlaceholder")}
+              className="pl-9"
+            />
+          </div>
+          <div className="overflow-hidden rounded-lg border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>{tp("organ")}</TableHead>
+                  <TableHead>{tp("pathogen")}</TableHead>
+                  <TableHead>{tp("examType")}</TableHead>
+                  {isOrgAdmin && (
+                    <TableHead className="w-16 text-right">
+                      <ReloadButton />
+                    </TableHead>
+                  )}
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredProtocols.length === 0 && (
+                  <TableEmpty colSpan={isOrgAdmin ? 4 : 3}>
+                    {research.protocols.length === 0 ? tp("empty") : tc("noResults")}
+                  </TableEmpty>
+                )}
+                {filteredProtocols.map((p) => (
+                  <TableRow key={p.id}>
+                    <TableCell>{txt(locale, p.organ.name)}</TableCell>
+                    <TableCell>{pathogenName(locale, p.pathogen)}</TableCell>
+                    <TableCell>{txt(locale, p.examType.name)}</TableCell>
                     {isOrgAdmin && (
-                      <TableHead className="w-16 text-right">
-                        <ReloadButton />
-                      </TableHead>
+                      <TableCell className="text-right">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="size-8 text-destructive"
+                          onClick={() => removeEntry(p.id)}
+                          aria-label={tc("remove")}
+                        >
+                          <Trash2 className="size-4" />
+                        </Button>
+                      </TableCell>
                     )}
                   </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {research.protocols.map((p) => (
-                    <TableRow key={p.id}>
-                      <TableCell>{txt(locale, p.organ.name)}</TableCell>
-                      <TableCell>{pathogenName(locale, p.pathogen)}</TableCell>
-                      <TableCell>{txt(locale, p.examType.name)}</TableCell>
-                      {isOrgAdmin && (
-                        <TableCell className="text-right">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="size-8 text-destructive"
-                            onClick={() => removeEntry(p.id)}
-                            aria-label={tc("remove")}
-                          >
-                            <Trash2 className="size-4" />
-                          </Button>
-                        </TableCell>
-                      )}
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          )}
+                ))}
+              </TableBody>
+            </Table>
+          </div>
         </CardContent>
       </Card>
 

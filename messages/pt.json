@@ -648,6 +648,11 @@
   "samples": {
     "new": "Nova amostra",
     "empty": "Nenhuma amostra registrada.",
+    "searchPlaceholder": "Buscar por identificação, tipo, órgão...",
+    "allStatuses": "Todos os status",
+    "allOrgans": "Todos os órgãos",
+    "allResearch": "Todas as pesquisas",
+    "clearFilters": "Limpar filtros",
     "colIdentification": "Identificação",
     "colResearch": "Pesquisa",
     "colOrgan": "Órgão",
@@ -701,7 +706,11 @@
     "ctPlaceholder": "Ct",
     "notesPlaceholder": "Observações",
     "saved": "Resultado salvo",
-    "saveError": "Não foi possível salvar o resultado"
+    "saveError": "Não foi possível salvar o resultado",
+    "searchPlaceholder": "Buscar por patógeno ou exame...",
+    "allResults": "Todos os resultados",
+    "noMatch": "Nenhum resultado para os filtros.",
+    "entryCount": "{count, plural, =0 {sem itens} one {# item} other {# itens}}"
   },
   "media": {
     "empty": "Nenhum arquivo enviado.",
@@ -738,6 +747,9 @@
     "pathogen": "Patógeno",
     "examType": "Exame",
     "empty": "Nenhuma entrada no protocolo.",
+    "searchPlaceholder": "Buscar por órgão, patógeno ou exame...",
+    "selectEmpty": "Nenhum item cadastrado.",
+    "goToGlossary": "Cadastrar no glossário",
     "added": "Entrada adicionada",
     "addError": "Não foi possível adicionar",
     "removed": "Entrada removida",

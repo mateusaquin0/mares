@@ -3,7 +3,7 @@
 import { useState, type FormEvent } from "react"
 import { useLocale, useTranslations } from "next-intl"
 import { toast } from "sonner"
-import { MoreHorizontal, Plus } from "lucide-react"
+import { MoreHorizontal, Plus, Search, X } from "lucide-react"
 
 import { txt } from "@/lib/catalog-i18n"
 import { formatDateOnly } from "@/lib/date"
@@ -13,6 +13,7 @@ import { useSamples, useCreateSample, useUpdateSample, useDeleteSample } from "@
 import { useOrgans } from "@/hooks/use-catalog"
 import type { Sample, SampleStatus } from "@/types/sample"
 import { Button } from "@/components/ui/button"
+import { Combobox } from "@/components/ui/combobox"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
@@ -23,6 +24,7 @@ import {
   Table,
   TableBody,
   TableCell,
+  TableEmpty,
   TableHead,
   TableHeader,
   TableRow,
@@ -73,6 +75,7 @@ const emptyForm: FormState = {
   notes: "",
 }
 
+const ALL = "__all__"
 const STATUSES: SampleStatus[] = ["STORED", "IN_USE", "DEPLETED", "DEGRADED"]
 const statusVariant: Record<SampleStatus, "default" | "secondary" | "destructive" | "outline"> = {
   STORED: "secondary",
@@ -114,6 +117,12 @@ export function SamplesTab({
   }>({})
   const [confirm, setConfirm] = useState<Sample | null>(null)
   const multiResearch = researches.length > 1
+
+  // ── Filtros da listagem ──
+  const [query, setQuery] = useState("")
+  const [fStatus, setFStatus] = useState(ALL)
+  const [fOrgan, setFOrgan] = useState(ALL)
+  const [fResearch, setFResearch] = useState(ALL)
 
   const set = (patch: Partial<FormState>) => setForm((f) => ({ ...f, ...patch }))
   const statusLabel = (s: SampleStatus) =>
@@ -191,6 +200,47 @@ export function SamplesTab({
 
   const fmtDate = (iso: string | null) => formatDateOnly(iso, locale)
 
+  // Opções de órgão e pesquisa derivadas das amostras existentes (ordenadas por rótulo).
+  const organOptions = [
+    ...new Map(items.map((s) => [s.organ.id, txt(locale, s.organ.name)])).entries(),
+  ]
+    .map(([id, label]) => ({ id, label }))
+    .sort((a, b) => a.label.localeCompare(b.label, locale))
+  const researchFilterOptions = [
+    ...new Map(items.map((s) => [s.research.id, s.research.name])).entries(),
+  ]
+    .map(([id, label]) => ({ id, label }))
+    .sort((a, b) => a.label.localeCompare(b.label, locale))
+
+  const search = query.trim().toLowerCase()
+  const filtered = items.filter((s) => {
+    if (fStatus !== ALL && s.status !== fStatus) return false
+    if (fOrgan !== ALL && s.organ.id !== fOrgan) return false
+    if (fResearch !== ALL && s.research.id !== fResearch) return false
+    if (search) {
+      const haystack = [
+        s.identification,
+        s.sampleType,
+        txt(locale, s.organ.name),
+        s.storageLocation ?? "",
+        s.research.name,
+      ]
+        .join(" ")
+        .toLowerCase()
+      if (!haystack.includes(search)) return false
+    }
+    return true
+  })
+
+  const hasFilters = query !== "" || fStatus !== ALL || fOrgan !== ALL || fResearch !== ALL
+  const clearFilters = () => {
+    setQuery("")
+    setFStatus(ALL)
+    setFOrgan(ALL)
+    setFResearch(ALL)
+  }
+  const colCount = multiResearch ? 10 : 9
+
   return (
     <div className="space-y-4">
       <div className="flex justify-end">
@@ -205,74 +255,143 @@ export function SamplesTab({
       ) : items.length === 0 ? (
         <p className="text-sm text-muted-foreground">{t("empty")}</p>
       ) : (
-        <div className="rounded-md border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>{t("colIdentification")}</TableHead>
-                {multiResearch && <TableHead>{t("colResearch")}</TableHead>}
-                <TableHead>{t("colOrgan")}</TableHead>
-                <TableHead>{t("colType")}</TableHead>
-                <TableHead>{t("colCollection")}</TableHead>
-                <TableHead>{t("colStorage")}</TableHead>
-                <TableHead className="text-right">{t("colTemp")}</TableHead>
-                <TableHead>{t("colStatus")}</TableHead>
-                <TableHead className="text-right">{t("colAnalyses")}</TableHead>
-                <TableHead className="w-12 text-right">
-                  <ReloadButton />
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {items.map((s) => (
-                <TableRow key={s.id}>
-                  <TableCell className="font-medium">{s.identification}</TableCell>
-                  {multiResearch && (
-                    <TableCell>
-                      <Badge variant="outline">{s.research.name}</Badge>
-                    </TableCell>
-                  )}
-                  <TableCell>{txt(locale, s.organ.name)}</TableCell>
-                  <TableCell>{s.sampleType}</TableCell>
-                  <TableCell className="text-muted-foreground">
-                    {fmtDate(s.collectionDate)}
-                  </TableCell>
-                  <TableCell className="text-muted-foreground">{s.storageLocation ?? ""}</TableCell>
-                  <TableCell className="text-right text-muted-foreground">
-                    {s.storageTemp ?? ""}
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={statusVariant[s.status]}>{statusLabel(s.status)}</Badge>
-                  </TableCell>
-                  <TableCell className="text-right">{s._count.analyses}</TableCell>
-                  <TableCell className="text-right">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="size-8">
-                          <MoreHorizontal className="size-4" />
-                          <span className="sr-only">{tc("actions")}</span>
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onSelect={() => openEdit(s)}>
-                          {tc("edit")}
-                        </DropdownMenuItem>
-                        {isOrgAdmin && (
-                          <DropdownMenuItem
-                            className="text-destructive focus:text-destructive"
-                            onSelect={() => setConfirm(s)}
-                          >
-                            {tc("delete")}
-                          </DropdownMenuItem>
-                        )}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
+        <>
+          {/* Barra de filtros */}
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="relative min-w-0 flex-1 sm:max-w-xs">
+              <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder={t("searchPlaceholder")}
+                className="h-9 pl-9"
+              />
+            </div>
+            <Select value={fStatus} onValueChange={setFStatus}>
+              <SelectTrigger className="h-9 w-auto min-w-36">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={ALL}>{t("allStatuses")}</SelectItem>
+                {STATUSES.map((s) => (
+                  <SelectItem key={s} value={s}>
+                    {statusLabel(s)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {organOptions.length > 1 && (
+              <Select value={fOrgan} onValueChange={setFOrgan}>
+                <SelectTrigger className="h-9 w-auto min-w-36">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={ALL}>{t("allOrgans")}</SelectItem>
+                  {organOptions.map((o) => (
+                    <SelectItem key={o.id} value={o.id}>
+                      {o.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+            {multiResearch && researchFilterOptions.length > 1 && (
+              <Select value={fResearch} onValueChange={setFResearch}>
+                <SelectTrigger className="h-9 w-auto min-w-36">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={ALL}>{t("allResearch")}</SelectItem>
+                  {researchFilterOptions.map((r) => (
+                    <SelectItem key={r.id} value={r.id}>
+                      {r.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+            {hasFilters && (
+              <Button variant="ghost" size="sm" onClick={clearFilters} className="gap-1">
+                <X className="size-3.5" />
+                {t("clearFilters")}
+              </Button>
+            )}
+          </div>
+
+          <div className="rounded-md border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>{t("colIdentification")}</TableHead>
+                  {multiResearch && <TableHead>{t("colResearch")}</TableHead>}
+                  <TableHead>{t("colOrgan")}</TableHead>
+                  <TableHead>{t("colType")}</TableHead>
+                  <TableHead>{t("colCollection")}</TableHead>
+                  <TableHead>{t("colStorage")}</TableHead>
+                  <TableHead className="text-right">{t("colTemp")}</TableHead>
+                  <TableHead>{t("colStatus")}</TableHead>
+                  <TableHead className="text-right">{t("colAnalyses")}</TableHead>
+                  <TableHead className="w-12 text-right">
+                    <ReloadButton />
+                  </TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
+              </TableHeader>
+              <TableBody>
+                {filtered.length === 0 && (
+                  <TableEmpty colSpan={colCount}>{tc("noResults")}</TableEmpty>
+                )}
+                {filtered.map((s) => (
+                  <TableRow key={s.id}>
+                    <TableCell className="font-medium">{s.identification}</TableCell>
+                    {multiResearch && (
+                      <TableCell>
+                        <Badge variant="outline">{s.research.name}</Badge>
+                      </TableCell>
+                    )}
+                    <TableCell>{txt(locale, s.organ.name)}</TableCell>
+                    <TableCell>{s.sampleType}</TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {fmtDate(s.collectionDate)}
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {s.storageLocation ?? ""}
+                    </TableCell>
+                    <TableCell className="text-right text-muted-foreground">
+                      {s.storageTemp ?? ""}
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={statusVariant[s.status]}>{statusLabel(s.status)}</Badge>
+                    </TableCell>
+                    <TableCell className="text-right">{s._count.analyses}</TableCell>
+                    <TableCell className="text-right">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="size-8">
+                            <MoreHorizontal className="size-4" />
+                            <span className="sr-only">{tc("actions")}</span>
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onSelect={() => openEdit(s)}>
+                            {tc("edit")}
+                          </DropdownMenuItem>
+                          {isOrgAdmin && (
+                            <DropdownMenuItem
+                              className="text-destructive focus:text-destructive"
+                              onSelect={() => setConfirm(s)}
+                            >
+                              {tc("delete")}
+                            </DropdownMenuItem>
+                          )}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </>
       )}
 
       {confirm && (
@@ -297,6 +416,8 @@ export function SamplesTab({
               <Label htmlFor="identification">{t("identification")}</Label>
               <Input
                 id="identification"
+                name="sampleIdentification"
+                autoComplete="on"
                 placeholder={t("identificationPlaceholder")}
                 value={form.identification}
                 onChange={(e) => set({ identification: e.target.value })}
@@ -332,18 +453,14 @@ export function SamplesTab({
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1">
                 <Label htmlFor="organ">{t("organ")}</Label>
-                <Select value={form.organId} onValueChange={(v) => set({ organId: v })}>
-                  <SelectTrigger id="organ">
-                    <SelectValue placeholder={t("organPlaceholder")} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {organs.map((o) => (
-                      <SelectItem key={o.id} value={o.id}>
-                        {txt(locale, o.name)}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Combobox
+                  options={organs.map((o) => ({ value: o.id, label: txt(locale, o.name) }))}
+                  value={form.organId}
+                  onChange={(v) => set({ organId: v })}
+                  placeholder={t("organPlaceholder")}
+                  searchPlaceholder={tc("search")}
+                  emptyText={tc("noResults")}
+                />
                 {errors.organId && <p className="text-xs text-destructive">{tval("required")}</p>}
               </div>
               <div className="space-y-1">
@@ -369,6 +486,8 @@ export function SamplesTab({
               <Label htmlFor="sampleType">{t("sampleType")}</Label>
               <Input
                 id="sampleType"
+                name="sampleType"
+                autoComplete="on"
                 placeholder={t("sampleTypePlaceholder")}
                 value={form.sampleType}
                 onChange={(e) => set({ sampleType: e.target.value })}
@@ -389,6 +508,8 @@ export function SamplesTab({
                 <Label htmlFor="storageTemp">{t("storageTemp")}</Label>
                 <Input
                   id="storageTemp"
+                  name="sampleStorageTemp"
+                  autoComplete="on"
                   type="number"
                   step="any"
                   value={form.storageTemp}
@@ -400,6 +521,8 @@ export function SamplesTab({
               <Label htmlFor="storageLocation">{t("storageLocation")}</Label>
               <Input
                 id="storageLocation"
+                name="sampleStorageLocation"
+                autoComplete="on"
                 value={form.storageLocation}
                 onChange={(e) => set({ storageLocation: e.target.value })}
               />
