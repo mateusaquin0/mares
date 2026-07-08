@@ -1,12 +1,13 @@
 // MARES — Remove um membro (vínculo) de uma pesquisa.
-// Regras: admin da org OU criador da pesquisa. O CRIADOR não pode ser removido.
+// Regras: admin da org OU criador da pesquisa. Qualquer membro pode ser removido (inclusive o
+// criador); a pesquisa pode ficar sem membros.
 
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { getAuthUser, requireOrgRole } from "@/lib/auth"
 import { apiError, unauthorized } from "@/lib/api"
 import { canManageResearch } from "@/lib/research-access"
-import { NotFoundError, ForbiddenError, ConflictError } from "@/lib/errors"
+import { NotFoundError, ForbiddenError } from "@/lib/errors"
 import { ERROR_CODES } from "@/lib/error-codes"
 
 export async function DELETE(
@@ -28,14 +29,8 @@ export async function DELETE(
       throw new ForbiddenError("Sem permissão para gerir membros", ERROR_CODES.forbidden)
     }
 
-    // O criador é membro permanente (mantém acesso pela regra "OU criador").
-    if (userId === research.createdById) {
-      throw new ConflictError(
-        "O criador não pode ser removido da pesquisa",
-        ERROR_CODES.researchMemberIsCreator,
-      )
-    }
-
+    // Qualquer membro pode ser removido — inclusive o criador. A pesquisa pode ficar sem
+    // membros (nesse caso, só o admin da org volta a enxergá-la).
     const link = await prisma.researchMember.findUnique({
       where: { researchId_userId: { researchId: id, userId } },
       select: { userId: true },
