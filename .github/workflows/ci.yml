@@ -1,0 +1,37 @@
+name: CI
+
+# Verificação de qualidade em cada push/PR (Fase 4 do docs/ROADMAP_TESTES.md).
+# Cobre typecheck, lint e os testes unitários (sem banco). Integração e E2E entram
+# em jobs próprios quando as Fases 2–3 forem implementadas.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Instalar dependências
+        run: npm ci
+
+      - name: Gerar Prisma Client
+        run: npx prisma generate
+
+      - name: Typecheck
+        run: npx tsc --noEmit
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Testes unitários
+        run: npm test
