@@ -58,6 +58,8 @@ export const ERROR_CODES = {
   // Fase 3 — integração SIMBA
   simbaNotFound: "simbaNotFound",
   simbaUnavailable: "simbaUnavailable",
+  // Feedback (sugestões / bugs)
+  feedbackNotFound: "feedbackNotFound",
 } as const
 
 export type ErrorCode = (typeof ERROR_CODES)[keyof typeof ERROR_CODES]
