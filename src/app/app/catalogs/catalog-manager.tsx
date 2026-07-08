@@ -79,9 +79,11 @@ const i18nEn = (v: string | I18nText | null | undefined) =>
 export function CatalogManager({
   userId,
   isSystemAdmin,
+  initialType = "organs",
 }: {
   userId: string
   isSystemAdmin: boolean
+  initialType?: CatalogType
 }) {
   const t = useTranslations("catalogs")
   const tc = useTranslations("common")
@@ -89,7 +91,7 @@ export function CatalogManager({
   const locale = useLocale()
   const em = useErrorMessage()
 
-  const [type, setType] = useState<CatalogType>("organs")
+  const [type, setType] = useState<CatalogType>(initialType)
   const [dialog, setDialog] = useState<{ mode: "create" | "edit"; row?: Row } | null>(null)
   const [confirmRow, setConfirmRow] = useState<Row | null>(null)
   // Táxon NCBI selecionado para o patógeno (fora do react-hook-form por ser numérico).

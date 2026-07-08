@@ -17,6 +17,7 @@ import {
   Table,
   TableBody,
   TableCell,
+  TableEmpty,
   TableHead,
   TableHeader,
   TableRow,
@@ -91,8 +92,6 @@ export default function AdminUsersPage() {
 
       {loading ? (
         <TableSkeleton />
-      ) : users.length === 0 ? (
-        <p className="text-sm text-muted-foreground">{t("empty")}</p>
       ) : (
         <div className="space-y-3">
           <Input
@@ -124,11 +123,9 @@ export default function AdminUsersPage() {
               </TableHeader>
               <TableBody>
                 {table.rows.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={5} className="text-center text-sm text-muted-foreground">
-                      {tc("noResults")}
-                    </TableCell>
-                  </TableRow>
+                  <TableEmpty colSpan={5}>
+                    {users.length === 0 ? t("empty") : tc("noResults")}
+                  </TableEmpty>
                 ) : (
                   table.rows.map((u) => (
                     <TableRow key={u.id}>

@@ -74,11 +74,26 @@ const TableCell = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <td
     ref={ref}
-    className={cn("p-4 align-middle [&:has([role=checkbox])]:pr-0", className)}
+    className={cn("break-words p-4 align-middle [&:has([role=checkbox])]:pr-0", className)}
     {...props}
   />
 ))
 TableCell.displayName = "TableCell"
+
+// Linha de estado vazio: mantém o corpo da tabela visível e mostra uma mensagem
+// centralizada, ocupando todas as colunas. Use dentro de <TableBody> quando a lista
+// (base ou filtrada) estiver vazia.
+const TableEmpty = React.forwardRef<
+  HTMLTableRowElement,
+  React.HTMLAttributes<HTMLTableRowElement> & { colSpan: number }
+>(({ className, colSpan, children, ...props }, ref) => (
+  <tr ref={ref} className={cn("hover:bg-transparent", className)} {...props}>
+    <td colSpan={colSpan} className="p-8 text-center text-sm text-muted-foreground">
+      {children}
+    </td>
+  </tr>
+))
+TableEmpty.displayName = "TableEmpty"
 
 const TableCaption = React.forwardRef<
   HTMLTableCaptionElement,
@@ -88,4 +103,14 @@ const TableCaption = React.forwardRef<
 ))
 TableCaption.displayName = "TableCaption"
 
-export { Table, TableHeader, TableBody, TableFooter, TableHead, TableRow, TableCell, TableCaption }
+export {
+  Table,
+  TableHeader,
+  TableBody,
+  TableFooter,
+  TableHead,
+  TableRow,
+  TableCell,
+  TableCaption,
+  TableEmpty,
+}

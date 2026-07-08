@@ -29,6 +29,7 @@ import {
   Table,
   TableBody,
   TableCell,
+  TableEmpty,
   TableHead,
   TableHeader,
   TableRow,
@@ -121,8 +122,6 @@ export function ResearchManager({ isOrgAdmin, selfId }: { isOrgAdmin: boolean; s
 
       {loading ? (
         <TableSkeleton />
-      ) : items.length === 0 ? (
-        <p className="text-sm text-muted-foreground">{t("empty")}</p>
       ) : (
         <div className="overflow-hidden rounded-xl border bg-card shadow-card">
           <div className="border-b p-4">
@@ -149,6 +148,11 @@ export function ResearchManager({ isOrgAdmin, selfId }: { isOrgAdmin: boolean; s
               </TableRow>
             </TableHeader>
             <TableBody>
+              {filtered.length === 0 && (
+                <TableEmpty colSpan={5}>
+                  {items.length === 0 ? t("empty") : tc("noResults")}
+                </TableEmpty>
+              )}
               {filtered.map((r) => (
                 <TableRow
                   key={r.id}

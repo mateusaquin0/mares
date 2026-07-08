@@ -13,6 +13,7 @@ import {
   Table,
   TableBody,
   TableCell,
+  TableEmpty,
   TableHead,
   TableHeader,
   TableRow,
@@ -55,8 +56,6 @@ export default function AccessRequestsPage() {
 
       {loading ? (
         <TableSkeleton />
-      ) : requests.length === 0 ? (
-        <p className="text-sm text-muted-foreground">{t("empty")}</p>
       ) : (
         <div className="overflow-hidden rounded-xl border bg-card shadow-card">
           <Table>
@@ -71,6 +70,7 @@ export default function AccessRequestsPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
+              {requests.length === 0 && <TableEmpty colSpan={4}>{t("empty")}</TableEmpty>}
               {requests.map((r) => (
                 <TableRow key={r.id}>
                   <TableCell className="font-medium">{r.organizationName}</TableCell>
