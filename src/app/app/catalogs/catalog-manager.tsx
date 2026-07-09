@@ -254,7 +254,7 @@ export function CatalogManager({
   })
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6 p-8">
+    <div className="mx-auto flex h-full max-w-6xl flex-col gap-6 p-8">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-3xl font-semibold tracking-tight">{t("title")}</h1>
@@ -281,100 +281,111 @@ export function CatalogManager({
       ) : (listQ.data?.length ?? 0) === 0 ? (
         <p className="text-sm text-muted-foreground">{t("empty")}</p>
       ) : (
-        <div className="space-y-3">
+        <div className="flex min-h-0 flex-1 flex-col gap-3">
           <Input
             value={table.query}
             onChange={(e) => table.setQuery(e.target.value)}
             placeholder={tc("search")}
             className="max-w-sm"
           />
-          <div className="overflow-hidden rounded-xl border bg-card shadow-card">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  {isPathogen ? (
-                    <>
-                      <SortableHead sortKey="name" sort={table.sort} onToggle={table.toggleSort}>
-                        {t("colName")}
-                      </SortableHead>
-                      <SortableHead sortKey="group" sort={table.sort} onToggle={table.toggleSort}>
-                        {t("colGroup")}
-                      </SortableHead>
-                    </>
-                  ) : (
-                    <>
-                      <SortableHead sortKey="namePt" sort={table.sort} onToggle={table.toggleSort}>
-                        {t("colNamePt")}
-                      </SortableHead>
-                      <SortableHead sortKey="nameEn" sort={table.sort} onToggle={table.toggleSort}>
-                        {t("colNameEn")}
-                      </SortableHead>
-                    </>
-                  )}
-                  <TableHead className="w-32 text-right">
-                    <ReloadButton />
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {table.rows.length === 0 ? (
+          <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border bg-card shadow-card">
+            {/* Rolagem contida na tabela (o <div overflow-auto> interno recebe h-full). */}
+            <div className="min-h-0 flex-1 [&>div]:h-full">
+              <Table>
+                <TableHeader className="sticky top-0 z-10 [&_th]:bg-accent">
                   <TableRow>
-                    <TableCell colSpan={3} className="text-center text-sm text-muted-foreground">
-                      {tc("noResults")}
-                    </TableCell>
+                    {isPathogen ? (
+                      <>
+                        <SortableHead sortKey="name" sort={table.sort} onToggle={table.toggleSort}>
+                          {t("colName")}
+                        </SortableHead>
+                        <SortableHead sortKey="group" sort={table.sort} onToggle={table.toggleSort}>
+                          {t("colGroup")}
+                        </SortableHead>
+                      </>
+                    ) : (
+                      <>
+                        <SortableHead
+                          sortKey="namePt"
+                          sort={table.sort}
+                          onToggle={table.toggleSort}
+                        >
+                          {t("colNamePt")}
+                        </SortableHead>
+                        <SortableHead
+                          sortKey="nameEn"
+                          sort={table.sort}
+                          onToggle={table.toggleSort}
+                        >
+                          {t("colNameEn")}
+                        </SortableHead>
+                      </>
+                    )}
+                    <TableHead className="w-32 text-right">
+                      <ReloadButton />
+                    </TableHead>
                   </TableRow>
-                ) : (
-                  table.rows.map((r) => (
-                    <TableRow key={r.id}>
-                      {isPathogen ? (
-                        <>
-                          <TableCell className="font-medium">
-                            <Truncate>{display(r)}</Truncate>
-                          </TableCell>
-                          <TableCell className="text-muted-foreground">
-                            <Truncate>{txt(locale, (r as PathogenRow).group.name)}</Truncate>
-                          </TableCell>
-                        </>
-                      ) : (
-                        <>
-                          <TableCell className="font-medium">
-                            <Truncate>{i18nPt((r as NamedRow).name)}</Truncate>
-                          </TableCell>
-                          <TableCell>
-                            <Truncate>{i18nEn((r as NamedRow).name)}</Truncate>
-                          </TableCell>
-                        </>
-                      )}
-                      <TableCell className="text-right">
-                        {canModify(r) && (
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon" className="size-8">
-                                <MoreHorizontal className="size-4" />
-                                <span className="sr-only">{tc("actions")}</span>
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem onSelect={() => openEdit(r)}>
-                                <Pencil className="size-4" />
-                                {tc("edit")}
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                className="text-destructive focus:text-destructive"
-                                onSelect={() => setConfirmRow(r)}
-                              >
-                                <Trash2 className="size-4" />
-                                {tc("delete")}
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        )}
+                </TableHeader>
+                <TableBody>
+                  {table.rows.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={3} className="text-center text-sm text-muted-foreground">
+                        {tc("noResults")}
                       </TableCell>
                     </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
+                  ) : (
+                    table.rows.map((r) => (
+                      <TableRow key={r.id}>
+                        {isPathogen ? (
+                          <>
+                            <TableCell className="font-medium">
+                              <Truncate>{display(r)}</Truncate>
+                            </TableCell>
+                            <TableCell className="text-muted-foreground">
+                              <Truncate>{txt(locale, (r as PathogenRow).group.name)}</Truncate>
+                            </TableCell>
+                          </>
+                        ) : (
+                          <>
+                            <TableCell className="font-medium">
+                              <Truncate>{i18nPt((r as NamedRow).name)}</Truncate>
+                            </TableCell>
+                            <TableCell>
+                              <Truncate>{i18nEn((r as NamedRow).name)}</Truncate>
+                            </TableCell>
+                          </>
+                        )}
+                        <TableCell className="text-right">
+                          {canModify(r) && (
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon" className="size-8">
+                                  <MoreHorizontal className="size-4" />
+                                  <span className="sr-only">{tc("actions")}</span>
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem onSelect={() => openEdit(r)}>
+                                  <Pencil className="size-4" />
+                                  {tc("edit")}
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  className="text-destructive focus:text-destructive"
+                                  onSelect={() => setConfirmRow(r)}
+                                >
+                                  <Trash2 className="size-4" />
+                                  {tc("delete")}
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </div>
           </div>
         </div>
       )}

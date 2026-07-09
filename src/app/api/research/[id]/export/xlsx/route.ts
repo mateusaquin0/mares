@@ -13,12 +13,13 @@ import { apiError, unauthorized } from "@/lib/api"
 import { NotFoundError } from "@/lib/errors"
 import { ERROR_CODES } from "@/lib/error-codes"
 import { dwcAnimalSelect } from "@/lib/darwin-core"
+import { animalResultsSearchWhere } from "@/lib/animal-query"
 import { buildAnimalsXlsx } from "@/lib/animals-xlsx"
 import { slugify } from "@/lib/slug"
 
 const XLSX_MIME = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 
-export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const user = await getAuthUser()
     if (!user) return unauthorized()
@@ -32,8 +33,15 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
     requireOrgRole(user, research.orgId, "RESEARCHER")
     await assertResearchVisible(user, research.orgId, id)
 
+    // Filtro de busca da grade de resultados (opcional): exporta apenas os animais que casam.
+    const searchWhere = animalResultsSearchWhere(req.nextUrl.searchParams.get("q") ?? "")
+
     const animals = await prisma.animal.findMany({
-      where: { researchId: id, ...(research.isPublic ? { isPublic: true } : {}) },
+      where: {
+        researchId: id,
+        ...(research.isPublic ? { isPublic: true } : {}),
+        ...(searchWhere ?? {}),
+      },
       orderBy: { eventDate: "asc" },
       select: {
         ...dwcAnimalSelect,

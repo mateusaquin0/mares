@@ -28,6 +28,7 @@ export function MultiSelect({
   emptyText,
   triggerClassName,
   searchable = true,
+  summary: summaryFn,
 }: {
   options: MultiSelectOption[]
   value: string[]
@@ -37,6 +38,9 @@ export function MultiSelect({
   emptyText: string
   triggerClassName?: string
   searchable?: boolean
+  // Rótulo do gatilho quando há seleção. Padrão: os rótulos selecionados unidos por vírgula.
+  // Passe, por ex., `(n) => t("summary", { count: n })` para exibir a contagem em vez das labels.
+  summary?: (count: number) => string
 }) {
   const [open, setOpen] = React.useState(false)
 
@@ -44,7 +48,12 @@ export function MultiSelect({
     onChange(value.includes(v) ? value.filter((x) => x !== v) : [...value, v])
 
   const selectedLabels = options.filter((o) => value.includes(o.value)).map((o) => o.label)
-  const summary = selectedLabels.length > 0 ? selectedLabels.join(", ") : placeholder
+  const summary =
+    value.length === 0
+      ? placeholder
+      : summaryFn
+        ? summaryFn(value.length)
+        : selectedLabels.join(", ")
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -60,7 +69,7 @@ export function MultiSelect({
             {summary}
           </span>
           <span className="flex shrink-0 items-center gap-1">
-            {value.length > 1 && (
+            {!summaryFn && value.length > 1 && (
               <span className="rounded bg-accent px-1.5 text-xs font-medium tabular-nums text-accent-foreground">
                 {value.length}
               </span>
