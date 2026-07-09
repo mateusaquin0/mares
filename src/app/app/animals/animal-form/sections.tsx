@@ -84,7 +84,11 @@ export function IdentificationSection({
 
       {/* Espécie com botão "indeterminado" (mesmo padrão dos campos de encalhe): ao marcar,
           o autocomplete é desabilitado e a espécie vai como null. */}
-      <Field htmlFor="species" label={t("species")} error={speciesIndet ? undefined : errors.species}>
+      <Field
+        htmlFor="species"
+        label={t("species")}
+        error={speciesIndet ? undefined : errors.species}
+      >
         <div className="flex items-center gap-2">
           {speciesIndet ? (
             <Input disabled value="" placeholder={t("speciesUndetermined")} className="flex-1" />
@@ -114,9 +118,7 @@ export function IdentificationSection({
             size="icon"
             className="shrink-0"
             onClick={toggleSpeciesIndet}
-            title={
-              speciesIndet ? t("speciesUndeterminedEnable") : t("speciesUndeterminedMark")
-            }
+            title={speciesIndet ? t("speciesUndeterminedEnable") : t("speciesUndeterminedMark")}
             aria-pressed={speciesIndet}
           >
             <Ban className={speciesIndet ? "size-4 text-destructive" : "size-4"} />
