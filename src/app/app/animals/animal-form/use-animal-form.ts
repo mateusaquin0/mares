@@ -73,6 +73,40 @@ export const STRANDING_TOGGLEABLE = [
 ] as const
 export type ToggleableField = (typeof STRANDING_TOGGLEABLE)[number]
 
+// Ordem visual dos campos e o id do elemento no DOM (difere da chave de erro em alguns
+// casos, ex.: strandingLat -> "lat"). Usado para rolar/focar o primeiro campo inválido.
+const FIELD_DOM_ORDER: { key: string; domId: string }[] = [
+  { key: "researchId", domId: "research" },
+  { key: "species", domId: "species" },
+  { key: "controlId", domId: "controlId" },
+  { key: "simbaRecordNumber", domId: "simba" },
+  { key: "eventDate", domId: "eventDate" },
+  { key: "strandingBeach", domId: "beach" },
+  { key: "municipality", domId: "municipality" },
+  { key: "state", domId: "state" },
+  { key: "strandingLat", domId: "lat" },
+  { key: "strandingLon", domId: "lon" },
+  { key: "sex", domId: "sex" },
+  { key: "lifeStage", domId: "lifeStage" },
+  { key: "bodyCondition", domId: "bodyCondition" },
+  { key: "decompositionStage", domId: "decomp" },
+  { key: "deathCondition", domId: "deathCondition" },
+  { key: "necropsyDate", domId: "necropsyDate" },
+  { key: "macroscopicNotes", domId: "notes" },
+]
+
+// Rola até o primeiro campo inválido (na ordem visual) e o foca, após o render aplicar o erro.
+function focusFirstError(fieldErrors: FieldErrors) {
+  const first = FIELD_DOM_ORDER.find((f) => fieldErrors[f.key])
+  if (!first) return
+  requestAnimationFrame(() => {
+    const el = document.getElementById(first.domId)
+    if (!el) return
+    el.scrollIntoView({ behavior: "smooth", block: "center" })
+    ;(el as HTMLElement).focus?.({ preventScroll: true })
+  })
+}
+
 // ISO -> YYYY-MM-DD para <input type="date">.
 const toDateInput = (iso: string | null) => (iso ? iso.slice(0, 10) : "")
 
@@ -114,6 +148,9 @@ export type AnimalFormApi = {
   // Campos de encalhe marcados como "sem informação" (desabilitados).
   disabled: Partial<Record<ToggleableField, boolean>>
   toggleDisabled: (field: ToggleableField) => void
+  // Espécie marcada como indeterminada (null no servidor).
+  speciesIndet: boolean
+  toggleSpeciesIndet: () => void
   saving: boolean
   isDirty: boolean
   fetchingSimba: boolean
@@ -142,8 +179,12 @@ export function useAnimalForm({
   const [form, setForm] = useState<FormState>(emptyForm)
   const [errors, setErrors] = useState<FieldErrors>({})
   const [disabled, setDisabled] = useState<Partial<Record<ToggleableField, boolean>>>({})
+  // Espécie indeterminada (carcaça não identificável): mesmo padrão dos campos de encalhe,
+  // porém com estado próprio, pois limpar espécie também limpa o vínculo WoRMS/família/ordem.
+  const [speciesIndet, setSpeciesIndet] = useState(false)
   const initialForm = useRef<FormState>(emptyForm)
   const initialDisabled = useRef<Partial<Record<ToggleableField, boolean>>>({})
+  const initialSpeciesIndet = useRef(false)
 
   const createM = useCreateAnimal()
   const updateM = useUpdateAnimal(animalId ?? "")
@@ -165,6 +206,8 @@ export function useAnimalForm({
       initialForm.current = init
       setDisabled({})
       initialDisabled.current = {}
+      setSpeciesIndet(false)
+      initialSpeciesIndet.current = false
     }
   }, [open, mode, defaultResearchId])
 
@@ -179,6 +222,10 @@ export function useAnimalForm({
       for (const f of STRANDING_TOGGLEABLE) if (!init[f].trim()) initDisabled[f] = true
       setDisabled(initDisabled)
       initialDisabled.current = initDisabled
+      // Espécie ausente = indeterminada.
+      const indet = init.species.trim() === ""
+      setSpeciesIndet(indet)
+      initialSpeciesIndet.current = indet
     }
   }, [open, editing, animalQ.data])
 
@@ -198,6 +245,13 @@ export function useAnimalForm({
     const willDisable = !disabled[field]
     setDisabled((d) => ({ ...d, [field]: willDisable }))
     if (willDisable) set({ [field]: "" } as Partial<FormState>)
+  }
+
+  // Alterna "espécie indeterminada": ao marcar, limpa a espécie e o vínculo taxonômico.
+  const toggleSpeciesIndet = () => {
+    const willIndet = !speciesIndet
+    setSpeciesIndet(willIndet)
+    if (willIndet) set({ species: "", wormsAphiaId: "", taxonFamily: "", taxonOrder: "" })
   }
 
   // Busca o registro no SIMBA e pré-preenche o formulário (o usuário revisa e salva).
@@ -282,6 +336,8 @@ export function useAnimalForm({
     for (const f of STRANDING_TOGGLEABLE) {
       if (!disabled[f] && form[f].trim() === "") fieldErrors[f] = "required"
     }
+    // Espécie: obrigatória, salvo quando marcada como indeterminada (schema aceita null).
+    if (!speciesIndet && form.species.trim() === "") fieldErrors.species = "required"
 
     // Validação interna com o mesmo schema do servidor, antes do POST.
     const parsed = (isEdit ? updateAnimalSchema : createAnimalSchema).safeParse(payload)
@@ -293,6 +349,8 @@ export function useAnimalForm({
     }
     if (Object.keys(fieldErrors).length > 0 || !parsed.success) {
       setErrors(fieldErrors)
+      toast.error(t("formInvalid"))
+      focusFirstError(fieldErrors)
       return
     }
 
@@ -310,7 +368,8 @@ export function useAnimalForm({
 
   const isDirty =
     JSON.stringify(form) !== JSON.stringify(initialForm.current) ||
-    JSON.stringify(disabled) !== JSON.stringify(initialDisabled.current)
+    JSON.stringify(disabled) !== JSON.stringify(initialDisabled.current) ||
+    speciesIndet !== initialSpeciesIndet.current
 
   return {
     form,
@@ -318,6 +377,8 @@ export function useAnimalForm({
     set,
     disabled,
     toggleDisabled,
+    speciesIndet,
+    toggleSpeciesIndet,
     saving,
     isDirty,
     fetchingSimba,

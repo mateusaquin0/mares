@@ -101,8 +101,12 @@ export async function getDashboardData(
     }),
   ])
 
-  // Espécies mais registradas.
-  const species = speciesGroups.map((s) => ({ name: s.species, count: s._count._all }))
+  // Espécies mais registradas. Espécie nula (indeterminada) recebe rótulo localizado.
+  const undetermined = locale === "en" ? "Undetermined" : "Indeterminado"
+  const species = speciesGroups.map((s) => ({
+    name: s.species ?? undetermined,
+    count: s._count._all,
+  }))
 
   // Positividade por exame (top 6 por volume de resultados).
   const positivesById = new Map(examPositivesRaw.map((e) => [e.examTypeId, e._count._all]))

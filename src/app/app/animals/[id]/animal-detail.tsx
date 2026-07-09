@@ -63,11 +63,13 @@ export function AnimalDetail({ id, isOrgAdmin }: { id: string; isOrgAdmin: boole
   }
 
   const na = t("notInformed")
+  // Espécie nula = indeterminada (carcaça não identificável).
+  const speciesLabel = animal.species ?? t("speciesUndetermined")
   const hasCoords = animal.strandingLat != null && animal.strandingLon != null
   const coords = hasCoords ? `${animal.strandingLat}, ${animal.strandingLon}` : na
   const locationLabel =
     [animal.strandingBeach, animal.municipality, animal.state].filter(Boolean).join(", ") ||
-    animal.species
+    speciesLabel
   const rows: { label: string; value: ReactNode }[] = [
     { label: t("taxonFamily"), value: animal.taxonFamily ?? na },
     { label: t("taxonOrder"), value: animal.taxonOrder ?? na },
@@ -108,7 +110,7 @@ export function AnimalDetail({ id, isOrgAdmin }: { id: string; isOrgAdmin: boole
         </span>
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-3">
-            <h1 className="text-2xl font-semibold italic tracking-tight">{animal.species}</h1>
+            <h1 className="text-2xl font-semibold italic tracking-tight">{speciesLabel}</h1>
             <Badge variant={animal.isPublic ? "public" : "private"}>
               {animal.isPublic ? t("public") : t("hidden")}
             </Badge>

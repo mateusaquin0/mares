@@ -16,7 +16,9 @@ const longitude = z.number().min(-180, "lonRange").max(180, "lonRange").nullable
 const requiredText = (max: number) => z.string().trim().min(1, "required").max(max)
 
 export const animalBaseSchema = z.object({
-  species: requiredText(LIMITS.name),
+  // Opcional no servidor: pode ser marcada como "indeterminado" no formulário (null). A
+  // obrigatoriedade padrão é aplicada no cliente, permitindo pular via o toggle.
+  species: optionalText(LIMITS.name),
   // Preenchidos via WoRMS ao selecionar a espécie (opcionais; limpáveis).
   wormsAphiaId: z.number().int().nullable().optional(),
   taxonFamily: optionalText(LIMITS.shortText),

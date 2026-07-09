@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -52,7 +53,7 @@ export function AnimalFormDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         dirty={f.isDirty}
-        className="max-h-[90vh] max-w-2xl overflow-y-auto"
+        className="max-w-2xl"
         // Na edição, a "pesquisa" é um input desabilitado, então o foco automático
         // do Radix cairia na espécie. Evita focar qualquer campo ao abrir.
         onOpenAutoFocus={(e) => e.preventDefault()}
@@ -61,25 +62,29 @@ export function AnimalFormDialog({
           <DialogTitle>{mode === "edit" ? t("editTitle") : t("createTitle")}</DialogTitle>
           <DialogDescription>{t("createDesc")}</DialogDescription>
         </DialogHeader>
-        <form onSubmit={f.submit} className="space-y-4">
-          <IdentificationSection
-            form={f.form}
-            errors={f.errors}
-            set={f.set}
-            mode={mode}
-            researches={researches}
-            fetchSimba={f.fetchSimba}
-            fetchingSimba={f.fetchingSimba}
-          />
-          <StrandingSection
-            form={f.form}
-            errors={f.errors}
-            set={f.set}
-            disabled={f.disabled}
-            toggleDisabled={f.toggleDisabled}
-          />
-          <ConditionSection form={f.form} errors={f.errors} set={f.set} />
-          <NotesSection form={f.form} errors={f.errors} set={f.set} isOrgAdmin={isOrgAdmin} />
+        <form onSubmit={f.submit} className="flex min-h-0 flex-1 flex-col gap-4">
+          <DialogBody className="space-y-4">
+            <IdentificationSection
+              form={f.form}
+              errors={f.errors}
+              set={f.set}
+              mode={mode}
+              researches={researches}
+              fetchSimba={f.fetchSimba}
+              fetchingSimba={f.fetchingSimba}
+              speciesIndet={f.speciesIndet}
+              toggleSpeciesIndet={f.toggleSpeciesIndet}
+            />
+            <StrandingSection
+              form={f.form}
+              errors={f.errors}
+              set={f.set}
+              disabled={f.disabled}
+              toggleDisabled={f.toggleDisabled}
+            />
+            <ConditionSection form={f.form} errors={f.errors} set={f.set} />
+            <NotesSection form={f.form} errors={f.errors} set={f.set} isOrgAdmin={isOrgAdmin} />
+          </DialogBody>
 
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>

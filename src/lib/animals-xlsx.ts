@@ -31,7 +31,7 @@ const asI18n = (v: unknown) => v as I18nText | string | null
 export type XlsxAnimal = {
   controlId: string | null
   simbaRecordNumber: string | null
-  species: string
+  species: string | null
   taxonFamily: string | null
   taxonOrder: string | null
   sex: string | null
@@ -91,6 +91,8 @@ const LIFE_STAGE: Record<LifeStageValue, { pt: string; en: string }> = {
   ADULT: { pt: "Adulto", en: "Adult" },
   UNDETERMINED: { pt: "Indeterminado", en: "Undetermined" },
 }
+// Rótulo de espécie indeterminada (null) na planilha.
+const UNDETERMINED_SPECIES: Record<Loc, string> = { pt: "Indeterminado", en: "Undetermined" }
 
 // Colunas da planilha: chave interna + cabeçalho por idioma + largura.
 const COLUMNS: { key: string; pt: string; en: string; width: number }[] = [
@@ -145,7 +147,7 @@ function rowFor(a: XlsxAnimal, loc: Loc): Record<string, string | number> {
   return {
     controlId: a.controlId ?? "",
     simba: a.simbaRecordNumber ?? "",
-    species: a.species,
+    species: a.species ?? UNDETERMINED_SPECIES[loc],
     family: a.taxonFamily ?? "",
     order: a.taxonOrder ?? "",
     sex,
@@ -189,7 +191,7 @@ export async function buildAnimalsXlsx(animals: XlsxAnimal[], locale: string): P
       for (const an of s.analyses) {
         wsA.addRow({
           animal: animalLabel,
-          species: a.species,
+          species: a.species ?? UNDETERMINED_SPECIES[loc],
           sample: s.identification,
           research: s.research.name,
           organ: txt(loc, asI18n(s.organ.name)),

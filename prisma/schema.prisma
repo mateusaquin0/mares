@@ -259,7 +259,7 @@ model Animal {
   id                 String        @id @default(uuid())
   controlId          String? // ID de controle interno, único por organização (ver @@unique abaixo)
   simbaRecordNumber  String? // Identificador SIMBA, único por organização (ver @@unique abaixo)
-  species            String
+  species            String? // NULL = espécie indeterminada (carcaça não identificável)
   // Campos preenchidos via WoRMS após validação taxonômica
   wormsAphiaId       Int?
   taxonFamily        String?
