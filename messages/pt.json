@@ -156,7 +156,8 @@
     "globalAdminOrg": "Administração da aplicação",
     "collapse": "Recolher menu",
     "expand": "Expandir menu",
-    "adminFeedback": "Sugestões e bugs"
+    "adminFeedback": "Sugestões e bugs",
+    "tutorial": "Como usar"
   },
   "dashboard": {
     "title": "Dashboard",
@@ -763,6 +764,106 @@
     "deleteError": "Não foi possível excluir",
     "deleteTitle": "Excluir arquivo",
     "deleteDesc": "Excluir este arquivo? Esta ação é irreversível."
+  },
+  "tutorial": {
+    "title": "Como usar o MARES",
+    "subtitle": "O fluxo padrão da plataforma, do acesso à exportação. Abra cada tópico para ver os passos.",
+    "sections": {
+      "overview": {
+        "title": "Visão geral e papéis",
+        "body": "O MARES organiza o registro de fauna marinha encalhada por grupo de pesquisa. Abaixo, o fluxo padrão de uso.",
+        "points": [
+          "Admin da aplicação: aprova solicitações e supervisiona grupos e usuários; não acessa dados científicos.",
+          "Admin do grupo de pesquisa: gerencia membros, pesquisas, protocolos e o glossário.",
+          "Pesquisador: cadastra e edita animais, amostras e análises — apenas nas pesquisas às quais está vinculado.",
+          "Público: sem login, vê apenas os dados marcados como públicos."
+        ]
+      },
+      "access": {
+        "title": "1. Acesso à plataforma",
+        "body": "Para começar, é preciso ter uma conta vinculada a um grupo de pesquisa.",
+        "points": [
+          "Solicite acesso pela tela pública (cria um novo grupo) ou peça a um admin do grupo para convidá-lo por e-mail.",
+          "Você recebe um e-mail com um link para definir a senha. O link expira no primeiro uso; se necessário, o admin reenvia o convite.",
+          "Depois de entrar, ajuste seu nome e senha em 'Meu perfil'."
+        ]
+      },
+      "group": {
+        "title": "2. Grupo de pesquisa e membros",
+        "body": "O grupo de pesquisa é o ambiente da sua equipe. A gestão de membros é do admin do grupo.",
+        "points": [
+          "Em 'Membros', o admin adiciona pesquisadores por e-mail (a lupa reaproveita contas já existentes).",
+          "Papéis: admin do grupo (gerencia tudo) ou pesquisador. O último admin não pode se rebaixar.",
+          "Pesquisadores acessam 'Membros' e 'Glossário' em modo leitura."
+        ]
+      },
+      "glossary": {
+        "title": "3. Glossário (órgãos, patógenos, exames)",
+        "body": "O glossário reúne os termos padronizados usados nos protocolos e nas análises.",
+        "points": [
+          "Órgãos, patógenos e tipos de exame são globais e compartilhados entre os grupos.",
+          "Qualquer admin de grupo pode adicionar termos; editar/remover é restrito ao admin da aplicação.",
+          "Patógenos usam nome científico; exames podem ter uma medida quantitativa (ex.: Ct)."
+        ]
+      },
+      "research": {
+        "title": "4. Pesquisa e protocolo",
+        "body": "Cada estudo é uma 'pesquisa', que define o protocolo e quem enxerga seus dados.",
+        "points": [
+          "Crie a pesquisa em 'Pesquisas' e monte o protocolo: combinações de órgão × patógeno × exame.",
+          "Vincule pesquisadores à pesquisa — só quem está vinculado enxerga seus animais, amostras e análises.",
+          "Defina a visibilidade (pública ou privada) da pesquisa."
+        ]
+      },
+      "animal": {
+        "title": "5. Cadastrar o animal (indivíduo)",
+        "body": "O animal representa o indivíduo físico encalhado.",
+        "points": [
+          "Cadastre em 'Animais', escolhendo a pesquisa dona. É possível importar dados do SIMBA pelo número de registro.",
+          "Campos de encalhe (data, local, coordenadas) podem ser marcados como 'sem informação' quando não disponíveis.",
+          "A visibilidade pública efetiva do animal exige que ele E a pesquisa sejam públicos.",
+          "Um mesmo indivíduo pode ser compartilhado por mais de uma pesquisa do grupo."
+        ]
+      },
+      "samples": {
+        "title": "6. Amostras",
+        "body": "As amostras são coletadas por órgão do indivíduo, na aba 'Amostras' do animal.",
+        "points": [
+          "Cadastre cada amostra com órgão, tipo, status e local de armazenamento.",
+          "O seletor de órgão lista apenas os órgãos do protocolo; use 'Mostrar todos' para coleta oportunista/biobanco."
+        ]
+      },
+      "analyses": {
+        "title": "7. Análises e resultados",
+        "body": "As análises registram os resultados laboratoriais por amostra.",
+        "points": [
+          "A grade combina órgão × patógeno × exame do protocolo; marque cada resultado (positivo, negativo ou inconclusivo) e a medida, quando houver.",
+          "Resultados positivos aparecem como 'patógenos positivos' na listagem e nos filtros."
+        ]
+      },
+      "history": {
+        "title": "8. Histórico do animal",
+        "body": "Cada indivíduo tem uma linha do tempo de alterações.",
+        "points": [
+          "A aba 'Histórico' reúne edições do animal, criação/edição de amostras e mudanças de análises, com autor e data."
+        ]
+      },
+      "map": {
+        "title": "9. Mapa e dados públicos",
+        "body": "Os encalhes aparecem em um mapa navegável.",
+        "points": [
+          "O mapa interno mostra os animais que você enxerga; o mapa público (sem login) mostra apenas os efetivamente públicos.",
+          "Filtre a listagem de animais por espécie, UF, patógeno, pesquisa, período e mais."
+        ]
+      },
+      "export": {
+        "title": "10. Exportação",
+        "body": "Exporte os dados para análise externa.",
+        "points": [
+          "Selecione animais (ou use 'selecionar todos' do filtro atual) e exporte em Excel ou Darwin Core."
+        ]
+      }
+    }
   },
   "pagination": {
     "rowsPerPage": "Por página",

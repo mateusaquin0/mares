@@ -156,7 +156,8 @@
     "globalAdminOrg": "Application administration",
     "collapse": "Collapse menu",
     "expand": "Expand menu",
-    "adminFeedback": "Suggestions & bugs"
+    "adminFeedback": "Suggestions & bugs",
+    "tutorial": "How to use"
   },
   "dashboard": {
     "title": "Dashboard",
@@ -763,6 +764,106 @@
     "deleteError": "Could not delete",
     "deleteTitle": "Delete file",
     "deleteDesc": "Delete this file? This action is irreversible."
+  },
+  "tutorial": {
+    "title": "How to use MARES",
+    "subtitle": "The platform's standard flow, from access to export. Open each topic to see the steps.",
+    "sections": {
+      "overview": {
+        "title": "Overview and roles",
+        "body": "MARES organizes the recording of stranded marine fauna by research group. Below is the standard usage flow.",
+        "points": [
+          "Application admin: approves requests and oversees groups and users; does not access scientific data.",
+          "Research group admin: manages members, research, protocols and the glossary.",
+          "Researcher: creates and edits animals, samples and analyses — only in the research they are assigned to.",
+          "Public: without login, sees only data marked as public."
+        ]
+      },
+      "access": {
+        "title": "1. Platform access",
+        "body": "To get started, you need an account linked to a research group.",
+        "points": [
+          "Request access on the public screen (creates a new group) or ask a group admin to invite you by email.",
+          "You receive an email with a link to set your password. The link expires on first use; if needed, the admin resends the invite.",
+          "After signing in, adjust your name and password in 'My profile'."
+        ]
+      },
+      "group": {
+        "title": "2. Research group and members",
+        "body": "The research group is your team's environment. Member management is done by the group admin.",
+        "points": [
+          "In 'Members', the admin adds researchers by email (the lookup reuses existing accounts).",
+          "Roles: group admin (manages everything) or researcher. The last admin cannot step down.",
+          "Researchers access 'Members' and 'Glossary' in read-only mode."
+        ]
+      },
+      "glossary": {
+        "title": "3. Glossary (organs, pathogens, exams)",
+        "body": "The glossary holds the standardized terms used in protocols and analyses.",
+        "points": [
+          "Organs, pathogens and exam types are global and shared across groups.",
+          "Any group admin can add terms; editing/removing is restricted to the application admin.",
+          "Pathogens use scientific names; exams may have a quantitative measure (e.g. Ct)."
+        ]
+      },
+      "research": {
+        "title": "4. Research and protocol",
+        "body": "Each study is a 'research', which defines the protocol and who can see its data.",
+        "points": [
+          "Create the research in 'Research' and build the protocol: organ × pathogen × exam combinations.",
+          "Assign researchers to the research — only assigned members see its animals, samples and analyses.",
+          "Set the research visibility (public or private)."
+        ]
+      },
+      "animal": {
+        "title": "5. Register the animal (individual)",
+        "body": "The animal represents the physical stranded individual.",
+        "points": [
+          "Register it in 'Animals', choosing the owning research. You can import SIMBA data by record number.",
+          "Stranding fields (date, location, coordinates) can be marked as 'no information' when unavailable.",
+          "The animal's effective public visibility requires both it AND the research to be public.",
+          "The same individual can be shared by more than one research in the group."
+        ]
+      },
+      "samples": {
+        "title": "6. Samples",
+        "body": "Samples are collected per organ of the individual, in the animal's 'Samples' tab.",
+        "points": [
+          "Register each sample with organ, type, status and storage location.",
+          "The organ selector lists only the protocol's organs; use 'Show all' for opportunistic/biobank collection."
+        ]
+      },
+      "analyses": {
+        "title": "7. Analyses and results",
+        "body": "Analyses record the lab results per sample.",
+        "points": [
+          "The grid combines the protocol's organ × pathogen × exam; mark each result (positive, negative or inconclusive) and the measure, when applicable.",
+          "Positive results appear as 'positive pathogens' in the listing and filters."
+        ]
+      },
+      "history": {
+        "title": "8. Animal history",
+        "body": "Each individual has a timeline of changes.",
+        "points": [
+          "The 'History' tab gathers animal edits, sample creation/edits and analysis changes, with author and date."
+        ]
+      },
+      "map": {
+        "title": "9. Map and public data",
+        "body": "Strandings appear on a browsable map.",
+        "points": [
+          "The internal map shows the animals you can see; the public map (no login) shows only the effectively public ones.",
+          "Filter the animals list by species, state, pathogen, research, period and more."
+        ]
+      },
+      "export": {
+        "title": "10. Export",
+        "body": "Export the data for external analysis.",
+        "points": [
+          "Select animals (or use 'select all' of the current filter) and export to Excel or Darwin Core."
+        ]
+      }
+    }
   },
   "pagination": {
     "rowsPerPage": "Per page",
