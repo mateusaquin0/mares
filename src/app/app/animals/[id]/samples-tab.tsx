@@ -487,31 +487,50 @@ export function SamplesTab({
                 )}
               </div>
             )}
+            {/* Órgão em linha própria: rótulo à esquerda e a escotilha do filtro à direita. */}
+            <div className="space-y-1">
+              <div className="flex items-center justify-between gap-2">
+                <Label htmlFor="organ">{t("organ")}</Label>
+                {hasProtocol && (
+                  <button
+                    type="button"
+                    className="text-xs font-medium text-accent-foreground underline underline-offset-2"
+                    onClick={() => setShowAllOrgans((v) => !v)}
+                  >
+                    {filteredByProtocol ? t("organShowAll") : t("organShowProtocol")}
+                  </button>
+                )}
+              </div>
+              <Combobox
+                options={organChoices.map((o) => ({ value: o.id, label: txt(locale, o.name) }))}
+                value={form.organId}
+                onChange={(v) => set({ organId: v })}
+                placeholder={t("organPlaceholder")}
+                searchPlaceholder={tc("search")}
+                emptyText={filteredByProtocol ? t("organProtocolEmpty") : tc("noResults")}
+              />
+              {hasProtocol && (
+                <p className="text-xs text-muted-foreground">
+                  {filteredByProtocol ? t("organProtocolHint") : t("organAllHint")}
+                </p>
+              )}
+              {errors.organId && <p className="text-xs text-destructive">{tval("required")}</p>}
+            </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1">
-                <Label htmlFor="organ">{t("organ")}</Label>
-                <Combobox
-                  options={organChoices.map((o) => ({ value: o.id, label: txt(locale, o.name) }))}
-                  value={form.organId}
-                  onChange={(v) => set({ organId: v })}
-                  placeholder={t("organPlaceholder")}
-                  searchPlaceholder={tc("search")}
-                  emptyText={filteredByProtocol ? t("organProtocolEmpty") : tc("noResults")}
+                <Label htmlFor="sampleType">{t("sampleType")}</Label>
+                <Input
+                  id="sampleType"
+                  name="sampleType"
+                  autoComplete="on"
+                  placeholder={t("sampleTypePlaceholder")}
+                  maxLength={LIMITS.name}
+                  value={form.sampleType}
+                  onChange={(e) => set({ sampleType: e.target.value })}
                 />
-                {/* Escotilha: quando há protocolo, permite alternar entre filtrado e todos. */}
-                {hasProtocol && (
-                  <p className="text-xs text-muted-foreground">
-                    {filteredByProtocol ? t("organProtocolHint") : t("organAllHint")}{" "}
-                    <button
-                      type="button"
-                      className="font-medium text-accent-foreground underline underline-offset-2"
-                      onClick={() => setShowAllOrgans((v) => !v)}
-                    >
-                      {filteredByProtocol ? t("organShowAll") : t("organShowProtocol")}
-                    </button>
-                  </p>
+                {errors.sampleType && (
+                  <p className="text-xs text-destructive">{tval("required")}</p>
                 )}
-                {errors.organId && <p className="text-xs text-destructive">{tval("required")}</p>}
               </div>
               <div className="space-y-1">
                 <Label htmlFor="status">{t("status")}</Label>
@@ -531,19 +550,6 @@ export function SamplesTab({
                   </SelectContent>
                 </Select>
               </div>
-            </div>
-            <div className="space-y-1">
-              <Label htmlFor="sampleType">{t("sampleType")}</Label>
-              <Input
-                id="sampleType"
-                name="sampleType"
-                autoComplete="on"
-                placeholder={t("sampleTypePlaceholder")}
-                maxLength={LIMITS.name}
-                value={form.sampleType}
-                onChange={(e) => set({ sampleType: e.target.value })}
-              />
-              {errors.sampleType && <p className="text-xs text-destructive">{tval("required")}</p>}
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1">
