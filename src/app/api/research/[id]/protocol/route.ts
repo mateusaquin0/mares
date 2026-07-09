@@ -2,13 +2,12 @@
 // Ver: qualquer membro. Adicionar: admin da org.
 
 import { NextRequest, NextResponse } from "next/server"
-import { Prisma } from "@prisma/client"
 import { prisma } from "@/lib/prisma"
 import { getAuthUser, requireOrgRole } from "@/lib/auth"
 import { assertResearchVisible } from "@/lib/research-access"
 import { apiError, unauthorized } from "@/lib/api"
 import { protocolEntriesSchema } from "@/schemas/research.schema"
-import { NotFoundError, ConflictError } from "@/lib/errors"
+import { NotFoundError } from "@/lib/errors"
 import { ERROR_CODES } from "@/lib/error-codes"
 
 async function researchOrg(id: string) {
@@ -53,19 +52,14 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     const body = await req.json().catch(() => null)
     const { entries } = protocolEntriesSchema.parse(body)
 
-    try {
-      await prisma.researchProtocol.createMany({
-        data: entries.map((e) => ({ ...e, researchId: id })),
-      })
-    } catch (e) {
-      // Viola a unique (researchId, organId, pathogenId, examTypeId).
-      if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
-        throw new ConflictError("Combinação já existe no protocolo", ERROR_CODES.protocolDuplicate)
-      }
-      throw e
-    }
+    // Seleção múltipla de patógenos pode reenviar combinações já existentes: ignoramos as
+    // duplicatas (unique researchId, organId, pathogenId, examTypeId) em vez de falhar o lote.
+    const { count } = await prisma.researchProtocol.createMany({
+      data: entries.map((e) => ({ ...e, researchId: id })),
+      skipDuplicates: true,
+    })
 
-    return NextResponse.json({ added: entries.length }, { status: 201 })
+    return NextResponse.json({ added: count }, { status: 201 })
   } catch (err) {
     return apiError(err)
   }

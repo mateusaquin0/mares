@@ -10,6 +10,7 @@ export const researchKeys = {
   list: () => ["research"] as const,
   detail: (id: string) => ["research", id] as const,
   members: (id: string) => ["research", id, "members"] as const,
+  results: (id: string) => ["research", id, "results"] as const,
 }
 
 export function useResearchList() {
@@ -23,6 +24,14 @@ export function useResearch(id: string, enabled = true) {
   return useQuery({
     queryKey: researchKeys.detail(id),
     queryFn: () => researchService.get(id),
+    enabled: enabled && !!id,
+  })
+}
+
+export function useResearchResults(id: string, enabled = true) {
+  return useQuery({
+    queryKey: researchKeys.results(id),
+    queryFn: () => researchService.results(id),
     enabled: enabled && !!id,
   })
 }
