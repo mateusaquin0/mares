@@ -1,5 +1,9 @@
 import { describe, it, expect } from "vitest"
-import { createResearchSchema, protocolEntriesSchema } from "@/schemas/research.schema"
+import {
+  createResearchSchema,
+  protocolEntriesSchema,
+  patchProtocolSchema,
+} from "@/schemas/research.schema"
 import { createSampleSchema } from "@/schemas/sample.schema"
 import { upsertAnalysisSchema } from "@/schemas/analysis.schema"
 
@@ -35,6 +39,15 @@ describe("protocolEntriesSchema", () => {
         entries: [{ organId: "o", pathogenId: "p", examTypeId: "e" }],
       }).success,
     ).toBe(true)
+  })
+})
+
+describe("patchProtocolSchema", () => {
+  it("aceita apenas os estados do enum", () => {
+    expect(patchProtocolSchema.safeParse({ status: "ACTIVE" }).success).toBe(true)
+    expect(patchProtocolSchema.safeParse({ status: "INACTIVE" }).success).toBe(true)
+    expect(patchProtocolSchema.safeParse({ status: "SUSPENSO" }).success).toBe(false)
+    expect(patchProtocolSchema.safeParse({}).success).toBe(false)
   })
 })
 
