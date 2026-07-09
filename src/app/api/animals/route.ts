@@ -97,7 +97,6 @@ export async function POST(req: NextRequest) {
       const animal = await prisma.animal.create({
         data: {
           ...animalData(data),
-          species: data.species.trim(),
           isPublic,
           // Origem derivada do vínculo com o SIMBA (ver docs/MIGRACAO.md).
           source: data.simbaRecordNumber ? "simba" : "manual",

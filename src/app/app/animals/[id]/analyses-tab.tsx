@@ -10,6 +10,8 @@ import { useErrorMessage } from "@/lib/use-error-message"
 import { useAnimalGrid } from "@/hooks/use-animals"
 import { useUpsertAnalysis } from "@/hooks/use-analyses"
 import type { AnalysisCell as Cell, ProtocolEntry, ResultValue, SampleLite } from "@/types/analysis"
+import { MeasureInput, NotesInput, ResultSelect } from "@/components/analysis-cells"
+import { Truncate } from "@/components/ui/truncate"
 import {
   Accordion,
   AccordionContent,
@@ -291,47 +293,16 @@ export function AnalysesTab({ animalId }: { animalId: string }) {
                               return (
                                 <TableRow key={k}>
                                   <TableCell className="font-medium">
-                                    {pathogenName(locale, entry.pathogen)}
+                                    <Truncate>{pathogenName(locale, entry.pathogen)}</Truncate>
                                   </TableCell>
                                   <TableCell className="text-muted-foreground">
-                                    {txt(locale, entry.examType.name)}
+                                    <Truncate>{txt(locale, entry.examType.name)}</Truncate>
                                   </TableCell>
                                   <TableCell>
-                                    <Select
-                                      value={cell.result ?? UNTESTED}
-                                      onValueChange={(v) =>
-                                        save(sample, entry, {
-                                          result: v === UNTESTED ? null : (v as ResultValue),
-                                        })
-                                      }
-                                    >
-                                      <SelectTrigger className="h-8">
-                                        <SelectValue />
-                                      </SelectTrigger>
-                                      <SelectContent>
-                                        <SelectItem value={UNTESTED}>
-                                          {t("resultUntested")}
-                                        </SelectItem>
-                                        <SelectItem value="POSITIVO">
-                                          <span className="flex items-center gap-2">
-                                            <span className="size-2 rounded-full bg-[hsl(123_41%_45%)]" />
-                                            {t("resultPositive")}
-                                          </span>
-                                        </SelectItem>
-                                        <SelectItem value="NEGATIVO">
-                                          <span className="flex items-center gap-2">
-                                            <span className="size-2 rounded-full bg-muted-foreground/40" />
-                                            {t("resultNegative")}
-                                          </span>
-                                        </SelectItem>
-                                        <SelectItem value="INCONCLUSIVO">
-                                          <span className="flex items-center gap-2">
-                                            <span className="size-2 rounded-full bg-[hsl(35_80%_50%)]" />
-                                            {t("resultInconclusive")}
-                                          </span>
-                                        </SelectItem>
-                                      </SelectContent>
-                                    </Select>
+                                    <ResultSelect
+                                      value={cell.result}
+                                      onChange={(result) => save(sample, entry, { result })}
+                                    />
                                   </TableCell>
                                   <TableCell>
                                     {entry.examType.measureLabel ? (
@@ -372,66 +343,5 @@ export function AnalysesTab({ animalId }: { animalId: string }) {
         </div>
       )}
     </div>
-  )
-}
-
-// Inputs não controlados que só disparam save no blur (evita PUT a cada tecla).
-// O rótulo da medida (Ct, Título, OD...) vem do próprio exame como placeholder; a unidade
-// opcional é exibida como sufixo.
-function MeasureInput({
-  value,
-  placeholder,
-  unit,
-  onCommit,
-}: {
-  value: number | null
-  placeholder: string
-  unit: string | null
-  onCommit: (n: number | null) => void
-}) {
-  const input = (
-    <Input
-      key={value ?? ""}
-      defaultValue={value ?? ""}
-      type="number"
-      step="any"
-      placeholder={placeholder}
-      title={placeholder}
-      className="h-8"
-      onBlur={(e) => {
-        const raw = e.target.value.trim()
-        onCommit(raw === "" ? null : Number(raw))
-      }}
-    />
-  )
-  if (!unit) return input
-  return (
-    <div className="flex items-center gap-1.5">
-      {input}
-      <span className="shrink-0 text-xs text-muted-foreground">{unit}</span>
-    </div>
-  )
-}
-
-function NotesInput({
-  value,
-  placeholder,
-  onCommit,
-}: {
-  value: string | null
-  placeholder: string
-  onCommit: (s: string | null) => void
-}) {
-  return (
-    <Input
-      key={value ?? ""}
-      defaultValue={value ?? ""}
-      placeholder={placeholder}
-      className="h-8"
-      onBlur={(e) => {
-        const raw = e.target.value.trim()
-        onCommit(raw === "" ? null : raw)
-      }}
-    />
   )
 }

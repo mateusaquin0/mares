@@ -37,7 +37,7 @@ export const dwcAnimalSelect = {
 export type DwcAnimal = {
   id: string
   controlId: string | null
-  species: string
+  species: string | null
   taxonFamily: string | null
   taxonOrder: string | null
   wormsAphiaId: number | null
@@ -86,8 +86,8 @@ function recordXml(a: DwcAnimal): string {
     tag("dwc:occurrenceID", a.controlId ?? a.id),
     tag("dwc:basisOfRecord", "PreservedSpecimen"),
     tag("dcterms:type", "PhysicalObject"),
-    tag("dwc:scientificName", a.species),
-    tag("dwc:taxonRank", "species"),
+    tag("dwc:scientificName", a.species ?? ""),
+    tag("dwc:taxonRank", a.species ? "species" : ""),
     tag("dwc:family", a.taxonFamily ?? ""),
     tag("dwc:order", a.taxonOrder ?? ""),
     tag(

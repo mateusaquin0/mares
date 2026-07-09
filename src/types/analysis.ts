@@ -44,3 +44,26 @@ export type AnalysisGrid = {
   sections: AnalysisSection[]
   analyses: (AnalysisCell & { sampleId: string; pathogenId: string; examTypeId: string })[]
 }
+
+// Animal na grade de resultados por pesquisa (/api/research/:id/results).
+export type ResultsAnimal = {
+  id: string
+  controlId: string | null
+  simbaRecordNumber: string | null
+  species: string
+  sex: string | null
+  lifeStage: string | null
+  municipality: string | null
+  state: string | null
+  strandingBeach: string | null
+  eventDate: string | null
+  samples: SampleLite[]
+}
+
+// Grade de resultados de UMA pesquisa: um único protocolo aplicado a todos os seus animais.
+export type ResearchResults = {
+  research: { id: string; name: string }
+  protocol: ProtocolEntry[]
+  animals: ResultsAnimal[]
+  analyses: (AnalysisCell & { sampleId: string; pathogenId: string; examTypeId: string })[]
+}

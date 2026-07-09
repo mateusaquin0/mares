@@ -23,11 +23,13 @@ export default async function RootLayout({
   const messages = await getMessages()
 
   return (
-    <html lang={locale} className={inter.variable}>
+    <html lang={locale} className={inter.variable} suppressHydrationWarning>
       <body className={`${inter.className} antialiased`}>
         <NextIntlClientProvider messages={messages}>
-          <Providers>{children}</Providers>
-          <Toaster position="top-right" richColors />
+          <Providers>
+            {children}
+            <Toaster position="top-right" richColors />
+          </Providers>
         </NextIntlClientProvider>
       </body>
     </html>

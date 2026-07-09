@@ -46,9 +46,9 @@ export async function GET() {
       }),
     ])
 
-    const species = [...new Set(speciesRows.map((r) => r.species).filter(Boolean))].sort((a, b) =>
-      a.localeCompare(b, locale),
-    )
+    const species = [
+      ...new Set(speciesRows.map((r) => r.species).filter((s): s is string => !!s)),
+    ].sort((a, b) => a.localeCompare(b, locale))
     const states = [...new Set(stateRows.map((r) => r.state).filter((s): s is string => !!s))].sort(
       (a, b) => a.localeCompare(b, locale),
     )

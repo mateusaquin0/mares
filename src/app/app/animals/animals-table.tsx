@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
-import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { useLocale, useTranslations } from "next-intl"
 import { toast } from "sonner"
 import { Download, Globe, Lock, MoreHorizontal, X } from "lucide-react"
@@ -11,6 +11,7 @@ import { formatDateOnly } from "@/lib/date"
 import { SEX_OPTIONS, LIFE_STAGE_OPTIONS } from "@/lib/animal-enums"
 import { downloadAnimalsExport, type ExportFormat } from "@/lib/export-download"
 import { Badge } from "@/components/ui/badge"
+import { Truncate } from "@/components/ui/truncate"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
@@ -69,6 +70,7 @@ export function AnimalsTable({
   const t = useTranslations("animals")
   const tc = useTranslations("common")
   const locale = useLocale()
+  const router = useRouter()
 
   const controlOf = (a: AnimalListItem) => a.controlId ?? a.simbaRecordNumber ?? ""
   const locationOf = (a: AnimalListItem) => [a.municipality, a.state].filter(Boolean).join(", ")
@@ -474,8 +476,13 @@ export function AnimalsTable({
               </TableRow>
             ) : (
               items.map((a) => (
-                <TableRow key={a.id} data-state={selected.has(a.id) ? "selected" : undefined}>
-                  <TableCell>
+                <TableRow
+                  key={a.id}
+                  data-state={selected.has(a.id) ? "selected" : undefined}
+                  onClick={() => router.push(`/app/animals/${a.id}`)}
+                  className="cursor-pointer transition-colors hover:bg-muted/50"
+                >
+                  <TableCell onClick={(e) => e.stopPropagation()}>
                     <Checkbox
                       aria-label={t("selectRow")}
                       checked={selected.has(a.id)}
@@ -483,17 +490,25 @@ export function AnimalsTable({
                     />
                   </TableCell>
                   <TableCell className="font-medium">
-                    <Link href={`/app/animals/${a.id}`} className="hover:underline">
+                    <Truncate>
                       {controlOf(a) || (
                         <span className="text-muted-foreground">{t("notInformed")}</span>
                       )}
-                    </Link>
+                    </Truncate>
                   </TableCell>
                   <TableCell>
-                    <span className="italic">{a.species}</span>
+                    <Truncate>
+                      {a.species ? (
+                        <span className="italic">{a.species}</span>
+                      ) : (
+                        <span className="text-muted-foreground">{t("speciesUndetermined")}</span>
+                      )}
+                    </Truncate>
                   </TableCell>
                   <TableCell className="text-muted-foreground">{sexLabel(a.sex)}</TableCell>
-                  <TableCell className="text-muted-foreground">{locationOf(a)}</TableCell>
+                  <TableCell className="text-muted-foreground">
+                    <Truncate>{locationOf(a)}</Truncate>
+                  </TableCell>
                   <TableCell className="text-muted-foreground">{fmtDate(a.eventDate)}</TableCell>
                   <TableCell>
                     {isEffectivePublic(a) ? (
@@ -509,7 +524,7 @@ export function AnimalsTable({
                     )}
                   </TableCell>
                   <TableCell className="text-right">{a._count.samples}</TableCell>
-                  <TableCell className="text-right">
+                  <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="ghost" size="icon" className="size-8">
@@ -518,9 +533,6 @@ export function AnimalsTable({
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem asChild>
-                          <Link href={`/app/animals/${a.id}`}>{t("view")}</Link>
-                        </DropdownMenuItem>
                         <DropdownMenuItem onSelect={() => onEdit(a)}>{tc("edit")}</DropdownMenuItem>
                         {isOrgAdmin && (
                           <DropdownMenuItem

@@ -52,11 +52,15 @@ export function IdentificationSection({
   researches,
   fetchSimba,
   fetchingSimba,
+  speciesIndet,
+  toggleSpeciesIndet,
 }: SectionProps & {
   mode: "create" | "edit"
   researches: ResearchOption[]
   fetchSimba: () => void
   fetchingSimba: boolean
+  speciesIndet: boolean
+  toggleSpeciesIndet: () => void
 }) {
   const t = useTranslations("animals")
 
@@ -78,24 +82,49 @@ export function IdentificationSection({
         />
       )}
 
-      <Field htmlFor="species" label={t("species")} error={errors.species}>
-        <SpeciesAutocomplete
-          id="species"
-          value={form.species}
-          invalid={!!errors.species}
-          onChange={(species, m) =>
-            m
-              ? set({
-                  species: m.scientificName,
-                  wormsAphiaId: String(m.aphiaId),
-                  taxonFamily: m.family ?? "",
-                  taxonOrder: m.order ?? "",
-                })
-              : // Edição manual desvincula do registro WoRMS.
-                set({ species, wormsAphiaId: "" })
-          }
-        />
-        {form.wormsAphiaId && (
+      {/* Espécie com botão "indeterminado" (mesmo padrão dos campos de encalhe): ao marcar,
+          o autocomplete é desabilitado e a espécie vai como null. */}
+      <Field
+        htmlFor="species"
+        label={t("species")}
+        error={speciesIndet ? undefined : errors.species}
+      >
+        <div className="flex items-center gap-2">
+          {speciesIndet ? (
+            <Input disabled value="" placeholder={t("speciesUndetermined")} className="flex-1" />
+          ) : (
+            <div className="flex-1">
+              <SpeciesAutocomplete
+                id="species"
+                value={form.species}
+                invalid={!!errors.species}
+                onChange={(species, m) =>
+                  m
+                    ? set({
+                        species: m.scientificName,
+                        wormsAphiaId: String(m.aphiaId),
+                        taxonFamily: m.family ?? "",
+                        taxonOrder: m.order ?? "",
+                      })
+                    : // Edição manual desvincula do registro WoRMS.
+                      set({ species, wormsAphiaId: "" })
+                }
+              />
+            </div>
+          )}
+          <Button
+            type="button"
+            variant={speciesIndet ? "secondary" : "outline"}
+            size="icon"
+            className="shrink-0"
+            onClick={toggleSpeciesIndet}
+            title={speciesIndet ? t("speciesUndeterminedEnable") : t("speciesUndeterminedMark")}
+            aria-pressed={speciesIndet}
+          >
+            <Ban className={speciesIndet ? "size-4 text-destructive" : "size-4"} />
+          </Button>
+        </div>
+        {!speciesIndet && form.wormsAphiaId && (
           <p className="text-xs text-muted-foreground">
             {t("wormsLinked", {
               aphiaId: form.wormsAphiaId,

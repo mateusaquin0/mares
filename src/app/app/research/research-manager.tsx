@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useTranslations } from "next-intl"
@@ -36,6 +36,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { Truncate } from "@/components/ui/truncate"
 import { ReloadButton } from "@/components/ui/reload-button"
 import {
   Dialog,
@@ -57,6 +58,7 @@ export function ResearchManager({ isOrgAdmin, selfId }: { isOrgAdmin: boolean; s
   const tc = useTranslations("common")
   const tval = useTranslations("validation")
   const em = useErrorMessage()
+  const router = useRouter()
   const researchQ = useResearchList()
   const items = researchQ.data ?? []
   const loading = researchQ.isLoading
@@ -89,12 +91,18 @@ export function ResearchManager({ isOrgAdmin, selfId }: { isOrgAdmin: boolean; s
 
   async function onSubmit(data: CreateResearchData) {
     try {
-      if (editing) await updateM.mutateAsync(data)
-      else await createM.mutateAsync(data)
-      toast.success(editing ? t("edited") : t("created"))
-      form.reset({ name: "", description: "", isPublic: false })
-      setOpen(false)
-      setEditing(null)
+      if (editing) {
+        await updateM.mutateAsync(data)
+        toast.success(t("edited"))
+        form.reset({ name: "", description: "", isPublic: false })
+        setOpen(false)
+        setEditing(null)
+        return
+      }
+      // Nova pesquisa começa vazia: leva o usuário direto ao detalhe para montar o protocolo.
+      const created = await createM.mutateAsync(data)
+      toast.success(t("created"))
+      router.push(`/app/research/${created.id}`)
     } catch (err) {
       toast.error(editing ? t("editError") : t("createError"), { description: em(err) })
     }
@@ -156,11 +164,13 @@ export function ResearchManager({ isOrgAdmin, selfId }: { isOrgAdmin: boolean; s
                 </TableEmpty>
               )}
               {filtered.map((r) => (
-                <TableRow key={r.id}>
+                <TableRow
+                  key={r.id}
+                  onClick={() => router.push(`/app/research/${r.id}`)}
+                  className="cursor-pointer transition-colors hover:bg-muted/50"
+                >
                   <TableCell className="font-medium">
-                    <Link href={`/app/research/${r.id}`} className="hover:underline">
-                      {r.name}
-                    </Link>
+                    <Truncate className="max-w-[24rem]">{r.name}</Truncate>
                   </TableCell>
                   <TableCell>
                     {r.isPublic ? (
@@ -177,7 +187,7 @@ export function ResearchManager({ isOrgAdmin, selfId }: { isOrgAdmin: boolean; s
                   </TableCell>
                   <TableCell className="text-right">{r._count.protocols}</TableCell>
                   <TableCell className="text-right">{r._count.animals}</TableCell>
-                  <TableCell className="text-right">
+                  <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="ghost" size="icon" className="size-8">
@@ -186,9 +196,6 @@ export function ResearchManager({ isOrgAdmin, selfId }: { isOrgAdmin: boolean; s
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem asChild>
-                          <Link href={`/app/research/${r.id}`}>{t("view")}</Link>
-                        </DropdownMenuItem>
                         {(isOrgAdmin || r.createdById === selfId) && (
                           <DropdownMenuItem onSelect={() => openEdit(r)}>
                             {tc("edit")}

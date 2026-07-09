@@ -33,6 +33,7 @@ import {
 } from "@/components/ui/accordion"
 import { Skeleton, TableSkeleton } from "@/components/ui/skeleton"
 import { Combobox, type ComboboxOption } from "@/components/ui/combobox"
+import { MultiCombobox } from "@/components/ui/multi-combobox"
 import { ResearchMembers } from "./research-members"
 import {
   Table,
@@ -43,6 +44,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { Truncate } from "@/components/ui/truncate"
 import { ReloadButton } from "@/components/ui/reload-button"
 import {
   Dialog,
@@ -52,6 +54,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 
 export function ResearchDetail({
   id,
@@ -78,7 +86,7 @@ export function ResearchDetail({
   const removeM = useRemoveProtocol(id)
 
   const [organId, setOrganId] = useState<string>()
-  const [pathogenId, setPathogenId] = useState<string>()
+  const [pathogenIds, setPathogenIds] = useState<string[]>([])
   const [examTypeId, setExamTypeId] = useState<string>()
   const [editOpen, setEditOpen] = useState(false)
   const [protocolQuery, setProtocolQuery] = useState("")
@@ -131,12 +139,14 @@ export function ResearchDetail({
   }
 
   async function addEntry() {
-    if (!organId || !pathogenId || !examTypeId) return
+    if (!organId || pathogenIds.length === 0 || !examTypeId) return
     try {
-      await addM.mutateAsync([{ organId, pathogenId, examTypeId }])
-      toast.success(tp("added"))
+      const res = await addM.mutateAsync(
+        pathogenIds.map((pathogenId) => ({ organId, pathogenId, examTypeId })),
+      )
+      toast.success(tp("added", { count: res?.added ?? pathogenIds.length }))
       setOrganId(undefined)
-      setPathogenId(undefined)
+      setPathogenIds([])
       setExamTypeId(undefined)
     } catch (err) {
       toast.error(tp("addError"), { description: em(err) })
@@ -192,12 +202,22 @@ export function ResearchDetail({
         </div>
         <div className="flex items-center gap-2">
           {research._count.animals > 0 && (
-            <Button asChild variant="outline">
-              <a href={`/api/research/${id}/export/darwin-core`}>
-                <Download className="size-4" />
-                {t("export")}
-              </a>
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline">
+                  <Download className="size-4" />
+                  {t("export")}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem asChild>
+                  <a href={`/api/research/${id}/export/darwin-core`}>{t("exportDarwinCore")}</a>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <a href={`/api/research/${id}/export/xlsx`}>{t("exportXlsx")}</a>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           )}
           {canEditContent && (
             <Button variant="outline" onClick={openEdit}>
@@ -216,29 +236,6 @@ export function ResearchDetail({
             {isOrgAdmin && (
               <div className="grid gap-2 rounded-lg border bg-muted/30 p-3 sm:grid-cols-[1fr_1fr_1fr_auto]">
                 <Combobox
-                  options={opts(organsQ.data)}
-                  value={organId}
-                  onChange={setOrganId}
-                  placeholder={tp("organ")}
-                  searchPlaceholder={tc("search")}
-                  emptyText={tp("selectEmpty")}
-                  emptyAction={glossaryLink("organs")}
-                  loading={organsQ.isLoading}
-                />
-                <Combobox
-                  options={(pathogensQ.data ?? []).map((c) => ({
-                    value: c.id,
-                    label: pathogenName(locale, c),
-                  }))}
-                  value={pathogenId}
-                  onChange={setPathogenId}
-                  placeholder={tp("pathogen")}
-                  searchPlaceholder={tc("search")}
-                  emptyText={tp("selectEmpty")}
-                  emptyAction={glossaryLink("pathogens")}
-                  loading={pathogensQ.isLoading}
-                />
-                <Combobox
                   options={opts(examTypesQ.data)}
                   value={examTypeId}
                   onChange={setExamTypeId}
@@ -248,9 +245,33 @@ export function ResearchDetail({
                   emptyAction={glossaryLink("exam-types")}
                   loading={examTypesQ.isLoading}
                 />
+                <MultiCombobox
+                  options={(pathogensQ.data ?? []).map((c) => ({
+                    value: c.id,
+                    label: pathogenName(locale, c),
+                  }))}
+                  value={pathogenIds}
+                  onChange={setPathogenIds}
+                  placeholder={tp("pathogen")}
+                  summary={(n) => tp("pathogenSelected", { count: n })}
+                  searchPlaceholder={tc("search")}
+                  emptyText={tp("selectEmpty")}
+                  emptyAction={glossaryLink("pathogens")}
+                  loading={pathogensQ.isLoading}
+                />
+                <Combobox
+                  options={opts(organsQ.data)}
+                  value={organId}
+                  onChange={setOrganId}
+                  placeholder={tp("organ")}
+                  searchPlaceholder={tc("search")}
+                  emptyText={tp("selectEmpty")}
+                  emptyAction={glossaryLink("organs")}
+                  loading={organsQ.isLoading}
+                />
                 <Button
                   onClick={addEntry}
-                  disabled={!organId || !pathogenId || !examTypeId}
+                  disabled={!organId || pathogenIds.length === 0 || !examTypeId}
                   loading={addM.isPending}
                 >
                   <Plus className="size-4" />
@@ -272,9 +293,9 @@ export function ResearchDetail({
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>{tp("organ")}</TableHead>
-                    <TableHead>{tp("pathogen")}</TableHead>
                     <TableHead>{tp("examType")}</TableHead>
+                    <TableHead>{tp("pathogen")}</TableHead>
+                    <TableHead>{tp("organ")}</TableHead>
                     {isOrgAdmin && (
                       <TableHead className="w-16 text-right">
                         <ReloadButton />
@@ -290,9 +311,15 @@ export function ResearchDetail({
                   )}
                   {filteredProtocols.map((p) => (
                     <TableRow key={p.id}>
-                      <TableCell>{txt(locale, p.organ.name)}</TableCell>
-                      <TableCell>{pathogenName(locale, p.pathogen)}</TableCell>
-                      <TableCell>{txt(locale, p.examType.name)}</TableCell>
+                      <TableCell>
+                        <Truncate>{txt(locale, p.examType.name)}</Truncate>
+                      </TableCell>
+                      <TableCell>
+                        <Truncate>{pathogenName(locale, p.pathogen)}</Truncate>
+                      </TableCell>
+                      <TableCell>
+                        <Truncate>{txt(locale, p.organ.name)}</Truncate>
+                      </TableCell>
                       {isOrgAdmin && (
                         <TableCell className="text-right">
                           <Button

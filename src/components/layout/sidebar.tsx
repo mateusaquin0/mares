@@ -14,6 +14,7 @@ import {
   ShieldCheck,
   Library,
   BookOpen,
+  ClipboardList,
   PanelLeftClose,
   PanelLeft,
 } from "lucide-react"
@@ -72,6 +73,7 @@ export function Sidebar({
   const navItems: NavItem[] = [
     { href: "/app/dashboard", label: t("dashboard"), icon: LayoutDashboard },
     { href: "/app/research", label: t("research"), icon: FlaskConical },
+    { href: "/app/results", label: t("results"), icon: ClipboardList },
     { href: "/app/map", label: t("map"), icon: Map },
     { href: "/app/animals", label: t("animals"), icon: Fish },
   ]

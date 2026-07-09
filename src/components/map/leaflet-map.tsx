@@ -22,6 +22,7 @@ export type PopupLabels = {
   noPositive: string
   viewDetails: string
   hidden: string
+  undetermined: string
 }
 
 type Props = {
@@ -58,8 +59,10 @@ function esc(s: string): string {
 }
 
 function popupHtml(p: MapPoint, labels: PopupLabels, locale: string, linkBase?: string): string {
-  const title = esc(p.controlId || p.species)
-  const species = `<div style="font-style:italic;color:#475569;font-size:12px;margin-top:1px">${esc(p.species)}</div>`
+  const title = esc(p.controlId || p.species || labels.undetermined)
+  const species = p.species
+    ? `<div style="font-style:italic;color:#475569;font-size:12px;margin-top:1px">${esc(p.species)}</div>`
+    : ""
   const location = [p.municipality, p.state].filter(Boolean).join(", ")
   const date = p.eventDate
     ? new Intl.DateTimeFormat(locale, {

@@ -144,7 +144,7 @@ export function MapExplorer({ points, linkBase, showVisibility }: Props) {
   const filtered = useMemo(
     () =>
       points.filter((p) => {
-        if (species.length && !species.includes(p.species)) return false
+        if (species.length && (p.species == null || !species.includes(p.species))) return false
         if (pathogen.length && !pathogen.some((x) => p.positivePathogens.includes(x))) return false
         if (sex.length && !(p.sex && sex.includes(p.sex))) return false
         if (lifeStage.length && !(p.lifeStage && lifeStage.includes(p.lifeStage))) return false
@@ -168,8 +168,9 @@ export function MapExplorer({ points, linkBase, showVisibility }: Props) {
       noPositive: t("popupNoPositive"),
       viewDetails: t("popupViewDetails"),
       hidden: t("legendHidden"),
+      undetermined: ta("speciesUndetermined"),
     }),
-    [t],
+    [t, ta],
   )
 
   const hasFilters =
@@ -217,7 +218,7 @@ export function MapExplorer({ points, linkBase, showVisibility }: Props) {
     ]
     const rows = filtered.map((p) => [
       p.controlId ?? "",
-      p.species,
+      p.species ?? ta("speciesUndetermined"),
       p.sex ? (sexLabel.get(p.sex) ?? p.sex) : "",
       p.lifeStage ? (stageLabel.get(p.lifeStage) ?? p.lifeStage) : "",
       p.municipality ?? "",

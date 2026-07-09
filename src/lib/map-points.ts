@@ -14,7 +14,7 @@ import { pathogenName, type I18nText } from "@/lib/catalog-i18n"
 export type MapPoint = {
   id: string
   controlId: string | null
-  species: string
+  species: string | null
   lat: number
   lon: number
   sex: string | null
@@ -58,7 +58,7 @@ const mapPointSelect = {
 type RawPoint = {
   id: string
   controlId: string | null
-  species: string
+  species: string | null
   strandingLat: number | null
   strandingLon: number | null
   sex: string | null

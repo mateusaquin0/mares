@@ -26,11 +26,15 @@ describe("createAnimalSchema", () => {
     expect(createAnimalSchema.safeParse(noResearch).success).toBe(false)
   })
 
-  it("exige campos obrigatórios (species, controlId)", () => {
-    for (const field of ["species", "controlId"]) {
-      const bad = { ...validAnimal, [field]: "" }
-      expect(createAnimalSchema.safeParse(bad).success, `${field} vazio deveria falhar`).toBe(false)
-    }
+  it("exige controlId", () => {
+    const bad = { ...validAnimal, controlId: "" }
+    expect(createAnimalSchema.safeParse(bad).success).toBe(false)
+  })
+
+  it("aceita espécie vazia/nula (marcável como 'indeterminado')", () => {
+    // Obrigatoriedade da espécie é client-side; o schema a aceita nula (espécie indeterminada).
+    expect(createAnimalSchema.safeParse({ ...validAnimal, species: "" }).success).toBe(true)
+    expect(createAnimalSchema.safeParse({ ...validAnimal, species: null }).success).toBe(true)
   })
 
   it("aceita campos de encalhe vazios/nulos (marcáveis como 'sem informação')", () => {

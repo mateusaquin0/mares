@@ -44,9 +44,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { Truncate } from "@/components/ui/truncate"
 import { ReloadButton } from "@/components/ui/reload-button"
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -326,17 +328,21 @@ export function CatalogManager({
                     <TableRow key={r.id}>
                       {isPathogen ? (
                         <>
-                          <TableCell className="font-medium">{display(r)}</TableCell>
+                          <TableCell className="font-medium">
+                            <Truncate>{display(r)}</Truncate>
+                          </TableCell>
                           <TableCell className="text-muted-foreground">
-                            {txt(locale, (r as PathogenRow).group.name)}
+                            <Truncate>{txt(locale, (r as PathogenRow).group.name)}</Truncate>
                           </TableCell>
                         </>
                       ) : (
                         <>
                           <TableCell className="font-medium">
-                            {i18nPt((r as NamedRow).name)}
+                            <Truncate>{i18nPt((r as NamedRow).name)}</Truncate>
                           </TableCell>
-                          <TableCell>{i18nEn((r as NamedRow).name)}</TableCell>
+                          <TableCell>
+                            <Truncate>{i18nEn((r as NamedRow).name)}</Truncate>
+                          </TableCell>
                         </>
                       )}
                       <TableCell className="text-right">
@@ -393,164 +399,169 @@ export function CatalogManager({
               {isPathogen ? t("addDescPathogen") : t("addDesc")}
             </DialogDescription>
           </DialogHeader>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            {isPathogen && (
-              <div className="space-y-1">
-                <Label>{t("group")}</Label>
-                <Select
-                  value={groupId}
-                  onValueChange={(v) => {
-                    setGroupId(v)
-                    setGroupError(false)
-                  }}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder={t("groupPlaceholder")} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {groups.map((g) => (
-                      <SelectItem key={g.id} value={g.id}>
-                        {txt(locale, g.name)}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {groupError && <p className="text-xs text-destructive">{tval("required")}</p>}
-              </div>
-            )}
-
-            {isPathogen && groupUsesSci ? (
-              <div className="space-y-1">
-                <Label htmlFor="sci">{t("nameSci")}</Label>
-                <Controller
-                  control={form.control}
-                  name="sci"
-                  rules={{ required: tval("required") }}
-                  render={({ field }) => (
-                    <TaxonAutocomplete
-                      id="sci"
-                      value={field.value ?? ""}
-                      invalid={!!form.formState.errors.sci}
-                      searchingText={t("ncbiSearching")}
-                      emptyText={t("ncbiEmpty")}
-                      search={taxonSearch}
-                      onChange={(name, m) => {
-                        field.onChange(name)
-                        // Ao escolher no NCBI, vincula o táxon; edição manual desvincula.
-                        setTaxonId(m ? m.id : null)
-                        form.setValue("taxonFamily", m?.family ?? "")
-                        form.setValue("taxonOrder", m?.order ?? "")
-                      }}
-                    />
-                  )}
-                />
-                {form.formState.errors.sci && (
-                  <p className="text-xs text-destructive">{form.formState.errors.sci.message}</p>
-                )}
-                {taxonId != null && (
-                  <p className="text-xs text-muted-foreground">
-                    {t("ncbiLinked", {
-                      taxonId,
-                      taxon:
-                        [form.watch("taxonFamily"), form.watch("taxonOrder")]
-                          .filter(Boolean)
-                          .join(" · ") || "—",
-                    })}
-                  </p>
-                )}
-              </div>
-            ) : (
-              <div className="space-y-3">
+          <form
+            onSubmit={form.handleSubmit(onSubmit)}
+            className="flex min-h-0 flex-1 flex-col gap-4"
+          >
+            <DialogBody className="space-y-4">
+              {isPathogen && (
                 <div className="space-y-1">
-                  <Label htmlFor="namePt">{t("namePt")}</Label>
-                  <Input
-                    id="namePt"
-                    maxLength={LIMITS.name}
-                    {...form.register("namePt", { required: tval("required") })}
-                  />
-                  {form.formState.errors.namePt && (
-                    <p className="text-xs text-destructive">
-                      {form.formState.errors.namePt.message}
-                    </p>
-                  )}
+                  <Label>{t("group")}</Label>
+                  <Select
+                    value={groupId}
+                    onValueChange={(v) => {
+                      setGroupId(v)
+                      setGroupError(false)
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder={t("groupPlaceholder")} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {groups.map((g) => (
+                        <SelectItem key={g.id} value={g.id}>
+                          {txt(locale, g.name)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {groupError && <p className="text-xs text-destructive">{tval("required")}</p>}
                 </div>
-                <div className="space-y-1">
-                  <Label htmlFor="nameEn">{t("nameEn")}</Label>
-                  <Input
-                    id="nameEn"
-                    maxLength={LIMITS.name}
-                    {...form.register("nameEn", { required: tval("required") })}
-                  />
-                  {form.formState.errors.nameEn && (
-                    <p className="text-xs text-destructive">
-                      {form.formState.errors.nameEn.message}
-                    </p>
-                  )}
-                </div>
+              )}
 
-                {isExamType && (
-                  <div className="space-y-3 rounded-lg border border-dashed p-3">
-                    <div className="flex items-start gap-2">
-                      <Checkbox
-                        id="hasMeasure"
-                        checked={hasMeasure}
-                        onCheckedChange={(v) => setHasMeasure(v === true)}
-                        className="mt-0.5"
+              {isPathogen && groupUsesSci ? (
+                <div className="space-y-1">
+                  <Label htmlFor="sci">{t("nameSci")}</Label>
+                  <Controller
+                    control={form.control}
+                    name="sci"
+                    rules={{ required: tval("required") }}
+                    render={({ field }) => (
+                      <TaxonAutocomplete
+                        id="sci"
+                        value={field.value ?? ""}
+                        invalid={!!form.formState.errors.sci}
+                        searchingText={t("ncbiSearching")}
+                        emptyText={t("ncbiEmpty")}
+                        search={taxonSearch}
+                        onChange={(name, m) => {
+                          field.onChange(name)
+                          // Ao escolher no NCBI, vincula o táxon; edição manual desvincula.
+                          setTaxonId(m ? m.id : null)
+                          form.setValue("taxonFamily", m?.family ?? "")
+                          form.setValue("taxonOrder", m?.order ?? "")
+                        }}
                       />
-                      <Label
-                        htmlFor="hasMeasure"
-                        className="text-sm font-normal text-muted-foreground"
-                      >
-                        {t("hasMeasure")}
-                      </Label>
-                    </div>
-                    {hasMeasure && (
-                      <div className="space-y-3">
-                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                          <div className="space-y-1">
-                            <Label htmlFor="measurePt">{t("measurePt")}</Label>
-                            <Input
-                              id="measurePt"
-                              placeholder={t("measurePlaceholder")}
-                              maxLength={LIMITS.tinyText}
-                              {...form.register("measurePt", { required: tval("required") })}
-                            />
-                            {form.formState.errors.measurePt && (
-                              <p className="text-xs text-destructive">
-                                {form.formState.errors.measurePt.message}
-                              </p>
-                            )}
-                          </div>
-                          <div className="space-y-1">
-                            <Label htmlFor="measureEn">{t("measureEn")}</Label>
-                            <Input
-                              id="measureEn"
-                              placeholder={t("measurePlaceholder")}
-                              maxLength={LIMITS.tinyText}
-                              {...form.register("measureEn", { required: tval("required") })}
-                            />
-                            {form.formState.errors.measureEn && (
-                              <p className="text-xs text-destructive">
-                                {form.formState.errors.measureEn.message}
-                              </p>
-                            )}
-                          </div>
-                        </div>
-                        <div className="space-y-1">
-                          <Label htmlFor="measureUnit">{t("measureUnit")}</Label>
-                          <Input
-                            id="measureUnit"
-                            placeholder={t("measureUnitPlaceholder")}
-                            maxLength={LIMITS.measureUnit}
-                            {...form.register("measureUnit")}
-                          />
-                        </div>
-                      </div>
+                    )}
+                  />
+                  {form.formState.errors.sci && (
+                    <p className="text-xs text-destructive">{form.formState.errors.sci.message}</p>
+                  )}
+                  {taxonId != null && (
+                    <p className="text-xs text-muted-foreground">
+                      {t("ncbiLinked", {
+                        taxonId,
+                        taxon:
+                          [form.watch("taxonFamily"), form.watch("taxonOrder")]
+                            .filter(Boolean)
+                            .join(" · ") || "—",
+                      })}
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <div className="space-y-1">
+                    <Label htmlFor="namePt">{t("namePt")}</Label>
+                    <Input
+                      id="namePt"
+                      maxLength={LIMITS.name}
+                      {...form.register("namePt", { required: tval("required") })}
+                    />
+                    {form.formState.errors.namePt && (
+                      <p className="text-xs text-destructive">
+                        {form.formState.errors.namePt.message}
+                      </p>
                     )}
                   </div>
-                )}
-              </div>
-            )}
+                  <div className="space-y-1">
+                    <Label htmlFor="nameEn">{t("nameEn")}</Label>
+                    <Input
+                      id="nameEn"
+                      maxLength={LIMITS.name}
+                      {...form.register("nameEn", { required: tval("required") })}
+                    />
+                    {form.formState.errors.nameEn && (
+                      <p className="text-xs text-destructive">
+                        {form.formState.errors.nameEn.message}
+                      </p>
+                    )}
+                  </div>
+
+                  {isExamType && (
+                    <div className="space-y-3 rounded-lg border border-dashed p-3">
+                      <div className="flex items-start gap-2">
+                        <Checkbox
+                          id="hasMeasure"
+                          checked={hasMeasure}
+                          onCheckedChange={(v) => setHasMeasure(v === true)}
+                          className="mt-0.5"
+                        />
+                        <Label
+                          htmlFor="hasMeasure"
+                          className="text-sm font-normal text-muted-foreground"
+                        >
+                          {t("hasMeasure")}
+                        </Label>
+                      </div>
+                      {hasMeasure && (
+                        <div className="space-y-3">
+                          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                            <div className="space-y-1">
+                              <Label htmlFor="measurePt">{t("measurePt")}</Label>
+                              <Input
+                                id="measurePt"
+                                placeholder={t("measurePlaceholder")}
+                                maxLength={LIMITS.tinyText}
+                                {...form.register("measurePt", { required: tval("required") })}
+                              />
+                              {form.formState.errors.measurePt && (
+                                <p className="text-xs text-destructive">
+                                  {form.formState.errors.measurePt.message}
+                                </p>
+                              )}
+                            </div>
+                            <div className="space-y-1">
+                              <Label htmlFor="measureEn">{t("measureEn")}</Label>
+                              <Input
+                                id="measureEn"
+                                placeholder={t("measurePlaceholder")}
+                                maxLength={LIMITS.tinyText}
+                                {...form.register("measureEn", { required: tval("required") })}
+                              />
+                              {form.formState.errors.measureEn && (
+                                <p className="text-xs text-destructive">
+                                  {form.formState.errors.measureEn.message}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                          <div className="space-y-1">
+                            <Label htmlFor="measureUnit">{t("measureUnit")}</Label>
+                            <Input
+                              id="measureUnit"
+                              placeholder={t("measureUnitPlaceholder")}
+                              maxLength={LIMITS.measureUnit}
+                              {...form.register("measureUnit")}
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+            </DialogBody>
 
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setDialog(null)}>

@@ -25,6 +25,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { Truncate } from "@/components/ui/truncate"
 
 // Gestão dos pesquisadores vinculados a uma pesquisa (escopo de visibilidade).
 // Admin da org ou criador podem adicionar/remover; os demais membros só visualizam.
@@ -106,11 +107,13 @@ export function ResearchMembers({ researchId, orgId }: { researchId: string; org
               <TableRow key={m.userId}>
                 <TableCell className="font-medium">
                   <span className="flex flex-wrap items-center gap-2">
-                    {m.name ?? m.email}
+                    <Truncate>{m.name ?? m.email}</Truncate>
                     {m.isCreator && <Badge variant="secondary">{t("memberCreator")}</Badge>}
                   </span>
                 </TableCell>
-                <TableCell className="text-muted-foreground">{m.email}</TableCell>
+                <TableCell className="text-muted-foreground">
+                  <Truncate>{m.email}</Truncate>
+                </TableCell>
                 {canManage && (
                   <TableCell className="text-right">
                     <ConfirmDialog

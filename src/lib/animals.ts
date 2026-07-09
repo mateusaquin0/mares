@@ -55,7 +55,7 @@ export async function assertResearchInOrg(researchId: string, orgId: string) {
 // Semântica: undefined = não altera; null = limpa (NULL); valor = grava.
 type Nullable<T> = T | null | undefined
 export type AnimalWritable = {
-  species?: string
+  species?: Nullable<string>
   wormsAphiaId?: Nullable<number>
   taxonFamily?: Nullable<string>
   taxonOrder?: Nullable<string>
@@ -79,7 +79,8 @@ export type AnimalWritable = {
 /** Monta o objeto de dados do Prisma a partir dos campos validados. */
 export function animalData(input: AnimalWritable) {
   return {
-    species: input.species?.trim(),
+    // Já vem trim/nulável do schema (optionalText). null = espécie indeterminada.
+    species: input.species,
     wormsAphiaId: input.wormsAphiaId,
     taxonFamily: input.taxonFamily,
     taxonOrder: input.taxonOrder,

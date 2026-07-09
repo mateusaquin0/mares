@@ -31,6 +31,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { Truncate } from "@/components/ui/truncate"
 import {
   Dialog,
   DialogContent,
@@ -202,8 +203,12 @@ export default function AdminFeedbackPage() {
                     title={t("viewDetails")}
                   >
                     <TableCell>{typeBadge(f.type)}</TableCell>
-                    <TableCell className="font-medium">{f.title}</TableCell>
-                    <TableCell className="text-sm">{f.createdByEmail}</TableCell>
+                    <TableCell className="font-medium">
+                      <Truncate className="max-w-[22rem]">{f.title}</Truncate>
+                    </TableCell>
+                    <TableCell className="text-sm">
+                      <Truncate>{f.createdByEmail}</Truncate>
+                    </TableCell>
                     <TableCell className="whitespace-nowrap text-sm text-muted-foreground">
                       {new Date(f.createdAt).toLocaleDateString(locale)}
                     </TableCell>

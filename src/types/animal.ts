@@ -10,7 +10,7 @@ export type AnimalListItem = {
   id: string
   controlId: string | null
   simbaRecordNumber: string | null
-  species: string
+  species: string | null
   sex: string | null
   lifeStage: string | null
   municipality: string | null
@@ -68,7 +68,7 @@ export type AnimalFacets = {
 // Detalhe completo de um animal (/api/animals/:id).
 export type AnimalDetail = {
   id: string
-  species: string
+  species: string | null
   wormsAphiaId: number | null
   taxonFamily: string | null
   taxonOrder: string | null

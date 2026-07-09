@@ -20,6 +20,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { Truncate } from "@/components/ui/truncate"
 import { SortableHead } from "@/components/ui/sortable-head"
 import {
   Dialog,
@@ -142,13 +143,15 @@ export default function AdminOrganizationsPage() {
                     >
                       <TableCell className="font-medium">
                         <span className="flex items-center gap-2">
-                          {o.name}
+                          <Truncate>{o.name}</Truncate>
                           {o.deactivatedAt && (
                             <Badge variant="secondary">{t("deactivatedBadge")}</Badge>
                           )}
                         </span>
                       </TableCell>
-                      <TableCell className="text-muted-foreground">{renderLocation(o)}</TableCell>
+                      <TableCell className="text-muted-foreground">
+                        <Truncate>{renderLocation(o)}</Truncate>
+                      </TableCell>
                       <TableCell className="text-right">{o.members.length}</TableCell>
                       <TableCell className="text-right">{o.researchCount}</TableCell>
                       <TableCell className="text-muted-foreground">

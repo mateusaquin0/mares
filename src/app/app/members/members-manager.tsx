@@ -51,6 +51,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { Truncate } from "@/components/ui/truncate"
 import { ReloadButton } from "@/components/ui/reload-button"
 import {
   Dialog,
@@ -349,12 +350,14 @@ export function MembersManager({
                           </span>
                           <div className="min-w-0">
                             <div className="flex items-center gap-2 font-medium">
-                              <span className="truncate">{m.name ?? "—"}</span>
+                              <Truncate className="max-w-full">{m.name ?? "—"}</Truncate>
                               {m.status === "INVITED" && (
                                 <Badge variant="secondary">{tc("invited")}</Badge>
                               )}
                             </div>
-                            <p className="truncate text-xs text-muted-foreground">{m.email}</p>
+                            <Truncate className="max-w-full text-xs text-muted-foreground">
+                              {m.email}
+                            </Truncate>
                           </div>
                         </div>
                       </TableCell>
