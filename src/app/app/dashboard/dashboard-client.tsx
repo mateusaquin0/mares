@@ -6,8 +6,9 @@
 
 import { useMemo, useState } from "react"
 import dynamic from "next/dynamic"
+import { useTheme } from "next-themes"
 import { useTranslations, useLocale } from "next-intl"
-import { Fish, TestTubes, Activity, Biohazard, X } from "lucide-react"
+import { Fish, TestTubes, Microscope, Activity, Biohazard, X } from "lucide-react"
 import {
   ResponsiveContainer,
   BarChart,
@@ -23,6 +24,8 @@ import {
 
 import { useDashboard } from "@/hooks/use-dashboard"
 import { useResearchList } from "@/hooks/use-research"
+import { usePathogens } from "@/hooks/use-catalog"
+import { txt } from "@/lib/catalog-i18n"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -33,6 +36,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { Combobox } from "@/components/ui/combobox"
 
 const ALL = "__all__"
 const SPECIES_COLORS = [
@@ -46,7 +50,25 @@ const SPECIES_COLORS = [
   "#0ea5e9",
 ]
 const NAVY = "#003366"
-const TEAL = "#006876"
+// inverse-primary do tema escuro (--primary do .dark em globals.css): azul claro legível
+// sobre o fundo escuro. Usado na linha do tempo quando o tema é dark.
+const PRIMARY_DARK = "#a7c8ff"
+
+// Estilo do tooltip do recharts. Como `contentStyle`/`labelStyle`/`itemStyle` viram `style`
+// inline (onde `var()` resolve), usamos os tokens do DS direto — adapta ao tema sozinho,
+// sem depender do tema resolvido em JS. Antes o fundo era branco fixo (ilegível no dark).
+const TOOLTIP_STYLE = {
+  contentStyle: {
+    background: "hsl(var(--popover))",
+    border: "1px solid hsl(var(--border))",
+    borderRadius: 8,
+    color: "hsl(var(--popover-foreground))",
+    boxShadow: "0 4px 12px rgb(0 0 0 / 0.15)",
+    fontSize: 12,
+  },
+  labelStyle: { color: "hsl(var(--popover-foreground))", fontWeight: 600 },
+  itemStyle: { color: "hsl(var(--popover-foreground))" },
+} as const
 
 // Heatmap depende de `window` (Leaflet) — nunca renderiza no servidor.
 const HeatMap = dynamic(() => import("@/components/map/heat-map"), {
@@ -57,24 +79,40 @@ const HeatMap = dynamic(() => import("@/components/map/heat-map"), {
 export function DashboardClient() {
   const t = useTranslations("dashboard")
   const locale = useLocale()
+  const { resolvedTheme } = useTheme()
   const [research, setResearch] = useState(ALL)
+  const [pathogen, setPathogen] = useState(ALL)
   const [from, setFrom] = useState("")
   const [to, setTo] = useState("")
+  // Modo de cálculo da taxa de positividade (A2). Estado local, sem persistência.
+  const [posMode, setPosMode] = useState<"animal" | "sample">("animal")
 
   const filters = useMemo(
     () => ({
       researchId: research === ALL ? undefined : research,
+      pathogenId: pathogen === ALL ? undefined : pathogen,
       from: from || undefined,
       to: to || undefined,
     }),
-    [research, from, to],
+    [research, pathogen, from, to],
   )
   const { data, isLoading } = useDashboard(filters)
   const { data: researches } = useResearchList()
+  const { data: pathogens } = usePathogens()
 
-  const hasFilters = research !== ALL || from !== "" || to !== ""
+  // Opções de patógeno do autocomplete: "todos" + patógenos ordenados pelo rótulo exibido
+  // (nome científico ou nome do catálogo).
+  const pathogenOptions = useMemo(() => {
+    const items = (pathogens ?? [])
+      .map((p) => ({ value: p.id, label: p.scientificName ?? txt(locale, p.name) }))
+      .sort((a, b) => a.label.localeCompare(b.label, locale))
+    return [{ value: ALL, label: t("allPathogens") }, ...items]
+  }, [pathogens, locale, t])
+
+  const hasFilters = research !== ALL || pathogen !== ALL || from !== "" || to !== ""
   const clear = () => {
     setResearch(ALL)
+    setPathogen(ALL)
     setFrom("")
     setTo("")
   }
@@ -88,21 +126,58 @@ export function DashboardClient() {
   const fmtMonth = (m: string) => monthFmt.format(new Date(`${m}-01T12:00:00Z`))
 
   const totals = data?.totals
+
+  // Taxa de positividade conforme o modo escolhido (por animal / por amostra).
+  // Cada modo tem seu próprio denominador; sem denominador (> 0) o valor é "—".
+  const posModes = [
+    { key: "animal", label: t("positivityByAnimal") },
+    { key: "sample", label: t("positivityBySample") },
+  ] as const
+  const posRate =
+    posMode === "sample"
+      ? { value: totals?.positivityBySample ?? 0, denom: totals?.testedSamples ?? 0 }
+      : { value: totals?.positivityByAnimal ?? 0, denom: totals?.testedAnimals ?? 0 }
+
+  // Recharts seta `stroke`/`fill` como atributos SVG, onde `var()` não resolve — por isso
+  // estas cores são escolhidas em JS conforme o tema resolvido (equivalem aos tokens do DS).
+  const isDark = resolvedTheme === "dark"
+  // Linha do tempo: o navy do DS some no dark; usa o inverse-primary claro (#a7c8ff).
+  const timelineColor = isDark ? PRIMARY_DARK : NAVY
+  // Ticks dos eixos (muted-foreground) e linhas de grade (border), legíveis nos dois temas.
+  const axisTick = isDark ? "#9ba7b5" : "#43474f"
+  const gridStroke = isDark ? "#283443" : "#e2e8f0"
+
   const stats = [
-    { label: t("statAnimals"), value: totals ? numberFmt.format(totals.animals) : "—", icon: Fish },
     {
+      id: "animals",
+      label: t("statAnimals"),
+      value: totals ? numberFmt.format(totals.animals) : "—",
+      icon: Fish,
+    },
+    {
+      id: "samples",
       label: t("statSamples"),
       value: totals ? numberFmt.format(totals.samples) : "—",
       icon: TestTubes,
     },
     {
+      id: "tested",
+      label: t("statTestedAnimals"),
+      value: totals ? numberFmt.format(totals.testedAnimals) : "—",
+      icon: Microscope,
+    },
+    {
+      id: "positivity",
       label: t("statPositivity"),
-      value: totals && totals.analyses > 0 ? pctFmt(totals.positivity) : "—",
+      value: totals && posRate.denom > 0 ? pctFmt(posRate.value) : "—",
       icon: Activity,
     },
     {
+      id: "positives",
       label: t("statPositives"),
-      value: totals ? numberFmt.format(totals.positive) : "—",
+      value: totals
+        ? numberFmt.format(posMode === "sample" ? totals.positiveSamples : totals.positiveAnimals)
+        : "—",
       icon: Biohazard,
     },
   ]
@@ -136,6 +211,22 @@ export function DashboardClient() {
         </label>
         <label className="flex flex-col gap-1 text-xs">
           <span className="font-semibold uppercase tracking-wide text-muted-foreground">
+            {t("filterPathogen")}
+          </span>
+          <div className="w-56">
+            <Combobox
+              options={pathogenOptions}
+              value={pathogen}
+              onChange={setPathogen}
+              placeholder={t("allPathogens")}
+              searchPlaceholder={t("searchPathogen")}
+              emptyText={t("noPathogenFound")}
+              loading={!pathogens}
+            />
+          </div>
+        </label>
+        <label className="flex flex-col gap-1 text-xs">
+          <span className="font-semibold uppercase tracking-wide text-muted-foreground">
             {t("filterFrom")}
           </span>
           <Input
@@ -165,11 +256,11 @@ export function DashboardClient() {
       </div>
 
       {/* Métricas principais */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
         {stats.map((s) => {
           const Icon = s.icon
           return (
-            <Card key={s.label} className="transition-shadow hover:shadow-card-hover">
+            <Card key={s.id} className="transition-shadow hover:shadow-card-hover">
               <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
                 <CardDescription className="text-xs font-semibold uppercase tracking-wide">
                   {s.label}
@@ -180,6 +271,29 @@ export function DashboardClient() {
               </CardHeader>
               <CardContent>
                 <p className="text-3xl font-bold tracking-tight text-foreground">{s.value}</p>
+                {(s.id === "positivity" || s.id === "positives") && (
+                  <div
+                    role="group"
+                    aria-label={s.label}
+                    className="mt-3 grid grid-cols-2 gap-0.5 rounded-md bg-secondary p-0.5"
+                  >
+                    {posModes.map((m) => (
+                      <button
+                        key={m.key}
+                        type="button"
+                        onClick={() => setPosMode(m.key)}
+                        aria-pressed={posMode === m.key}
+                        className={`rounded px-2 py-1 text-xs font-medium transition-colors ${
+                          posMode === m.key
+                            ? "bg-card text-foreground shadow-sm"
+                            : "text-muted-foreground hover:text-foreground"
+                        }`}
+                      >
+                        {m.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
           )
@@ -200,17 +314,24 @@ export function DashboardClient() {
             ) : (
               <ResponsiveContainer width="100%" height={Math.max(160, species.length * 42)}>
                 <BarChart layout="vertical" data={species} margin={{ left: 8, right: 24 }}>
-                  <CartesianGrid horizontal={false} stroke="#e2e8f0" />
-                  <XAxis type="number" allowDecimals={false} tick={{ fontSize: 12 }} />
+                  <CartesianGrid horizontal={false} stroke={gridStroke} />
+                  <XAxis
+                    type="number"
+                    allowDecimals={false}
+                    tick={{ fontSize: 12, fill: axisTick }}
+                  />
                   <YAxis
                     type="category"
                     dataKey="name"
                     width={150}
-                    tick={{ fontSize: 12, fontStyle: "italic" }}
+                    tick={{ fontSize: 12, fontStyle: "italic", fill: axisTick }}
                   />
                   <Tooltip
-                    formatter={(v) => numberFmt.format(Number(v))}
-                    cursor={{ fill: "#f1f5f9" }}
+                    formatter={(v) => [numberFmt.format(Number(v)), t("speciesCount")]}
+                    cursor={{ fill: "hsl(var(--accent))" }}
+                    contentStyle={TOOLTIP_STYLE.contentStyle}
+                    labelStyle={TOOLTIP_STYLE.labelStyle}
+                    itemStyle={TOOLTIP_STYLE.itemStyle}
                   />
                   <Bar dataKey="count" radius={[0, 4, 4, 0]}>
                     {species.map((s, i) => (
@@ -242,7 +363,7 @@ export function DashboardClient() {
                         <span className="truncate text-foreground" title={r.label}>
                           {r.label}
                         </span>
-                        <span className="font-bold tabular-nums" style={{ color }}>
+                        <span className="font-bold tabular-nums text-foreground">
                           {pctFmt(r.pct)}{" "}
                           <span className="font-normal text-muted-foreground">
                             ({numberFmt.format(r.positives)}/{numberFmt.format(r.total)})
@@ -279,27 +400,30 @@ export function DashboardClient() {
               <AreaChart data={timeline} margin={{ left: 0, right: 16, top: 8 }}>
                 <defs>
                   <linearGradient id="areaFill" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor={TEAL} stopOpacity={0.35} />
-                    <stop offset="100%" stopColor={TEAL} stopOpacity={0.02} />
+                    <stop offset="0%" stopColor={timelineColor} stopOpacity={0.35} />
+                    <stop offset="100%" stopColor={timelineColor} stopOpacity={0.02} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid stroke="#e2e8f0" vertical={false} />
+                <CartesianGrid stroke={gridStroke} vertical={false} />
                 <XAxis
                   dataKey="month"
                   tickFormatter={fmtMonth}
-                  tick={{ fontSize: 12 }}
+                  tick={{ fontSize: 12, fill: axisTick }}
                   minTickGap={16}
                 />
-                <YAxis allowDecimals={false} tick={{ fontSize: 12 }} width={32} />
+                <YAxis allowDecimals={false} tick={{ fontSize: 12, fill: axisTick }} width={32} />
                 <Tooltip
                   labelFormatter={(m) => fmtMonth(String(m))}
                   formatter={(v) => [numberFmt.format(Number(v)), t("timelineCount")]}
-                  cursor={{ stroke: NAVY, strokeWidth: 1 }}
+                  cursor={{ stroke: timelineColor, strokeWidth: 1 }}
+                  contentStyle={TOOLTIP_STYLE.contentStyle}
+                  labelStyle={TOOLTIP_STYLE.labelStyle}
+                  itemStyle={TOOLTIP_STYLE.itemStyle}
                 />
                 <Area
                   type="monotone"
                   dataKey="count"
-                  stroke={NAVY}
+                  stroke={timelineColor}
                   strokeWidth={2}
                   fill="url(#areaFill)"
                 />
