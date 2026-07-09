@@ -33,6 +33,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
           organId: true,
           pathogenId: true,
           examTypeId: true,
+          status: true,
           pathogen: { select: { id: true, scientificName: true, name: true } },
           examType: { select: { id: true, name: true, measureLabel: true, measureUnit: true } },
         },

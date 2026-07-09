@@ -2,9 +2,13 @@
 
 import type { CatalogItem, PathogenItem } from "@/types/catalog"
 
+export type ProtocolStatus = "ACTIVE" | "INACTIVE"
+
 // Entrada do protocolo de uma pesquisa (combinação órgão × patógeno × exame).
 export type ProtocolEntry = {
   id: string
+  status: ProtocolStatus
+  deactivatedAt: string | null
   organ: CatalogItem
   pathogen: PathogenItem
   examType: CatalogItem

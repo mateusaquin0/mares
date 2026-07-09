@@ -12,6 +12,7 @@
     "format:check": "prettier --check .",
     "db:seed": "prisma db seed",
     "db:studio": "prisma studio",
+    "db:audit-orphans": "tsx scripts/audit-orphan-analyses.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:cov": "vitest run --coverage",

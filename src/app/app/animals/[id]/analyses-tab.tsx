@@ -21,6 +21,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
+import { Checkbox } from "@/components/ui/checkbox"
 import { TableSkeleton } from "@/components/ui/skeleton"
 import {
   Table,
@@ -62,6 +63,7 @@ export function AnalysesTab({ animalId }: { animalId: string }) {
   const [fResult, setFResult] = useState(ALL)
   const [fResearch, setFResearch] = useState(ALL)
   const [fOrgan, setFOrgan] = useState(ALL)
+  const [showInactive, setShowInactive] = useState(false)
 
   // Sincroniza o mapa de células (editável, com update otimista) com a grade carregada.
   useEffect(() => {
@@ -124,6 +126,9 @@ export function AnalysesTab({ animalId }: { animalId: string }) {
   // Indivíduo compartilhado: uma seção por pesquisa. Com uma só pesquisa, oculta o cabeçalho.
   const multi = grid.sections.length > 1
 
+  // Protocolos inativos: ocultos por padrão; o toggle os revela em leitura (badge, sem editar).
+  const hasInactive = grid.sections.some((s) => s.protocol.some((p) => p.status === "INACTIVE"))
+
   // ── Opções de filtro derivadas da grade ──
   const researchOptions = grid.sections.map((s) => ({ id: s.research.id, label: s.research.name }))
   const organOptions = [
@@ -170,6 +175,7 @@ export function AnalysesTab({ animalId }: { animalId: string }) {
           sample,
           entries: sec.protocol
             .filter((p) => p.organId === sample.organ.id)
+            .filter((entry) => entry.status === "ACTIVE" || showInactive)
             .filter((entry) => matchEntry(sample, entry)),
         }))
         .filter(({ entries }) => !hasFilters || entries.length > 0),
@@ -233,6 +239,12 @@ export function AnalysesTab({ animalId }: { animalId: string }) {
             </SelectContent>
           </Select>
         )}
+        {hasInactive && (
+          <label className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Checkbox checked={showInactive} onCheckedChange={(v) => setShowInactive(v === true)} />
+            {t("showInactive")}
+          </label>
+        )}
         {hasFilters && (
           <Button variant="ghost" size="sm" onClick={clearFilters} className="gap-1">
             <X className="size-3.5" />
@@ -291,10 +303,16 @@ export function AnalysesTab({ animalId }: { animalId: string }) {
                             {entries.map((entry) => {
                               const k = keyOf(sample.id, entry.pathogenId, entry.examTypeId)
                               const cell = getCell(k)
+                              const inactive = entry.status === "INACTIVE"
                               return (
                                 <TableRow key={k}>
                                   <TableCell className="font-medium">
-                                    <Truncate>{pathogenName(locale, entry.pathogen)}</Truncate>
+                                    <span className="flex items-center gap-2">
+                                      <Truncate>{pathogenName(locale, entry.pathogen)}</Truncate>
+                                      {inactive && (
+                                        <Badge variant="secondary">{t("inactive")}</Badge>
+                                      )}
+                                    </span>
                                   </TableCell>
                                   <TableCell className="text-muted-foreground">
                                     <Truncate>{txt(locale, entry.examType.name)}</Truncate>
@@ -302,6 +320,7 @@ export function AnalysesTab({ animalId }: { animalId: string }) {
                                   <TableCell>
                                     <ResultSelect
                                       value={cell.result}
+                                      disabled={inactive}
                                       onChange={(result) => save(sample, entry, { result })}
                                     />
                                   </TableCell>
@@ -311,6 +330,7 @@ export function AnalysesTab({ animalId }: { animalId: string }) {
                                         value={cell.measureValue}
                                         placeholder={txt(locale, entry.examType.measureLabel)}
                                         unit={entry.examType.measureUnit}
+                                        disabled={inactive}
                                         onCommit={(n) => {
                                           if (n !== cell.measureValue)
                                             save(sample, entry, { measureValue: n })
@@ -324,6 +344,7 @@ export function AnalysesTab({ animalId }: { animalId: string }) {
                                     <NotesInput
                                       value={cell.notes}
                                       placeholder={t("notesPlaceholder")}
+                                      disabled={inactive}
                                       onCommit={(s) => {
                                         if (s !== cell.notes) save(sample, entry, { notes: s })
                                       }}

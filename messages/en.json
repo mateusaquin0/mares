@@ -742,6 +742,8 @@
     "noProtocol": "This animal's research has no protocol defined. Configure the protocol to enable the analysis grid.",
     "noSamples": "Record samples in the Samples tab to fill the analysis grid.",
     "noApplicable": "No protocol combination applies to this sample's organ.",
+    "showInactive": "Show inactive",
+    "inactive": "Inactive",
     "colPathogen": "Pathogen",
     "colExam": "Exam",
     "colResult": "Result",
@@ -917,6 +919,7 @@
     "colLocation": "Location",
     "colDate": "Date",
     "noSampleForOrgan": "No sample for this organ",
+    "showInactive": "Show inactive",
     "noMatch": "No animal matches the filter.",
     "animalCount": "{count, plural, =0 {no animals} one {# animal} other {# animals}}"
   },
@@ -934,7 +937,20 @@
     "added": "{count, plural, one {# entry added} other {# entries added}}",
     "addError": "Could not add",
     "removed": "Entry removed",
-    "removeError": "Could not remove"
+    "removeError": "Could not remove",
+    "actions": "Actions",
+    "inactive": "Inactive",
+    "deactivate": "Deactivate",
+    "reactivate": "Reactivate",
+    "delete": "Delete",
+    "deactivated": "Protocol deactivated",
+    "reactivated": "Protocol reactivated",
+    "statusError": "Could not change status",
+    "showInactive": "Show inactive",
+    "deleteTitle": "Delete protocol",
+    "deleteDesc": "This will delete the protocol and also remove the analyses already recorded for this combination. This action cannot be undone.",
+    "deactivateTitle": "Deactivate protocol",
+    "deactivateDesc": "This preserves the analyses already recorded, but prevents new entries for this combination until the protocol is reactivated."
   },
   "catalogs": {
     "title": "Glossary",

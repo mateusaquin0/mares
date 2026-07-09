@@ -27,6 +27,11 @@ export const protocolEntriesSchema = z.object({
   entries: z.array(protocolEntrySchema).min(1),
 })
 
+// Ativa/desativa uma entrada de protocolo (ver docs/PLANO_PROTOCOLO_ANALISES.md).
+export const patchProtocolSchema = z.object({
+  status: z.enum(["ACTIVE", "INACTIVE"]),
+})
+
 // Vincula um pesquisador (já membro da org) à pesquisa.
 export const addResearchMemberSchema = z.object({
   userId: z.string().min(1),
@@ -35,3 +40,4 @@ export const addResearchMemberSchema = z.object({
 export type CreateResearchData = z.infer<typeof createResearchSchema>
 export type UpdateResearchData = z.infer<typeof updateResearchSchema>
 export type ProtocolEntry = z.infer<typeof protocolEntrySchema>
+export type PatchProtocolData = z.infer<typeof patchProtocolSchema>

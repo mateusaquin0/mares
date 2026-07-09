@@ -742,6 +742,8 @@
     "noProtocol": "A pesquisa deste animal não tem protocolo definido. Configure o protocolo para habilitar a grade de análises.",
     "noSamples": "Registre amostras na aba Amostras para preencher a grade de análises.",
     "noApplicable": "Nenhuma combinação do protocolo se aplica ao órgão desta amostra.",
+    "showInactive": "Mostrar inativos",
+    "inactive": "Inativo",
     "colPathogen": "Patógeno",
     "colExam": "Exame",
     "colResult": "Resultado",
@@ -917,6 +919,7 @@
     "colLocation": "Local",
     "colDate": "Data",
     "noSampleForOrgan": "Sem amostra deste órgão",
+    "showInactive": "Mostrar inativos",
     "noMatch": "Nenhum animal para o filtro.",
     "animalCount": "{count, plural, =0 {nenhum animal} one {# animal} other {# animais}}"
   },
@@ -934,7 +937,20 @@
     "added": "{count, plural, one {# entrada adicionada} other {# entradas adicionadas}}",
     "addError": "Não foi possível adicionar",
     "removed": "Entrada removida",
-    "removeError": "Não foi possível remover"
+    "removeError": "Não foi possível remover",
+    "actions": "Ações",
+    "inactive": "Inativo",
+    "deactivate": "Desativar",
+    "reactivate": "Reativar",
+    "delete": "Excluir",
+    "deactivated": "Protocolo desativado",
+    "reactivated": "Protocolo reativado",
+    "statusError": "Não foi possível alterar o estado",
+    "showInactive": "Mostrar inativos",
+    "deleteTitle": "Excluir protocolo",
+    "deleteDesc": "Esta ação excluirá o protocolo e apagará também as análises já registradas para esta combinação. Essa operação não pode ser desfeita.",
+    "deactivateTitle": "Desativar protocolo",
+    "deactivateDesc": "Esta ação preserva as análises já registradas, mas impede novos lançamentos para esta combinação até que o protocolo seja reativado."
   },
   "catalogs": {
     "title": "Glossário",

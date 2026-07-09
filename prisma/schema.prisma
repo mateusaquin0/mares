@@ -45,6 +45,11 @@ enum SampleStatus {
   DEGRADED // degradada / inutilizável
 }
 
+enum ResearchProtocolStatus {
+  ACTIVE // combinação em uso: aceita novos lançamentos de análise
+  INACTIVE // preservada para histórico, mas bloqueia novos lançamentos
+}
+
 enum FeedbackType {
   SUGGESTION // sugestão de melhoria
   BUG // relato de problema
@@ -166,20 +171,25 @@ model ResearchMember {
   @@index([userId])
 }
 
-// Define quais exames/patógenos/órgãos compõem uma pesquisa
+// Define quais exames/patógenos/órgãos compõem uma pesquisa.
+// Estado (ver docs/PLANO_PROTOCOLO_ANALISES.md): ACTIVE aceita novos lançamentos; INACTIVE
+// preserva o histórico de análises, mas bloqueia novos cadastros/edições para a combinação.
 model ResearchProtocol {
-  id         String   @id @default(uuid())
-  researchId String
-  research   Research @relation(fields: [researchId], references: [id], onDelete: Cascade)
-  organId    String
-  organ      Organ    @relation(fields: [organId], references: [id])
-  pathogenId String
-  pathogen   Pathogen @relation(fields: [pathogenId], references: [id])
-  examTypeId String
-  examType   ExamType @relation(fields: [examTypeId], references: [id])
+  id            String                 @id @default(uuid())
+  researchId    String
+  research      Research               @relation(fields: [researchId], references: [id], onDelete: Cascade)
+  organId       String
+  organ         Organ                  @relation(fields: [organId], references: [id])
+  pathogenId    String
+  pathogen      Pathogen               @relation(fields: [pathogenId], references: [id])
+  examTypeId    String
+  examType      ExamType               @relation(fields: [examTypeId], references: [id])
+  status        ResearchProtocolStatus @default(ACTIVE)
+  deactivatedAt DateTime?
 
   @@unique([researchId, organId, pathogenId, examTypeId])
   @@index([researchId])
+  @@index([researchId, status])
 }
 
 // ─────────────────────────────────────────────────────────────

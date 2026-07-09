@@ -18,6 +18,8 @@ export const researchService = {
 
   addProtocol: (id: string, entries: ProtocolEntryInput[]) =>
     http.post<{ added: number }>(`/api/research/${id}/protocol`, { entries }),
+  setProtocolStatus: (id: string, entryId: string, status: "ACTIVE" | "INACTIVE") =>
+    http.patch(`/api/research/${id}/protocol/${entryId}`, { status }),
   removeProtocol: (id: string, entryId: string) =>
     http.del(`/api/research/${id}/protocol/${entryId}`),
 

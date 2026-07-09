@@ -28,13 +28,15 @@ export async function PUT(req: NextRequest) {
     // Só preenche análises de amostras de pesquisas que enxerga.
     await assertResearchVisible(user, sample.orgId, sample.researchId)
 
-    // A célula só é válida se o trio (órgão da amostra, patógeno, exame) estiver no protocolo.
+    // A célula só é válida se o trio (órgão da amostra, patógeno, exame) estiver no protocolo
+    // e ATIVO. Combinações inativas preservam o histórico, mas não aceitam novos lançamentos.
     const combo = await prisma.researchProtocol.findFirst({
       where: {
         researchId: sample.researchId,
         organId: sample.organId,
         pathogenId: data.pathogenId,
         examTypeId: data.examTypeId,
+        status: "ACTIVE",
       },
       select: { id: true },
     })

@@ -8,6 +8,7 @@ export type ProtocolEntry = {
   organId: string
   pathogenId: string
   examTypeId: string
+  status: "ACTIVE" | "INACTIVE"
   pathogen: { id: string; scientificName: string | null; name: string | I18nText | null }
   // measureLabel presente = o exame tem leitura quantitativa (ex.: Ct, Título); null = só qualitativo.
   examType: {

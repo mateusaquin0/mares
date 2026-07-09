@@ -15,6 +15,7 @@ import { ResultDot } from "@/components/analysis-cells"
 import { Truncate } from "@/components/ui/truncate"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
+import { Checkbox } from "@/components/ui/checkbox"
 import { TableSkeleton } from "@/components/ui/skeleton"
 import { TablePagination } from "@/components/ui/table-pagination"
 import {
@@ -72,12 +73,17 @@ export function ResultsManager() {
   const [query, setQuery] = useState("")
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(20)
+  const [showInactive, setShowInactive] = useState(false)
 
-  // Exames disponíveis (patógeno × tipo de exame), na ordem do protocolo.
+  const hasInactive = (data?.protocol ?? []).some((p) => p.status === "INACTIVE")
+
+  // Exames disponíveis (patógeno × tipo de exame), na ordem do protocolo. Combinações inativas
+  // ficam ocultas por padrão; o toggle "Mostrar inativos" as inclui (para consultar histórico).
   const tests = useMemo<Test[]>(() => {
     if (!data) return []
     const map = new Map<string, Test>()
     for (const p of data.protocol) {
+      if (p.status === "INACTIVE" && !showInactive) continue
       const k = testKey(p.pathogenId, p.examTypeId)
       let test = map.get(k)
       if (!test) {
@@ -94,7 +100,7 @@ export function ResultsManager() {
       test.organIds.add(p.organId)
     }
     return [...map.values()]
-  }, [data])
+  }, [data, showInactive])
 
   // Ao trocar de pesquisa/dados, volta para o primeiro exame e limpa o filtro.
   useEffect(() => {
@@ -262,6 +268,15 @@ export function ResultsManager() {
                 />
               </div>
               <Badge variant="secondary">{t("animalCount", { count: animals.length })}</Badge>
+              {hasInactive && (
+                <label className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Checkbox
+                    checked={showInactive}
+                    onCheckedChange={(v) => setShowInactive(v === true)}
+                  />
+                  {t("showInactive")}
+                </label>
+              )}
               {query && (
                 <button
                   type="button"
