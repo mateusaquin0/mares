@@ -41,6 +41,43 @@
 
     --radius: 0.5rem;
   }
+
+  /* Modo escuro — navy profundo com superfícies elevadas e realces cyan (ver design.md).
+     Reaproveita os mesmos tokens semânticos: a maior parte da UI adapta automaticamente. */
+  .dark {
+    --background: 213 45% 9%; /* navy profundo */
+    --foreground: 210 20% 94%; /* inverse-on-surface #eff1f3 */
+
+    --card: 213 38% 13%;
+    --card-foreground: 210 20% 94%;
+
+    --popover: 213 38% 13%;
+    --popover-foreground: 210 20% 94%;
+
+    --primary: 217 100% 83%; /* inverse-primary #a7c8ff */
+    --primary-foreground: 213 45% 12%;
+
+    --secondary: 213 25% 18%;
+    --secondary-foreground: 210 20% 94%;
+
+    --muted: 213 25% 18%;
+    --muted-foreground: 214 15% 66%;
+
+    --accent: 189 45% 18%; /* cyan escurecido — realce costeiro */
+    --accent-foreground: 187 70% 78%;
+
+    --destructive: 0 70% 55%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 213 25% 21%;
+    --input: 213 25% 21%;
+    --ring: 189 80% 45%;
+
+    --ocean: 212 55% 16%;
+    --brand-cyan: 189 70% 62%;
+    --bio: 123 40% 52%;
+    --bio-foreground: 0 0% 100%;
+  }
 }
 
 @layer base {
@@ -82,4 +119,29 @@ input[type="number"]::-webkit-outer-spin-button {
    não "vaze" por cima de modais/overlays (Radix Dialog fica em z-50). */
 .leaflet-container {
   z-index: 0;
+}
+
+/* Scrollbars personalizadas: finas, nas cores do design system e com um respiro entre o
+   thumb e o conteúdo. O gap vem de uma borda transparente + `background-clip: padding-box`
+   (o thumb visível fica menor que a trilha). Firefox usa `scrollbar-width/color` (sem gap). */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: hsl(var(--muted-foreground) / 0.35) transparent;
+}
+::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+::-webkit-scrollbar-track,
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background-color: hsl(var(--muted-foreground) / 0.35);
+  border-radius: 9999px;
+  border: 3px solid transparent;
+  background-clip: padding-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background-color: hsl(var(--muted-foreground) / 0.55);
 }

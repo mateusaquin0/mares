@@ -32,9 +32,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { Truncate } from "@/components/ui/truncate"
 import { ReloadButton } from "@/components/ui/reload-button"
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogFooter,
   DialogHeader,
@@ -374,19 +376,25 @@ export function SamplesTab({
                 )}
                 {filtered.map((s) => (
                   <TableRow key={s.id}>
-                    <TableCell className="font-medium">{s.identification}</TableCell>
+                    <TableCell className="font-medium">
+                      <Truncate>{s.identification}</Truncate>
+                    </TableCell>
                     {multiResearch && (
                       <TableCell>
                         <Badge variant="outline">{s.research.name}</Badge>
                       </TableCell>
                     )}
-                    <TableCell>{txt(locale, s.organ.name)}</TableCell>
-                    <TableCell>{s.sampleType}</TableCell>
+                    <TableCell>
+                      <Truncate>{txt(locale, s.organ.name)}</Truncate>
+                    </TableCell>
+                    <TableCell>
+                      <Truncate>{s.sampleType}</Truncate>
+                    </TableCell>
                     <TableCell className="text-muted-foreground">
                       {fmtDate(s.collectionDate)}
                     </TableCell>
                     <TableCell className="text-muted-foreground">
-                      {s.storageLocation ?? ""}
+                      <Truncate>{s.storageLocation ?? ""}</Truncate>
                     </TableCell>
                     <TableCell className="text-right text-muted-foreground">
                       {s.storageTemp ?? ""}
@@ -439,165 +447,167 @@ export function SamplesTab({
       )}
 
       <Dialog open={!!dialog} onOpenChange={(o) => !o && setDialog(null)}>
-        <DialogContent className="max-h-[90vh] overflow-y-auto" dirty={isDirty}>
+        <DialogContent dirty={isDirty}>
           <DialogHeader>
             <DialogTitle>{dialog?.mode === "edit" ? t("editTitle") : t("addTitle")}</DialogTitle>
           </DialogHeader>
-          <form onSubmit={onSubmit} className="space-y-4">
-            <div className="space-y-1">
-              <Label htmlFor="identification">{t("identification")}</Label>
-              <Input
-                id="identification"
-                name="sampleIdentification"
-                autoComplete="on"
-                placeholder={t("identificationPlaceholder")}
-                maxLength={LIMITS.name}
-                value={form.identification}
-                onChange={(e) => set({ identification: e.target.value })}
-              />
-              {errors.identification && (
-                <p className="text-xs text-destructive">{tval("required")}</p>
-              )}
-            </div>
-            {multiResearch && (
+          <form onSubmit={onSubmit} className="flex min-h-0 flex-1 flex-col gap-4">
+            <DialogBody className="space-y-4">
               <div className="space-y-1">
-                <Label htmlFor="sample-research">{t("research")}</Label>
-                <Select
-                  value={form.researchId}
-                  // Trocar a pesquisa reinicia o órgão e reaplica o filtro do protocolo.
-                  onValueChange={(v) => {
-                    set({ researchId: v, organId: "" })
-                    setShowAllOrgans(false)
-                  }}
-                  disabled={dialog?.mode === "edit"}
-                >
-                  <SelectTrigger id="sample-research">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {researches.map((r) => (
-                      <SelectItem key={r.id} value={r.id}>
-                        {r.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {dialog?.mode === "edit" && (
-                  <p className="text-xs text-muted-foreground">{t("researchLockedHint")}</p>
-                )}
-              </div>
-            )}
-            {/* Órgão em linha própria: rótulo à esquerda e a escotilha do filtro à direita. */}
-            <div className="space-y-1">
-              <div className="flex items-center justify-between gap-2">
-                <Label htmlFor="organ">{t("organ")}</Label>
-                {hasProtocol && (
-                  <button
-                    type="button"
-                    className="text-xs font-medium text-accent-foreground underline underline-offset-2"
-                    onClick={() => setShowAllOrgans((v) => !v)}
-                  >
-                    {filteredByProtocol ? t("organShowAll") : t("organShowProtocol")}
-                  </button>
-                )}
-              </div>
-              <Combobox
-                options={organChoices.map((o) => ({ value: o.id, label: txt(locale, o.name) }))}
-                value={form.organId}
-                onChange={(v) => set({ organId: v })}
-                placeholder={t("organPlaceholder")}
-                searchPlaceholder={tc("search")}
-                emptyText={filteredByProtocol ? t("organProtocolEmpty") : tc("noResults")}
-              />
-              {hasProtocol && (
-                <p className="text-xs text-muted-foreground">
-                  {filteredByProtocol ? t("organProtocolHint") : t("organAllHint")}
-                </p>
-              )}
-              {errors.organId && <p className="text-xs text-destructive">{tval("required")}</p>}
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1">
-                <Label htmlFor="sampleType">{t("sampleType")}</Label>
+                <Label htmlFor="identification">{t("identification")}</Label>
                 <Input
-                  id="sampleType"
-                  name="sampleType"
+                  id="identification"
+                  name="sampleIdentification"
                   autoComplete="on"
-                  placeholder={t("sampleTypePlaceholder")}
+                  placeholder={t("identificationPlaceholder")}
                   maxLength={LIMITS.name}
-                  value={form.sampleType}
-                  onChange={(e) => set({ sampleType: e.target.value })}
+                  value={form.identification}
+                  onChange={(e) => set({ identification: e.target.value })}
                 />
-                {errors.sampleType && (
+                {errors.identification && (
                   <p className="text-xs text-destructive">{tval("required")}</p>
                 )}
               </div>
+              {multiResearch && (
+                <div className="space-y-1">
+                  <Label htmlFor="sample-research">{t("research")}</Label>
+                  <Select
+                    value={form.researchId}
+                    // Trocar a pesquisa reinicia o órgão e reaplica o filtro do protocolo.
+                    onValueChange={(v) => {
+                      set({ researchId: v, organId: "" })
+                      setShowAllOrgans(false)
+                    }}
+                    disabled={dialog?.mode === "edit"}
+                  >
+                    <SelectTrigger id="sample-research">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {researches.map((r) => (
+                        <SelectItem key={r.id} value={r.id}>
+                          {r.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {dialog?.mode === "edit" && (
+                    <p className="text-xs text-muted-foreground">{t("researchLockedHint")}</p>
+                  )}
+                </div>
+              )}
+              {/* Órgão em linha própria: rótulo à esquerda e a escotilha do filtro à direita. */}
               <div className="space-y-1">
-                <Label htmlFor="status">{t("status")}</Label>
-                <Select
-                  value={form.status}
-                  onValueChange={(v) => set({ status: v as SampleStatus })}
-                >
-                  <SelectTrigger id="status">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {STATUSES.map((s) => (
-                      <SelectItem key={s} value={s}>
-                        {statusLabel(s)}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1">
-                <Label htmlFor="collectionDate">{t("collectionDate")}</Label>
-                <Input
-                  id="collectionDate"
-                  type="date"
-                  value={form.collectionDate}
-                  onChange={(e) => set({ collectionDate: e.target.value })}
+                <div className="flex items-center justify-between gap-2">
+                  <Label htmlFor="organ">{t("organ")}</Label>
+                  {hasProtocol && (
+                    <button
+                      type="button"
+                      className="text-xs font-medium text-accent-foreground underline underline-offset-2"
+                      onClick={() => setShowAllOrgans((v) => !v)}
+                    >
+                      {filteredByProtocol ? t("organShowAll") : t("organShowProtocol")}
+                    </button>
+                  )}
+                </div>
+                <Combobox
+                  options={organChoices.map((o) => ({ value: o.id, label: txt(locale, o.name) }))}
+                  value={form.organId}
+                  onChange={(v) => set({ organId: v })}
+                  placeholder={t("organPlaceholder")}
+                  searchPlaceholder={tc("search")}
+                  emptyText={filteredByProtocol ? t("organProtocolEmpty") : tc("noResults")}
                 />
+                {hasProtocol && (
+                  <p className="text-xs text-muted-foreground">
+                    {filteredByProtocol ? t("organProtocolHint") : t("organAllHint")}
+                  </p>
+                )}
+                {errors.organId && <p className="text-xs text-destructive">{tval("required")}</p>}
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <Label htmlFor="sampleType">{t("sampleType")}</Label>
+                  <Input
+                    id="sampleType"
+                    name="sampleType"
+                    autoComplete="on"
+                    placeholder={t("sampleTypePlaceholder")}
+                    maxLength={LIMITS.name}
+                    value={form.sampleType}
+                    onChange={(e) => set({ sampleType: e.target.value })}
+                  />
+                  {errors.sampleType && (
+                    <p className="text-xs text-destructive">{tval("required")}</p>
+                  )}
+                </div>
+                <div className="space-y-1">
+                  <Label htmlFor="status">{t("status")}</Label>
+                  <Select
+                    value={form.status}
+                    onValueChange={(v) => set({ status: v as SampleStatus })}
+                  >
+                    <SelectTrigger id="status">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {STATUSES.map((s) => (
+                        <SelectItem key={s} value={s}>
+                          {statusLabel(s)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <Label htmlFor="collectionDate">{t("collectionDate")}</Label>
+                  <Input
+                    id="collectionDate"
+                    type="date"
+                    value={form.collectionDate}
+                    onChange={(e) => set({ collectionDate: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label htmlFor="storageTemp">{t("storageTemp")}</Label>
+                  <Input
+                    id="storageTemp"
+                    name="sampleStorageTemp"
+                    autoComplete="on"
+                    type="number"
+                    step="any"
+                    value={form.storageTemp}
+                    onChange={(e) => set({ storageTemp: e.target.value })}
+                  />
+                </div>
               </div>
               <div className="space-y-1">
-                <Label htmlFor="storageTemp">{t("storageTemp")}</Label>
+                <Label htmlFor="storageLocation">{t("storageLocation")}</Label>
                 <Input
-                  id="storageTemp"
-                  name="sampleStorageTemp"
+                  id="storageLocation"
+                  name="sampleStorageLocation"
                   autoComplete="on"
-                  type="number"
-                  step="any"
-                  value={form.storageTemp}
-                  onChange={(e) => set({ storageTemp: e.target.value })}
+                  maxLength={LIMITS.name}
+                  value={form.storageLocation}
+                  onChange={(e) => set({ storageLocation: e.target.value })}
                 />
               </div>
-            </div>
-            <div className="space-y-1">
-              <Label htmlFor="storageLocation">{t("storageLocation")}</Label>
-              <Input
-                id="storageLocation"
-                name="sampleStorageLocation"
-                autoComplete="on"
-                maxLength={LIMITS.name}
-                value={form.storageLocation}
-                onChange={(e) => set({ storageLocation: e.target.value })}
-              />
-            </div>
-            <div className="space-y-1">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="notes">{t("notes")}</Label>
-                <CharCounter value={form.notes} max={LIMITS.longText} />
+              <div className="space-y-1">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="notes">{t("notes")}</Label>
+                  <CharCounter value={form.notes} max={LIMITS.longText} />
+                </div>
+                <Textarea
+                  id="notes"
+                  rows={2}
+                  maxLength={LIMITS.longText}
+                  value={form.notes}
+                  onChange={(e) => set({ notes: e.target.value })}
+                />
               </div>
-              <Textarea
-                id="notes"
-                rows={2}
-                maxLength={LIMITS.longText}
-                value={form.notes}
-                onChange={(e) => set({ notes: e.target.value })}
-              />
-            </div>
+            </DialogBody>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setDialog(null)}>
                 {tc("cancel")}

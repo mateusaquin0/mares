@@ -17,9 +17,11 @@ const badgeVariants = cva(
         // Variantes semânticas do design MARES (ver design.md §Chips/Badges).
         public: "border-transparent bg-accent text-accent-foreground",
         private: "border-transparent bg-primary/10 text-primary",
-        positive: "border-[hsl(var(--bio)/0.35)] bg-[hsl(var(--bio)/0.14)] text-[hsl(123_44%_30%)]",
+        positive:
+          "border-[hsl(var(--bio)/0.35)] bg-[hsl(var(--bio)/0.14)] text-[hsl(123_44%_30%)] dark:bg-[hsl(var(--bio)/0.22)] dark:text-[hsl(123_45%_72%)]",
         negative: "border-transparent bg-secondary text-muted-foreground",
-        inconclusive: "border-[hsl(35_80%_78%)] bg-[hsl(35_92%_92%)] text-[hsl(28_80%_34%)]",
+        inconclusive:
+          "border-[hsl(35_80%_78%)] bg-[hsl(35_92%_92%)] text-[hsl(28_80%_34%)] dark:border-[hsl(35_50%_32%)] dark:bg-[hsl(35_45%_18%)] dark:text-[hsl(35_85%_70%)]",
       },
     },
     defaultVariants: {

@@ -18,6 +18,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { Truncate } from "@/components/ui/truncate"
 import { ReloadButton } from "@/components/ui/reload-button"
 import {
   DropdownMenu,
@@ -73,9 +74,15 @@ export default function AccessRequestsPage() {
               {requests.length === 0 && <TableEmpty colSpan={4}>{t("empty")}</TableEmpty>}
               {requests.map((r) => (
                 <TableRow key={r.id}>
-                  <TableCell className="font-medium">{r.organizationName}</TableCell>
-                  <TableCell>{r.requesterName}</TableCell>
-                  <TableCell className="text-muted-foreground">{r.email}</TableCell>
+                  <TableCell className="font-medium">
+                    <Truncate>{r.organizationName}</Truncate>
+                  </TableCell>
+                  <TableCell>
+                    <Truncate>{r.requesterName}</Truncate>
+                  </TableCell>
+                  <TableCell className="text-muted-foreground">
+                    <Truncate>{r.email}</Truncate>
+                  </TableCell>
                   <TableCell className="text-right">
                     {(() => {
                       const isBusy = !!busy?.startsWith(r.id + ":")

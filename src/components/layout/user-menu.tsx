@@ -1,10 +1,11 @@
 "use client"
 
-import { useState, useTransition } from "react"
+import { useEffect, useState, useTransition } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
+import { useTheme } from "next-themes"
 import { useLocale, useTranslations } from "next-intl"
-import { Check, ChevronDown, Loader2, LogOut, User } from "lucide-react"
+import { Check, ChevronDown, Loader2, LogOut, Monitor, Moon, Sun, User } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { createClient } from "@/lib/supabase/client"
@@ -35,8 +36,18 @@ export function UserMenu({
   const t = useTranslations("sidebar")
   const active = useLocale() as Locale
   const router = useRouter()
+  const { theme, setTheme } = useTheme()
+  // next-themes só resolve o tema no cliente; evita divergência de hidratação no check ativo.
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => setMounted(true), [])
   const [pending, startTransition] = useTransition()
   const [signingOut, setSigningOut] = useState(false)
+
+  const themeOptions = [
+    { value: "light", label: t("themeLight"), icon: Sun },
+    { value: "dark", label: t("themeDark"), icon: Moon },
+    { value: "system", label: t("themeSystem"), icon: Monitor },
+  ] as const
 
   const initials = (userName || "?")
     .split(" ")
@@ -113,6 +124,29 @@ export function UserMenu({
             {l === active && <Check className="ml-auto size-4 text-accent-foreground" />}
           </DropdownMenuItem>
         ))}
+
+        <DropdownMenuSeparator />
+        <DropdownMenuLabel className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+          {t("theme")}
+        </DropdownMenuLabel>
+        {themeOptions.map((o) => {
+          const Icon = o.icon
+          return (
+            <DropdownMenuItem
+              key={o.value}
+              onSelect={(e) => {
+                e.preventDefault()
+                setTheme(o.value)
+              }}
+            >
+              <Icon className="size-4" />
+              <span>{o.label}</span>
+              {mounted && theme === o.value && (
+                <Check className="ml-auto size-4 text-accent-foreground" />
+              )}
+            </DropdownMenuItem>
+          )
+        })}
 
         <DropdownMenuSeparator />
         <DropdownMenuItem

@@ -32,6 +32,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { Truncate } from "@/components/ui/truncate"
 import { ReloadButton } from "@/components/ui/reload-button"
 
 // Gestão de membros de um grupo pelo admin global (adicionar, mudar papel, remover).
@@ -104,8 +105,8 @@ export function OrgMembers({ org }: { org: AdminOrg }) {
                 {org.members.map((m) => (
                   <TableRow key={m.userId}>
                     <TableCell>
-                      <div className="font-medium">{m.name ?? "—"}</div>
-                      <div className="text-xs text-muted-foreground">{m.email}</div>
+                      <Truncate className="font-medium">{m.name ?? "—"}</Truncate>
+                      <Truncate className="text-xs text-muted-foreground">{m.email}</Truncate>
                     </TableCell>
                     <TableCell>
                       <Select

@@ -22,6 +22,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { Truncate } from "@/components/ui/truncate"
 import { ReloadButton } from "@/components/ui/reload-button"
 import { SortableHead } from "@/components/ui/sortable-head"
 
@@ -131,7 +132,7 @@ export default function AdminUsersPage() {
                     <TableRow key={u.id}>
                       <TableCell className="font-medium">
                         <span className="flex items-center gap-2">
-                          {u.name ?? "—"}
+                          <Truncate>{u.name ?? "—"}</Truncate>
                           {u.isSystemAdmin && (
                             <Badge className="bg-amber-100 text-amber-800 hover:bg-amber-100">
                               {t("globalAdmin")}
@@ -139,8 +140,12 @@ export default function AdminUsersPage() {
                           )}
                         </span>
                       </TableCell>
-                      <TableCell className="text-muted-foreground">{u.email}</TableCell>
-                      <TableCell className="text-sm text-muted-foreground">{orgsText(u)}</TableCell>
+                      <TableCell className="text-muted-foreground">
+                        <Truncate>{u.email}</Truncate>
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">
+                        <Truncate>{orgsText(u)}</Truncate>
+                      </TableCell>
                       <TableCell>
                         <Badge variant="secondary">{statusLabel(u.status)}</Badge>
                       </TableCell>

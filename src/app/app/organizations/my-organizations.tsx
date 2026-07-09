@@ -20,6 +20,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { Truncate } from "@/components/ui/truncate"
 import { ReloadButton } from "@/components/ui/reload-button"
 
 export function MyOrganizations({
@@ -75,7 +76,9 @@ export function MyOrganizations({
             {list.length === 0 && <TableEmpty colSpan={3}>{t("empty")}</TableEmpty>}
             {list.map((m) => (
               <TableRow key={m.orgId}>
-                <TableCell className="font-medium">{m.orgName}</TableCell>
+                <TableCell className="font-medium">
+                  <Truncate>{m.orgName}</Truncate>
+                </TableCell>
                 <TableCell>
                   <Badge variant={m.role === "ORG_ADMIN" ? "default" : "secondary"}>
                     {m.role === "ORG_ADMIN" ? tc("roleAdmin") : tc("roleResearcher")}
