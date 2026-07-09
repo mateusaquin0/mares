@@ -226,7 +226,7 @@ export function AnimalsTable({
   )
 
   return (
-    <div className="space-y-3">
+    <div className="flex min-h-0 flex-1 flex-col gap-3">
       {/* Barra de filtros estruturados */}
       <div className="flex flex-wrap items-end gap-3 rounded-xl border bg-card p-3 shadow-card">
         {filterField(
@@ -400,9 +400,10 @@ export function AnimalsTable({
         )}
       </div>
 
-      <div className="overflow-hidden rounded-xl border bg-card shadow-card">
+      {/* Card da tabela ocupa o espaço restante; a rolagem fica contida no <div> interno. */}
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border bg-card shadow-card [&>div]:min-h-0 [&>div]:flex-1">
         <Table className={loading ? "opacity-60 transition-opacity" : undefined}>
-          <TableHeader>
+          <TableHeader className="sticky top-0 z-10 [&_th]:bg-accent">
             <TableRow>
               <TableHead className="w-10">
                 <Checkbox

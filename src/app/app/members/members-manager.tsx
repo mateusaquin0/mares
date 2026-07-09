@@ -283,7 +283,7 @@ export function MembersManager({
   const pending = members.filter((m) => m.status === "INVITED")
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6 p-8">
+    <div className="mx-auto flex h-full max-w-6xl flex-col gap-6 p-8">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-3xl font-semibold tracking-tight">{t("title")}</h1>
@@ -308,9 +308,9 @@ export function MembersManager({
       ) : members.length === 0 ? (
         <p className="text-sm text-muted-foreground">{t("empty")}</p>
       ) : (
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <div className="grid min-h-0 flex-1 grid-cols-1 gap-6 lg:grid-cols-3 lg:[grid-template-rows:minmax(0,1fr)]">
           {/* Tabela de membros (esquerda) */}
-          <div className="overflow-hidden rounded-xl border bg-card shadow-card lg:col-span-2">
+          <div className="flex min-h-0 flex-col overflow-hidden rounded-xl border bg-card shadow-card lg:col-span-2">
             <div className="border-b p-4">
               <div className="relative max-w-sm">
                 <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
@@ -322,122 +322,125 @@ export function MembersManager({
                 />
               </div>
             </div>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>{t("colName")}</TableHead>
-                  <TableHead>{t("colRole")}</TableHead>
-                  {canManage && (
-                    <TableHead className="w-16 text-right">
-                      <ReloadButton />
-                    </TableHead>
+            {/* Rolagem contida na tabela (o <div overflow-auto> interno recebe h-full). */}
+            <div className="min-h-0 flex-1 [&>div]:h-full">
+              <Table>
+                <TableHeader className="sticky top-0 z-10 [&_th]:bg-accent">
+                  <TableRow>
+                    <TableHead>{t("colName")}</TableHead>
+                    <TableHead>{t("colRole")}</TableHead>
+                    {canManage && (
+                      <TableHead className="w-16 text-right">
+                        <ReloadButton />
+                      </TableHead>
+                    )}
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filtered.length === 0 && (
+                    <TableEmpty colSpan={canManage ? 3 : 2}>{tc("noResults")}</TableEmpty>
                   )}
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filtered.length === 0 && (
-                  <TableEmpty colSpan={canManage ? 3 : 2}>{tc("noResults")}</TableEmpty>
-                )}
-                {filtered.map((m) => {
-                  const isSelf = m.userId === selfId
-                  const isAdmin = m.role === "ORG_ADMIN"
-                  return (
-                    <TableRow key={m.userId}>
-                      <TableCell>
-                        <div className="flex items-center gap-3">
-                          <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-accent text-xs font-semibold text-accent-foreground">
-                            {initials(m.name ?? m.email)}
-                          </span>
-                          <div className="min-w-0">
-                            <div className="flex items-center gap-2 font-medium">
-                              <Truncate className="max-w-full">{m.name ?? "—"}</Truncate>
-                              {m.status === "INVITED" && (
-                                <Badge variant="secondary">{tc("invited")}</Badge>
-                              )}
+                  {filtered.map((m) => {
+                    const isSelf = m.userId === selfId
+                    const isAdmin = m.role === "ORG_ADMIN"
+                    return (
+                      <TableRow key={m.userId}>
+                        <TableCell>
+                          <div className="flex items-center gap-3">
+                            <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-accent text-xs font-semibold text-accent-foreground">
+                              {initials(m.name ?? m.email)}
+                            </span>
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-2 font-medium">
+                                <Truncate className="max-w-full">{m.name ?? "—"}</Truncate>
+                                {m.status === "INVITED" && (
+                                  <Badge variant="secondary">{tc("invited")}</Badge>
+                                )}
+                              </div>
+                              <Truncate className="max-w-full text-xs text-muted-foreground">
+                                {m.email}
+                              </Truncate>
                             </div>
-                            <Truncate className="max-w-full text-xs text-muted-foreground">
-                              {m.email}
-                            </Truncate>
                           </div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        {isAdmin ? (
-                          <Badge className="border-transparent bg-primary text-primary-foreground hover:bg-primary/90">
-                            {tc("roleAdmin")}
-                          </Badge>
-                        ) : (
-                          <Badge variant="secondary">{tc("roleResearcher")}</Badge>
-                        )}
-                      </TableCell>
-                      {canManage && (
-                        <TableCell className="text-right">
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="size-8"
-                                disabled={busy === m.userId}
-                              >
-                                <MoreHorizontal className="size-4" />
-                                <span className="sr-only">{t("colActions")}</span>
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              {isSelf ? (
-                                <>
-                                  {isAdmin && (
-                                    // Último admin não pode se rebaixar (grupo ficaria sem admin):
-                                    // item desabilitado com dica; o backend também rejeita.
-                                    <DropdownMenuItem
-                                      disabled={adminCount <= 1}
-                                      title={adminCount <= 1 ? t("lastAdminHint") : undefined}
-                                      onSelect={() => setConfirm({ kind: "demote", member: m })}
-                                    >
-                                      {t("makeResearcher")}
-                                    </DropdownMenuItem>
-                                  )}
-                                  <DropdownMenuItem
-                                    className="text-destructive focus:text-destructive"
-                                    onSelect={() => setConfirm({ kind: "leave", member: m })}
-                                  >
-                                    {tc("leave")}
-                                  </DropdownMenuItem>
-                                </>
-                              ) : (
-                                <>
-                                  <DropdownMenuItem
-                                    // Não é possível alterar o papel de outro admin (visível,
-                                    // desabilitado). Promover pesquisador → admin passa por confirmação.
-                                    disabled={isAdmin}
-                                    onSelect={() => setConfirm({ kind: "promote", member: m })}
-                                  >
-                                    {isAdmin ? t("makeResearcher") : t("makeAdmin")}
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem
-                                    className="text-destructive focus:text-destructive"
-                                    // Não é possível remover outro admin.
-                                    disabled={isAdmin}
-                                    onSelect={() => setConfirm({ kind: "remove", member: m })}
-                                  >
-                                    {tc("remove")}
-                                  </DropdownMenuItem>
-                                </>
-                              )}
-                            </DropdownMenuContent>
-                          </DropdownMenu>
                         </TableCell>
-                      )}
-                    </TableRow>
-                  )
-                })}
-              </TableBody>
-            </Table>
+                        <TableCell>
+                          {isAdmin ? (
+                            <Badge className="border-transparent bg-primary text-primary-foreground hover:bg-primary/90">
+                              {tc("roleAdmin")}
+                            </Badge>
+                          ) : (
+                            <Badge variant="secondary">{tc("roleResearcher")}</Badge>
+                          )}
+                        </TableCell>
+                        {canManage && (
+                          <TableCell className="text-right">
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="size-8"
+                                  disabled={busy === m.userId}
+                                >
+                                  <MoreHorizontal className="size-4" />
+                                  <span className="sr-only">{t("colActions")}</span>
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                {isSelf ? (
+                                  <>
+                                    {isAdmin && (
+                                      // Último admin não pode se rebaixar (grupo ficaria sem admin):
+                                      // item desabilitado com dica; o backend também rejeita.
+                                      <DropdownMenuItem
+                                        disabled={adminCount <= 1}
+                                        title={adminCount <= 1 ? t("lastAdminHint") : undefined}
+                                        onSelect={() => setConfirm({ kind: "demote", member: m })}
+                                      >
+                                        {t("makeResearcher")}
+                                      </DropdownMenuItem>
+                                    )}
+                                    <DropdownMenuItem
+                                      className="text-destructive focus:text-destructive"
+                                      onSelect={() => setConfirm({ kind: "leave", member: m })}
+                                    >
+                                      {tc("leave")}
+                                    </DropdownMenuItem>
+                                  </>
+                                ) : (
+                                  <>
+                                    <DropdownMenuItem
+                                      // Não é possível alterar o papel de outro admin (visível,
+                                      // desabilitado). Promover pesquisador → admin passa por confirmação.
+                                      disabled={isAdmin}
+                                      onSelect={() => setConfirm({ kind: "promote", member: m })}
+                                    >
+                                      {isAdmin ? t("makeResearcher") : t("makeAdmin")}
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                      className="text-destructive focus:text-destructive"
+                                      // Não é possível remover outro admin.
+                                      disabled={isAdmin}
+                                      onSelect={() => setConfirm({ kind: "remove", member: m })}
+                                    >
+                                      {tc("remove")}
+                                    </DropdownMenuItem>
+                                  </>
+                                )}
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </TableCell>
+                        )}
+                      </TableRow>
+                    )
+                  })}
+                </TableBody>
+              </Table>
+            </div>
           </div>
 
-          {/* Coluna lateral: resumo + convites pendentes */}
-          <div className="space-y-6">
+          {/* Coluna lateral: resumo + convites pendentes (rola sozinha se ultrapassar a altura) */}
+          <div className="space-y-6 lg:min-h-0 lg:overflow-y-auto">
             <Card>
               <CardHeader className="pb-3">
                 <CardTitle className="flex items-center gap-2 text-base">

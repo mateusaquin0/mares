@@ -118,7 +118,7 @@ export function ResearchManager({ isOrgAdmin, selfId }: { isOrgAdmin: boolean; s
   }
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6 p-8">
+    <div className="mx-auto flex h-full max-w-6xl flex-col gap-6 p-8">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-3xl font-semibold tracking-tight">{t("title")}</h1>
@@ -133,7 +133,7 @@ export function ResearchManager({ isOrgAdmin, selfId }: { isOrgAdmin: boolean; s
       {loading ? (
         <TableSkeleton />
       ) : (
-        <div className="overflow-hidden rounded-xl border bg-card shadow-card">
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border bg-card shadow-card">
           <div className="border-b p-4">
             <div className="relative max-w-sm">
               <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
@@ -145,77 +145,80 @@ export function ResearchManager({ isOrgAdmin, selfId }: { isOrgAdmin: boolean; s
               />
             </div>
           </div>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>{t("colName")}</TableHead>
-                <TableHead>{t("colVisibility")}</TableHead>
-                <TableHead className="text-right">{t("colProtocols")}</TableHead>
-                <TableHead className="text-right">{t("colAnimals")}</TableHead>
-                <TableHead className="w-24 text-right">
-                  <ReloadButton />
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filtered.length === 0 && (
-                <TableEmpty colSpan={5}>
-                  {items.length === 0 ? t("empty") : tc("noResults")}
-                </TableEmpty>
-              )}
-              {filtered.map((r) => (
-                <TableRow
-                  key={r.id}
-                  onClick={() => router.push(`/app/research/${r.id}`)}
-                  className="cursor-pointer transition-colors hover:bg-muted/50"
-                >
-                  <TableCell className="font-medium">
-                    <Truncate className="max-w-[24rem]">{r.name}</Truncate>
-                  </TableCell>
-                  <TableCell>
-                    {r.isPublic ? (
-                      <Badge variant="public" className="gap-1">
-                        <Globe className="size-3" />
-                        {t("public")}
-                      </Badge>
-                    ) : (
-                      <Badge variant="private" className="gap-1">
-                        <Lock className="size-3" />
-                        {t("private")}
-                      </Badge>
-                    )}
-                  </TableCell>
-                  <TableCell className="text-right">{r._count.protocols}</TableCell>
-                  <TableCell className="text-right">{r._count.animals}</TableCell>
-                  <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="size-8">
-                          <MoreHorizontal className="size-4" />
-                          <span className="sr-only">{t("colActions")}</span>
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        {(isOrgAdmin || r.createdById === selfId) && (
-                          <DropdownMenuItem onSelect={() => openEdit(r)}>
-                            {tc("edit")}
-                          </DropdownMenuItem>
-                        )}
-                        {isOrgAdmin && (
-                          <DropdownMenuItem
-                            className="text-destructive focus:text-destructive"
-                            onSelect={() => setConfirm(r)}
-                          >
-                            {tc("delete")}
-                          </DropdownMenuItem>
-                        )}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
+          {/* Rolagem contida na tabela (o <div overflow-auto> interno recebe h-full). */}
+          <div className="min-h-0 flex-1 [&>div]:h-full">
+            <Table>
+              <TableHeader className="sticky top-0 z-10 [&_th]:bg-accent">
+                <TableRow>
+                  <TableHead>{t("colName")}</TableHead>
+                  <TableHead>{t("colVisibility")}</TableHead>
+                  <TableHead className="text-right">{t("colProtocols")}</TableHead>
+                  <TableHead className="text-right">{t("colAnimals")}</TableHead>
+                  <TableHead className="w-24 text-right">
+                    <ReloadButton />
+                  </TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {filtered.length === 0 && (
+                  <TableEmpty colSpan={5}>
+                    {items.length === 0 ? t("empty") : tc("noResults")}
+                  </TableEmpty>
+                )}
+                {filtered.map((r) => (
+                  <TableRow
+                    key={r.id}
+                    onClick={() => router.push(`/app/research/${r.id}`)}
+                    className="cursor-pointer transition-colors hover:bg-muted/50"
+                  >
+                    <TableCell className="font-medium">
+                      <Truncate className="max-w-[24rem]">{r.name}</Truncate>
+                    </TableCell>
+                    <TableCell>
+                      {r.isPublic ? (
+                        <Badge variant="public" className="gap-1">
+                          <Globe className="size-3" />
+                          {t("public")}
+                        </Badge>
+                      ) : (
+                        <Badge variant="private" className="gap-1">
+                          <Lock className="size-3" />
+                          {t("private")}
+                        </Badge>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-right">{r._count.protocols}</TableCell>
+                    <TableCell className="text-right">{r._count.animals}</TableCell>
+                    <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="size-8">
+                            <MoreHorizontal className="size-4" />
+                            <span className="sr-only">{t("colActions")}</span>
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          {(isOrgAdmin || r.createdById === selfId) && (
+                            <DropdownMenuItem onSelect={() => openEdit(r)}>
+                              {tc("edit")}
+                            </DropdownMenuItem>
+                          )}
+                          {isOrgAdmin && (
+                            <DropdownMenuItem
+                              className="text-destructive focus:text-destructive"
+                              onSelect={() => setConfirm(r)}
+                            >
+                              {tc("delete")}
+                            </DropdownMenuItem>
+                          )}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
         </div>
       )}
 
