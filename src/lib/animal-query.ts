@@ -80,6 +80,24 @@ export function parseAnimalListParams(sp: URLSearchParams): AnimalListFilters {
   }
 }
 
+// Busca textual da grade de resultados: mesmos campos do filtro client-side (results-manager).
+// Retorna null quando o termo é vazio (nenhum filtro a aplicar).
+export function animalResultsSearchWhere(q: string): Prisma.AnimalWhereInput | null {
+  const term = q.trim()
+  if (!term) return null
+  const contains = { contains: term, mode: "insensitive" as const }
+  return {
+    OR: [
+      { controlId: contains },
+      { simbaRecordNumber: contains },
+      { species: contains },
+      { municipality: contains },
+      { state: contains },
+      { strandingBeach: contains },
+    ],
+  }
+}
+
 // Cláusula base do escopo: organização + pesquisas visíveis (via primária ou participação).
 export function animalScopeWhere(orgId: string, scopeIds?: string[]): Prisma.AnimalWhereInput {
   const where: Prisma.AnimalWhereInput = { research: { orgId } }

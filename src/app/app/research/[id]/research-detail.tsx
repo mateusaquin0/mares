@@ -9,7 +9,6 @@ import { toast } from "sonner"
 import {
   ArrowLeft,
   Ban,
-  Download,
   MoreHorizontal,
   Pencil,
   Plus,
@@ -231,24 +230,6 @@ export function ResearchDetail({
           </p>
         </div>
         <div className="flex items-center gap-2">
-          {research._count.animals > 0 && (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline">
-                  <Download className="size-4" />
-                  {t("export")}
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem asChild>
-                  <a href={`/api/research/${id}/export/darwin-core`}>{t("exportDarwinCore")}</a>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <a href={`/api/research/${id}/export/xlsx`}>{t("exportXlsx")}</a>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          )}
           {canEditContent && (
             <Button variant="outline" onClick={openEdit}>
               <Pencil className="size-4" />
