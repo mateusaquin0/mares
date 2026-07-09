@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react"
 import Link from "next/link"
 import { useLocale, useTranslations } from "next-intl"
-import { Search, X } from "lucide-react"
+import { Download, Search, X } from "lucide-react"
 
 import { pathogenName, txt } from "@/lib/catalog-i18n"
 import { formatDateOnly } from "@/lib/date"
@@ -15,7 +15,15 @@ import { ResultDot } from "@/components/analysis-cells"
 import { Truncate } from "@/components/ui/truncate"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
+import { MultiSelect } from "@/components/ui/multi-select"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { TableSkeleton } from "@/components/ui/skeleton"
 import { TablePagination } from "@/components/ui/table-pagination"
 import {
@@ -75,6 +83,18 @@ export function ResultsManager() {
   const [pageSize, setPageSize] = useState(20)
   const [showInactive, setShowInactive] = useState(false)
 
+  // Colunas opcionais (sexo/fase, local, data) visíveis por padrão; o multiselect permite ocultá-las.
+  const OPTIONAL_COLUMNS = ["sexStage", "location", "date"] as const
+  const [visibleColumns, setVisibleColumns] = useState<string[]>([...OPTIONAL_COLUMNS])
+  const showSexStage = visibleColumns.includes("sexStage")
+  const showLocation = visibleColumns.includes("location")
+  const showDate = visibleColumns.includes("date")
+  const columnOptions = [
+    { value: "sexStage", label: t("colSexStage") },
+    { value: "location", label: t("colLocation") },
+    { value: "date", label: t("colDate") },
+  ]
+
   const hasInactive = (data?.protocol ?? []).some((p) => p.status === "INACTIVE")
 
   // Exames disponíveis (patógeno × tipo de exame), na ordem do protocolo. Combinações inativas
@@ -133,6 +153,15 @@ export function ResultsManager() {
       .map(([id, label]) => ({ id, label }))
       .sort((a, b) => a.label.localeCompare(b.label, locale))
   }, [data, test, locale])
+
+  // Órgãos visíveis: multiselect que oculta colunas de órgão. Ao trocar de exame/pesquisa (o
+  // conjunto de órgãos muda), volta a exibir todos. Mantém sempre ao menos um ativo.
+  const [visibleOrganIds, setVisibleOrganIds] = useState<string[]>([])
+  useEffect(() => {
+    setVisibleOrganIds(organs.map((o) => o.id))
+  }, [organs])
+  const visibleOrgans = organs.filter((o) => visibleOrganIds.includes(o.id))
+  const organOptions = organs.map((o) => ({ value: o.id, label: o.label }))
 
   const sexLabel = (s: string | null) => {
     const o = SEX_OPTIONS.find((x) => x.value === s)
@@ -197,11 +226,36 @@ export function ResultsManager() {
   // da <table>, permitindo puxar a grade horizontalmente com o mouse.
   const attachDrag = useDragScroll<HTMLTableElement>((table) => table.parentElement)
 
+  // Exportação: sempre exporta todos os resultados da pesquisa, respeitando o filtro de busca.
+  const exportHref = (fmt: "darwin-core" | "xlsx") =>
+    `/api/research/${researchId}/export/${fmt}${search ? `?q=${encodeURIComponent(search)}` : ""}`
+  const canExport = !!researchId && (data?.animals.length ?? 0) > 0
+
   return (
-    <div className="mx-auto max-w-7xl space-y-6 p-8">
-      <div>
-        <h1 className="text-3xl font-semibold tracking-tight">{t("title")}</h1>
-        <p className="mt-1 text-sm text-muted-foreground">{t("subtitle")}</p>
+    <div className="mx-auto flex h-full max-w-7xl flex-col gap-6 p-8">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-semibold tracking-tight">{t("title")}</h1>
+          <p className="mt-1 text-sm text-muted-foreground">{t("subtitle")}</p>
+        </div>
+        {canExport && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline">
+                <Download className="size-4" />
+                {t("export")}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem asChild>
+                <a href={exportHref("darwin-core")}>{t("exportDarwinCore")}</a>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <a href={exportHref("xlsx")}>{t("exportXlsx")}</a>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
       </div>
 
       {/* Seletores de pesquisa + exame, lado a lado */}
@@ -267,7 +321,31 @@ export function ResultsManager() {
                   className="h-9 pl-9"
                 />
               </div>
-              <Badge variant="secondary">{t("animalCount", { count: animals.length })}</Badge>
+              <MultiSelect
+                options={columnOptions}
+                value={visibleColumns}
+                onChange={setVisibleColumns}
+                placeholder={t("columns")}
+                emptyText={t("columnsEmpty")}
+                summary={(n) => `${t("columns")} · ${t("selectedCount", { count: n })}`}
+                searchable={false}
+                triggerClassName="h-9 w-auto min-w-40"
+              />
+              {organOptions.length > 0 && (
+                <MultiSelect
+                  options={organOptions}
+                  value={visibleOrganIds}
+                  onChange={(v) => {
+                    // Mantém ao menos um órgão visível: ignora a tentativa de ocultar o último.
+                    if (v.length > 0) setVisibleOrganIds(v)
+                  }}
+                  placeholder={t("organs")}
+                  searchPlaceholder={t("searchOrgan")}
+                  emptyText={t("columnsEmpty")}
+                  summary={(n) => `${t("organs")} · ${t("selectedCount", { count: n })}`}
+                  triggerClassName="h-9 w-auto min-w-40"
+                />
+              )}
               {hasInactive && (
                 <label className="flex items-center gap-2 text-sm text-muted-foreground">
                   <Checkbox
@@ -289,36 +367,41 @@ export function ResultsManager() {
               )}
             </div>
 
-            {/* Legenda */}
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-muted-foreground">
-              <span className="flex items-center gap-1.5">
-                <ResultDot result="POSITIVO" /> {ta("resultPositive")}
-              </span>
-              <span className="flex items-center gap-1.5">
-                <ResultDot result="NEGATIVO" /> {ta("resultNegative")}
-              </span>
-              <span className="flex items-center gap-1.5">
-                <ResultDot result="INCONCLUSIVO" /> {ta("resultInconclusive")}
-              </span>
-              <span className="flex items-center gap-1.5">
-                <ResultDot result={null} /> {ta("resultUntested")}
-              </span>
+            {/* Legenda + contagem de animais (legenda à esquerda, badge à direita) */}
+            <div className="flex w-full flex-wrap items-center justify-between gap-x-4 gap-y-1.5">
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-muted-foreground">
+                <span className="flex items-center gap-1.5">
+                  <ResultDot result="POSITIVO" /> {ta("resultPositive")}
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <ResultDot result="NEGATIVO" /> {ta("resultNegative")}
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <ResultDot result="INCONCLUSIVO" /> {ta("resultInconclusive")}
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <ResultDot result={null} /> {ta("resultUntested")}
+                </span>
+              </div>
+              <Badge variant="secondary">{t("animalCount", { count: animals.length })}</Badge>
             </div>
           </div>
 
           {animals.length === 0 ? (
             <p className="text-sm text-muted-foreground">{t("noMatch")}</p>
           ) : (
-            <div className="rounded-lg border">
+            // Wrapper ocupa a altura restante; a rolagem (vertical e horizontal) fica contida no
+            // <div overflow-auto> interno da tabela (via [&>div]:h-full), sem rolar a página.
+            <div className="min-h-0 flex-1 overflow-hidden rounded-lg border [&>div]:h-full">
               <Table ref={attachDrag}>
-                <TableHeader>
+                <TableHeader className="sticky top-0 z-10 [&_th]:bg-accent">
                   <TableRow>
                     <TableHead>{t("colId")}</TableHead>
                     <TableHead>{t("colSpecies")}</TableHead>
-                    <TableHead>{t("colSexStage")}</TableHead>
-                    <TableHead>{t("colLocation")}</TableHead>
-                    <TableHead>{t("colDate")}</TableHead>
-                    {organs.map((o) => (
+                    {showSexStage && <TableHead>{t("colSexStage")}</TableHead>}
+                    {showLocation && <TableHead>{t("colLocation")}</TableHead>}
+                    {showDate && <TableHead>{t("colDate")}</TableHead>}
+                    {visibleOrgans.map((o) => (
                       <TableHead key={o.id} className="text-center">
                         {o.label}
                       </TableHead>
@@ -346,22 +429,29 @@ export function ResultsManager() {
                       <TableCell className="align-top">
                         <Truncate className="italic">{a.species}</Truncate>
                       </TableCell>
-                      <TableCell className="align-top text-sm text-muted-foreground">
-                        <Truncate>
-                          {[sexLabel(a.sex), stageLabel(a.lifeStage)].filter(Boolean).join(" / ") ||
-                            "—"}
-                        </Truncate>
-                      </TableCell>
-                      <TableCell className="align-top text-sm text-muted-foreground">
-                        <Truncate>{locationOf(a) || "—"}</Truncate>
-                        {a.strandingBeach && (
-                          <Truncate className="mt-0.5 text-xs">{a.strandingBeach}</Truncate>
-                        )}
-                      </TableCell>
-                      <TableCell className="align-top whitespace-nowrap text-sm text-muted-foreground">
-                        {formatDateOnly(a.eventDate, locale) || "—"}
-                      </TableCell>
-                      {organs.map((o) => {
+                      {showSexStage && (
+                        <TableCell className="align-top text-sm text-muted-foreground">
+                          <Truncate>
+                            {[sexLabel(a.sex), stageLabel(a.lifeStage)]
+                              .filter(Boolean)
+                              .join(" / ") || "—"}
+                          </Truncate>
+                        </TableCell>
+                      )}
+                      {showLocation && (
+                        <TableCell className="align-top text-sm text-muted-foreground">
+                          <Truncate>{locationOf(a) || "—"}</Truncate>
+                          {a.strandingBeach && (
+                            <Truncate className="mt-0.5 text-xs">{a.strandingBeach}</Truncate>
+                          )}
+                        </TableCell>
+                      )}
+                      {showDate && (
+                        <TableCell className="align-top whitespace-nowrap text-sm text-muted-foreground">
+                          {formatDateOnly(a.eventDate, locale) || "—"}
+                        </TableCell>
+                      )}
+                      {visibleOrgans.map((o) => {
                         const { hasSample, result } = cellOf(a, o.id)
                         return (
                           <TableCell key={o.id} className="text-center align-middle">
