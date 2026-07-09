@@ -121,25 +121,28 @@ export function SamplesTab({
     sampleType?: boolean
   }>({})
   const [confirm, setConfirm] = useState<Sample | null>(null)
+  // Escotilha de escape: mostrar todos os órgãos (biobanco/coleta oportunista além do protocolo).
+  const [showAllOrgans, setShowAllOrgans] = useState(false)
   const multiResearch = researches.length > 1
 
-  // Órgãos oferecidos no formulário: apenas os que estão no protocolo da pesquisa dona da
+  // Órgãos oferecidos no formulário: por padrão, apenas os do protocolo da pesquisa dona da
   // amostra. O detalhe da pesquisa (com `protocols`) é buscado só quando o diálogo está aberto.
   const detailQ = useResearch(form.researchId, !!dialog && !!form.researchId)
+  const hasProtocol = (detailQ.data?.protocols?.length ?? 0) > 0
+  const filteredByProtocol = hasProtocol && !showAllOrgans
   const organChoices = useMemo(() => {
     const protocolOrgans = new Map(
       (detailQ.data?.protocols ?? []).map((p) => [p.organ.id, p.organ] as const),
     )
-    // Pesquisa sem protocolo definido → não há por que filtrar; oferece todos.
-    const base = protocolOrgans.size > 0 ? [...protocolOrgans.values()] : organs
+    // Filtra pelo protocolo, salvo quando o usuário optou por ver todos ou não há protocolo.
+    const base = filteredByProtocol ? [...protocolOrgans.values()] : organs
     // Preserva o órgão já selecionado (edição) mesmo que ele tenha saído do protocolo.
     if (form.organId && !base.some((o) => o.id === form.organId)) {
       const current = organs.find((o) => o.id === form.organId)
       if (current) return [...base, current]
     }
     return base
-  }, [detailQ.data, organs, form.organId])
-  const filteredByProtocol = (detailQ.data?.protocols?.length ?? 0) > 0
+  }, [detailQ.data, organs, form.organId, filteredByProtocol])
 
   // ── Filtros da listagem ──
   const [query, setQuery] = useState("")
@@ -158,6 +161,7 @@ export function SamplesTab({
 
   function openCreate() {
     setErrors({})
+    setShowAllOrgans(false)
     // Amostra nova pertence à pesquisa primária por padrão (researches[0]); o seletor só
     // aparece quando há mais de uma pesquisa no indivíduo.
     const init = { ...emptyForm, researchId: researches[0]?.id ?? "" }
@@ -167,6 +171,7 @@ export function SamplesTab({
   }
   function openEdit(row: Sample) {
     setErrors({})
+    setShowAllOrgans(false)
     const init: FormState = {
       researchId: row.research.id,
       organId: row.organ.id,
@@ -459,8 +464,11 @@ export function SamplesTab({
                 <Label htmlFor="sample-research">{t("research")}</Label>
                 <Select
                   value={form.researchId}
-                  // Trocar a pesquisa reinicia o órgão (o protocolo — e seus órgãos — muda).
-                  onValueChange={(v) => set({ researchId: v, organId: "" })}
+                  // Trocar a pesquisa reinicia o órgão e reaplica o filtro do protocolo.
+                  onValueChange={(v) => {
+                    set({ researchId: v, organId: "" })
+                    setShowAllOrgans(false)
+                  }}
                   disabled={dialog?.mode === "edit"}
                 >
                   <SelectTrigger id="sample-research">
@@ -490,8 +498,18 @@ export function SamplesTab({
                   searchPlaceholder={tc("search")}
                   emptyText={filteredByProtocol ? t("organProtocolEmpty") : tc("noResults")}
                 />
-                {filteredByProtocol && (
-                  <p className="text-xs text-muted-foreground">{t("organProtocolHint")}</p>
+                {/* Escotilha: quando há protocolo, permite alternar entre filtrado e todos. */}
+                {hasProtocol && (
+                  <p className="text-xs text-muted-foreground">
+                    {filteredByProtocol ? t("organProtocolHint") : t("organAllHint")}{" "}
+                    <button
+                      type="button"
+                      className="font-medium text-accent-foreground underline underline-offset-2"
+                      onClick={() => setShowAllOrgans((v) => !v)}
+                    >
+                      {filteredByProtocol ? t("organShowAll") : t("organShowProtocol")}
+                    </button>
+                  </p>
                 )}
                 {errors.organId && <p className="text-xs text-destructive">{tval("required")}</p>}
               </div>
