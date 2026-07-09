@@ -35,7 +35,7 @@ export function TutorialContent() {
         <p className="mt-1 text-sm text-muted-foreground">{t("subtitle")}</p>
       </div>
 
-      <Accordion type="multiple" defaultValue={["overview"]} className="space-y-2">
+      <Accordion type="single" collapsible defaultValue="overview" className="space-y-2">
         {SECTIONS.map((id) => {
           const points = t.raw(`sections.${id}.points`) as string[]
           return (
