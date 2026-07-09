@@ -9,7 +9,19 @@ import { apiError, unauthorized } from "@/lib/api"
 import { getDashboardData, type DashboardData } from "@/lib/dashboard"
 
 const EMPTY: DashboardData = {
-  totals: { animals: 0, samples: 0, analyses: 0, positive: 0, positivity: 0 },
+  totals: {
+    animals: 0,
+    samples: 0,
+    testedAnimals: 0,
+    testedSamples: 0,
+    analyses: 0,
+    positive: 0,
+    positiveAnimals: 0,
+    positiveSamples: 0,
+    positivity: 0,
+    positivityByAnimal: 0,
+    positivityBySample: 0,
+  },
   species: [],
   positivityByExam: [],
   timeline: [],
@@ -40,6 +52,7 @@ export async function GET(req: NextRequest) {
     const data = await getDashboardData(orgId, locale, {
       researchId,
       researchIds: scope.all ? undefined : scope.ids,
+      pathogenId: sp.get("pathogenId") ?? undefined,
       from: sp.get("from") ?? undefined,
       to: sp.get("to") ?? undefined,
     })

@@ -11,6 +11,9 @@ export type DashboardFilters = {
   // Escopo de visibilidade por pesquisa (undefined = admin, sem restrição). Quando presente,
   // o dashboard agrega apenas os animais cuja pesquisa primária está no conjunto.
   researchIds?: string[]
+  // Patógeno: quando presente, restringe TODO o dashboard aos dados daquele patógeno —
+  // população = animais com ≥1 análise do patógeno; métricas de análise filtradas por ele.
+  pathogenId?: string
   from?: string // ISO date (YYYY-MM-DD), inclusivo
   to?: string // ISO date (YYYY-MM-DD), inclusivo
 }
@@ -19,14 +22,26 @@ export type DashboardData = {
   totals: {
     animals: number
     samples: number
+    testedAnimals: number // animais com ≥1 análise com resultado (A1)
+    testedSamples: number // amostras com ≥1 análise com resultado (A2)
     analyses: number
     positive: number
-    positivity: number
+    positiveAnimals: number // animais com ≥1 análise POSITIVO (A2)
+    positiveSamples: number // amostras com ≥1 análise POSITIVO (A2)
+    positivity: number // padrão: por análise
+    positivityByAnimal: number // A2
+    positivityBySample: number // A2
   }
   species: { name: string; count: number }[]
   positivityByExam: { label: string; total: number; positives: number; pct: number }[]
   timeline: { month: string; count: number }[] // YYYY-MM → nº de encalhes (por eventDate)
   heat: [number, number][] // [lat, lon] dos animais com coordenadas
+}
+
+// Taxa de positividade percentual, com guarda de divisão por zero (denominador 0 → 0).
+// Compartilhada pelos três modos de cálculo (por análise, animal, amostra — A2).
+export function positivityRate(positives: number, denominator: number): number {
+  return denominator > 0 ? (positives / denominator) * 100 : 0
 }
 
 // Monta o filtro Prisma dos animais a partir do escopo (org) + filtros globais.
@@ -48,6 +63,11 @@ function animalWhere(orgId: string, f: DashboardFilters): Prisma.AnimalWhereInpu
       ...(f.to ? { lte: new Date(`${f.to}T23:59:59.999Z`) } : {}),
     }
   }
+  // Filtro por patógeno: restringe a população aos animais com ≥1 análise do patógeno.
+  // (As métricas de análise recebem o mesmo filtro no nível da análise — ver getDashboardData.)
+  if (f.pathogenId) {
+    where.samples = { some: { analyses: { some: { pathogenId: f.pathogenId } } } }
+  }
   return where
 }
 
@@ -58,12 +78,19 @@ export async function getDashboardData(
 ): Promise<DashboardData> {
   const aWhere = animalWhere(orgId, filters)
   const analysisScope = { sample: { animal: aWhere } }
+  // Restrição por patógeno aplicada no nível da análise (numeradores/denominadores por
+  // análise, e o `some` interno das contagens por animal/amostra).
+  const pWhere = filters.pathogenId ? { pathogenId: filters.pathogenId } : {}
 
   const [
     animals,
     samples,
+    testedAnimals,
+    testedSamples,
     analyses,
     positive,
+    positiveAnimals,
+    positiveSamples,
     speciesGroups,
     examTotalsRaw,
     examPositivesRaw,
@@ -72,8 +99,28 @@ export async function getDashboardData(
   ] = await Promise.all([
     prisma.animal.count({ where: aWhere }),
     prisma.sample.count({ where: { animal: aWhere } }),
-    prisma.analysis.count({ where: { result: { not: null }, ...analysisScope } }),
-    prisma.analysis.count({ where: { result: "POSITIVO", ...analysisScope } }),
+    // Animais/amostras "testados" = com ≥1 análise com resultado preenchido (A1/A2).
+    prisma.animal.count({
+      where: {
+        ...aWhere,
+        samples: { some: { analyses: { some: { result: { not: null }, ...pWhere } } } },
+      },
+    }),
+    prisma.sample.count({
+      where: { animal: aWhere, analyses: { some: { result: { not: null }, ...pWhere } } },
+    }),
+    prisma.analysis.count({ where: { result: { not: null }, ...pWhere, ...analysisScope } }),
+    prisma.analysis.count({ where: { result: "POSITIVO", ...pWhere, ...analysisScope } }),
+    // Animais/amostras com ≥1 análise POSITIVO (numeradores dos modos por animal/amostra, A2).
+    prisma.animal.count({
+      where: {
+        ...aWhere,
+        samples: { some: { analyses: { some: { result: "POSITIVO", ...pWhere } } } },
+      },
+    }),
+    prisma.sample.count({
+      where: { animal: aWhere, analyses: { some: { result: "POSITIVO", ...pWhere } } },
+    }),
     prisma.animal.groupBy({
       by: ["species"],
       where: aWhere,
@@ -83,12 +130,12 @@ export async function getDashboardData(
     }),
     prisma.analysis.groupBy({
       by: ["examTypeId"],
-      where: { result: { not: null }, ...analysisScope },
+      where: { result: { not: null }, ...pWhere, ...analysisScope },
       _count: { _all: true },
     }),
     prisma.analysis.groupBy({
       by: ["examTypeId"],
-      where: { result: "POSITIVO", ...analysisScope },
+      where: { result: "POSITIVO", ...pWhere, ...analysisScope },
       _count: { _all: true },
     }),
     prisma.animal.findMany({
@@ -151,9 +198,15 @@ export async function getDashboardData(
     totals: {
       animals,
       samples,
+      testedAnimals,
+      testedSamples,
       analyses,
       positive,
-      positivity: analyses > 0 ? (positive / analyses) * 100 : 0,
+      positiveAnimals,
+      positiveSamples,
+      positivity: positivityRate(positive, analyses),
+      positivityByAnimal: positivityRate(positiveAnimals, testedAnimals),
+      positivityBySample: positivityRate(positiveSamples, testedSamples),
     },
     species,
     positivityByExam,
