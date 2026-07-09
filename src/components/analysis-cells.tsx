@@ -47,15 +47,18 @@ export function ResultDot({
 export function ResultSelect({
   value,
   onChange,
+  disabled = false,
 }: {
   value: ResultValue | null
   onChange: (v: ResultValue | null) => void
+  disabled?: boolean
 }) {
   const t = useTranslations("analyses")
   return (
     <Select
       value={value ?? UNTESTED}
       onValueChange={(v) => onChange(v === UNTESTED ? null : (v as ResultValue))}
+      disabled={disabled}
     >
       <SelectTrigger className="h-8">
         <SelectValue />
@@ -93,11 +96,13 @@ export function MeasureInput({
   placeholder,
   unit,
   onCommit,
+  disabled = false,
 }: {
   value: number | null
   placeholder: string
   unit: string | null
   onCommit: (n: number | null) => void
+  disabled?: boolean
 }) {
   const input = (
     <Input
@@ -108,6 +113,7 @@ export function MeasureInput({
       placeholder={placeholder}
       title={placeholder}
       className="h-8"
+      disabled={disabled}
       onBlur={(e) => {
         const raw = e.target.value.trim()
         onCommit(raw === "" ? null : Number(raw))
@@ -127,10 +133,12 @@ export function NotesInput({
   value,
   placeholder,
   onCommit,
+  disabled = false,
 }: {
   value: string | null
   placeholder: string
   onCommit: (s: string | null) => void
+  disabled?: boolean
 }) {
   return (
     <Input
@@ -138,6 +146,7 @@ export function NotesInput({
       defaultValue={value ?? ""}
       placeholder={placeholder}
       className="h-8"
+      disabled={disabled}
       onBlur={(e) => {
         const raw = e.target.value.trim()
         onCommit(raw === "" ? null : raw)

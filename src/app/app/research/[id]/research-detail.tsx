@@ -6,13 +6,24 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useLocale, useTranslations } from "next-intl"
 import { toast } from "sonner"
-import { ArrowLeft, Download, Pencil, Plus, Search, Trash2 } from "lucide-react"
+import {
+  ArrowLeft,
+  Ban,
+  Download,
+  MoreHorizontal,
+  Pencil,
+  Plus,
+  RotateCcw,
+  Search,
+  Trash2,
+} from "lucide-react"
 
 import { updateResearchSchema, type UpdateResearchData } from "@/schemas/research.schema"
 import {
   useResearch,
   useUpdateResearch,
   useAddProtocol,
+  useSetProtocolStatus,
   useRemoveProtocol,
 } from "@/hooks/use-research"
 import { useOrgans, usePathogens, useExamTypes } from "@/hooks/use-catalog"
@@ -58,8 +69,10 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { ConfirmDialog } from "@/components/confirm-dialog"
 
 export function ResearchDetail({
   id,
@@ -83,6 +96,7 @@ export function ResearchDetail({
   const examTypesQ = useExamTypes(isOrgAdmin)
   const updateM = useUpdateResearch(id)
   const addM = useAddProtocol(id)
+  const statusM = useSetProtocolStatus(id)
   const removeM = useRemoveProtocol(id)
 
   const [organId, setOrganId] = useState<string>()
@@ -90,6 +104,9 @@ export function ResearchDetail({
   const [examTypeId, setExamTypeId] = useState<string>()
   const [editOpen, setEditOpen] = useState(false)
   const [protocolQuery, setProtocolQuery] = useState("")
+  const [showInactive, setShowInactive] = useState(false)
+  // Confirmação destrutiva/desativação disparada pelo menu de ações de uma linha.
+  const [confirm, setConfirm] = useState<{ id: string; mode: "delete" | "deactivate" } | null>(null)
 
   const research = researchQ.data
   const canEditContent = isOrgAdmin || research?.createdById === selfId
@@ -104,8 +121,12 @@ export function ResearchDetail({
     </Link>
   )
 
+  const allProtocols = research?.protocols ?? []
+  const hasInactive = allProtocols.some((p) => p.status === "INACTIVE")
   const protocolSearch = protocolQuery.trim().toLowerCase()
-  const filteredProtocols = (research?.protocols ?? []).filter((p) => {
+  const filteredProtocols = allProtocols.filter((p) => {
+    // Inativos ficam ocultos por padrão; o toggle "Mostrar inativos" os revela (em leitura).
+    if (p.status === "INACTIVE" && !showInactive) return false
     if (!protocolSearch) return true
     return (
       txt(locale, p.organ.name).toLowerCase().includes(protocolSearch) ||
@@ -159,6 +180,15 @@ export function ResearchDetail({
       toast.success(tp("removed"))
     } catch (err) {
       toast.error(tp("removeError"), { description: em(err) })
+    }
+  }
+
+  async function setStatus(entryId: string, status: "ACTIVE" | "INACTIVE") {
+    try {
+      await statusM.mutateAsync({ entryId, status })
+      toast.success(status === "INACTIVE" ? tp("deactivated") : tp("reactivated"))
+    } catch (err) {
+      toast.error(tp("statusError"), { description: em(err) })
     }
   }
 
@@ -280,14 +310,25 @@ export function ResearchDetail({
               </div>
             )}
 
-            <div className="relative max-w-sm">
-              <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                value={protocolQuery}
-                onChange={(e) => setProtocolQuery(e.target.value)}
-                placeholder={tp("searchPlaceholder")}
-                className="pl-9"
-              />
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="relative max-w-sm flex-1">
+                <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  value={protocolQuery}
+                  onChange={(e) => setProtocolQuery(e.target.value)}
+                  placeholder={tp("searchPlaceholder")}
+                  className="pl-9"
+                />
+              </div>
+              {hasInactive && (
+                <label className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Checkbox
+                    checked={showInactive}
+                    onCheckedChange={(v) => setShowInactive(v === true)}
+                  />
+                  {tp("showInactive")}
+                </label>
+              )}
             </div>
             <div className="overflow-hidden rounded-lg border">
               <Table>
@@ -309,32 +350,67 @@ export function ResearchDetail({
                       {research.protocols.length === 0 ? tp("empty") : tc("noResults")}
                     </TableEmpty>
                   )}
-                  {filteredProtocols.map((p) => (
-                    <TableRow key={p.id}>
-                      <TableCell>
-                        <Truncate>{txt(locale, p.examType.name)}</Truncate>
-                      </TableCell>
-                      <TableCell>
-                        <Truncate>{pathogenName(locale, p.pathogen)}</Truncate>
-                      </TableCell>
-                      <TableCell>
-                        <Truncate>{txt(locale, p.organ.name)}</Truncate>
-                      </TableCell>
-                      {isOrgAdmin && (
-                        <TableCell className="text-right">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="size-8 text-destructive"
-                            onClick={() => removeEntry(p.id)}
-                            aria-label={tc("remove")}
-                          >
-                            <Trash2 className="size-4" />
-                          </Button>
+                  {filteredProtocols.map((p) => {
+                    const inactive = p.status === "INACTIVE"
+                    return (
+                      <TableRow
+                        key={p.id}
+                        className={inactive ? "text-muted-foreground" : undefined}
+                      >
+                        <TableCell>
+                          <span className="flex items-center gap-2">
+                            <Truncate>{txt(locale, p.examType.name)}</Truncate>
+                            {inactive && <Badge variant="secondary">{tp("inactive")}</Badge>}
+                          </span>
                         </TableCell>
-                      )}
-                    </TableRow>
-                  ))}
+                        <TableCell>
+                          <Truncate>{pathogenName(locale, p.pathogen)}</Truncate>
+                        </TableCell>
+                        <TableCell>
+                          <Truncate>{txt(locale, p.organ.name)}</Truncate>
+                        </TableCell>
+                        {isOrgAdmin && (
+                          <TableCell className="text-right">
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="size-8"
+                                  aria-label={tp("actions")}
+                                >
+                                  <MoreHorizontal className="size-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                {inactive ? (
+                                  <DropdownMenuItem onClick={() => setStatus(p.id, "ACTIVE")}>
+                                    <RotateCcw className="size-4" />
+                                    {tp("reactivate")}
+                                  </DropdownMenuItem>
+                                ) : (
+                                  <DropdownMenuItem
+                                    onClick={() => setConfirm({ id: p.id, mode: "deactivate" })}
+                                  >
+                                    <Ban className="size-4" />
+                                    {tp("deactivate")}
+                                  </DropdownMenuItem>
+                                )}
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem
+                                  className="text-destructive focus:text-destructive"
+                                  onClick={() => setConfirm({ id: p.id, mode: "delete" })}
+                                >
+                                  <Trash2 className="size-4" />
+                                  {tp("delete")}
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </TableCell>
+                        )}
+                      </TableRow>
+                    )
+                  })}
                 </TableBody>
               </Table>
             </div>
@@ -347,6 +423,20 @@ export function ResearchDetail({
           </AccordionContent>
         </AccordionItem>
       </Accordion>
+
+      <ConfirmDialog
+        open={confirm !== null}
+        onOpenChange={(o) => !o && setConfirm(null)}
+        destructive={confirm?.mode === "delete"}
+        title={confirm?.mode === "delete" ? tp("deleteTitle") : tp("deactivateTitle")}
+        description={confirm?.mode === "delete" ? tp("deleteDesc") : tp("deactivateDesc")}
+        confirmLabel={confirm?.mode === "delete" ? tp("delete") : tp("deactivate")}
+        onConfirm={async () => {
+          if (!confirm) return
+          if (confirm.mode === "delete") await removeEntry(confirm.id)
+          else await setStatus(confirm.id, "INACTIVE")
+        }}
+      />
 
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
         <DialogContent dirty={editForm.formState.isDirty}>
