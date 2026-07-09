@@ -697,6 +697,8 @@
     "researchLockedHint": "Research can't be changed after the sample is created.",
     "organ": "Organ",
     "organPlaceholder": "Select organ",
+    "organProtocolHint": "Only organs in the research protocol.",
+    "organProtocolEmpty": "No organs in this research's protocol.",
     "identification": "Identification",
     "identificationPlaceholder": "e.g. AM-001",
     "sampleType": "Sample type",

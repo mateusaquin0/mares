@@ -1,6 +1,6 @@
 "use client"
 
-import { useRef, useState, type FormEvent } from "react"
+import { useMemo, useRef, useState, type FormEvent } from "react"
 import { useLocale, useTranslations } from "next-intl"
 import { toast } from "sonner"
 import { MoreHorizontal, Plus, Search, X } from "lucide-react"
@@ -12,6 +12,7 @@ import { useErrorMessage } from "@/lib/use-error-message"
 import { type SamplePayload } from "@/services/samples"
 import { useSamples, useCreateSample, useUpdateSample, useDeleteSample } from "@/hooks/use-samples"
 import { useOrgans } from "@/hooks/use-catalog"
+import { useResearch } from "@/hooks/use-research"
 import type { Sample, SampleStatus } from "@/types/sample"
 import { Button } from "@/components/ui/button"
 import { Combobox } from "@/components/ui/combobox"
@@ -121,6 +122,24 @@ export function SamplesTab({
   }>({})
   const [confirm, setConfirm] = useState<Sample | null>(null)
   const multiResearch = researches.length > 1
+
+  // Órgãos oferecidos no formulário: apenas os que estão no protocolo da pesquisa dona da
+  // amostra. O detalhe da pesquisa (com `protocols`) é buscado só quando o diálogo está aberto.
+  const detailQ = useResearch(form.researchId, !!dialog && !!form.researchId)
+  const organChoices = useMemo(() => {
+    const protocolOrgans = new Map(
+      (detailQ.data?.protocols ?? []).map((p) => [p.organ.id, p.organ] as const),
+    )
+    // Pesquisa sem protocolo definido → não há por que filtrar; oferece todos.
+    const base = protocolOrgans.size > 0 ? [...protocolOrgans.values()] : organs
+    // Preserva o órgão já selecionado (edição) mesmo que ele tenha saído do protocolo.
+    if (form.organId && !base.some((o) => o.id === form.organId)) {
+      const current = organs.find((o) => o.id === form.organId)
+      if (current) return [...base, current]
+    }
+    return base
+  }, [detailQ.data, organs, form.organId])
+  const filteredByProtocol = (detailQ.data?.protocols?.length ?? 0) > 0
 
   // ── Filtros da listagem ──
   const [query, setQuery] = useState("")
@@ -440,7 +459,8 @@ export function SamplesTab({
                 <Label htmlFor="sample-research">{t("research")}</Label>
                 <Select
                   value={form.researchId}
-                  onValueChange={(v) => set({ researchId: v })}
+                  // Trocar a pesquisa reinicia o órgão (o protocolo — e seus órgãos — muda).
+                  onValueChange={(v) => set({ researchId: v, organId: "" })}
                   disabled={dialog?.mode === "edit"}
                 >
                   <SelectTrigger id="sample-research">
@@ -463,13 +483,16 @@ export function SamplesTab({
               <div className="space-y-1">
                 <Label htmlFor="organ">{t("organ")}</Label>
                 <Combobox
-                  options={organs.map((o) => ({ value: o.id, label: txt(locale, o.name) }))}
+                  options={organChoices.map((o) => ({ value: o.id, label: txt(locale, o.name) }))}
                   value={form.organId}
                   onChange={(v) => set({ organId: v })}
                   placeholder={t("organPlaceholder")}
                   searchPlaceholder={tc("search")}
-                  emptyText={tc("noResults")}
+                  emptyText={filteredByProtocol ? t("organProtocolEmpty") : tc("noResults")}
                 />
+                {filteredByProtocol && (
+                  <p className="text-xs text-muted-foreground">{t("organProtocolHint")}</p>
+                )}
                 {errors.organId && <p className="text-xs text-destructive">{tval("required")}</p>}
               </div>
               <div className="space-y-1">

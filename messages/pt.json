@@ -697,6 +697,8 @@
     "researchLockedHint": "A pesquisa não pode ser alterada após a criação da amostra.",
     "organ": "Órgão",
     "organPlaceholder": "Selecione o órgão",
+    "organProtocolHint": "Apenas órgãos do protocolo da pesquisa.",
+    "organProtocolEmpty": "Nenhum órgão no protocolo desta pesquisa.",
     "identification": "Identificação",
     "identificationPlaceholder": "Ex.: AM-001",
     "sampleType": "Tipo de amostra",
