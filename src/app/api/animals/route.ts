@@ -18,45 +18,56 @@ import {
   assertResearchInOrg,
   toAnimalListItem,
 } from "@/lib/animals"
+import { animalOrderBy, buildAnimalWhere, parseAnimalListParams } from "@/lib/animal-query"
 
+// Listagem paginada, filtrada e ordenada no servidor. Ver docs/CONTRATO_API.md §1.
 export async function GET(req: NextRequest) {
   try {
     const user = await getAuthUser()
     if (!user) return unauthorized()
     const orgId = await getActiveOrgId(user)
-    if (!orgId) return NextResponse.json([])
+    if (!orgId) return NextResponse.json({ items: [], total: 0, page: 1, pageSize: 20 })
     requireOrgRole(user, orgId, "RESEARCHER")
 
-    const researchId = req.nextUrl.searchParams.get("researchId") ?? undefined
+    const filters = parseAnimalListParams(req.nextUrl.searchParams)
 
     // Escopo por pesquisa: admin vê todas as pesquisas da org; pesquisador só as
-    // vinculadas/criadas. O conjunto efetivo de pesquisas do animal (primária ∪ participações)
-    // precisa interceptar o escopo.
+    // vinculadas/criadas. O conjunto efetivo do animal (primária ∪ participações) intercepta.
     const scope = await getResearchScope(user, orgId)
-    if (!scope.all && researchId && !scope.ids.includes(researchId)) {
-      return NextResponse.json([])
-    }
-    // IDs de pesquisa efetivamente usados no filtro: o filtro explícito (se houver) ou o escopo.
-    const scopeIds = researchId ? [researchId] : scope.all ? undefined : scope.ids
-
-    // Escopo pela org (via pesquisa primária, sempre da mesma org). Ao filtrar por pesquisa,
-    // inclui o indivíduo tanto como primária quanto como participante (compartilhamento).
-    const where: Prisma.AnimalWhereInput = { research: { orgId } }
-    if (scopeIds) {
-      where.OR = [
-        { researchId: { in: scopeIds } },
-        { participations: { some: { researchId: { in: scopeIds } } } },
-      ]
+    const scopeIds = scope.all ? undefined : scope.ids
+    // Pesquisador sem nenhuma pesquisa visível → conjunto vazio (evita where OR: { in: [] }).
+    if (scopeIds && scopeIds.length === 0) {
+      return filters.idsOnly
+        ? NextResponse.json({ ids: [] })
+        : NextResponse.json({ items: [], total: 0, page: filters.page, pageSize: filters.pageSize })
     }
 
-    const animals = await prisma.animal.findMany({
-      where,
-      orderBy: { createdAt: "desc" },
-      select: animalListSelect,
-    })
+    const where = buildAnimalWhere(orgId, scopeIds, filters)
+
+    // Modo "selecionar todos": só os ids que casam com o filtro (todas as páginas).
+    if (filters.idsOnly) {
+      const rows = await prisma.animal.findMany({ where, select: { id: true } })
+      return NextResponse.json({ ids: rows.map((r) => r.id) })
+    }
+
+    const [total, animals] = await Promise.all([
+      prisma.animal.count({ where }),
+      prisma.animal.findMany({
+        where,
+        orderBy: animalOrderBy(filters.sort, filters.dir),
+        skip: (filters.page - 1) * filters.pageSize,
+        take: filters.pageSize,
+        select: animalListSelect,
+      }),
+    ])
 
     const locale = await getLocale()
-    return NextResponse.json(animals.map((a) => toAnimalListItem(locale, a)))
+    return NextResponse.json({
+      items: animals.map((a) => toAnimalListItem(locale, a)),
+      total,
+      page: filters.page,
+      pageSize: filters.pageSize,
+    })
   } catch (err) {
     return apiError(err)
   }

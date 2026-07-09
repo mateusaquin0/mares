@@ -764,6 +764,13 @@
     "deleteTitle": "Excluir arquivo",
     "deleteDesc": "Excluir este arquivo? Esta ação é irreversível."
   },
+  "pagination": {
+    "rowsPerPage": "Por página",
+    "range": "{from}-{to} de {total}",
+    "pageOf": "Página {page} de {pages}",
+    "previous": "Anterior",
+    "next": "Próxima"
+  },
   "audit": {
     "empty": "Nenhuma alteração registrada.",
     "colWhen": "Quando",

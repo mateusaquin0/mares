@@ -26,6 +26,45 @@ export type AnimalListItem = {
   positivePathogens: string[]
 }
 
+// Colunas ordenáveis da listagem (compartilhado cliente/servidor).
+export type AnimalSortKey =
+  "control" | "species" | "sex" | "location" | "date" | "isPublic" | "samples" | "research"
+
+// Estado da consulta da listagem (filtros + ordenação + paginação), controlado no cliente.
+export type AnimalListQuery = {
+  q: string
+  species: string[]
+  sex: string[]
+  lifeStage: string[]
+  state: string[]
+  research: string[]
+  pathogen: string[]
+  visibility: "all" | "public" | "private"
+  samples: "all" | "with" | "without"
+  from: string
+  to: string
+  sort: AnimalSortKey
+  dir: "asc" | "desc"
+  page: number
+  pageSize: number
+}
+
+// Resposta paginada de /api/animals.
+export type AnimalListPage = {
+  items: AnimalListItem[]
+  total: number
+  page: number
+  pageSize: number
+}
+
+// Facetas dos filtros (/api/animals/facets): valores distintos do escopo do usuário.
+export type AnimalFacets = {
+  species: string[]
+  states: string[]
+  researches: { id: string; name: string }[]
+  pathogens: { id: string; label: string }[]
+}
+
 // Detalhe completo de um animal (/api/animals/:id).
 export type AnimalDetail = {
   id: string

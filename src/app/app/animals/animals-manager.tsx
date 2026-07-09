@@ -1,13 +1,14 @@
 "use client"
 
-import { useState } from "react"
+import { useCallback, useState } from "react"
 import { useTranslations } from "next-intl"
 import { toast } from "sonner"
 import { Plus } from "lucide-react"
 
-import { useAnimals, useDeleteAnimal } from "@/hooks/use-animals"
+import { useAnimals, useAnimalFacets, useDeleteAnimal } from "@/hooks/use-animals"
 import { useResearchList } from "@/hooks/use-research"
-import type { AnimalListItem } from "@/types/animal"
+import { animalsService } from "@/services/animals"
+import type { AnimalListItem, AnimalListQuery } from "@/types/animal"
 import { useErrorMessage } from "@/lib/use-error-message"
 import { Button } from "@/components/ui/button"
 import { TableSkeleton } from "@/components/ui/skeleton"
@@ -15,27 +16,58 @@ import { ConfirmDialog } from "@/components/confirm-dialog"
 import { AnimalsTable } from "./animals-table"
 import { AnimalFormDialog } from "./animal-form"
 
+const DEFAULT_QUERY: AnimalListQuery = {
+  q: "",
+  species: [],
+  sex: [],
+  lifeStage: [],
+  state: [],
+  research: [],
+  pathogen: [],
+  visibility: "all",
+  samples: "all",
+  from: "",
+  to: "",
+  sort: "date",
+  dir: "desc",
+  page: 1,
+  pageSize: 20,
+}
+
 export function AnimalsManager({ isOrgAdmin }: { isOrgAdmin: boolean }) {
   const t = useTranslations("animals")
   const tc = useTranslations("common")
   const em = useErrorMessage()
 
-  const animalsQ = useAnimals()
+  // Estado da consulta (filtros + ordenação + paginação), controlado aqui — a busca é
+  // server-side. Qualquer mudança que não seja de página reinicia para a página 1.
+  const [query, setQuery] = useState<AnimalListQuery>(DEFAULT_QUERY)
+  const patchQuery = useCallback((patch: Partial<AnimalListQuery>) => {
+    setQuery((q) => {
+      const next = { ...q, ...patch }
+      if (!("page" in patch)) next.page = 1
+      return next
+    })
+  }, [])
+
+  const animalsQ = useAnimals(query)
+  const facetsQ = useAnimalFacets()
   const researchQ = useResearchList()
-  const items = animalsQ.data ?? []
-  const researches = (researchQ.data ?? []).map((r) => ({
-    id: r.id,
-    name: r.name,
-  }))
-  const loading = animalsQ.isLoading || researchQ.isLoading
+
+  const page = animalsQ.data
+  const items = page?.items ?? []
+  const total = page?.total ?? 0
+  const researches = (researchQ.data ?? []).map((r) => ({ id: r.id, name: r.name }))
+
+  // Skeleton só no primeiro carregamento (sem dados ainda); depois mantemos a tabela e
+  // apenas esmaecemos durante o refetch (`isFetching`).
+  const firstLoad = (animalsQ.isLoading && !page) || researchQ.isLoading
   const deleteM = useDeleteAnimal()
 
-  // Diálogo de criar/editar e confirmação de exclusão.
-  const [dialog, setDialog] = useState<{
-    mode: "create" | "edit"
-    id?: string
-  } | null>(null)
+  const [dialog, setDialog] = useState<{ mode: "create" | "edit"; id?: string } | null>(null)
   const [confirm, setConfirm] = useState<AnimalListItem | null>(null)
+
+  const fetchFilteredIds = useCallback(() => animalsService.ids(query).then((r) => r.ids), [query])
 
   async function remove(a: AnimalListItem) {
     try {
@@ -62,15 +94,19 @@ export function AnimalsManager({ isOrgAdmin }: { isOrgAdmin: boolean }) {
         </Button>
       </div>
 
-      {loading ? (
+      {firstLoad ? (
         <TableSkeleton />
       ) : noResearch ? (
         <p className="text-sm text-muted-foreground">{t("noResearch")}</p>
-      ) : items.length === 0 ? (
-        <p className="text-sm text-muted-foreground">{t("empty")}</p>
       ) : (
         <AnimalsTable
           items={items}
+          total={total}
+          query={query}
+          patchQuery={patchQuery}
+          facets={facetsQ.data}
+          fetchFilteredIds={fetchFilteredIds}
+          loading={animalsQ.isFetching}
           isOrgAdmin={isOrgAdmin}
           onEdit={(a) => setDialog({ mode: "edit", id: a.id })}
           onDelete={setConfirm}
