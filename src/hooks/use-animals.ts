@@ -2,24 +2,36 @@
 // Encapsulam cache/dedupe das requisições, evitando o double-fetch do
 // useEffect manual (React Strict Mode) e centralizando as chaves de query.
 
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 
 import { animalsService } from "@/services/animals"
 import type { CreateAnimalData, UpdateAnimalData } from "@/schemas/animal.schema"
+import type { AnimalListQuery } from "@/types/animal"
 
 export const animalKeys = {
   all: ["animals"] as const,
-  list: (researchId?: string) => ["animals", researchId ?? null] as const,
+  list: (query: AnimalListQuery) => ["animals", query] as const,
+  facets: () => ["animal-facets"] as const,
   detail: (id: string) => ["animal", id] as const,
   grid: (id: string) => ["animal-grid", id] as const,
   media: (id: string) => ["animal-media", id] as const,
   audit: (id: string) => ["animal-audit", id] as const,
 }
 
-export function useAnimals(researchId?: string) {
+// Listagem paginada (server-side). Mantém a página anterior visível durante o refetch.
+export function useAnimals(query: AnimalListQuery) {
   return useQuery({
-    queryKey: animalKeys.list(researchId),
-    queryFn: () => animalsService.list(researchId),
+    queryKey: animalKeys.list(query),
+    queryFn: () => animalsService.list(query),
+    placeholderData: keepPreviousData,
+  })
+}
+
+// Facetas dos filtros (valores distintos do escopo do usuário).
+export function useAnimalFacets() {
+  return useQuery({
+    queryKey: animalKeys.facets(),
+    queryFn: () => animalsService.facets(),
   })
 }
 
@@ -58,7 +70,10 @@ export function useCreateAnimal() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (data: CreateAnimalData) => animalsService.create(data),
-    onSuccess: () => qc.invalidateQueries({ queryKey: animalKeys.all }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: animalKeys.all })
+      qc.invalidateQueries({ queryKey: animalKeys.facets() })
+    },
   })
 }
 
@@ -68,6 +83,7 @@ export function useUpdateAnimal(id: string) {
     mutationFn: (data: UpdateAnimalData) => animalsService.update(id, data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: animalKeys.all })
+      qc.invalidateQueries({ queryKey: animalKeys.facets() })
       qc.invalidateQueries({ queryKey: animalKeys.detail(id) })
     },
   })
@@ -77,7 +93,10 @@ export function useDeleteAnimal() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (id: string) => animalsService.remove(id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: animalKeys.all }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: animalKeys.all })
+      qc.invalidateQueries({ queryKey: animalKeys.facets() })
+    },
   })
 }
 

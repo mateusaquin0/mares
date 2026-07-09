@@ -1,13 +1,12 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import Link from "next/link"
 import { useLocale, useTranslations } from "next-intl"
 import { toast } from "sonner"
 import { Download, Globe, Lock, MoreHorizontal, X } from "lucide-react"
 
-import type { AnimalListItem } from "@/types/animal"
-import { useTable } from "@/lib/use-table"
+import type { AnimalFacets, AnimalListItem, AnimalListQuery, AnimalSortKey } from "@/types/animal"
 import { formatDateOnly } from "@/lib/date"
 import { SEX_OPTIONS, LIFE_STAGE_OPTIONS } from "@/lib/animal-enums"
 import { downloadAnimalsExport, type ExportFormat } from "@/lib/export-download"
@@ -33,6 +32,7 @@ import {
 } from "@/components/ui/table"
 import { ReloadButton } from "@/components/ui/reload-button"
 import { SortableHead } from "@/components/ui/sortable-head"
+import { TablePagination } from "@/components/ui/table-pagination"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -40,24 +40,28 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 
-const ALL = "__all__"
-
-// Valores distintos, não-nulos, ordenados por locale — base das opções de filtro.
-function distinctSorted(values: (string | null)[], locale: string): string[] {
-  return [...new Set(values.filter((v): v is string => !!v))].sort((a, b) =>
-    a.localeCompare(b, locale),
-  )
-}
-
-// Tabela de animais: busca, ordenação e ações (ver/editar/excluir). O estado dos
-// dados vive no AnimalsManager; aqui só apresentamos e sinalizamos ações.
+// Tabela de animais com filtros, ordenação e paginação SERVER-SIDE. O estado da consulta
+// (`query`) vive no AnimalsManager, que busca a página e as facetas; aqui só apresentamos e
+// sinalizamos mudanças via `patchQuery`. Ver docs/CONTRATO_API.md §1.
 export function AnimalsTable({
   items,
+  total,
+  query,
+  patchQuery,
+  facets,
+  fetchFilteredIds,
+  loading,
   isOrgAdmin,
   onEdit,
   onDelete,
 }: {
   items: AnimalListItem[]
+  total: number
+  query: AnimalListQuery
+  patchQuery: (patch: Partial<AnimalListQuery>) => void
+  facets: AnimalFacets | undefined
+  fetchFilteredIds: () => Promise<string[]>
+  loading: boolean
   isOrgAdmin: boolean
   onEdit: (a: AnimalListItem) => void
   onDelete: (a: AnimalListItem) => void
@@ -73,165 +77,108 @@ export function AnimalsTable({
     const o = SEX_OPTIONS.find((x) => x.value === s)
     return o ? t(o.key) : (s ?? "")
   }
-  // Visibilidade pública EFETIVA: o animal só é público se ele E a pesquisa forem públicos.
   const isEffectivePublic = (a: AnimalListItem) => a.isPublic && a.research.isPublic
-  // Explica no tooltip por que o animal aparece (ou não) no mapa público.
   const visibilityTooltip = (a: AnimalListItem) => {
     if (!a.research.isPublic) return t("visMapResearchPrivate")
     return a.isPublic ? t("visMapPublic") : t("visMapAnimalHidden")
   }
 
-  // ── Filtros estruturados (multisseleção + selects), aplicados antes da busca/ordenação ──
-  const [fSpecies, setFSpecies] = useState<string[]>([])
-  const [fSex, setFSex] = useState<string[]>([])
-  const [fLifeStage, setFLifeStage] = useState<string[]>([])
-  const [fState, setFState] = useState<string[]>([])
-  const [fResearch, setFResearch] = useState<string[]>([])
-  const [fPathogen, setFPathogen] = useState<string[]>([])
-  const [fVisibility, setFVisibility] = useState(ALL)
-  const [fSamples, setFSamples] = useState(ALL)
-  const [fFrom, setFFrom] = useState("")
-  const [fTo, setFTo] = useState("")
-
+  // ── Opções dos filtros: vêm das facetas (todo o escopo), não da página. ──
   const speciesOptions = useMemo<MultiSelectOption[]>(
-    () =>
-      distinctSorted(
-        items.map((a) => a.species),
-        locale,
-      ).map((s) => ({ value: s, label: s })),
-    [items, locale],
+    () => (facets?.species ?? []).map((s) => ({ value: s, label: s })),
+    [facets],
   )
   const stateOptions = useMemo<MultiSelectOption[]>(
-    () =>
-      distinctSorted(
-        items.map((a) => a.state),
-        locale,
-      ).map((s) => ({ value: s, label: s })),
-    [items, locale],
+    () => (facets?.states ?? []).map((s) => ({ value: s, label: s })),
+    [facets],
+  )
+  const researchOptions = useMemo<MultiSelectOption[]>(
+    () => (facets?.researches ?? []).map((r) => ({ value: r.id, label: r.name })),
+    [facets],
   )
   const pathogenOptions = useMemo<MultiSelectOption[]>(
-    () =>
-      distinctSorted(
-        items.flatMap((a) => a.positivePathogens),
-        locale,
-      ).map((p) => ({
-        value: p,
-        label: p,
-      })),
-    [items, locale],
+    () => (facets?.pathogens ?? []).map((p) => ({ value: p.id, label: p.label })),
+    [facets],
   )
-  const researchOptions = useMemo<MultiSelectOption[]>(() => {
-    const map = new Map<string, string>()
-    // Considera todas as pesquisas do indivíduo (primária + participações).
-    for (const a of items) for (const r of a.researches) map.set(r.id, r.name)
-    return [...map.entries()]
-      .map(([value, label]) => ({ value, label }))
-      .sort((x, y) => x.label.localeCompare(y.label, locale))
-  }, [items, locale])
-  const sexOptions = useMemo<MultiSelectOption[]>(() => {
-    const present = new Set(items.map((a) => a.sex))
-    return SEX_OPTIONS.filter((o) => present.has(o.value)).map((o) => ({
-      value: o.value,
-      label: t(o.key),
-    }))
-  }, [items, t])
-  const lifeStageOptions = useMemo<MultiSelectOption[]>(() => {
-    const present = new Set(items.map((a) => a.lifeStage))
-    return LIFE_STAGE_OPTIONS.filter((o) => present.has(o.value)).map((o) => ({
-      value: o.value,
-      label: t(o.key),
-    }))
-  }, [items, t])
-
-  const filteredItems = useMemo(
-    () =>
-      items.filter((a) => {
-        if (fSpecies.length && !fSpecies.includes(a.species)) return false
-        if (fSex.length && !(a.sex && fSex.includes(a.sex))) return false
-        if (fLifeStage.length && !(a.lifeStage && fLifeStage.includes(a.lifeStage))) return false
-        if (fState.length && !(a.state && fState.includes(a.state))) return false
-        if (fResearch.length && !a.researches.some((r) => fResearch.includes(r.id))) return false
-        if (fPathogen.length && !fPathogen.some((p) => a.positivePathogens.includes(p)))
-          return false
-        if (fVisibility === "public" && !isEffectivePublic(a)) return false
-        if (fVisibility === "private" && isEffectivePublic(a)) return false
-        if (fSamples === "with" && a._count.samples === 0) return false
-        if (fSamples === "without" && a._count.samples > 0) return false
-        if (fFrom && (!a.eventDate || a.eventDate < fFrom)) return false
-        if (fTo && (!a.eventDate || a.eventDate > fTo)) return false
-        return true
-      }),
-    [
-      items,
-      fSpecies,
-      fSex,
-      fLifeStage,
-      fState,
-      fResearch,
-      fPathogen,
-      fVisibility,
-      fSamples,
-      fFrom,
-      fTo,
-    ],
+  const sexOptions = useMemo<MultiSelectOption[]>(
+    () => SEX_OPTIONS.map((o) => ({ value: o.value, label: t(o.key) })),
+    [t],
+  )
+  const lifeStageOptions = useMemo<MultiSelectOption[]>(
+    () => LIFE_STAGE_OPTIONS.map((o) => ({ value: o.value, label: t(o.key) })),
+    [t],
   )
 
   const hasFilters =
-    fSpecies.length > 0 ||
-    fSex.length > 0 ||
-    fLifeStage.length > 0 ||
-    fState.length > 0 ||
-    fResearch.length > 0 ||
-    fPathogen.length > 0 ||
-    fVisibility !== ALL ||
-    fSamples !== ALL ||
-    fFrom !== "" ||
-    fTo !== ""
+    !!query.q ||
+    query.species.length > 0 ||
+    query.sex.length > 0 ||
+    query.lifeStage.length > 0 ||
+    query.state.length > 0 ||
+    query.research.length > 0 ||
+    query.pathogen.length > 0 ||
+    query.visibility !== "all" ||
+    query.samples !== "all" ||
+    query.from !== "" ||
+    query.to !== ""
+
+  // Busca textual com debounce (evita um request por tecla).
+  const [searchInput, setSearchInput] = useState(query.q)
+  useEffect(() => setSearchInput(query.q), [query.q])
+  useEffect(() => {
+    const id = setTimeout(() => {
+      if (searchInput.trim() !== query.q) patchQuery({ q: searchInput.trim() })
+    }, 350)
+    return () => clearTimeout(id)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchInput])
 
   const clearFilters = () => {
-    setFSpecies([])
-    setFSex([])
-    setFLifeStage([])
-    setFState([])
-    setFResearch([])
-    setFPathogen([])
-    setFVisibility(ALL)
-    setFSamples(ALL)
-    setFFrom("")
-    setFTo("")
+    setSearchInput("")
+    patchQuery({
+      q: "",
+      species: [],
+      sex: [],
+      lifeStage: [],
+      state: [],
+      research: [],
+      pathogen: [],
+      visibility: "all",
+      samples: "all",
+      from: "",
+      to: "",
+    })
   }
 
-  const table = useTable(filteredItems, {
-    locale,
-    initialSort: { key: "date", dir: "desc" },
-    columns: {
-      control: controlOf,
-      species: (a) => a.species,
-      sex: (a) => sexLabel(a.sex),
-      lifeStage: (a) => a.lifeStage ?? "",
-      location: locationOf,
-      date: (a) => a.eventDate ?? "",
-      research: (a) => a.research.name,
-      isPublic: (a) => (isEffectivePublic(a) ? "1" : "0"),
-      samples: (a) => a._count.samples,
-    },
-    search: (a) =>
-      [
-        controlOf(a),
-        a.species,
-        sexLabel(a.sex),
-        a.lifeStage ?? "",
-        locationOf(a),
-        a.research.name,
-      ].join(" "),
-  })
+  const toggleSort = (key: string) =>
+    patchQuery({
+      sort: key as AnimalSortKey,
+      dir: query.sort === key && query.dir === "asc" ? "desc" : "asc",
+    })
 
-  // Seleção para exportação (ids acumulados; a seleção "todos" age sobre as linhas filtradas).
+  // ── Seleção para exportação. "Selecionar todos" cobre TODO o conjunto filtrado (todas as
+  //    páginas), buscando os ids no servidor. A seleção é limpa ao mudar os filtros. ──
   const [selected, setSelected] = useState<Set<string>>(new Set())
+  const [selectingAll, setSelectingAll] = useState(false)
   const [exporting, setExporting] = useState(false)
-  const rowIds = table.rows.map((a) => a.id)
-  const allSelected = rowIds.length > 0 && rowIds.every((id) => selected.has(id))
-  const someSelected = rowIds.some((id) => selected.has(id))
+
+  const filterSig = JSON.stringify([
+    query.q,
+    query.species,
+    query.sex,
+    query.lifeStage,
+    query.state,
+    query.research,
+    query.pathogen,
+    query.visibility,
+    query.samples,
+    query.from,
+    query.to,
+  ])
+  useEffect(() => setSelected(new Set()), [filterSig])
+
+  const allSelected = total > 0 && selected.size >= total
+  const someSelected = selected.size > 0 && !allSelected
 
   const toggleRow = (id: string, on: boolean) =>
     setSelected((prev) => {
@@ -241,15 +188,21 @@ export function AnimalsTable({
       return next
     })
 
-  const toggleAll = (on: boolean) =>
-    setSelected((prev) => {
-      const next = new Set(prev)
-      for (const id of rowIds) {
-        if (on) next.add(id)
-        else next.delete(id)
-      }
-      return next
-    })
+  async function toggleAll(on: boolean) {
+    if (!on) {
+      setSelected(new Set())
+      return
+    }
+    setSelectingAll(true)
+    try {
+      const ids = await fetchFilteredIds()
+      setSelected(new Set(ids))
+    } catch {
+      toast.error(t("exportError"))
+    } finally {
+      setSelectingAll(false)
+    }
+  }
 
   async function exportAs(format: ExportFormat) {
     if (selected.size === 0) return
@@ -263,7 +216,6 @@ export function AnimalsTable({
     }
   }
 
-  // Todos os campos de filtro têm a mesma largura (w-44); os controles preenchem o campo.
   const filterField = (label: string, control: React.ReactNode) => (
     <label className="flex w-44 flex-col gap-1 text-xs">
       <span className="font-semibold uppercase tracking-wide text-muted-foreground">{label}</span>
@@ -280,50 +232,48 @@ export function AnimalsTable({
           <div className="w-full">
             <MultiSelect
               options={speciesOptions}
-              value={fSpecies}
-              onChange={setFSpecies}
+              value={query.species}
+              onChange={(v) => patchQuery({ species: v })}
               placeholder={t("allSpecies")}
               searchPlaceholder={t("filterSpecies")}
               emptyText={tc("noResults")}
             />
           </div>,
         )}
-        {sexOptions.length > 0 &&
-          filterField(
-            t("colSex"),
-            <div className="w-full">
-              <MultiSelect
-                options={sexOptions}
-                value={fSex}
-                onChange={setFSex}
-                placeholder={t("allSexes")}
-                emptyText={tc("noResults")}
-                searchable={false}
-              />
-            </div>,
-          )}
-        {lifeStageOptions.length > 0 &&
-          filterField(
-            t("colLifeStage"),
-            <div className="w-full">
-              <MultiSelect
-                options={lifeStageOptions}
-                value={fLifeStage}
-                onChange={setFLifeStage}
-                placeholder={t("allLifeStages")}
-                emptyText={tc("noResults")}
-                searchable={false}
-              />
-            </div>,
-          )}
+        {filterField(
+          t("colSex"),
+          <div className="w-full">
+            <MultiSelect
+              options={sexOptions}
+              value={query.sex}
+              onChange={(v) => patchQuery({ sex: v })}
+              placeholder={t("allSexes")}
+              emptyText={tc("noResults")}
+              searchable={false}
+            />
+          </div>,
+        )}
+        {filterField(
+          t("colLifeStage"),
+          <div className="w-full">
+            <MultiSelect
+              options={lifeStageOptions}
+              value={query.lifeStage}
+              onChange={(v) => patchQuery({ lifeStage: v })}
+              placeholder={t("allLifeStages")}
+              emptyText={tc("noResults")}
+              searchable={false}
+            />
+          </div>,
+        )}
         {stateOptions.length > 0 &&
           filterField(
             t("filterState"),
             <div className="w-full">
               <MultiSelect
                 options={stateOptions}
-                value={fState}
-                onChange={setFState}
+                value={query.state}
+                onChange={(v) => patchQuery({ state: v })}
                 placeholder={t("allStates")}
                 searchPlaceholder={t("filterState")}
                 emptyText={tc("noResults")}
@@ -336,8 +286,8 @@ export function AnimalsTable({
             <div className="w-full">
               <MultiSelect
                 options={researchOptions}
-                value={fResearch}
-                onChange={setFResearch}
+                value={query.research}
+                onChange={(v) => patchQuery({ research: v })}
                 placeholder={t("allResearch")}
                 searchPlaceholder={t("colResearch")}
                 emptyText={tc("noResults")}
@@ -350,8 +300,8 @@ export function AnimalsTable({
             <div className="w-full">
               <MultiSelect
                 options={pathogenOptions}
-                value={fPathogen}
-                onChange={setFPathogen}
+                value={query.pathogen}
+                onChange={(v) => patchQuery({ pathogen: v })}
                 placeholder={t("allPathogens")}
                 searchPlaceholder={t("filterPathogen")}
                 emptyText={tc("noResults")}
@@ -360,12 +310,15 @@ export function AnimalsTable({
           )}
         {filterField(
           t("colVisibility"),
-          <Select value={fVisibility} onValueChange={setFVisibility}>
+          <Select
+            value={query.visibility}
+            onValueChange={(v) => patchQuery({ visibility: v as AnimalListQuery["visibility"] })}
+          >
             <SelectTrigger className="h-9 w-full">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value={ALL}>{t("allVisibility")}</SelectItem>
+              <SelectItem value="all">{t("allVisibility")}</SelectItem>
               <SelectItem value="public">{t("public")}</SelectItem>
               <SelectItem value="private">{t("private")}</SelectItem>
             </SelectContent>
@@ -373,12 +326,15 @@ export function AnimalsTable({
         )}
         {filterField(
           t("filterSamples"),
-          <Select value={fSamples} onValueChange={setFSamples}>
+          <Select
+            value={query.samples}
+            onValueChange={(v) => patchQuery({ samples: v as AnimalListQuery["samples"] })}
+          >
             <SelectTrigger className="h-9 w-full">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value={ALL}>{t("allSamples")}</SelectItem>
+              <SelectItem value="all">{t("allSamples")}</SelectItem>
               <SelectItem value="with">{t("withSamples")}</SelectItem>
               <SelectItem value="without">{t("withoutSamples")}</SelectItem>
             </SelectContent>
@@ -388,8 +344,8 @@ export function AnimalsTable({
           t("filterFrom"),
           <Input
             type="date"
-            value={fFrom}
-            onChange={(e) => setFFrom(e.target.value)}
+            value={query.from}
+            onChange={(e) => patchQuery({ from: e.target.value })}
             className="h-9 w-full"
           />,
         )}
@@ -397,8 +353,8 @@ export function AnimalsTable({
           t("filterTo"),
           <Input
             type="date"
-            value={fTo}
-            onChange={(e) => setFTo(e.target.value)}
+            value={query.to}
+            onChange={(e) => patchQuery({ to: e.target.value })}
             className="h-9 w-full"
           />,
         )}
@@ -412,8 +368,8 @@ export function AnimalsTable({
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <Input
-          value={table.query}
-          onChange={(e) => table.setQuery(e.target.value)}
+          value={searchInput}
+          onChange={(e) => setSearchInput(e.target.value)}
           placeholder={tc("search")}
           className="max-w-sm"
         />
@@ -441,39 +397,65 @@ export function AnimalsTable({
           </div>
         )}
       </div>
+
       <div className="overflow-hidden rounded-xl border bg-card shadow-card">
-        <Table>
+        <Table className={loading ? "opacity-60 transition-opacity" : undefined}>
           <TableHeader>
             <TableRow>
               <TableHead className="w-10">
                 <Checkbox
                   aria-label={t("selectAll")}
+                  disabled={selectingAll || total === 0}
                   checked={allSelected ? true : someSelected ? "indeterminate" : false}
                   onCheckedChange={(v) => toggleAll(v === true)}
                 />
               </TableHead>
-              <SortableHead sortKey="control" sort={table.sort} onToggle={table.toggleSort}>
+              <SortableHead
+                sortKey="control"
+                sort={{ key: query.sort, dir: query.dir }}
+                onToggle={toggleSort}
+              >
                 {t("colControl")}
               </SortableHead>
-              <SortableHead sortKey="species" sort={table.sort} onToggle={table.toggleSort}>
+              <SortableHead
+                sortKey="species"
+                sort={{ key: query.sort, dir: query.dir }}
+                onToggle={toggleSort}
+              >
                 {t("colSpecies")}
               </SortableHead>
-              <SortableHead sortKey="sex" sort={table.sort} onToggle={table.toggleSort}>
+              <SortableHead
+                sortKey="sex"
+                sort={{ key: query.sort, dir: query.dir }}
+                onToggle={toggleSort}
+              >
                 {t("colSex")}
               </SortableHead>
-              <SortableHead sortKey="location" sort={table.sort} onToggle={table.toggleSort}>
+              <SortableHead
+                sortKey="location"
+                sort={{ key: query.sort, dir: query.dir }}
+                onToggle={toggleSort}
+              >
                 {t("colLocation")}
               </SortableHead>
-              <SortableHead sortKey="date" sort={table.sort} onToggle={table.toggleSort}>
+              <SortableHead
+                sortKey="date"
+                sort={{ key: query.sort, dir: query.dir }}
+                onToggle={toggleSort}
+              >
                 {t("colDate")}
               </SortableHead>
-              <SortableHead sortKey="isPublic" sort={table.sort} onToggle={table.toggleSort}>
+              <SortableHead
+                sortKey="isPublic"
+                sort={{ key: query.sort, dir: query.dir }}
+                onToggle={toggleSort}
+              >
                 {t("colVisibility")}
               </SortableHead>
               <SortableHead
                 sortKey="samples"
-                sort={table.sort}
-                onToggle={table.toggleSort}
+                sort={{ key: query.sort, dir: query.dir }}
+                onToggle={toggleSort}
                 align="right"
               >
                 {t("colSamples")}
@@ -484,14 +466,14 @@ export function AnimalsTable({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {table.rows.length === 0 ? (
+            {items.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={9} className="text-center text-sm text-muted-foreground">
-                  {tc("noResults")}
+                  {hasFilters ? tc("noResults") : t("empty")}
                 </TableCell>
               </TableRow>
             ) : (
-              table.rows.map((a) => (
+              items.map((a) => (
                 <TableRow key={a.id} data-state={selected.has(a.id) ? "selected" : undefined}>
                   <TableCell>
                     <Checkbox
@@ -557,6 +539,14 @@ export function AnimalsTable({
           </TableBody>
         </Table>
       </div>
+
+      <TablePagination
+        page={query.page}
+        pageSize={query.pageSize}
+        total={total}
+        onPageChange={(p) => patchQuery({ page: p })}
+        onPageSizeChange={(ps) => patchQuery({ pageSize: ps })}
+      />
     </div>
   )
 }

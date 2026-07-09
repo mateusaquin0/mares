@@ -13,6 +13,7 @@ import {
   Building2,
   ShieldCheck,
   Library,
+  BookOpen,
   PanelLeftClose,
   PanelLeft,
 } from "lucide-react"
@@ -252,6 +253,17 @@ export function Sidebar({
       </nav>
 
       <div className={cn("space-y-1 border-t border-border py-3", collapsed ? "px-2" : "px-3")}>
+        <Link
+          href="/app/tutorial"
+          title={t("tutorial")}
+          className={cn(
+            "flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-foreground/70 transition-colors hover:bg-muted hover:text-foreground",
+            collapsed && "justify-center px-0",
+          )}
+        >
+          <BookOpen className="size-4 shrink-0" />
+          {!collapsed && <span className="truncate">{t("tutorial")}</span>}
+        </Link>
         <FeedbackDialog collapsed={collapsed} />
         <UserMenu userName={userName} email={email} roleLabel={roleLabel} collapsed={collapsed} />
       </div>
