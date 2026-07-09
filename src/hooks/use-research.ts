@@ -19,10 +19,11 @@ export function useResearchList() {
   })
 }
 
-export function useResearch(id: string) {
+export function useResearch(id: string, enabled = true) {
   return useQuery({
     queryKey: researchKeys.detail(id),
     queryFn: () => researchService.get(id),
+    enabled: enabled && !!id,
   })
 }
 

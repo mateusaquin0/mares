@@ -156,10 +156,7 @@ export function ResearchManager({ isOrgAdmin, selfId }: { isOrgAdmin: boolean; s
                 </TableEmpty>
               )}
               {filtered.map((r) => (
-                <TableRow
-                  key={r.id}
-
-                >
+                <TableRow key={r.id}>
                   <TableCell className="font-medium">
                     <Link href={`/app/research/${r.id}`} className="hover:underline">
                       {r.name}
