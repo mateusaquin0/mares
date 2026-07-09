@@ -9,6 +9,7 @@ import { apiError, unauthorized } from "@/lib/api"
 import { protocolEntriesSchema } from "@/schemas/research.schema"
 import { NotFoundError } from "@/lib/errors"
 import { ERROR_CODES } from "@/lib/error-codes"
+import { addOrReactivateProtocols } from "@/lib/protocols"
 
 async function researchOrg(id: string) {
   const r = await prisma.research.findUnique({ where: { id }, select: { orgId: true } })
@@ -30,6 +31,8 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
       orderBy: { id: "asc" },
       select: {
         id: true,
+        status: true,
+        deactivatedAt: true,
         organ: { select: { id: true, name: true } },
         pathogen: { select: { id: true, scientificName: true, name: true } },
         examType: { select: { id: true, name: true } },
@@ -52,14 +55,12 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     const body = await req.json().catch(() => null)
     const { entries } = protocolEntriesSchema.parse(body)
 
-    // Seleção múltipla de patógenos pode reenviar combinações já existentes: ignoramos as
-    // duplicatas (unique researchId, organId, pathogenId, examTypeId) em vez de falhar o lote.
-    const { count } = await prisma.researchProtocol.createMany({
-      data: entries.map((e) => ({ ...e, researchId: id })),
-      skipDuplicates: true,
-    })
+    // Seleção múltipla de patógenos pode reenviar combinações já existentes. Combinações
+    // inéditas são criadas; combinações inativas são REATIVADAS (em vez de duplicar); as já
+    // ativas são ignoradas. `added` conta as criadas + reativadas.
+    const { affected } = await addOrReactivateProtocols(id, entries)
 
-    return NextResponse.json({ added: count }, { status: 201 })
+    return NextResponse.json({ added: affected }, { status: 201 })
   } catch (err) {
     return apiError(err)
   }

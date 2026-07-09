@@ -73,6 +73,15 @@ export function useAddProtocol(researchId: string) {
   })
 }
 
+export function useSetProtocolStatus(researchId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ entryId, status }: { entryId: string; status: "ACTIVE" | "INACTIVE" }) =>
+      researchService.setProtocolStatus(researchId, entryId, status),
+    onSuccess: () => qc.invalidateQueries({ queryKey: researchKeys.detail(researchId) }),
+  })
+}
+
 export function useRemoveProtocol(researchId: string) {
   const qc = useQueryClient()
   return useMutation({
