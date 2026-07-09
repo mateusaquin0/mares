@@ -264,7 +264,8 @@ export function AnalysesTab({ animalId }: { animalId: string }) {
                     <AccordionTrigger>
                       <span className="flex flex-wrap items-center gap-2">
                         <span className="font-semibold">
-                          {sample.sampleType} — {txt(locale, sample.organ.name)}
+                          {txt(locale, sample.organ.name)}
+                          <span className="font-normal"> ({sample.sampleType})</span>
                         </span>
                         <Badge variant="secondary">{statusLabel(sample.status)}</Badge>
                         <span className="text-xs font-normal text-muted-foreground">
