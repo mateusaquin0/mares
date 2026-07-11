@@ -276,7 +276,7 @@ export function SamplesTab({
   const colCount = multiResearch ? 10 : 9
 
   return (
-    <div className="space-y-4">
+    <div className="flex min-h-0 flex-1 flex-col gap-4">
       <div className="flex justify-end">
         <Button size="sm" onClick={openCreate}>
           <Plus className="size-4" />
@@ -352,9 +352,9 @@ export function SamplesTab({
             )}
           </div>
 
-          <div className="rounded-md border">
+          <div className="min-h-0 flex-1 overflow-hidden rounded-md border [&>div]:h-full">
             <Table>
-              <TableHeader>
+              <TableHeader className="sticky top-0 z-10 [&_th]:bg-accent">
                 <TableRow>
                   <TableHead>{t("colIdentification")}</TableHead>
                   {multiResearch && <TableHead>{t("colResearch")}</TableHead>}

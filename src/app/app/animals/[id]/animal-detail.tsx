@@ -14,7 +14,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Skeleton, TableSkeleton } from "@/components/ui/skeleton"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { AnimalFormDialog } from "../animal-form"
 import { ResearchShare } from "./research-share"
 import { SamplesTab } from "./samples-tab"
@@ -36,6 +36,9 @@ export function AnimalDetail({ id, isOrgAdmin }: { id: string; isOrgAdmin: boole
   const animal = animalQ.data ?? null
   const loading = animalQ.isLoading
   const [editing, setEditing] = useState(false)
+  // Abas controladas: só o conteúdo da aba ativa é renderizado (as demais nem entram no DOM),
+  // para que ele ocupe toda a altura sem que painéis ocultos disputem espaço no flex.
+  const [tab, setTab] = useState("info")
   const researchQ = useResearchList()
   const researches = (researchQ.data ?? []).map((r) => ({ id: r.id, name: r.name }))
 
@@ -95,7 +98,7 @@ export function AnimalDetail({ id, isOrgAdmin }: { id: string; isOrgAdmin: boole
   ]
 
   return (
-    <div className="mx-auto max-w-5xl space-y-6 p-8">
+    <div className="mx-auto flex h-full max-w-5xl flex-col gap-6 p-8">
       <Link
         href="/app/animals"
         className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
@@ -138,8 +141,8 @@ export function AnimalDetail({ id, isOrgAdmin }: { id: string; isOrgAdmin: boole
         </div>
       </div>
 
-      <Tabs defaultValue="info">
-        <TabsList className="flex-wrap">
+      <Tabs value={tab} onValueChange={setTab} className="flex min-h-0 flex-1 flex-col">
+        <TabsList className="flex-wrap self-start">
           <TabsTrigger value="info">{t("detailInfo")}</TabsTrigger>
           <TabsTrigger value="samples">
             {t("samplesTab")} ({animal._count.samples})
@@ -151,80 +154,87 @@ export function AnimalDetail({ id, isOrgAdmin }: { id: string; isOrgAdmin: boole
           <TabsTrigger value="audit">{t("auditTab")}</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="info" className="mt-4">
-          <Card>
-            <CardContent className="space-y-6 pt-6">
-              <dl className="grid grid-cols-1 gap-x-8 gap-y-4 sm:grid-cols-2 lg:grid-cols-3">
-                {rows.map((r) => (
-                  <div key={r.label} className="flex flex-col gap-0.5">
-                    <dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                      {r.label}
-                    </dt>
-                    <dd className="text-sm text-foreground">{r.value}</dd>
+        <div className="mt-4 flex min-h-0 flex-1 flex-col">
+          {tab === "info" && (
+            <Card className="flex min-h-0 flex-1 flex-col">
+              <CardContent className="flex min-h-0 flex-1 flex-col overflow-hidden pt-6">
+                <div className="min-h-0 flex-1 space-y-6 overflow-y-auto">
+                  <dl className="grid grid-cols-1 gap-x-8 gap-y-4 sm:grid-cols-2 lg:grid-cols-3">
+                    {rows.map((r) => (
+                      <div key={r.label} className="flex flex-col gap-0.5">
+                        <dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                          {r.label}
+                        </dt>
+                        <dd className="text-sm text-foreground">{r.value}</dd>
+                      </div>
+                    ))}
+                  </dl>
+                  <div className="border-t pt-4">
+                    <ResearchShare animal={animal} />
                   </div>
-                ))}
-              </dl>
-              <div className="border-t pt-4">
-                <ResearchShare animal={animal} />
-              </div>
-              {hasCoords && (
-                <div className="border-t pt-4">
-                  <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                    {t("strandingLocationMap")}
-                  </p>
-                  <div className="h-[320px] overflow-hidden rounded-lg border">
-                    <PointMap
-                      lat={animal.strandingLat as number}
-                      lon={animal.strandingLon as number}
-                      label={locationLabel}
-                    />
-                  </div>
+                  {hasCoords && (
+                    <div className="border-t pt-4">
+                      <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                        {t("strandingLocationMap")}
+                      </p>
+                      <div className="h-[320px] overflow-hidden rounded-lg border">
+                        <PointMap
+                          lat={animal.strandingLat as number}
+                          lon={animal.strandingLon as number}
+                          label={locationLabel}
+                        />
+                      </div>
+                    </div>
+                  )}
+                  {animal.macroscopicNotes && (
+                    <div className="border-t pt-4">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                        {t("macroscopicNotes")}
+                      </p>
+                      <p className="mt-1 whitespace-pre-wrap text-sm">{animal.macroscopicNotes}</p>
+                    </div>
+                  )}
                 </div>
-              )}
-              {animal.macroscopicNotes && (
-                <div className="border-t pt-4">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                    {t("macroscopicNotes")}
-                  </p>
-                  <p className="mt-1 whitespace-pre-wrap text-sm">{animal.macroscopicNotes}</p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
+              </CardContent>
+            </Card>
+          )}
 
-        <TabsContent value="samples" className="mt-4">
-          <Card>
-            <CardContent className="pt-6">
-              <SamplesTab
-                animalId={id}
-                isOrgAdmin={isOrgAdmin}
-                researches={[animal.research, ...animal.participations.map((p) => p.research)]}
-              />
-            </CardContent>
-          </Card>
-        </TabsContent>
-        <TabsContent value="analyses" className="mt-4">
-          <Card>
-            <CardContent className="pt-6">
-              <AnalysesTab animalId={id} />
-            </CardContent>
-          </Card>
-        </TabsContent>
-        <TabsContent value="media" className="mt-4">
-          <Card>
-            <CardContent className="pt-6">
-              <MediaTab animalId={id} isOrgAdmin={isOrgAdmin} />
-            </CardContent>
-          </Card>
-        </TabsContent>
-        <TabsContent value="audit" className="mt-4">
-          <Card>
-            <CardContent className="pt-6">
-              <AuditTab animalId={id} />
-            </CardContent>
-          </Card>
-        </TabsContent>
+          {tab === "samples" && (
+            <Card className="flex min-h-0 flex-1 flex-col">
+              <CardContent className="flex min-h-0 flex-1 flex-col overflow-hidden pt-6">
+                <SamplesTab
+                  animalId={id}
+                  isOrgAdmin={isOrgAdmin}
+                  researches={[animal.research, ...animal.participations.map((p) => p.research)]}
+                />
+              </CardContent>
+            </Card>
+          )}
+
+          {tab === "analyses" && (
+            <Card className="flex min-h-0 flex-1 flex-col">
+              <CardContent className="flex min-h-0 flex-1 flex-col overflow-hidden pt-6">
+                <AnalysesTab animalId={id} />
+              </CardContent>
+            </Card>
+          )}
+
+          {tab === "media" && (
+            <Card className="flex min-h-0 flex-1 flex-col">
+              <CardContent className="flex min-h-0 flex-1 flex-col overflow-hidden pt-6">
+                <MediaTab animalId={id} isOrgAdmin={isOrgAdmin} />
+              </CardContent>
+            </Card>
+          )}
+
+          {tab === "audit" && (
+            <Card className="flex min-h-0 flex-1 flex-col">
+              <CardContent className="flex min-h-0 flex-1 flex-col overflow-hidden pt-6">
+                <AuditTab animalId={id} />
+              </CardContent>
+            </Card>
+          )}
+        </div>
       </Tabs>
 
       <AnimalFormDialog

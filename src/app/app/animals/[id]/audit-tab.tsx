@@ -115,65 +115,67 @@ export function AuditTab({ animalId }: { animalId: string }) {
   if (items.length === 0) return <p className="text-sm text-muted-foreground">{t("empty")}</p>
 
   return (
-    <div className="relative ml-4">
-      {/* Vertical timeline line */}
-      <div className="absolute left-0 top-0 bottom-0 w-px bg-border" />
+    <div className="min-h-0 flex-1 overflow-y-auto">
+      <div className="relative ml-4">
+        {/* Vertical timeline line */}
+        <div className="absolute left-0 top-0 bottom-0 w-px bg-border" />
 
-      <div className="space-y-6">
-        {items.map((r) => {
-          const meta = entityMeta(r.entity)
-          const Icon = meta.icon
-          const isCreated = r.field === "created"
-          return (
-            <div key={r.id} className="relative pl-8">
-              {/* Timeline dot */}
-              <div className="absolute left-0 top-2 -translate-x-1/2 size-3 rounded-full border-2 border-accent-foreground bg-card" />
+        <div className="space-y-6">
+          {items.map((r) => {
+            const meta = entityMeta(r.entity)
+            const Icon = meta.icon
+            const isCreated = r.field === "created"
+            return (
+              <div key={r.id} className="relative pl-8">
+                {/* Timeline dot */}
+                <div className="absolute left-0 top-2 -translate-x-1/2 size-3 rounded-full border-2 border-accent-foreground bg-card" />
 
-              <div className="rounded-lg border bg-card p-4 shadow-sm">
-                {/* Header: entity + date + author */}
-                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
-                  <span className="inline-flex items-center gap-1 font-medium text-foreground">
-                    <Icon className="size-3.5" />
-                    {meta.label}
-                  </span>
-                  <span className="inline-flex items-center gap-1">
-                    <Clock className="size-3" />
-                    {fmtDate(r.changedAt)} · {fmtTime(r.changedAt)}
-                  </span>
-                  <span className="inline-flex items-center gap-1">
-                    <User className="size-3" />
-                    {r.author}
-                  </span>
-                </div>
+                <div className="rounded-lg border bg-card p-4 shadow-sm">
+                  {/* Header: entity + date + author */}
+                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
+                    <span className="inline-flex items-center gap-1 font-medium text-foreground">
+                      <Icon className="size-3.5" />
+                      {meta.label}
+                    </span>
+                    <span className="inline-flex items-center gap-1">
+                      <Clock className="size-3" />
+                      {fmtDate(r.changedAt)} · {fmtTime(r.changedAt)}
+                    </span>
+                    <span className="inline-flex items-center gap-1">
+                      <User className="size-3" />
+                      {r.author}
+                    </span>
+                  </div>
 
-                {/* Context (sample · organ · pathogen · exam) */}
-                {contextOf(r) && (
-                  <p className="mt-1 text-xs text-muted-foreground">{contextOf(r)}</p>
-                )}
-
-                {/* Change detail */}
-                <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
-                  <span className="font-medium text-foreground">{fieldLabel(r)}</span>
-                  {isCreated ? (
-                    <Badge variant="secondary" className="text-xs">
-                      {r.newValue}
-                    </Badge>
-                  ) : (
-                    <>
-                      <Badge variant={resultVariant(r, r.oldValue)} className="text-xs">
-                        {valueLabel(r, r.oldValue)}
-                      </Badge>
-                      <ArrowRight className="size-3.5 shrink-0 text-muted-foreground" />
-                      <Badge variant={resultVariant(r, r.newValue)} className="text-xs">
-                        {valueLabel(r, r.newValue)}
-                      </Badge>
-                    </>
+                  {/* Context (sample · organ · pathogen · exam) */}
+                  {contextOf(r) && (
+                    <p className="mt-1 text-xs text-muted-foreground">{contextOf(r)}</p>
                   )}
+
+                  {/* Change detail */}
+                  <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
+                    <span className="font-medium text-foreground">{fieldLabel(r)}</span>
+                    {isCreated ? (
+                      <Badge variant="secondary" className="text-xs">
+                        {r.newValue}
+                      </Badge>
+                    ) : (
+                      <>
+                        <Badge variant={resultVariant(r, r.oldValue)} className="text-xs">
+                          {valueLabel(r, r.oldValue)}
+                        </Badge>
+                        <ArrowRight className="size-3.5 shrink-0 text-muted-foreground" />
+                        <Badge variant={resultVariant(r, r.newValue)} className="text-xs">
+                          {valueLabel(r, r.newValue)}
+                        </Badge>
+                      </>
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
-          )
-        })}
+            )
+          })}
+        </div>
       </div>
     </div>
   )

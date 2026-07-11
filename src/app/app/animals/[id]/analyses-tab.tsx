@@ -183,7 +183,7 @@ export function AnalysesTab({ animalId }: { animalId: string }) {
     .filter(({ samples }) => samples.length > 0)
 
   return (
-    <div className="space-y-6">
+    <div className="flex min-h-0 flex-1 flex-col gap-6">
       {/* Barra de filtros */}
       <div className="flex flex-wrap items-center gap-3">
         <div className="relative min-w-0 flex-1 sm:max-w-xs">
@@ -256,7 +256,7 @@ export function AnalysesTab({ animalId }: { animalId: string }) {
       {sectionsToRender.length === 0 ? (
         <p className="text-sm text-muted-foreground">{t("noMatch")}</p>
       ) : (
-        <div className="space-y-10">
+        <div className="min-h-0 flex-1 space-y-10 overflow-y-auto">
           {sectionsToRender.map(({ sec: section, samples }) => (
             <div key={section.research.id} className="space-y-6">
               {multi && (
