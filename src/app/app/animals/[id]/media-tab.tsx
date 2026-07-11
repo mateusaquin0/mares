@@ -57,7 +57,7 @@ export function MediaTab({ animalId, isOrgAdmin }: { animalId: string; isOrgAdmi
   const fmtDate = (iso: string) => new Date(iso).toLocaleDateString(locale)
 
   return (
-    <div className="space-y-6">
+    <div className="flex min-h-0 flex-1 flex-col gap-6">
       <div className="flex flex-wrap items-end gap-2 rounded-md border p-4">
         <div className="space-y-1">
           <label className="text-xs font-medium text-muted-foreground">{t("selectFile")}</label>
@@ -90,7 +90,7 @@ export function MediaTab({ animalId, isOrgAdmin }: { animalId: string; isOrgAdmi
       ) : items.length === 0 ? (
         <p className="text-sm text-muted-foreground">{t("empty")}</p>
       ) : (
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
+        <div className="grid min-h-0 flex-1 auto-rows-min grid-cols-2 gap-4 overflow-y-auto sm:grid-cols-3 md:grid-cols-4">
           {items.map((m) => {
             const isImage = m.mimeType.startsWith("image/")
             return (
