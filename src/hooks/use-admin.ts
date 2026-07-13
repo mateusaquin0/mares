@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import type { z } from "zod"
 
 import { adminService } from "@/services/admin"
+import { pendingCountsKeys } from "@/hooks/use-pending-counts"
 import type { addMemberSchema } from "@/schemas/organization.schema"
 import type { OrgMemberRole } from "@/types/organization"
 
@@ -48,7 +49,11 @@ export function useActOnRequest() {
   return useMutation({
     mutationFn: (vars: { id: string; action: "approve" | "reject" }) =>
       adminService.actOnRequest(vars.id, vars.action),
-    onSuccess: () => qc.invalidateQueries({ queryKey: adminKeys.requests() }),
+    // Fila mudou + a bolinha de pendências do menu precisa atualizar.
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: adminKeys.requests() })
+      qc.invalidateQueries({ queryKey: pendingCountsKeys.all })
+    },
   })
 }
 

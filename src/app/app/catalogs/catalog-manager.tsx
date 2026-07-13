@@ -26,7 +26,6 @@ import { txt, pathogenName, type I18nText } from "@/lib/catalog-i18n"
 import { useErrorMessage } from "@/lib/use-error-message"
 import { useTable } from "@/lib/use-table"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Input } from "@/components/ui/input"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -316,10 +315,14 @@ export function CatalogManager({
             <Button asChild variant="outline">
               <Link href="/app/catalogs/requests">
                 {t("reviewQueue")}
+                {/* Bolinha laranja de pendência (mesmo indicador do menu lateral). */}
                 {pendingCount > 0 && (
-                  <Badge variant="default" className="ml-1">
-                    {pendingCount}
-                  </Badge>
+                  <span
+                    role="status"
+                    aria-label={t("pending", { count: pendingCount })}
+                    title={t("pending", { count: pendingCount })}
+                    className="ml-1 size-2 shrink-0 rounded-full bg-orange-500"
+                  />
                 )}
               </Link>
             </Button>

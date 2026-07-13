@@ -48,10 +48,13 @@ import {
 
 const STATUSES: FeedbackStatus[] = ["NEW", "IN_REVIEW", "RESOLVED", "WONT_FIX"]
 
-const statusVariant: Record<FeedbackStatus, "default" | "secondary" | "outline" | "negative"> = {
-  NEW: "default",
-  IN_REVIEW: "secondary",
-  RESOLVED: "outline",
+// Cores distintas por status (variantes semânticas do Badge, ver design.md §Chips/Badges):
+// NEW âmbar (a triar) · IN_REVIEW marca (em andamento) · RESOLVED verde · WONT_FIX cinza.
+type BadgeVariant = React.ComponentProps<typeof Badge>["variant"]
+const statusVariant: Record<FeedbackStatus, BadgeVariant> = {
+  NEW: "inconclusive",
+  IN_REVIEW: "private",
+  RESOLVED: "positive",
   WONT_FIX: "negative",
 }
 

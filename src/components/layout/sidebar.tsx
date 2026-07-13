@@ -22,6 +22,7 @@ import {
 import { cn } from "@/lib/utils"
 import type { AuthMembership } from "@/lib/auth"
 import { useSetActiveOrg } from "@/hooks/use-members"
+import { usePendingCounts } from "@/hooks/use-pending-counts"
 import { Logo } from "@/components/logo"
 import { FeedbackDialog } from "@/components/feedback-dialog"
 import {
@@ -38,6 +39,31 @@ type NavItem = {
   label: string
   icon: typeof LayoutDashboard
   disabled?: boolean
+}
+
+// Indicador de pendências (bolinha laranja). Expandido: à direita do label.
+// Recolhido: sobreposta no canto superior direito do ícone (o link é `relative`).
+function NavDot({
+  count,
+  collapsed,
+  title,
+}: {
+  count: number
+  collapsed: boolean
+  title: string
+}) {
+  if (count <= 0) return null
+  return (
+    <span
+      role="status"
+      aria-label={title}
+      title={title}
+      className={cn(
+        "size-2 shrink-0 rounded-full bg-orange-500",
+        collapsed ? "absolute right-1.5 top-1.5" : "ml-auto",
+      )}
+    />
+  )
 }
 
 export function Sidebar({
@@ -57,6 +83,16 @@ export function Sidebar({
   const router = useRouter()
   const setActiveM = useSetActiveOrg()
   const t = useTranslations("sidebar")
+
+  // Contagens de pendências → bolinha no item correspondente. O endpoint já zera o que o
+  // usuário não pode tratar, então pesquisador nunca vê bolinha no Glossário.
+  const { data: pending } = usePendingCounts()
+  const pendingByHref: Record<string, number> = {
+    "/app/catalogs": pending?.glossaryRequests ?? 0,
+    "/app/admin/access-requests": pending?.accessRequests ?? 0,
+    "/app/admin/feedback": pending?.feedback ?? 0,
+  }
+  const dotTitle = (count: number) => t("pending", { count })
 
   const [collapsed, setCollapsed] = useState(false)
   useEffect(() => {
@@ -105,7 +141,7 @@ export function Sidebar({
 
   const linkClass = (active: boolean) =>
     cn(
-      "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors",
+      "relative flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors",
       collapsed && "justify-center px-0",
       active
         ? "bg-accent font-semibold text-accent-foreground"
@@ -217,6 +253,11 @@ export function Sidebar({
               >
                 <Icon className="size-4 shrink-0" />
                 {!collapsed && <span className="truncate">{item.label}</span>}
+                <NavDot
+                  count={pendingByHref[item.href] ?? 0}
+                  collapsed={collapsed}
+                  title={dotTitle(pendingByHref[item.href] ?? 0)}
+                />
               </Link>
             )
           })}
@@ -247,6 +288,11 @@ export function Sidebar({
                 >
                   <ShieldCheck className="size-4 shrink-0" />
                   {!collapsed && <span className="truncate">{item.label}</span>}
+                  <NavDot
+                    count={pendingByHref[item.href] ?? 0}
+                    collapsed={collapsed}
+                    title={dotTitle(pendingByHref[item.href] ?? 0)}
+                  />
                 </Link>
               )
             })}

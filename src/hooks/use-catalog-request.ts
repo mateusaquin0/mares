@@ -3,6 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 
 import { catalogRequestService } from "@/services/catalog-request"
+import { pendingCountsKeys } from "@/hooks/use-pending-counts"
 import type { CatalogItemPayload } from "@/services/catalog"
 import type { CatalogType } from "@/schemas/catalog.schema"
 
@@ -44,10 +45,11 @@ export function useApproveRequest() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (id: string) => catalogRequestService.approve(id),
-    // Item novo entrou no glossário + fila mudou.
+    // Item novo entrou no glossário + fila mudou + bolinha de pendências do menu.
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: catalogRequestKeys.all })
       qc.invalidateQueries({ queryKey: ["catalog"] })
+      qc.invalidateQueries({ queryKey: pendingCountsKeys.all })
     },
   })
 }
@@ -57,6 +59,9 @@ export function useRejectRequest() {
   return useMutation({
     mutationFn: (vars: { id: string; note?: string }) =>
       catalogRequestService.reject(vars.id, vars.note),
-    onSuccess: () => qc.invalidateQueries({ queryKey: catalogRequestKeys.all }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: catalogRequestKeys.all })
+      qc.invalidateQueries({ queryKey: pendingCountsKeys.all })
+    },
   })
 }

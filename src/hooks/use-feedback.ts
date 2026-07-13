@@ -3,6 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 
 import { feedbackService } from "@/services/feedback"
+import { pendingCountsKeys } from "@/hooks/use-pending-counts"
 import type { CreateFeedbackData } from "@/schemas/feedback.schema"
 import type { FeedbackStatus } from "@/types/feedback"
 
@@ -37,6 +38,10 @@ export function useUpdateFeedback() {
       status?: FeedbackStatus
       adminNote?: string | null
     }) => feedbackService.update(id, data),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["feedback"] }),
+    // Lista mudou + a bolinha de pendências do menu (feedback NEW) precisa atualizar.
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["feedback"] })
+      qc.invalidateQueries({ queryKey: pendingCountsKeys.all })
+    },
   })
 }
