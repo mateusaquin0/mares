@@ -140,7 +140,12 @@ export function TaxonAutocomplete({
         createPortal(
           <div
             ref={listRef}
-            className="fixed z-[100] overflow-hidden rounded-md border bg-popover text-popover-foreground shadow-md"
+            // Portalado para o body: dentro de um Dialog modal (Radix), o body fica com
+            // pointer-events:none — reativamos aqui. O data-attr diz ao Dialog para NÃO tratar o
+            // clique como "fora" (senão fecharia o diálogo antes de selecionar).
+            data-dropdown-portal=""
+            onPointerDown={(e) => e.stopPropagation()}
+            className="pointer-events-auto fixed z-[100] overflow-hidden rounded-md border bg-popover text-popover-foreground shadow-md"
             style={{ top: pos.top, left: pos.left, width: pos.width }}
           >
             {loading ? (

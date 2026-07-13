@@ -7,7 +7,7 @@ import { Prisma, type CatalogRequestType, type CatalogRequestStatus } from "@pri
 import { prisma } from "@/lib/prisma"
 import type { CatalogType } from "@/schemas/catalog.schema"
 import { catalogRequestPayloadSchema } from "@/schemas/catalog-request.schema"
-import { createCatalogItem, findDuplicate } from "@/lib/catalog"
+import { assertPathogenFromNcbi, createCatalogItem, findDuplicate } from "@/lib/catalog"
 import { NotFoundError, ConflictError, ForbiddenError } from "@/lib/errors"
 import { ERROR_CODES } from "@/lib/error-codes"
 import { slugify } from "@/lib/slug"
@@ -71,6 +71,12 @@ export async function createCatalogRequest(opts: {
     string,
     unknown
   >
+
+  // Patógeno científico: exige seleção do NCBI (taxonId) já na solicitação (feedback imediato).
+  if (opts.type === "pathogens") {
+    const sci = typeof parsed.scientificName === "string" ? parsed.scientificName.trim() : ""
+    assertPathogenFromNcbi(sci || null, typeof parsed.taxonId === "number" ? parsed.taxonId : null)
+  }
 
   // Dedup: bloqueia solicitação pendente idêntica do PRÓPRIO autor (mesmo tipo + mesmo nome).
   const names = payloadNames(opts.type, parsed)

@@ -35,6 +35,7 @@ export const pathogenSchema = z.object({
   // Táxon (NCBI) — preenchido pelo autocomplete do nome científico.
   taxonFamily: z.string().max(LIMITS.shortText).optional().or(z.literal("")),
   taxonOrder: z.string().max(LIMITS.shortText).optional().or(z.literal("")),
+  taxonRank: z.string().max(LIMITS.tinyText).optional().or(z.literal("")),
   taxonId: z.number().int().nullable().optional(),
 })
 

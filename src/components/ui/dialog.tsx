@@ -42,7 +42,10 @@ const DialogContent = React.forwardRef<
         className,
       )}
       onInteractOutside={(e) => {
-        if (dirty) e.preventDefault()
+        // Não fecha por: (a) formulário sujo; (b) interação num dropdown portalado para o body
+        // (ex.: autocomplete de táxon) — que é "fora" do content mas parte da mesma UI.
+        const target = e.detail.originalEvent.target as Element | null
+        if (dirty || target?.closest("[data-dropdown-portal]")) e.preventDefault()
       }}
       onEscapeKeyDown={(e) => {
         if (dirty) e.preventDefault()

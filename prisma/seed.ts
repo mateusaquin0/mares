@@ -60,11 +60,39 @@ const pathogens: Array<{
   sci?: string
   namePt?: string
   nameEn?: string
+  // Táxon (NCBI Taxonomy): `family` alimenta a sugestão de espécies e `rank` decide se o alvo é
+  // amplo (rastreio) na confirmação por sequenciamento.
+  family?: string
+  rank?: string
 }> = [
-  { key: "toxoplasma_gondii", groupKey: "protozoa", sci: "Toxoplasma gondii" },
-  { key: "sarcocystis_sp", groupKey: "protozoa", sci: "Sarcocystis sp." },
-  { key: "neospora_caninum", groupKey: "protozoa", sci: "Neospora caninum" },
-  { key: "besnoitia_sp", groupKey: "protozoa", sci: "Besnoitia sp." },
+  {
+    key: "toxoplasma_gondii",
+    groupKey: "protozoa",
+    sci: "Toxoplasma gondii",
+    family: "Sarcocystidae",
+    rank: "species",
+  },
+  {
+    key: "sarcocystis_sp",
+    groupKey: "protozoa",
+    sci: "Sarcocystis sp.",
+    family: "Sarcocystidae",
+    rank: "genus",
+  },
+  {
+    key: "neospora_caninum",
+    groupKey: "protozoa",
+    sci: "Neospora caninum",
+    family: "Sarcocystidae",
+    rank: "species",
+  },
+  {
+    key: "besnoitia_sp",
+    groupKey: "protozoa",
+    sci: "Besnoitia sp.",
+    family: "Sarcocystidae",
+    rank: "genus",
+  },
   { key: "brucella_sp", groupKey: "bacteria", sci: "Brucella sp." },
   { key: "brucella_ceti", groupKey: "bacteria", sci: "Brucella ceti" },
   {
@@ -230,6 +258,8 @@ async function main() {
       groupId: groupIdByKey[p.groupKey],
       scientificName: p.sci ?? null,
       name: p.sci ? Prisma.DbNull : { pt: p.namePt!, en: p.nameEn! },
+      taxonFamily: p.family ?? null,
+      taxonRank: p.rank ?? null,
     }
     await prisma.pathogen.upsert({ where: { key: p.key }, update: data, create: data })
   }

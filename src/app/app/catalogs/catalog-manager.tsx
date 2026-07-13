@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useState } from "react"
 import Link from "next/link"
 import { Controller, useForm } from "react-hook-form"
 import { useLocale, useTranslations } from "next-intl"
@@ -9,7 +9,6 @@ import { BarChart3, MoreHorizontal, Pencil, Plus, Trash2 } from "lucide-react"
 
 import type { CatalogType } from "@/schemas/catalog.schema"
 import { LIMITS } from "@/schemas/limits"
-import { slugify } from "@/lib/slug"
 import { useNcbiSearch } from "@/hooks/use-ncbi"
 import {
   useCatalogList,
@@ -71,8 +70,6 @@ type FormShape = {
   namePt?: string
   nameEn?: string
   sci?: string
-  taxonFamily?: string
-  taxonOrder?: string
   // Só para exam-types: rótulo/unidade da medida quantitativa (Ct, Título...).
   measurePt?: string
   measureEn?: string
@@ -108,8 +105,16 @@ export function CatalogManager({
   const [type, setType] = useState<CatalogType>(initialType)
   const [dialog, setDialog] = useState<{ mode: "create" | "edit"; row?: Row } | null>(null)
   const [confirmRow, setConfirmRow] = useState<Row | null>(null)
-  // Táxon NCBI selecionado para o patógeno (fora do react-hook-form por ser numérico).
+  // Táxon do patógeno FORA do react-hook-form: com shouldUnregister, campos nunca registrados
+  // (estes, que só são preenchidos programaticamente) não restauram no reset() da edição.
   const [taxonId, setTaxonId] = useState<number | null>(null)
+  const [taxon, setTaxon] = useState<{ family: string; order: string; rank: string }>({
+    family: "",
+    order: "",
+    rank: "",
+  })
+  // Nome científico não veio do NCBI ao tentar criar (regra: exige seleção da base).
+  const [ncbiError, setNcbiError] = useState(false)
   // Exam-types: o item tem uma leitura quantitativa (Ct, Título...)?
   const [hasMeasure, setHasMeasure] = useState(false)
   const isPathogen = type === "pathogens"
@@ -144,18 +149,20 @@ export function CatalogManager({
   const [groupError, setGroupError] = useState(false)
   const selectedGroup = groups.find((g) => g.id === groupId)
   const groupUsesSci = selectedGroup?.usesScientificName ?? true
+  // Resumo do táxon exibido abaixo do nome científico (rank · família · ordem).
+  const taxonSummary = [taxon.rank, taxon.family, taxon.order].filter(Boolean).join(" · ")
 
   function openCreate() {
     setGroupId("")
     setGroupError(false)
+    setNcbiError(false)
     setTaxonId(null)
+    setTaxon({ family: "", order: "", rank: "" })
     setHasMeasure(false)
     form.reset({
       namePt: "",
       nameEn: "",
       sci: "",
-      taxonFamily: "",
-      taxonOrder: "",
       measurePt: "",
       measureEn: "",
       measureUnit: "",
@@ -164,21 +171,27 @@ export function CatalogManager({
   }
   function openEdit(row: Row) {
     setGroupError(false)
+    setNcbiError(false)
     if (isPathogen) {
       const p = row as PathogenRow
       setGroupId(p.group.id)
       setTaxonId(p.taxonId)
+      // Restaura o táxon do banco (aparece abaixo do nome científico já na abertura).
+      setTaxon({
+        family: p.taxonFamily ?? "",
+        order: p.taxonOrder ?? "",
+        rank: p.taxonRank ?? "",
+      })
       setHasMeasure(false)
       form.reset({
         sci: p.scientificName ?? "",
         namePt: i18nPt(p.name),
         nameEn: i18nEn(p.name),
-        taxonFamily: p.taxonFamily ?? "",
-        taxonOrder: p.taxonOrder ?? "",
       })
     } else {
       setGroupId("")
       setTaxonId(null)
+      setTaxon({ family: "", order: "", rank: "" })
       const n = row as NamedRow
       const measured = isExamType && n.measureLabel != null
       setHasMeasure(measured)
@@ -199,14 +212,21 @@ export function CatalogManager({
       return
     }
     const isEdit = dialog?.mode === "edit"
+    // Regra: criar patógeno de grupo científico exige seleção do NCBI (taxonId vinculado).
+    // Só no cadastro (não na edição, para não travar itens legados sem vínculo).
+    if (!isEdit && isPathogen && groupUsesSci && !taxonId) {
+      setNcbiError(true)
+      return
+    }
     const body = isPathogen
       ? {
           groupId,
           scientificName: data.sci,
           namePt: data.namePt,
           nameEn: data.nameEn,
-          taxonFamily: data.taxonFamily,
-          taxonOrder: data.taxonOrder,
+          taxonFamily: taxon.family,
+          taxonOrder: taxon.order,
+          taxonRank: taxon.rank,
           taxonId,
         }
       : isExamType
@@ -249,34 +269,6 @@ export function CatalogManager({
 
   const display = (r: Row) =>
     isPathogen ? pathogenName(locale, r as PathogenRow) : i18nPt((r as NamedRow).name)
-
-  // L1 — deduplicação na origem: enquanto o usuário digita, aponta itens já existentes
-  // parecidos (ignorando acento/caixa). Na maioria, ele só precisa USAR o item existente.
-  const watched = form.watch()
-  const similar = useMemo(() => {
-    if (!dialog || dialog.mode !== "create") return []
-    const rows = (listQ.data ?? []) as Row[]
-    const candidates = (
-      isPathogen ? [watched.sci, watched.namePt, watched.nameEn] : [watched.namePt, watched.nameEn]
-    )
-      .map((c) => (c ? slugify(c) : ""))
-      .filter(Boolean)
-    if (!candidates.length) return []
-    const matches = (n: string | null | undefined) => {
-      if (!n) return false
-      const s = slugify(n)
-      return candidates.some((q) => s === q || s.includes(q) || q.includes(s))
-    }
-    return rows
-      .filter((r) =>
-        isPathogen
-          ? matches((r as PathogenRow).scientificName) ||
-            matches(i18nPt((r as PathogenRow).name)) ||
-            matches(i18nEn((r as PathogenRow).name))
-          : matches(i18nPt((r as NamedRow).name)) || matches(i18nEn((r as NamedRow).name)),
-      )
-      .slice(0, 5)
-  }, [dialog, listQ.data, isPathogen, watched.sci, watched.namePt, watched.nameEn])
 
   const table = useTable(listQ.data ?? [], {
     locale,
@@ -499,18 +491,6 @@ export function CatalogManager({
             className="flex min-h-0 flex-1 flex-col gap-4"
           >
             <DialogBody className="space-y-4">
-              {dialog?.mode === "create" && similar.length > 0 && (
-                <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 p-3 text-xs">
-                  <p className="font-medium text-amber-700 dark:text-amber-400">
-                    {t("similarWarning")}
-                  </p>
-                  <ul className="mt-1 list-disc space-y-0.5 pl-4 text-muted-foreground">
-                    {similar.map((r) => (
-                      <li key={r.id}>{display(r)}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
               {isPathogen && (
                 <div className="space-y-1">
                   <Label>{t("group")}</Label>
@@ -555,8 +535,12 @@ export function CatalogManager({
                           field.onChange(name)
                           // Ao escolher no NCBI, vincula o táxon; edição manual desvincula.
                           setTaxonId(m ? m.id : null)
-                          form.setValue("taxonFamily", m?.family ?? "")
-                          form.setValue("taxonOrder", m?.order ?? "")
+                          setTaxon({
+                            family: m?.family ?? "",
+                            order: m?.order ?? "",
+                            rank: m?.rank ?? "",
+                          })
+                          setNcbiError(false)
                         }}
                       />
                     )}
@@ -564,17 +548,16 @@ export function CatalogManager({
                   {form.formState.errors.sci && (
                     <p className="text-xs text-destructive">{form.formState.errors.sci.message}</p>
                   )}
-                  {taxonId != null && (
+                  {ncbiError && <p className="text-xs text-destructive">{t("ncbiRequired")}</p>}
+                  {taxonId != null ? (
                     <p className="text-xs text-muted-foreground">
-                      {t("ncbiLinked", {
-                        taxonId,
-                        taxon:
-                          [form.watch("taxonFamily"), form.watch("taxonOrder")]
-                            .filter(Boolean)
-                            .join(" · ") || "—",
-                      })}
+                      {t("ncbiLinked", { taxonId, taxon: taxonSummary || "—" })}
                     </p>
-                  )}
+                  ) : taxonSummary ? (
+                    <p className="text-xs text-muted-foreground">
+                      {t("taxonInfo", { taxon: taxonSummary })}
+                    </p>
+                  ) : null}
                 </div>
               ) : (
                 <div className="space-y-3">
