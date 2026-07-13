@@ -133,6 +133,7 @@ export type PathogenRow = {
   name: Prisma.JsonValue | null
   taxonFamily: string | null
   taxonOrder: string | null
+  taxonRank: string | null
   taxonId: number | null
   createdById: string | null
   group: PathogenGroupRow
@@ -146,6 +147,7 @@ const pathogenSelect = {
   name: true,
   taxonFamily: true,
   taxonOrder: true,
+  taxonRank: true,
   taxonId: true,
   createdById: true,
   group: { select: { id: true, key: true, name: true, usesScientificName: true } },
@@ -176,10 +178,11 @@ export async function listPathogens(): Promise<PathogenRow[]> {
   return rows.map((r) => ({ ...r, inUse: used.has(r.id) }))
 }
 
-// Táxon do patógeno (NCBI): família/ordem/TaxId. Só faz sentido para grupos científicos.
+// Táxon do patógeno (NCBI): família/ordem/rank/TaxId. Só faz sentido para grupos científicos.
 export type PathogenTaxon = {
   taxonFamily: string | null
   taxonOrder: string | null
+  taxonRank: string | null
   taxonId: number | null
 }
 
@@ -199,6 +202,7 @@ export async function createPathogenEntry(data: {
       name: data.name ?? Prisma.DbNull,
       taxonFamily: data.taxon.taxonFamily,
       taxonOrder: data.taxon.taxonOrder,
+      taxonRank: data.taxon.taxonRank,
       taxonId: data.taxon.taxonId,
       createdById: data.createdById,
     },
@@ -219,6 +223,7 @@ export async function updatePathogenEntry(
       name: data.name ?? Prisma.DbNull,
       taxonFamily: data.taxon.taxonFamily,
       taxonOrder: data.taxon.taxonOrder,
+      taxonRank: data.taxon.taxonRank,
       taxonId: data.taxon.taxonId,
     },
     select: pathogenSelect,
@@ -250,6 +255,7 @@ export async function resolvePathogen(body: unknown): Promise<{
     const taxon: PathogenTaxon = {
       taxonFamily: data.taxonFamily?.trim() || null,
       taxonOrder: data.taxonOrder?.trim() || null,
+      taxonRank: data.taxonRank?.trim().toLowerCase() || null,
       taxonId: data.taxonId ?? null,
     }
     return { groupId: group.id, scientificName: sci, name: null, taxon, keySource: sci }
@@ -258,13 +264,30 @@ export async function resolvePathogen(body: unknown): Promise<{
   const en = data.nameEn?.trim()
   if (!pt || !en)
     throw new ValidationError("Nome (PT e EN) é obrigatório", ERROR_CODES.catalogNameRequired)
-  const emptyTaxon: PathogenTaxon = { taxonFamily: null, taxonOrder: null, taxonId: null }
+  const emptyTaxon: PathogenTaxon = {
+    taxonFamily: null,
+    taxonOrder: null,
+    taxonRank: null,
+    taxonId: null,
+  }
   return {
     groupId: group.id,
     scientificName: null,
     name: { pt, en },
     taxon: emptyTaxon,
     keySource: pt,
+  }
+}
+
+// Regra de negócio: um patógeno de grupo científico só pode ser CRIADO a partir de uma seleção
+// da base NCBI — isto é, com `taxonId` vinculado. Nome científico digitado livremente (sem
+// vínculo) é recusado. Não se aplica a grupos de nome comum (scientificName nulo).
+export function assertPathogenFromNcbi(scientificName: string | null, taxonId: number | null) {
+  if (scientificName && taxonId == null) {
+    throw new ValidationError(
+      "Selecione o nome científico na base NCBI",
+      ERROR_CODES.pathogenNcbiRequired,
+    )
   }
 }
 
@@ -381,6 +404,7 @@ export async function createCatalogItem(
   try {
     if (type === "pathogens") {
       const p = await resolvePathogen(body)
+      assertPathogenFromNcbi(p.scientificName, p.taxon.taxonId)
       return await createPathogenEntry({
         key: await uniqueKey(type, p.keySource),
         groupId: p.groupId,

@@ -41,6 +41,8 @@ export const ERROR_CODES = {
   catalogDuplicate: "catalogDuplicate",
   catalogInUse: "catalogInUse",
   catalogNameRequired: "catalogNameRequired",
+  // Patógeno científico só pode ser criado a partir de uma seleção do NCBI (taxonId vinculado).
+  pathogenNcbiRequired: "pathogenNcbiRequired",
   // Fase 3 — animais, amostras e análises
   animalNotFound: "animalNotFound",
   animalDuplicate: "animalDuplicate",
@@ -56,6 +58,10 @@ export const ERROR_CODES = {
   sampleIdentificationDuplicate: "sampleIdentificationDuplicate",
   organNotFound: "organNotFound",
   analysisInvalidCombo: "analysisInvalidCombo",
+  // Confirmação de espécie por sequenciamento
+  analysisNotFound: "analysisNotFound",
+  confirmationParentNotPositive: "confirmationParentNotPositive",
+  confirmationDuplicate: "confirmationDuplicate",
   mediaNotFound: "mediaNotFound",
   mediaInvalidType: "mediaInvalidType",
   mediaTooLarge: "mediaTooLarge",

@@ -513,7 +513,11 @@
     "catalogRequestNotFound": "Solicitação não encontrada.",
     "catalogRequestProcessed": "Esta solicitação já foi processada.",
     "catalogRequestSelfReview": "Você não pode revisar a própria solicitação.",
-    "catalogRequestDuplicatePending": "Você já tem uma solicitação pendente para este item."
+    "catalogRequestDuplicatePending": "Você já tem uma solicitação pendente para este item.",
+    "analysisNotFound": "Análise não encontrada",
+    "confirmationParentNotPositive": "Só um rastreio positivo pode receber confirmação de espécie",
+    "confirmationDuplicate": "Esta espécie já foi confirmada nesta amostra",
+    "pathogenNcbiRequired": "Selecione o nome científico na base NCBI"
   },
   "location": {
     "country": "País",
@@ -773,7 +777,27 @@
     "searchPlaceholder": "Buscar por patógeno ou exame...",
     "allResults": "Todos os resultados",
     "noMatch": "Nenhum resultado para os filtros.",
-    "entryCount": "{count, plural, =0 {sem itens} one {# item} other {# itens}}"
+    "entryCount": "{count, plural, =0 {sem itens} one {# item} other {# itens}}",
+    "confirmTitle": "Confirmação de espécie",
+    "confirmAdd": "Confirmar espécie",
+    "confirmEmpty": "Nenhuma espécie confirmada por sequenciamento.",
+    "confirmOrphanWarning": "O rastreio não está mais positivo — revise estas confirmações.",
+    "confirmEdit": "Editar confirmação",
+    "confirmDelete": "Excluir confirmação",
+    "confirmDeleteTitle": "Excluir confirmação de espécie?",
+    "confirmDeleteDesc": "Esta ação remove a espécie confirmada e seus registros de sequenciamento. Não pode ser desfeita.",
+    "confirmSpecies": "Espécie",
+    "confirmSpeciesPlaceholder": "Selecione a espécie",
+    "confirmExam": "Exame",
+    "confirmExamPlaceholder": "Selecione o exame",
+    "seqTitle": "Sequências",
+    "seqMarker": "Marcador",
+    "seqAccession": "Nº de acesso",
+    "seqIdentity": "% identidade",
+    "seqPlatform": "Plataforma",
+    "seqRemove": "Remover sequência",
+    "seqAdd": "Adicionar sequência",
+    "seqEmpty": "sem dados"
   },
   "media": {
     "empty": "Nenhum arquivo enviado.",
@@ -1028,7 +1052,9 @@
     "usageTitle": "Uso deste item",
     "usageLoading": "Calculando…",
     "usageResearches": "{count} pesquisa(s)",
-    "usageOrgs": "{count} grupo(s)"
+    "usageOrgs": "{count} grupo(s)",
+    "ncbiRequired": "Selecione o nome científico na base NCBI (não é permitido digitar livremente).",
+    "taxonInfo": "Táxon: {taxon}"
   },
   "feedback": {
     "trigger": "Sugestão / Bug",

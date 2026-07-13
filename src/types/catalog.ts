@@ -6,10 +6,13 @@ import type { I18nText } from "@/lib/catalog-i18n"
 export type CatalogItem = { id: string; name: string | I18nText }
 
 // Patógeno (pode ter nome científico e/ou nome do catálogo).
+// Táxon (NCBI) vem na listagem e alimenta a sugestão de espécies da mesma família na confirmação.
 export type PathogenItem = {
   id: string
   scientificName: string | null
   name: string | I18nText | null
+  taxonFamily?: string | null
+  taxonId?: number | null
 }
 
 // ── Gestão de catálogos (CatalogManager) ─────────────────────────────────────
@@ -37,6 +40,7 @@ export type PathogenRow = {
   name: string | I18nText | null
   taxonFamily: string | null
   taxonOrder: string | null
+  taxonRank: string | null
   taxonId: number | null
   createdById: string | null
   inUse: boolean

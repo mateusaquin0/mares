@@ -11,6 +11,7 @@ import { getAuthUser, requireOrgRole } from "@/lib/auth"
 import { assertAnimalVisible } from "@/lib/research-access"
 import { apiError, unauthorized } from "@/lib/api"
 import { loadAnimalOrg } from "@/lib/animals"
+import { analysisRowSelect, protocolPathogenSelect } from "@/lib/analyses"
 
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -41,14 +42,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
       }),
       prisma.analysis.findMany({
         where: { sample: sampleScope },
-        select: {
-          sampleId: true,
-          pathogenId: true,
-          examTypeId: true,
-          result: true,
-          measureValue: true,
-          notes: true,
-        },
+        select: analysisRowSelect,
       }),
     ])
 
@@ -77,7 +71,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
             pathogenId: true,
             examTypeId: true,
             status: true,
-            pathogen: { select: { id: true, scientificName: true, name: true } },
+            pathogen: { select: protocolPathogenSelect },
             examType: { select: { id: true, name: true, measureLabel: true, measureUnit: true } },
           },
         })

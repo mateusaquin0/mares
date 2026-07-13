@@ -1,16 +1,24 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { Fragment, useEffect, useState } from "react"
 import { useLocale, useTranslations } from "next-intl"
 import { toast } from "sonner"
 import { FlaskConical, Search, X } from "lucide-react"
 
 import { pathogenName, txt } from "@/lib/catalog-i18n"
+import { isBroadPathogen } from "@/lib/pathogen"
 import { useErrorMessage } from "@/lib/use-error-message"
 import { useAnimalGrid } from "@/hooks/use-animals"
 import { useUpsertAnalysis } from "@/hooks/use-analyses"
-import type { AnalysisCell as Cell, ProtocolEntry, ResultValue, SampleLite } from "@/types/analysis"
+import type {
+  AnalysisCell,
+  AnalysisRow,
+  ProtocolEntry,
+  ResultValue,
+  SampleLite,
+} from "@/types/analysis"
 import { MeasureInput, NotesInput, ResultSelect } from "@/components/analysis-cells"
+import { ConfirmationPanel } from "./confirmation-panel"
 import { Truncate } from "@/components/ui/truncate"
 import {
   Accordion,
@@ -46,6 +54,9 @@ const RESULTS: ResultValue[] = ["POSITIVO", "NEGATIVO", "INCONCLUSIVO"]
 const keyOf = (sampleId: string, pathogenId: string, examTypeId: string) =>
   `${sampleId}|${pathogenId}|${examTypeId}`
 
+// Célula editável da grade + o id da análise persistida (necessário para pendurar confirmações).
+type Cell = AnalysisCell & { id?: string }
+
 export function AnalysesTab({ animalId }: { animalId: string }) {
   const t = useTranslations("analyses")
   const ts = useTranslations("samples")
@@ -66,11 +77,14 @@ export function AnalysesTab({ animalId }: { animalId: string }) {
   const [showInactive, setShowInactive] = useState(false)
 
   // Sincroniza o mapa de células (editável, com update otimista) com a grade carregada.
+  // Só os RASTREIOS (parentAnalysisId null) viram células; as confirmações são aninhadas.
   useEffect(() => {
     if (!grid) return
     const map: Record<string, Cell> = {}
     for (const a of grid.analyses) {
+      if (a.parentAnalysisId !== null) continue
       map[keyOf(a.sampleId, a.pathogenId, a.examTypeId)] = {
+        id: a.id,
         result: a.result,
         measureValue: a.measureValue,
         notes: a.notes,
@@ -80,6 +94,15 @@ export function AnalysesTab({ animalId }: { animalId: string }) {
   }, [grid])
 
   const getCell = (k: string): Cell => cells[k] ?? { result: null, measureValue: null, notes: null }
+
+  // Confirmações (análises-filhas) agrupadas por rastreio-pai, reidratadas da grade.
+  const childrenByParent = new Map<string, AnalysisRow[]>()
+  for (const a of grid?.analyses ?? []) {
+    if (a.parentAnalysisId === null) continue
+    const list = childrenByParent.get(a.parentAnalysisId) ?? []
+    list.push(a)
+    childrenByParent.set(a.parentAnalysisId, list)
+  }
 
   const statusLabel = (s: string) =>
     ({
@@ -103,7 +126,7 @@ export function AnalysesTab({ animalId }: { animalId: string }) {
     setCells((c) => ({ ...c, [k]: next }))
 
     try {
-      await upsertM.mutateAsync({
+      const saved = await upsertM.mutateAsync({
         sampleId: sample.id,
         pathogenId: entry.pathogenId,
         examTypeId: entry.examTypeId,
@@ -111,6 +134,8 @@ export function AnalysesTab({ animalId }: { animalId: string }) {
         measureValue: next.measureValue,
         notes: next.notes,
       })
+      // Guarda o id da análise persistida (habilita pendurar confirmações neste positivo).
+      if (saved?.id) setCells((c) => ({ ...c, [k]: { ...next, id: saved.id } }))
       toast.success(t("saved"))
     } catch (err) {
       toast.error(t("saveError"), { description: em(err) })
@@ -304,53 +329,78 @@ export function AnalysesTab({ animalId }: { animalId: string }) {
                               const k = keyOf(sample.id, entry.pathogenId, entry.examTypeId)
                               const cell = getCell(k)
                               const inactive = entry.status === "INACTIVE"
+                              const confirmations = cell.id
+                                ? (childrenByParent.get(cell.id) ?? [])
+                                : []
+                              const isPositive = cell.result === "POSITIVO"
+                              // Painel de confirmação: só em positivo de alvo AMPLO (família/gênero
+                              // — onde a espécie ainda não está resolvida), ou onde já há
+                              // confirmações (inclusive órfãs, se o rastreio deixou de ser positivo).
+                              const showPanel =
+                                (isPositive && isBroadPathogen(entry.pathogen) && !!cell.id) ||
+                                confirmations.length > 0
                               return (
-                                <TableRow key={k}>
-                                  <TableCell className="font-medium">
-                                    <span className="flex items-center gap-2">
-                                      <Truncate>{pathogenName(locale, entry.pathogen)}</Truncate>
-                                      {inactive && (
-                                        <Badge variant="secondary">{t("inactive")}</Badge>
-                                      )}
-                                    </span>
-                                  </TableCell>
-                                  <TableCell className="text-muted-foreground">
-                                    <Truncate>{txt(locale, entry.examType.name)}</Truncate>
-                                  </TableCell>
-                                  <TableCell>
-                                    <ResultSelect
-                                      value={cell.result}
-                                      disabled={inactive}
-                                      onChange={(result) => save(sample, entry, { result })}
-                                    />
-                                  </TableCell>
-                                  <TableCell>
-                                    {entry.examType.measureLabel ? (
-                                      <MeasureInput
-                                        value={cell.measureValue}
-                                        placeholder={txt(locale, entry.examType.measureLabel)}
-                                        unit={entry.examType.measureUnit}
+                                <Fragment key={k}>
+                                  <TableRow>
+                                    <TableCell className="font-medium">
+                                      <span className="flex items-center gap-2">
+                                        <Truncate>{pathogenName(locale, entry.pathogen)}</Truncate>
+                                        {inactive && (
+                                          <Badge variant="secondary">{t("inactive")}</Badge>
+                                        )}
+                                      </span>
+                                    </TableCell>
+                                    <TableCell className="text-muted-foreground">
+                                      <Truncate>{txt(locale, entry.examType.name)}</Truncate>
+                                    </TableCell>
+                                    <TableCell>
+                                      <ResultSelect
+                                        value={cell.result}
                                         disabled={inactive}
-                                        onCommit={(n) => {
-                                          if (n !== cell.measureValue)
-                                            save(sample, entry, { measureValue: n })
+                                        onChange={(result) => save(sample, entry, { result })}
+                                      />
+                                    </TableCell>
+                                    <TableCell>
+                                      {entry.examType.measureLabel ? (
+                                        <MeasureInput
+                                          value={cell.measureValue}
+                                          placeholder={txt(locale, entry.examType.measureLabel)}
+                                          unit={entry.examType.measureUnit}
+                                          disabled={inactive}
+                                          onCommit={(n) => {
+                                            if (n !== cell.measureValue)
+                                              save(sample, entry, { measureValue: n })
+                                          }}
+                                        />
+                                      ) : (
+                                        <span className="text-sm text-muted-foreground">—</span>
+                                      )}
+                                    </TableCell>
+                                    <TableCell>
+                                      <NotesInput
+                                        value={cell.notes}
+                                        placeholder={t("notesPlaceholder")}
+                                        disabled={inactive}
+                                        onCommit={(s) => {
+                                          if (s !== cell.notes) save(sample, entry, { notes: s })
                                         }}
                                       />
-                                    ) : (
-                                      <span className="text-sm text-muted-foreground">—</span>
-                                    )}
-                                  </TableCell>
-                                  <TableCell>
-                                    <NotesInput
-                                      value={cell.notes}
-                                      placeholder={t("notesPlaceholder")}
-                                      disabled={inactive}
-                                      onCommit={(s) => {
-                                        if (s !== cell.notes) save(sample, entry, { notes: s })
-                                      }}
-                                    />
-                                  </TableCell>
-                                </TableRow>
+                                    </TableCell>
+                                  </TableRow>
+                                  {showPanel && cell.id && (
+                                    <TableRow className="hover:bg-transparent">
+                                      <TableCell colSpan={5} className="pb-4 pt-0">
+                                        <ConfirmationPanel
+                                          animalId={animalId}
+                                          parentId={cell.id}
+                                          screeningPathogen={entry.pathogen}
+                                          confirmations={confirmations}
+                                          parentIsPositive={isPositive}
+                                        />
+                                      </TableCell>
+                                    </TableRow>
+                                  )}
+                                </Fragment>
                               )
                             })}
                           </TableBody>

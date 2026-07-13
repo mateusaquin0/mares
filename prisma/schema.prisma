@@ -248,8 +248,11 @@ model Pathogen {
   scientificName String?            @map("scientific_name")
   name           Json?
   // Táxon (NCBI Taxonomy) — preenchido pelo autocomplete do nome científico. taxonId = TaxId.
+  // taxonRank = rank NCBI do próprio patógeno ("species", "genus", "family"…); decide se é um
+  // alvo AMPLO (rastreio) elegível a confirmação de espécie. Ver docs/PLANO_CONFIRMACAO_SEQUENCIAMENTO.md.
   taxonFamily    String?            @map("taxon_family")
   taxonOrder     String?            @map("taxon_order")
+  taxonRank      String?            @map("taxon_rank")
   taxonId        Int?               @map("taxon_id")
   createdById    String?            @map("created_by_id")
   protocols      ResearchProtocol[]
@@ -385,10 +388,38 @@ model Analysis {
   // serologias). NULL quando não aplicável ou não medido.
   measureValue Float? @map("ctValue")
   notes      String?
+  // Confirmação de espécie (ver docs/PLANO_CONFIRMACAO_SEQUENCIAMENTO.md):
+  // NULL = análise de RASTREIO (aparece na grade, definida pelo protocolo). Preenchido = análise
+  // de CONFIRMAÇÃO (sequenciamento) pendurada num rastreio POSITIVO; carrega a espécie resolvida
+  // (pathogenId) e não exige entrada de ResearchProtocol. Cascade: apagar o rastreio apaga suas
+  // confirmações (importante: deleteProtocolCascade mira o rastreio; os filhos caem por aqui).
+  parentAnalysisId String?    @map("parent_analysis_id")
+  parentAnalysis   Analysis?  @relation("AnalysisConfirmation", fields: [parentAnalysisId], references: [id], onDelete: Cascade)
+  confirmations    Analysis[] @relation("AnalysisConfirmation")
+  sequences        SequenceRecord[]
   createdAt  DateTime @default(now())
 
   @@unique([sampleId, pathogenId, examTypeId])
   @@index([sampleId])
+  @@index([parentAnalysisId])
+}
+
+// Rastro de um sequenciamento que sustenta a determinação de espécie de uma Analysis de
+// confirmação (parentAnalysisId preenchido). 1:N — uma mesma espécie pode ter mais de uma
+// sequência (ex.: marcadores 18S e cox1). A espécie NÃO vive aqui (é o pathogenId da análise);
+// estes campos guardam o COMO se chegou à espécie. Ver docs/PLANO_CONFIRMACAO_SEQUENCIAMENTO.md.
+model SequenceRecord {
+  id          String   @id @default(uuid())
+  analysisId  String   @map("analysis_id")
+  analysis    Analysis @relation(fields: [analysisId], references: [id], onDelete: Cascade)
+  marker      String? // gene/região: "18S rRNA", "ITS1", "cox1 (COI)" — DwC target_gene
+  accession   String? // nº de acesso GenBank/BOLD (match de referência e/ou depósito próprio)
+  pctIdentity Float?   @map("pct_identity") // % de identidade do BLAST
+  consensus   String? // sequência consenso (FASTA), opcional
+  platform    String? // "Sanger", "Illumina", opcional
+  createdAt   DateTime @default(now())
+
+  @@index([analysisId])
 }
 
 // Arquivos anexados a um animal (fotos de campo, microscopia, laudos PDF)

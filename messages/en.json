@@ -513,7 +513,11 @@
     "catalogRequestNotFound": "Request not found.",
     "catalogRequestProcessed": "This request has already been processed.",
     "catalogRequestSelfReview": "You cannot review your own request.",
-    "catalogRequestDuplicatePending": "You already have a pending request for this item."
+    "catalogRequestDuplicatePending": "You already have a pending request for this item.",
+    "analysisNotFound": "Analysis not found",
+    "confirmationParentNotPositive": "Only a positive screening can receive species confirmation",
+    "confirmationDuplicate": "This species has already been confirmed for this sample",
+    "pathogenNcbiRequired": "Select the scientific name from the NCBI database"
   },
   "location": {
     "country": "Country",
@@ -773,7 +777,27 @@
     "searchPlaceholder": "Search by pathogen or exam...",
     "allResults": "All results",
     "noMatch": "No results for the filters.",
-    "entryCount": "{count, plural, =0 {no items} one {# item} other {# items}}"
+    "entryCount": "{count, plural, =0 {no items} one {# item} other {# items}}",
+    "confirmTitle": "Species confirmation",
+    "confirmAdd": "Confirm species",
+    "confirmEmpty": "No species confirmed by sequencing yet.",
+    "confirmOrphanWarning": "Screening is no longer positive — review these confirmations.",
+    "confirmEdit": "Edit confirmation",
+    "confirmDelete": "Delete confirmation",
+    "confirmDeleteTitle": "Delete species confirmation?",
+    "confirmDeleteDesc": "This removes the confirmed species and its sequencing records. It cannot be undone.",
+    "confirmSpecies": "Species",
+    "confirmSpeciesPlaceholder": "Select species",
+    "confirmExam": "Exam",
+    "confirmExamPlaceholder": "Select exam",
+    "seqTitle": "Sequences",
+    "seqMarker": "Marker",
+    "seqAccession": "Accession",
+    "seqIdentity": "% identity",
+    "seqPlatform": "Platform",
+    "seqRemove": "Remove sequence",
+    "seqAdd": "Add sequence",
+    "seqEmpty": "no data"
   },
   "media": {
     "empty": "No files uploaded.",
@@ -1028,7 +1052,9 @@
     "usageTitle": "Usage of this item",
     "usageLoading": "Calculating…",
     "usageResearches": "{count} research(es)",
-    "usageOrgs": "{count} group(s)"
+    "usageOrgs": "{count} group(s)",
+    "ncbiRequired": "Select the scientific name from the NCBI database (free typing is not allowed).",
+    "taxonInfo": "Taxon: {taxon}"
   },
   "feedback": {
     "trigger": "Suggestion / Bug",
