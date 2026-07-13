@@ -43,15 +43,7 @@ type NavItem = {
 
 // Indicador de pendências (bolinha laranja). Expandido: à direita do label.
 // Recolhido: sobreposta no canto superior direito do ícone (o link é `relative`).
-function NavDot({
-  count,
-  collapsed,
-  title,
-}: {
-  count: number
-  collapsed: boolean
-  title: string
-}) {
+function NavDot({ count, collapsed, title }: { count: number; collapsed: boolean; title: string }) {
   if (count <= 0) return null
   return (
     <span
