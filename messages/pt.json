@@ -305,7 +305,7 @@
     "lookupTitle": "Buscar e-mail na plataforma",
     "lookupFound": "Usuário já existe na plataforma — nome preenchido automaticamente.",
     "lookupError": "Não foi possível buscar o e-mail",
-    "nameLabel": "Nome (se for novo)",
+    "nameLabel": "Nome",
     "nameLookupHint": "Busque o e-mail acima para verificar se o usuário já existe.",
     "nameNewUserHint": "Novo usuário — informe o nome para o convite.",
     "roleLabel": "Tipo de acesso",
@@ -411,7 +411,7 @@
     "addMemberTitle": "Adicionar usuário",
     "addMemberButton": "Adicionar",
     "addEmailLabel": "E-mail",
-    "addNameLabel": "Nome (se for novo)",
+    "addNameLabel": "Nome",
     "addNameHint": "Se o e-mail já tiver conta, ele é apenas vinculado. Caso contrário, enviamos um convite — informe o nome.",
     "memberAdded": "Usuário vinculado ao grupo de pesquisa",
     "memberInvited": "Convite enviado por e-mail",
@@ -422,7 +422,12 @@
     "removeMemberDesc": "Remover {email} deste grupo de pesquisa?",
     "memberRemoved": "Usuário removido",
     "removeError": "Não foi possível remover",
-    "orgDeactivatedToast": "Grupo desativado (ficou sem membros)"
+    "orgDeactivatedToast": "Grupo desativado (ficou sem membros)",
+    "addLookupTitle": "Buscar e-mail na plataforma",
+    "addLookupFound": "Usuário já existe na plataforma — nome preenchido automaticamente.",
+    "addLookupError": "Não foi possível buscar o e-mail",
+    "addNameLookupHint": "Busque o e-mail acima para verificar se o usuário já existe.",
+    "addNameNewUserHint": "Novo usuário — informe o nome para o convite."
   },
   "adminRequests": {
     "title": "Solicitações de acesso",

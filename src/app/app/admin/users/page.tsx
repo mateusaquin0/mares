@@ -3,6 +3,7 @@
 import { useState, useCallback } from "react"
 import { useLocale, useTranslations } from "next-intl"
 import { toast } from "sonner"
+import { Crown } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -134,9 +135,12 @@ export default function AdminUsersPage() {
                         <span className="flex items-center gap-2">
                           <Truncate>{u.name ?? "—"}</Truncate>
                           {u.isSystemAdmin && (
-                            <Badge className="bg-amber-100 text-amber-800 hover:bg-amber-100">
-                              {t("globalAdmin")}
-                            </Badge>
+                            <span title={t("globalAdmin")} className="inline-flex shrink-0">
+                              <Crown
+                                className="size-4 text-amber-500"
+                                aria-label={t("globalAdmin")}
+                              />
+                            </span>
                           )}
                         </span>
                       </TableCell>
