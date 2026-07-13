@@ -5,6 +5,7 @@ import { ArrowRight, Map, FlaskConical, Share2 } from "lucide-react"
 import { getAuthUser } from "@/lib/auth"
 import { Logo } from "@/components/logo"
 import { LocaleSwitcher } from "@/components/locale-switcher"
+import { ThemeToggle } from "@/components/theme-toggle"
 
 // Landing pública ("/"): apresenta o MARES e dá acesso direto ao mapa público (sem login).
 // O middleware trata "/" como rota pública. Se houver sessão, o CTA leva ao painel.
@@ -35,6 +36,7 @@ export default async function Home() {
             <span className="text-xl font-bold tracking-tight">MARES</span>
           </Link>
           <div className="flex items-center gap-2 sm:gap-3">
+            <ThemeToggle className="text-white/80 hover:bg-white/10 hover:text-white" />
             <LocaleSwitcher className="text-white/80 hover:text-white" />
             <Link
               href={authHref}

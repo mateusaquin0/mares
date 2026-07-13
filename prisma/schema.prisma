@@ -62,6 +62,19 @@ enum FeedbackStatus {
   WONT_FIX // descartado
 }
 
+// Tipo do item pedido numa solicitação de glossário (espelha CatalogType, sem hífen).
+enum CatalogRequestType {
+  ORGAN
+  PATHOGEN
+  EXAM_TYPE
+}
+
+enum CatalogRequestStatus {
+  PENDING // aguardando curadoria
+  APPROVED // aprovada → item criado
+  REJECTED // recusada (duplicata, inválida etc.)
+}
+
 // ─────────────────────────────────────────────────────────────
 // Organização e usuários
 // ─────────────────────────────────────────────────────────────
@@ -97,6 +110,7 @@ model User {
   // Pesquisas às quais o usuário está vinculado como pesquisador (escopo de visibilidade).
   researchMemberships ResearchMember[]
   feedbacks     Feedback[]   @relation("FeedbackAuthor")
+  catalogRequests CatalogRequest[] @relation("CatalogRequestAuthor")
   createdAt     DateTime     @default(now())
 }
 
@@ -423,4 +437,31 @@ model Feedback {
 
   @@index([status])
   @@index([createdAt])
+}
+
+// Solicitação de inclusão de item no glossário global aberta por um pesquisador.
+// Curadoria: qualquer admin de grupo OU admin global aprova/rejeita (fila única).
+// `payload` guarda o corpo do formulário (validado por Zod na entrada e na aprovação);
+// ao aprovar, o item é criado pela MESMA lógica da criação direta. Ver docs/GLOSSARIO_SOLICITACOES.md.
+model CatalogRequest {
+  id               String               @id @default(uuid())
+  type             CatalogRequestType
+  payload          Json // corpo do formulário: { namePt, nameEn, groupId, scientificName, taxon… }
+  status           CatalogRequestStatus @default(PENDING)
+  // Autor; SetNull para preservar o histórico se o usuário for removido.
+  requestedById    String?
+  requestedBy      User?                @relation("CatalogRequestAuthor", fields: [requestedById], references: [id], onDelete: SetNull)
+  requestedByEmail String // snapshot do e-mail do solicitante
+  orgId            String? // grupo ativo no momento da solicitação (contexto + anonimização por grupo)
+  orgName          String? // snapshot do nome do grupo (rótulo, resiste a rename/desativação)
+  reviewedById     String?
+  reviewedAt       DateTime?
+  reviewNote       String? // motivo da rejeição (opcional)
+  duplicateOfId    String? // item canônico quando rejeitada como duplicata
+  createdItemId    String? // item gerado na aprovação (rastro; sem FK)
+  createdAt        DateTime             @default(now())
+  updatedAt        DateTime             @updatedAt
+
+  @@index([status, createdAt])
+  @@index([requestedById])
 }

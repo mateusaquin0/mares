@@ -29,4 +29,7 @@ export const catalogService = {
   update: (type: CatalogType, id: string, body: CatalogItemPayload) =>
     http.put(`/api/catalog/${type}/${id}`, body),
   remove: (type: CatalogType, id: string) => http.del(`/api/catalog/${type}/${id}`),
+  // Indicador de uso (só admin global): quantas pesquisas / grupos referenciam o item.
+  usage: (type: CatalogType, id: string) =>
+    http.get<{ researches: number; orgs: number }>(`/api/catalog/${type}/${id}/usage`),
 }
