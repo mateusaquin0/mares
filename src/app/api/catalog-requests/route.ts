@@ -30,7 +30,9 @@ export async function POST(req: NextRequest) {
 
     const body = createCatalogRequestSchema.parse(await req.json().catch(() => null))
     const orgId = await getActiveOrgId(user)
-    const orgName = orgId ? (user.memberships.find((m) => m.orgId === orgId)?.orgName ?? null) : null
+    const orgName = orgId
+      ? (user.memberships.find((m) => m.orgId === orgId)?.orgName ?? null)
+      : null
 
     const created = await createCatalogRequest({
       type: body.type,

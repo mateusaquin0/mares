@@ -427,27 +427,27 @@ export function CatalogManager({
                           <div className="flex items-center justify-end gap-1">
                             {isSystemAdmin && <UsageIndicator type={type} id={r.id} />}
                             {canModify(r) && (
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon" className="size-8">
-                                  <MoreHorizontal className="size-4" />
-                                  <span className="sr-only">{tc("actions")}</span>
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuItem onSelect={() => openEdit(r)}>
-                                  <Pencil className="size-4" />
-                                  {tc("edit")}
-                                </DropdownMenuItem>
-                                <DropdownMenuItem
-                                  className="text-destructive focus:text-destructive"
-                                  onSelect={() => setConfirmRow(r)}
-                                >
-                                  <Trash2 className="size-4" />
-                                  {tc("delete")}
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="ghost" size="icon" className="size-8">
+                                    <MoreHorizontal className="size-4" />
+                                    <span className="sr-only">{tc("actions")}</span>
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  <DropdownMenuItem onSelect={() => openEdit(r)}>
+                                    <Pencil className="size-4" />
+                                    {tc("edit")}
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem
+                                    className="text-destructive focus:text-destructive"
+                                    onSelect={() => setConfirmRow(r)}
+                                  >
+                                    <Trash2 className="size-4" />
+                                    {tc("delete")}
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
                             )}
                           </div>
                         </TableCell>

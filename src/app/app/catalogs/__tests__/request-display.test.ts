@@ -1,10 +1,6 @@
 import { describe, it, expect } from "vitest"
 
-import {
-  catalogTypeOfRequest,
-  requestItemName,
-  requestNormalizedNames,
-} from "../request-display"
+import { catalogTypeOfRequest, requestItemName, requestNormalizedNames } from "../request-display"
 import type { CatalogRequestItem } from "@/types/catalog-request"
 
 function make(over: Partial<CatalogRequestItem>): CatalogRequestItem {

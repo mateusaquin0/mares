@@ -16,11 +16,7 @@ import {
 } from "@/hooks/use-catalog-request"
 import type { CatalogRequestItem, CatalogRequestStatus } from "@/types/catalog-request"
 import type { NamedRow, PathogenRow } from "@/types/catalog"
-import {
-  catalogTypeOfRequest,
-  requestItemName,
-  requestNormalizedNames,
-} from "../request-display"
+import { catalogTypeOfRequest, requestItemName, requestNormalizedNames } from "../request-display"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Textarea } from "@/components/ui/textarea"
@@ -87,10 +83,7 @@ export function RequestsReview({ isSystemAdmin }: { isSystemAdmin: boolean }) {
     const rows = glossaryQ.data ?? []
     const names = (r: NamedRow | PathogenRow): string[] =>
       selected.type === "PATHOGEN"
-        ? [
-            (r as PathogenRow).scientificName ?? "",
-            txt(locale, (r as PathogenRow).name),
-          ]
+        ? [(r as PathogenRow).scientificName ?? "", txt(locale, (r as PathogenRow).name)]
         : [txt(locale, (r as NamedRow).name)]
     const hit = (n: string) => {
       const s = slugify(n)
@@ -98,7 +91,12 @@ export function RequestsReview({ isSystemAdmin }: { isSystemAdmin: boolean }) {
     }
     const out: string[] = []
     for (const r of rows) {
-      if (names(r).some(hit)) out.push(selected.type === "PATHOGEN" ? pathogenName(locale, r as PathogenRow) : txt(locale, (r as NamedRow).name))
+      if (names(r).some(hit))
+        out.push(
+          selected.type === "PATHOGEN"
+            ? pathogenName(locale, r as PathogenRow)
+            : txt(locale, (r as NamedRow).name),
+        )
     }
     return out.slice(0, 5)
   }, [selected, glossaryQ.data, locale])

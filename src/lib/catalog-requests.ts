@@ -149,7 +149,8 @@ export async function approveCatalogRequest(
   reviewerId: string,
 ): Promise<{ createdItemId: string }> {
   const req = await prisma.catalogRequest.findUnique({ where: { id }, select: requestSelect })
-  if (!req) throw new NotFoundError("Solicitação não encontrada", ERROR_CODES.catalogRequestNotFound)
+  if (!req)
+    throw new NotFoundError("Solicitação não encontrada", ERROR_CODES.catalogRequestNotFound)
   assertReviewable(req, reviewerId)
 
   const type = ENUM_TO_TYPE[req.type]
@@ -195,7 +196,8 @@ export async function rejectCatalogRequest(
     where: { id },
     select: { status: true, requestedById: true },
   })
-  if (!req) throw new NotFoundError("Solicitação não encontrada", ERROR_CODES.catalogRequestNotFound)
+  if (!req)
+    throw new NotFoundError("Solicitação não encontrada", ERROR_CODES.catalogRequestNotFound)
   assertReviewable(req, reviewerId)
 
   const upd = await prisma.catalogRequest.updateMany({

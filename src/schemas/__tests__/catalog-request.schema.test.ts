@@ -22,9 +22,9 @@ describe("createCatalogRequestSchema", () => {
 
 describe("catalogRequestPayloadSchema", () => {
   it("organs/exam-types exigem nome PT e EN", () => {
-    expect(catalogRequestPayloadSchema("organs").safeParse({ namePt: "", nameEn: "" }).success).toBe(
-      false,
-    )
+    expect(
+      catalogRequestPayloadSchema("organs").safeParse({ namePt: "", nameEn: "" }).success,
+    ).toBe(false)
     expect(
       catalogRequestPayloadSchema("organs").safeParse({ namePt: "Rim", nameEn: "Kidney" }).success,
     ).toBe(true)
@@ -41,8 +41,8 @@ describe("catalogRequestPayloadSchema", () => {
   it("pathogens exige groupId", () => {
     const schema = catalogRequestPayloadSchema("pathogens")
     expect(schema.safeParse({ scientificName: "Toxoplasma gondii" }).success).toBe(false)
-    expect(
-      schema.safeParse({ groupId: "g1", scientificName: "Toxoplasma gondii" }).success,
-    ).toBe(true)
+    expect(schema.safeParse({ groupId: "g1", scientificName: "Toxoplasma gondii" }).success).toBe(
+      true,
+    )
   })
 })

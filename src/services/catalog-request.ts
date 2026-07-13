@@ -16,7 +16,8 @@ export const catalogRequestService = {
     }),
   // Minhas solicitações (qualquer usuário).
   listMine: () => http.get<CatalogRequestItem[]>("/api/catalog-requests/mine"),
-  approve: (id: string) => http.post<{ createdItemId: string }>(`/api/catalog-requests/${id}/approve`),
+  approve: (id: string) =>
+    http.post<{ createdItemId: string }>(`/api/catalog-requests/${id}/approve`),
   reject: (id: string, note?: string) =>
     http.post(`/api/catalog-requests/${id}/reject`, { note: note ?? "" }),
 }
