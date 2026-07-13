@@ -66,7 +66,8 @@ export default function AdminFeedbackPage() {
   const locale = useLocale()
   const em = useErrorMessage()
 
-  const [statusFilter, setStatusFilter] = useState<FeedbackStatus | "ALL">("ALL")
+  // Abre já filtrando os novos (a triar); o usuário pode trocar para "Todos".
+  const [statusFilter, setStatusFilter] = useState<FeedbackStatus | "ALL">("NEW")
   const [typeFilter, setTypeFilter] = useState<FeedbackType | "ALL">("ALL")
   const [author, setAuthor] = useState("")
 
