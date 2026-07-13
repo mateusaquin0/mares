@@ -1,13 +1,15 @@
 "use client"
 
-import { useState } from "react"
+import { useMemo, useState } from "react"
+import Link from "next/link"
 import { Controller, useForm } from "react-hook-form"
 import { useLocale, useTranslations } from "next-intl"
 import { toast } from "sonner"
-import { MoreHorizontal, Pencil, Plus, Trash2 } from "lucide-react"
+import { BarChart3, MoreHorizontal, Pencil, Plus, Trash2 } from "lucide-react"
 
 import type { CatalogType } from "@/schemas/catalog.schema"
 import { LIMITS } from "@/schemas/limits"
+import { slugify } from "@/lib/slug"
 import { useNcbiSearch } from "@/hooks/use-ncbi"
 import {
   useCatalogList,
@@ -15,13 +17,17 @@ import {
   useCreateCatalogItem,
   useUpdateCatalogItem,
   useDeleteCatalogItem,
+  useCatalogUsage,
 } from "@/hooks/use-catalog"
+import { useCreateCatalogRequest, useReviewableRequests } from "@/hooks/use-catalog-request"
 import type { CatalogRow as Row, NamedRow, PathogenRow } from "@/types/catalog"
 import { TaxonAutocomplete } from "@/components/taxon-autocomplete"
 import { txt, pathogenName, type I18nText } from "@/lib/catalog-i18n"
 import { useErrorMessage } from "@/lib/use-error-message"
 import { useTable } from "@/lib/use-table"
 import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Input } from "@/components/ui/input"
 import { Checkbox } from "@/components/ui/checkbox"
 import { TableSkeleton } from "@/components/ui/skeleton"
@@ -83,12 +89,15 @@ export function CatalogManager({
   userId,
   isSystemAdmin,
   canManage,
+  isReviewer,
   initialType = "organs",
 }: {
   userId: string
   isSystemAdmin: boolean
-  // Admin da org (ou global) pode adicionar itens; pesquisador só lê.
+  // Admin da org (ou global) pode adicionar itens; pesquisador só lê (e pode SOLICITAR).
   canManage: boolean
+  // Curador (admin de grupo ou global): vê a fila de solicitações pendentes.
+  isReviewer: boolean
   initialType?: CatalogType
 }) {
   const t = useTranslations("catalogs")
@@ -110,6 +119,11 @@ export function CatalogManager({
   const createM = useCreateCatalogItem(type)
   const updateM = useUpdateCatalogItem(type)
   const deleteM = useDeleteCatalogItem(type)
+  // Pesquisador solicita em vez de criar direto.
+  const requestM = useCreateCatalogRequest()
+  // Contador de pendências para o botão da fila (só curadores).
+  const pendingQ = useReviewableRequests("PENDING", isReviewer)
+  const pendingCount = pendingQ.data?.length ?? 0
 
   // Editar/excluir: admin global sempre; senão, o criador enquanto o item não estiver em uso.
   const canModify = (r: Row) => isSystemAdmin || (r.createdById === userId && !r.inUse)
@@ -207,12 +221,21 @@ export function CatalogManager({
           }
         : { namePt: data.namePt, nameEn: data.nameEn }
     try {
-      if (isEdit) await updateM.mutateAsync({ id: dialog!.row!.id, body })
-      else await createM.mutateAsync(body)
-      toast.success(isEdit ? t("updated") : t("created"))
+      if (isEdit) {
+        await updateM.mutateAsync({ id: dialog!.row!.id, body })
+        toast.success(t("updated"))
+      } else if (canManage) {
+        await createM.mutateAsync(body)
+        toast.success(t("created"))
+      } else {
+        // Pesquisador: abre solicitação de inclusão (curadoria aprova depois).
+        await requestM.mutateAsync({ type, payload: body })
+        toast.success(t("requestSent"))
+      }
       setDialog(null)
     } catch (err) {
-      toast.error(isEdit ? t("updateError") : t("createError"), { description: em(err) })
+      const key = isEdit ? "updateError" : canManage ? "createError" : "requestError"
+      toast.error(t(key), { description: em(err) })
     }
   }
 
@@ -227,6 +250,34 @@ export function CatalogManager({
 
   const display = (r: Row) =>
     isPathogen ? pathogenName(locale, r as PathogenRow) : i18nPt((r as NamedRow).name)
+
+  // L1 — deduplicação na origem: enquanto o usuário digita, aponta itens já existentes
+  // parecidos (ignorando acento/caixa). Na maioria, ele só precisa USAR o item existente.
+  const watched = form.watch()
+  const similar = useMemo(() => {
+    if (!dialog || dialog.mode !== "create") return []
+    const rows = (listQ.data ?? []) as Row[]
+    const candidates = (
+      isPathogen ? [watched.sci, watched.namePt, watched.nameEn] : [watched.namePt, watched.nameEn]
+    )
+      .map((c) => (c ? slugify(c) : ""))
+      .filter(Boolean)
+    if (!candidates.length) return []
+    const matches = (n: string | null | undefined) => {
+      if (!n) return false
+      const s = slugify(n)
+      return candidates.some((q) => s === q || s.includes(q) || q.includes(s))
+    }
+    return rows
+      .filter((r) =>
+        isPathogen
+          ? matches((r as PathogenRow).scientificName) ||
+            matches(i18nPt((r as PathogenRow).name)) ||
+            matches(i18nEn((r as PathogenRow).name))
+          : matches(i18nPt((r as NamedRow).name)) || matches(i18nEn((r as NamedRow).name)),
+      )
+      .slice(0, 5)
+  }, [dialog, listQ.data, isPathogen, watched.sci, watched.namePt, watched.nameEn])
 
   const table = useTable(listQ.data ?? [], {
     locale,
@@ -260,12 +311,29 @@ export function CatalogManager({
           <h1 className="text-3xl font-semibold tracking-tight">{t("title")}</h1>
           <p className="mt-1 text-sm text-muted-foreground">{t("subtitle")}</p>
         </div>
-        {canManage && (
+        <div className="flex flex-wrap items-center gap-2">
+          {isReviewer && (
+            <Button asChild variant="outline">
+              <Link href="/app/catalogs/requests">
+                {t("reviewQueue")}
+                {pendingCount > 0 && (
+                  <Badge variant="default" className="ml-1">
+                    {pendingCount}
+                  </Badge>
+                )}
+              </Link>
+            </Button>
+          )}
+          {!canManage && (
+            <Button asChild variant="ghost">
+              <Link href="/app/catalogs/my-requests">{t("myRequests")}</Link>
+            </Button>
+          )}
           <Button onClick={openCreate}>
             <Plus className="size-4" />
-            {t("add")}
+            {canManage ? t("add") : t("request")}
           </Button>
-        )}
+        </div>
       </div>
 
       <Tabs value={type} onValueChange={(v) => setType(v as CatalogType)}>
@@ -356,7 +424,9 @@ export function CatalogManager({
                           </>
                         )}
                         <TableCell className="text-right">
-                          {canModify(r) && (
+                          <div className="flex items-center justify-end gap-1">
+                            {isSystemAdmin && <UsageIndicator type={type} id={r.id} />}
+                            {canModify(r) && (
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
                                 <Button variant="ghost" size="icon" className="size-8">
@@ -378,7 +448,8 @@ export function CatalogManager({
                                 </DropdownMenuItem>
                               </DropdownMenuContent>
                             </DropdownMenu>
-                          )}
+                            )}
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))
@@ -405,9 +476,19 @@ export function CatalogManager({
       <Dialog open={!!dialog} onOpenChange={(o) => !o && setDialog(null)}>
         <DialogContent dirty={form.formState.isDirty}>
           <DialogHeader>
-            <DialogTitle>{dialog?.mode === "edit" ? t("editTitle") : t("addTitle")}</DialogTitle>
+            <DialogTitle>
+              {dialog?.mode === "edit"
+                ? t("editTitle")
+                : canManage
+                  ? t("addTitle")
+                  : t("requestTitle")}
+            </DialogTitle>
             <DialogDescription>
-              {isPathogen ? t("addDescPathogen") : t("addDesc")}
+              {!canManage && dialog?.mode === "create"
+                ? t("requestDesc")
+                : isPathogen
+                  ? t("addDescPathogen")
+                  : t("addDesc")}
             </DialogDescription>
           </DialogHeader>
           <form
@@ -415,6 +496,18 @@ export function CatalogManager({
             className="flex min-h-0 flex-1 flex-col gap-4"
           >
             <DialogBody className="space-y-4">
+              {dialog?.mode === "create" && similar.length > 0 && (
+                <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 p-3 text-xs">
+                  <p className="font-medium text-amber-700 dark:text-amber-400">
+                    {t("similarWarning")}
+                  </p>
+                  <ul className="mt-1 list-disc space-y-0.5 pl-4 text-muted-foreground">
+                    {similar.map((r) => (
+                      <li key={r.id}>{display(r)}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
               {isPathogen && (
                 <div className="space-y-1">
                   <Label>{t("group")}</Label>
@@ -579,12 +672,41 @@ export function CatalogManager({
                 {tc("cancel")}
               </Button>
               <Button type="submit" loading={form.formState.isSubmitting}>
-                {tc("save")}
+                {!canManage && dialog?.mode === "create" ? t("sendRequest") : tc("save")}
               </Button>
             </DialogFooter>
           </form>
         </DialogContent>
       </Dialog>
     </div>
+  )
+}
+
+// Indicador de uso (só admin global): abre um popover que busca sob demanda quantas
+// pesquisas / grupos referenciam o item. Só contagens — nunca ids (privacidade).
+function UsageIndicator({ type, id }: { type: CatalogType; id: string }) {
+  const t = useTranslations("catalogs")
+  const [open, setOpen] = useState(false)
+  const usageQ = useCatalogUsage(type, id, open)
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button variant="ghost" size="icon" className="size-8" title={t("usageTitle")}>
+          <BarChart3 className="size-4" />
+          <span className="sr-only">{t("usageTitle")}</span>
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent align="end" className="w-56 text-sm">
+        <p className="mb-2 font-medium">{t("usageTitle")}</p>
+        {usageQ.isLoading || !usageQ.data ? (
+          <p className="text-muted-foreground">{t("usageLoading")}</p>
+        ) : (
+          <ul className="space-y-1 text-muted-foreground">
+            <li>{t("usageResearches", { count: usageQ.data.researches })}</li>
+            <li>{t("usageOrgs", { count: usageQ.data.orgs })}</li>
+          </ul>
+        )}
+      </PopoverContent>
+    </Popover>
   )
 }

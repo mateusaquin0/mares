@@ -81,6 +81,17 @@ export function requireAnyOrgAdmin(user: AuthUser) {
   if (!isAnyOrgAdmin(user)) throw new ForbiddenError()
 }
 
+// Curadoria do glossário (fila única): qualquer admin de grupo OU admin global pode
+// revisar/aprovar/rejeitar solicitações de item. Mesmo nível de confiança de quem já
+// adiciona itens direto (requireAnyOrgAdmin).
+export function canReviewCatalogRequest(user: AuthUser): boolean {
+  return isAnyOrgAdmin(user)
+}
+
+export function requireCatalogReviewer(user: AuthUser) {
+  if (!canReviewCatalogRequest(user)) throw new ForbiddenError()
+}
+
 // Exige um papel mínimo na organização. O admin global NÃO participa de organizações e,
 // portanto, NÃO satisfaz verificações de papel de org (ele usa as rotas /api/admin/*).
 export function requireOrgRole(user: AuthUser, orgId: string, minRole: MembershipRole) {

@@ -60,6 +60,16 @@ export function usePathogenGroups(enabled = true) {
   })
 }
 
+// Indicador de uso de um item (só admin global). Busca sob demanda (ex.: ao abrir o popover).
+export function useCatalogUsage(type: CatalogType, id: string | null, enabled = true) {
+  return useQuery({
+    queryKey: ["catalog", type, "usage", id],
+    queryFn: () => catalogService.usage(type, id as string),
+    enabled: enabled && !!id,
+    staleTime: 60_000,
+  })
+}
+
 // ── Mutações (CatalogManager) ────────────────────────────────────────────────
 
 export function useCreateCatalogItem(type: CatalogType) {

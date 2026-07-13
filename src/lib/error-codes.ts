@@ -65,6 +65,11 @@ export const ERROR_CODES = {
   simbaUnavailable: "simbaUnavailable",
   // Feedback (sugestões / bugs)
   feedbackNotFound: "feedbackNotFound",
+  // Solicitações de glossário
+  catalogRequestNotFound: "catalogRequestNotFound",
+  catalogRequestProcessed: "catalogRequestProcessed",
+  catalogRequestSelfReview: "catalogRequestSelfReview",
+  catalogRequestDuplicatePending: "catalogRequestDuplicatePending",
 } as const
 
 export type ErrorCode = (typeof ERROR_CODES)[keyof typeof ERROR_CODES]

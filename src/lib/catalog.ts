@@ -5,8 +5,8 @@
 import { Prisma } from "@prisma/client"
 import { prisma } from "@/lib/prisma"
 import type { CatalogType } from "@/schemas/catalog.schema"
-import { pathogenSchema } from "@/schemas/catalog.schema"
-import { NotFoundError, ValidationError } from "@/lib/errors"
+import { pathogenSchema, examTypeSchema, nameI18nSchema } from "@/schemas/catalog.schema"
+import { NotFoundError, ValidationError, ConflictError } from "@/lib/errors"
 import { ERROR_CODES } from "@/lib/error-codes"
 import { slugify } from "@/lib/slug"
 
@@ -368,4 +368,138 @@ export function canModifyCatalog(opts: {
 }): boolean {
   if (opts.isSystemAdmin) return true
   return !!opts.createdById && opts.createdById === opts.userId && opts.usage === 0
+}
+
+// ── Criação unificada (usada pela criação direta E pela aprovação de solicitação) ───────────
+// Valida o corpo conforme o tipo e cria o item, atribuindo `createdById`. Converte a violação
+// do índice único de nome (P2002) em ConflictError(catalogDuplicate) para ambos os chamadores.
+export async function createCatalogItem(
+  type: CatalogType,
+  body: unknown,
+  createdById: string,
+): Promise<NamedRow | PathogenRow> {
+  try {
+    if (type === "pathogens") {
+      const p = await resolvePathogen(body)
+      return await createPathogenEntry({
+        key: await uniqueKey(type, p.keySource),
+        groupId: p.groupId,
+        scientificName: p.scientificName,
+        name: p.name,
+        taxon: p.taxon,
+        createdById,
+      })
+    }
+    if (type === "exam-types") {
+      const data = examTypeSchema.parse(body)
+      return await createNamed(
+        type,
+        await uniqueKey(type, data.namePt),
+        { pt: data.namePt.trim(), en: data.nameEn.trim() },
+        createdById,
+        resolveMeasure(data),
+      )
+    }
+    const data = nameI18nSchema.parse(body)
+    return await createNamed(
+      type,
+      await uniqueKey(type, data.namePt),
+      { pt: data.namePt.trim(), en: data.nameEn.trim() },
+      createdById,
+    )
+  } catch (e) {
+    if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
+      throw new ConflictError("Já existe um item com esse nome", ERROR_CODES.catalogDuplicate)
+    }
+    throw e
+  }
+}
+
+// ── Indicador de uso (só admin global): quantas pesquisas / grupos referenciam o item ───────
+// Retorna apenas contagens de DISTINTOS (nunca ids) — privacidade por construção. Ver plano.
+export type CatalogUsageBreakdown = { researches: number; orgs: number }
+
+function fieldFor(type: CatalogType): "organId" | "pathogenId" | "examTypeId" {
+  return type === "organs" ? "organId" : type === "pathogens" ? "pathogenId" : "examTypeId"
+}
+
+export async function catalogUsageBreakdown(
+  type: CatalogType,
+  id: string,
+): Promise<CatalogUsageBreakdown> {
+  const field = fieldFor(type)
+  const researches = new Set<string>()
+  const orgs = new Set<string>()
+
+  // Protocolos (a org vem via research). Vale para os três tipos.
+  const protocols = await prisma.researchProtocol.findMany({
+    where: { [field]: id },
+    select: { researchId: true, research: { select: { orgId: true } } },
+  })
+  for (const p of protocols) {
+    researches.add(p.researchId)
+    orgs.add(p.research.orgId)
+  }
+
+  if (type === "organs") {
+    // Amostras referenciam o órgão e já trazem researchId + orgId denormalizados.
+    const samples = await prisma.sample.findMany({
+      where: { organId: id },
+      select: { researchId: true, orgId: true },
+    })
+    for (const s of samples) {
+      researches.add(s.researchId)
+      orgs.add(s.orgId)
+    }
+  } else {
+    // Patógeno / exame: análises → amostra (researchId + orgId).
+    const analyses = await prisma.analysis.findMany({
+      where: { [field]: id },
+      select: { sample: { select: { researchId: true, orgId: true } } },
+    })
+    for (const a of analyses) {
+      researches.add(a.sample.researchId)
+      orgs.add(a.sample.orgId)
+    }
+  }
+
+  return { researches: researches.size, orgs: orgs.size }
+}
+
+// ── Deduplicação (best-effort, p/ rótulo de rejeição) ───────────────────────────────────────
+// Devolve o id de um item existente cujo nome normalizado (sem acento/caixa) coincide com o
+// payload, ou null. Dataset pequeno → filtra em memória. Espelha os índices únicos do banco.
+function readName(v: Prisma.JsonValue | null): { pt: string; en: string } {
+  if (v && typeof v === "object" && !Array.isArray(v)) {
+    const o = v as Record<string, unknown>
+    return { pt: typeof o.pt === "string" ? o.pt : "", en: typeof o.en === "string" ? o.en : "" }
+  }
+  return { pt: "", en: "" }
+}
+
+export async function findDuplicate(type: CatalogType, body: unknown): Promise<string | null> {
+  if (type === "pathogens") {
+    const p = await resolvePathogen(body)
+    const rows = await listPathogens()
+    const sci = p.scientificName ? slugify(p.scientificName) : null
+    const pt = p.name?.pt ? slugify(p.name.pt) : null
+    const en = p.name?.en ? slugify(p.name.en) : null
+    const match = rows.find((r) => {
+      if (sci && r.scientificName && slugify(r.scientificName) === sci) return true
+      const n = readName(r.name)
+      if (pt && n.pt && slugify(n.pt) === pt) return true
+      if (en && n.en && slugify(n.en) === en) return true
+      return false
+    })
+    return match?.id ?? null
+  }
+  const data = type === "exam-types" ? examTypeSchema.parse(body) : nameI18nSchema.parse(body)
+  const pt = slugify(data.namePt)
+  const en = slugify(data.nameEn)
+  const rows = await listNamed(type)
+  const match = rows.find((r) => {
+    const n = readName(r.name)
+    return (n.pt && slugify(n.pt) === pt) || (n.en && slugify(n.en) === en)
+  })
+  return match?.id ?? null
 }
