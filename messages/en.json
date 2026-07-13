@@ -305,7 +305,7 @@
     "lookupTitle": "Look up email on the platform",
     "lookupFound": "User already exists on the platform — name filled in automatically.",
     "lookupError": "Could not look up the email",
-    "nameLabel": "Name (if new)",
+    "nameLabel": "Name",
     "nameLookupHint": "Look up the email above to check whether the user already exists.",
     "nameNewUserHint": "New user — provide the name for the invite.",
     "roleLabel": "Access type",
@@ -411,7 +411,7 @@
     "addMemberTitle": "Add user",
     "addMemberButton": "Add",
     "addEmailLabel": "Email",
-    "addNameLabel": "Name (if new)",
+    "addNameLabel": "Name",
     "addNameHint": "If the email already has an account, it is simply linked. Otherwise we send an invite — provide the name.",
     "memberAdded": "User linked to the research group",
     "memberInvited": "Invitation sent by email",
@@ -422,7 +422,12 @@
     "removeMemberDesc": "Remove {email} from this research group?",
     "memberRemoved": "User removed",
     "removeError": "Couldn't remove",
-    "orgDeactivatedToast": "Group deactivated (left with no members)"
+    "orgDeactivatedToast": "Group deactivated (left with no members)",
+    "addLookupTitle": "Look up email on the platform",
+    "addLookupFound": "User already exists on the platform — name filled in automatically.",
+    "addLookupError": "Could not look up the email",
+    "addNameLookupHint": "Look up the email above to check whether the user already exists.",
+    "addNameNewUserHint": "New user — provide the name for the invite."
   },
   "adminRequests": {
     "title": "Access requests",

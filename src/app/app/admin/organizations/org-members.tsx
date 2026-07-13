@@ -5,10 +5,11 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useTranslations } from "next-intl"
 import { toast } from "sonner"
-import { UserPlus, Trash2 } from "lucide-react"
+import { UserPlus, Trash2, Search } from "lucide-react"
 
 import { addMemberSchema, type AddMemberData } from "@/schemas/organization.schema"
 import { useAddOrgMember, useSetOrgMemberRole, useRemoveOrgMember } from "@/hooks/use-admin"
+import { useLookupUser } from "@/hooks/use-users"
 import type { AdminOrg } from "@/types/admin"
 import type { OrgMemberRole } from "@/types/organization"
 import { useErrorMessage } from "@/lib/use-error-message"
@@ -35,6 +36,8 @@ import {
 import { Truncate } from "@/components/ui/truncate"
 import { ReloadButton } from "@/components/ui/reload-button"
 
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
 // Gestão de membros de um grupo pelo admin global (adicionar, mudar papel, remover).
 export function OrgMembers({ org }: { org: AdminOrg }) {
   const t = useTranslations("adminOrgs")
@@ -45,18 +48,42 @@ export function OrgMembers({ org }: { org: AdminOrg }) {
   const addM = useAddOrgMember(org.id)
   const roleM = useSetOrgMemberRole(org.id)
   const removeM = useRemoveOrgMember(org.id)
+  const lookupM = useLookupUser()
   const [removing, setRemoving] = useState<string | null>(null)
+  // Resultado da lupa: null = ainda não buscou; found = já existe (nome preenchido e travado).
+  const [lookup, setLookup] = useState<{ found: boolean } | null>(null)
 
   const form = useForm<AddMemberData>({
     resolver: zodResolver(addMemberSchema),
     defaultValues: { email: "", name: "", role: "RESEARCHER" },
   })
 
+  // Lupa: busca o e-mail na plataforma. Se existir, preenche o nome e trava o campo; senão,
+  // libera o nome para convidar um novo usuário. (Mesma lógica da lista de membros do grupo.)
+  async function lookupEmail() {
+    const email = form.getValues("email").trim().toLowerCase()
+    if (!EMAIL_RE.test(email)) {
+      form.setError("email", { message: "email" })
+      return
+    }
+    try {
+      const res = await lookupM.mutateAsync(email)
+      setLookup({ found: res.exists })
+      // Encontrado: preenche o nome (vazio → undefined, para não exigir o campo travado);
+      // não encontrado: libera o campo. Buscar nunca invalida o nome.
+      form.setValue("name", res.exists ? res.name || undefined : "", { shouldValidate: false })
+      form.clearErrors("name")
+    } catch (err) {
+      toast.error(t("addLookupError"), { description: em(err) })
+    }
+  }
+
   async function onAdd(data: AddMemberData) {
     try {
       const res = await addM.mutateAsync({ ...data, name: data.name?.trim() || undefined })
       toast.success(res.invited ? t("memberInvited") : t("memberAdded"))
       form.reset({ email: "", name: "", role: "RESEARCHER" })
+      setLookup(null)
     } catch (err) {
       toast.error(t("addError"), { description: em(err) })
     }
@@ -151,37 +178,71 @@ export function OrgMembers({ org }: { org: AdminOrg }) {
       </div>
 
       {/* Adicionar membro */}
-      <form onSubmit={form.handleSubmit(onAdd)} className="space-y-3 rounded-md border p-3">
+      <form onSubmit={form.handleSubmit(onAdd)} className="space-y-4 rounded-md border p-4">
         <p className="text-sm font-medium">{t("addMemberTitle")}</p>
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <div className="space-y-1">
-            <Label htmlFor="add-email">{t("addEmailLabel")}</Label>
-            <Input id="add-email" type="email" {...form.register("email")} />
-            {form.formState.errors.email && (
-              <p className="text-xs text-destructive">
-                {tval(form.formState.errors.email.message!)}
-              </p>
-            )}
+
+        {/* E-mail (chave da busca) + lupa, em destaque no topo. */}
+        <div className="space-y-1">
+          <Label htmlFor="add-email">{t("addEmailLabel")}</Label>
+          <div className="flex items-center gap-2">
+            {(() => {
+              const emailReg = form.register("email")
+              return (
+                <Input
+                  id="add-email"
+                  type="email"
+                  {...emailReg}
+                  onChange={(e) => {
+                    emailReg.onChange(e)
+                    // Editar o e-mail invalida a busca anterior.
+                    if (lookup) setLookup(null)
+                  }}
+                />
+              )
+            })()}
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              className="shrink-0"
+              onClick={lookupEmail}
+              loading={lookupM.isPending}
+              title={t("addLookupTitle")}
+            >
+              {!lookupM.isPending && <Search className="size-4" />}
+            </Button>
           </div>
+          {form.formState.errors.email && (
+            <p className="text-xs text-destructive">{tval(form.formState.errors.email.message!)}</p>
+          )}
+          {lookup?.found && <p className="text-xs text-bio">{t("addLookupFound")}</p>}
+        </div>
+
+        {/* Nome + tipo, lado a lado. */}
+        <div className="grid gap-3 sm:grid-cols-2">
           <div className="space-y-1">
             <Label htmlFor="add-name">{t("addNameLabel")}</Label>
-            <Input id="add-name" {...form.register("name")} />
+            <Input id="add-name" readOnly={lookup?.found} {...form.register("name")} />
+            {lookup == null ? (
+              <p className="text-xs text-muted-foreground">{t("addNameLookupHint")}</p>
+            ) : (
+              !lookup.found && (
+                <p className="text-xs text-muted-foreground">{t("addNameNewUserHint")}</p>
+              )
+            )}
             {form.formState.errors.name && (
               <p className="text-xs text-destructive">
                 {tval(form.formState.errors.name.message!)}
               </p>
             )}
           </div>
-        </div>
-        <p className="text-xs text-muted-foreground">{t("addNameHint")}</p>
-        <div className="flex items-end gap-3">
           <div className="space-y-1">
             <Label>{t("colUserRole")}</Label>
             <Select
               value={form.watch("role") ?? "RESEARCHER"}
               onValueChange={(v) => form.setValue("role", v as OrgMemberRole)}
             >
-              <SelectTrigger className="h-9 w-44">
+              <SelectTrigger className="h-10 w-full">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -190,7 +251,11 @@ export function OrgMembers({ org }: { org: AdminOrg }) {
               </SelectContent>
             </Select>
           </div>
-          <Button type="submit" loading={form.formState.isSubmitting}>
+        </div>
+
+        {/* Rodapé: botão à direita. */}
+        <div className="flex justify-end border-t pt-3">
+          <Button type="submit" loading={form.formState.isSubmitting} className="w-full sm:w-auto">
             <UserPlus className="size-4" />
             {t("addMemberButton")}
           </Button>
