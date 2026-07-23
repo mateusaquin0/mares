@@ -12,6 +12,26 @@ updates:
         update-types:
           - minor
           - patch
+    # Majors de framework/infra são migrações deliberadas (breaking changes, às vezes
+    # exigem mudança de config). Feitos na mão quando decidido — não como bump automático.
+    # Segurança não é afetada: patches de CVE são minor/patch, continuam vindo.
+    ignore:
+      - dependency-name: "next"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "react"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "react-dom"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@types/react"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@types/react-dom"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "prisma"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@prisma/client"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "eslint"
+        update-types: ["version-update:semver-major"]
     labels:
       - dependencies
       - security
@@ -21,5 +41,10 @@ updates:
     directory: "/"
     schedule:
       interval: weekly
+    groups:
+      # Todos os bumps de Actions num único PR por semana (evita 1 PR por action).
+      github-actions:
+        patterns:
+          - "*"
     labels:
       - ci
