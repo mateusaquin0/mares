@@ -7,6 +7,7 @@ import { getAuthUser } from "@/lib/auth"
 import { apiError, tooManyRequests, unauthorized } from "@/lib/api"
 import { clientKey, rateLimit } from "@/lib/rate-limit"
 import { parseNcbiTaxa } from "@/lib/ncbi"
+import { env } from "@/env"
 
 const EUTILS = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils"
 
@@ -23,7 +24,7 @@ export async function GET(req: NextRequest) {
     const q = req.nextUrl.searchParams.get("q")?.trim() ?? ""
     if (q.length < 3) return NextResponse.json([])
 
-    const auth = process.env.NCBI_API_KEY ? `&api_key=${process.env.NCBI_API_KEY}` : ""
+    const auth = env.NCBI_API_KEY ? `&api_key=${env.NCBI_API_KEY}` : ""
 
     // 1) esearch: nomes que começam com o termo (truncamento *).
     const esearch = `${EUTILS}/esearch.fcgi?db=taxonomy&retmax=10&retmode=json&term=${encodeURIComponent(

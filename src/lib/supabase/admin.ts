@@ -2,19 +2,18 @@
 // Usar APENAS no servidor (Route Handlers). Nunca importar em Client Components.
 
 import { createClient } from "@supabase/supabase-js"
+import { env } from "@/env"
 
 export function createAdminClient() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    { auth: { autoRefreshToken: false, persistSession: false } },
-  )
+  return createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  })
 }
 
 // Convidados definem a senha antes de entrar; o link do convite leva a /auth/confirm,
 // que valida o token e redireciona para /auth/set-password.
 const inviteRedirectTo = () =>
-  `${process.env.NEXT_PUBLIC_APP_URL ?? ""}/auth/confirm?next=/auth/set-password`
+  `${env.NEXT_PUBLIC_APP_URL ?? ""}/auth/confirm?next=/auth/set-password`
 
 // Convida um usuário por e-mail (envia o link do Supabase para definir a senha).
 // Retorna o id do usuário criado no Auth.
