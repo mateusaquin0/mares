@@ -37,8 +37,9 @@ jobs:
       - name: Formatação (Prettier)
         run: npm run format:check
 
-      - name: Testes unitários
-        run: npm test
+      # Com cobertura: os thresholds do vitest.config.ts falham o job se a cobertura cair.
+      - name: Testes unitários (com cobertura)
+        run: npm run test:cov
 
   integration:
     runs-on: ubuntu-latest
