@@ -255,7 +255,7 @@ async function main() {
     // Grupos científicos: scientificName (name nulo). Ações antrópicas: name { pt, en }.
     const data = {
       key: p.key,
-      groupId: groupIdByKey[p.groupKey],
+      groupId: groupIdByKey[p.groupKey]!,
       scientificName: p.sci ?? null,
       name: p.sci ? Prisma.DbNull : { pt: p.namePt!, en: p.nameEn! },
       taxonFamily: p.family ?? null,

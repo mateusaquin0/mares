@@ -13,7 +13,7 @@ export type NcbiTaxon = {
 /** Primeiro valor de uma tag simples. */
 export function firstTag(xml: string, tag: string): string | null {
   const m = xml.match(new RegExp(`<${tag}>([\\s\\S]*?)</${tag}>`, "i"))
-  return m ? m[1].trim() : null
+  return m?.[1]?.trim() ?? null
 }
 
 /** Nome científico de um Rank dentro do LineageEx (ex.: family, order). */
@@ -21,7 +21,7 @@ export function lineageName(xml: string, rank: string): string | null {
   const m = xml.match(
     new RegExp(`<ScientificName>([^<]+)</ScientificName>\\s*<Rank>${rank}</Rank>`, "i"),
   )
-  return m ? m[1].trim() : null
+  return m?.[1]?.trim() ?? null
 }
 
 /** Divide o TaxaSet nos blocos <Taxon> de nível superior (ignora os aninhados no LineageEx). */

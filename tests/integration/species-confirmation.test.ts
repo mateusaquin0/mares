@@ -138,7 +138,7 @@ describe("Criação de confirmação (createConfirmation)", () => {
     expect(child.parentAnalysisId).toBe(parentId)
     expect(child.pathogenId).toBe(speciesAId)
     expect(child.sequences).toHaveLength(1)
-    expect(child.sequences[0].accession).toBe("ON123456")
+    expect(child.sequences[0]!.accession).toBe("ON123456")
 
     // Não existe protocolo para (espécie A, sequenciamento) — a confirmação foi criada mesmo assim.
     const combo = await prisma.researchProtocol.findFirst({

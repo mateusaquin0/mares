@@ -46,7 +46,7 @@ export function useTable<T>(
   let out = q ? rows.filter((r) => opts.search(r).toLowerCase().includes(q)) : rows.slice()
 
   if (sort && opts.columns[sort.key]) {
-    const accessor = opts.columns[sort.key]
+    const accessor = opts.columns[sort.key]!
     out = out.slice().sort((a, b) => {
       const av = accessor(a)
       const bv = accessor(b)
