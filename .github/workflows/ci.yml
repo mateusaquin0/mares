@@ -15,7 +15,7 @@ jobs:
   build-and-test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       - uses: actions/setup-node@v5
         with:
@@ -61,7 +61,7 @@ jobs:
       DATABASE_URL: postgresql://postgres:postgres@localhost:5432/mares_test
       DIRECT_URL: postgresql://postgres:postgres@localhost:5432/mares_test
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       - uses: actions/setup-node@v5
         with:
@@ -110,7 +110,7 @@ jobs:
       NEXT_PUBLIC_SUPABASE_ANON_KEY: dummy-anon-key
       NEXT_PUBLIC_APP_URL: http://localhost:3100
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       - uses: actions/setup-node@v5
         with:
