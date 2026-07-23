@@ -60,6 +60,8 @@ function decodeEntities(s: string): string {
 
 /** Primeiro valor de um termo Darwin Core pelo nome local (ex.: "scientificName"). */
 function term(xml: string, localName: string): string | null {
+  // `localName` é constante interna (nome de termo Darwin Core), nunca entrada do usuário.
+  // eslint-disable-next-line security/detect-non-literal-regexp
   const re = new RegExp(
     `<(?:[A-Za-z0-9_]+:)?${localName}\\b[^>]*>([\\s\\S]*?)</(?:[A-Za-z0-9_]+:)?${localName}>`,
     "i",
@@ -80,7 +82,10 @@ function firstTerm(xml: string, names: string[]): string | null {
 
 /** Isola o primeiro <SimpleDarwinRecord> do set (a busca por record_number retorna um). */
 function firstRecordBlock(xml: string): string {
+  // Lazy `[\s\S]*?` com terminador distinto (não há backtracking catastrófico) e a
+  // entrada é o XML do SIMBA, não do usuário. Risco de ReDoS desprezível.
   const m = xml.match(
+    // eslint-disable-next-line security/detect-unsafe-regex
     /<(?:[A-Za-z0-9_]+:)?SimpleDarwinRecord\b[^>]*>([\s\S]*?)<\/(?:[A-Za-z0-9_]+:)?SimpleDarwinRecord>/i,
   )
   return m ? m[1] : xml
