@@ -1,0 +1,58 @@
+name: Migrate (produção)
+
+# Aplica as migrations do Prisma no banco de PRODUÇÃO (Supabase).
+#
+# Por que existe: o build da Vercel roda apenas `next build` + `prisma generate`.
+# Nada aplicava o schema em produção — era manual. Sem isto, um merge que adiciona
+# uma migration publica código que espera uma coluna que ainda não existe no banco.
+#
+# Roda só quando há migration nova em push para main (path filter) e pode ser
+# disparado manualmente (workflow_dispatch) para reprocessar.
+#
+# PRÉ-REQUISITOS (configurar uma vez no GitHub → Settings):
+#   1. Environments → criar "production".
+#   2. Nele, adicionar os secrets:
+#        PRODUCTION_DATABASE_URL  → connection string pooled do Supabase (porta 6543)
+#        PRODUCTION_DIRECT_URL    → connection string DIRETA do Supabase (porta 5432)
+#      A `migrate deploy` usa a URL direta (directUrl no schema.prisma).
+#   3. (Recomendado) Marcar "Required reviewers" no environment para exigir
+#      aprovação humana antes de alterar o schema de produção.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "prisma/migrations/**"
+  workflow_dispatch:
+
+# Nunca deixa duas migrations rodarem ao mesmo tempo; não cancela uma em andamento.
+concurrency:
+  group: migrate-prod
+  cancel-in-progress: false
+
+jobs:
+  migrate:
+    name: prisma migrate deploy
+    runs-on: ubuntu-latest
+    # Escopa os secrets de produção e habilita gate de aprovação manual (se configurado).
+    environment: production
+    env:
+      DATABASE_URL: ${{ secrets.PRODUCTION_DATABASE_URL }}
+      DIRECT_URL: ${{ secrets.PRODUCTION_DIRECT_URL }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Instalar dependências
+        run: npm ci
+
+      # Mostra o estado atual (quais migrations faltam) antes de aplicar — fica no log.
+      - name: Status das migrations
+        run: npx prisma migrate status
+
+      - name: Aplicar migrations
+        run: npx prisma migrate deploy
