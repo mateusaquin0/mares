@@ -17,7 +17,8 @@ em produção é o workflow [`migrate-prod.yml`](.github/workflows/migrate-prod.
 
 ## Configuração única (GitHub)
 
-Em **Settings → Environments**, criar o environment `production` e adicionar:
+Em **Settings → Environments**, no environment `Production` (já existe se a Vercel
+estiver integrada), adicionar:
 
 - `PRODUCTION_DATABASE_URL` — connection string _pooled_ do Supabase (porta `6543`).
 - `PRODUCTION_DIRECT_URL` — connection string _direta_ do Supabase (porta `5432`).

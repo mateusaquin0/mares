@@ -10,7 +10,7 @@ name: Migrate (produção)
 # disparado manualmente (workflow_dispatch) para reprocessar.
 #
 # PRÉ-REQUISITOS (configurar uma vez no GitHub → Settings):
-#   1. Environments → criar "production".
+#   1. Environments → environment "Production" (já existe se a Vercel estiver integrada).
 #   2. Nele, adicionar os secrets:
 #        PRODUCTION_DATABASE_URL  → connection string pooled do Supabase (porta 6543)
 #        PRODUCTION_DIRECT_URL    → connection string DIRETA do Supabase (porta 5432)
@@ -35,7 +35,8 @@ jobs:
     name: prisma migrate deploy
     runs-on: ubuntu-latest
     # Escopa os secrets de produção e habilita gate de aprovação manual (se configurado).
-    environment: production
+    # Nome deve casar exatamente com o environment existente no GitHub ("Production").
+    environment: Production
     env:
       DATABASE_URL: ${{ secrets.PRODUCTION_DATABASE_URL }}
       DIRECT_URL: ${{ secrets.PRODUCTION_DIRECT_URL }}
