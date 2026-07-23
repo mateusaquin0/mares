@@ -1,0 +1,77 @@
+name: Security
+
+# Pipeline de segurança: roda em push/PR para main e semanalmente (agenda).
+# Três camadas complementares:
+#   1. CodeQL   — SAST: vulnerabilidades e code smells no código JS/TS.
+#   2. Dependências — npm audit: pacotes com CVEs conhecidos (Dependabot cuida das atualizações).
+#   3. Secrets  — Gitleaks: credenciais/chaves acidentalmente commitadas.
+
+on:
+  # Roda a cada push em QUALQUER branch e em todo PR/merge para main.
+  push:
+  pull_request:
+    branches: [main]
+  schedule:
+    # Segunda-feira 03:00 UTC — pega CVEs novos em deps que não mudaram.
+    - cron: "0 3 * * 1"
+
+# Cancela execuções antigas do mesmo ref quando um novo push chega.
+concurrency:
+  group: security-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  codeql:
+    name: CodeQL (SAST)
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Inicializar CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: javascript-typescript
+          # security-and-quality inclui, além de segurança, regras de qualidade (code smells).
+          queries: security-and-quality
+
+      - name: Analisar
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:javascript-typescript"
+
+  dependencies:
+    name: Auditoria de dependências
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Instalar dependências
+        run: npm ci
+
+      # Falha apenas em vulnerabilidades high/critical para não travar o fluxo
+      # com ruído de severidade baixa. Ajuste --audit-level conforme a política.
+      - name: npm audit (high/critical)
+        run: npm audit --audit-level=high
+
+  secrets:
+    name: Varredura de secrets
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          # Histórico completo para o Gitleaks varrer todos os commits do PR/push.
+          fetch-depth: 0
+
+      - name: Gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -1,0 +1,25 @@
+version: 2
+updates:
+  # Atualizações de dependências npm — agrupadas para reduzir ruído de PRs.
+  - package-ecosystem: npm
+    directory: "/"
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      # Patches/minors não-quebrantes num único PR por semana.
+      minor-and-patch:
+        update-types:
+          - minor
+          - patch
+    labels:
+      - dependencies
+      - security
+
+  # Mantém as próprias GitHub Actions (checkout, setup-node, codeql...) atualizadas.
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+    labels:
+      - ci
