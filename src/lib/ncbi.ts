@@ -12,13 +12,17 @@ export type NcbiTaxon = {
 
 /** Primeiro valor de uma tag simples. */
 export function firstTag(xml: string, tag: string): string | null {
+  // `tag` é sempre uma constante interna (nome de tag XML), nunca entrada do usuário.
+  // eslint-disable-next-line security/detect-non-literal-regexp
   const m = xml.match(new RegExp(`<${tag}>([\\s\\S]*?)</${tag}>`, "i"))
   return m ? m[1].trim() : null
 }
 
 /** Nome científico de um Rank dentro do LineageEx (ex.: family, order). */
 export function lineageName(xml: string, rank: string): string | null {
+  // `rank` é constante interna (ex.: "family", "order"), nunca entrada do usuário.
   const m = xml.match(
+    // eslint-disable-next-line security/detect-non-literal-regexp
     new RegExp(`<ScientificName>([^<]+)</ScientificName>\\s*<Rank>${rank}</Rank>`, "i"),
   )
   return m ? m[1].trim() : null
