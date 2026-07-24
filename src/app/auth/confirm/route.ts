@@ -6,20 +6,24 @@
 import { NextResponse } from "next/server"
 import { createServerClient } from "@supabase/ssr"
 import type { EmailOtpType } from "@supabase/supabase-js"
+import { env } from "@/env"
 
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url)
   const tokenHash = searchParams.get("token_hash")
   const type = searchParams.get("type") as EmailOtpType | null
   const code = searchParams.get("code")
-  const next = searchParams.get("next") ?? "/auth/set-password"
+  const nextParam = searchParams.get("next")
+  // Só aceita caminho relativo interno: começa com "/" e não é "//" nem "/\",
+  // que permitiriam open-redirect para outro host. Senão, usa o destino padrão.
+  const next = nextParam && /^\/(?![/\\])/.test(nextParam) ? nextParam : "/auth/set-password"
 
   // A resposta é criada antes para que os cookies da sessão sejam anexados a ela.
   const response = NextResponse.redirect(`${origin}${next}`)
 
   const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    env.NEXT_PUBLIC_SUPABASE_URL,
+    env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
     {
       cookies: {
         getAll() {
