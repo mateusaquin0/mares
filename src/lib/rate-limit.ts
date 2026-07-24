@@ -62,7 +62,7 @@ export function rateLimit(key: string, opts: RateLimitOptions): RateLimitResult 
   const hits = (buckets.get(key) ?? []).filter((t) => t > windowStart)
 
   if (hits.length >= opts.limit) {
-    const retryAfter = Math.ceil((hits[0] + opts.windowMs - now) / 1000)
+    const retryAfter = Math.ceil((hits[0]! + opts.windowMs - now) / 1000) // hits.length >= limit >= 1
     buckets.set(key, hits)
     return { ok: false, remaining: 0, retryAfter: Math.max(1, retryAfter) }
   }

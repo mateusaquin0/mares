@@ -213,8 +213,8 @@ describe("Adicionar protocolo (addOrReactivateProtocols)", () => {
       select: { id: true, status: true },
     })
     expect(rows).toHaveLength(1)
-    expect(rows[0].id).toBe(existing)
-    expect(rows[0].status).toBe("ACTIVE")
+    expect(rows[0]!.id).toBe(existing)
+    expect(rows[0]!.status).toBe("ACTIVE")
 
     // Reenviar uma combinação já ativa não conta como afetada.
     const again = await addOrReactivateProtocols(r2, [

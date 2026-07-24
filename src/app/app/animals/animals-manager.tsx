@@ -79,7 +79,7 @@ export function AnimalsManager({ isOrgAdmin }: { isOrgAdmin: boolean }) {
   }
 
   const noResearch = researches.length === 0
-  const defaultResearchId = researches.length === 1 ? researches[0].id : ""
+  const defaultResearchId = researches.length === 1 ? researches[0]!.id : ""
 
   return (
     <div className="mx-auto flex h-full max-w-6xl flex-col gap-6 p-8">

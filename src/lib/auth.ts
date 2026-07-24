@@ -107,5 +107,5 @@ export async function getActiveOrgId(user: AuthUser): Promise<string | null> {
   const cookieStore = await cookies()
   const cookieOrg = cookieStore.get(ACTIVE_ORG_COOKIE)?.value
   if (cookieOrg && user.memberships.some((m) => m.orgId === cookieOrg)) return cookieOrg
-  return user.memberships[0].orgId
+  return user.memberships[0]!.orgId // length > 0 garantido pelo guard acima
 }

@@ -39,7 +39,7 @@ function csvCell(v: unknown): string {
 async function main() {
   const countOnly = process.argv.includes("--count")
 
-  const [{ orphan_analyses }] = await prisma.$queryRaw<{ orphan_analyses: bigint }[]>`
+  const [row] = await prisma.$queryRaw<{ orphan_analyses: bigint }[]>`
     SELECT COUNT(*) AS orphan_analyses
     FROM "Analysis" a
     JOIN "Sample" s ON s.id = a."sampleId"
@@ -52,7 +52,7 @@ async function main() {
     )
   `
 
-  const total = Number(orphan_analyses)
+  const total = Number(row?.orphan_analyses ?? 0)
   console.log(`Análises órfãs encontradas: ${total}`)
 
   if (countOnly || total === 0) {

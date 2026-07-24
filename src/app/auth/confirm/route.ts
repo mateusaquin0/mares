@@ -32,7 +32,7 @@ export async function GET(request: Request) {
               .get("cookie")
               ?.split("; ")
               .map((c) => {
-                const [name, ...rest] = c.split("=")
+                const [name = "", ...rest] = c.split("=")
                 return { name, value: rest.join("=") }
               }) ?? []
           )

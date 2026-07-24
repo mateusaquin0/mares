@@ -13,16 +13,14 @@ import { test, expect } from "@playwright/test"
 test.describe("Fluxos autenticados (pendente: Supabase de teste)", () => {
   test.skip(true, "Requer projeto Supabase de teste com Auth — ver ROADMAP_TESTES.md §3")
 
-  test("login → dashboard → logout", async ({ page }) => {
+  test("login → dashboard → logout", async () => {
     // 1. goto /login; preencher e-mail/senha do usuário de teste; submeter.
     // 2. esperar URL /app/dashboard e algum elemento do painel.
     // 3. abrir o menu do usuário; clicar em sair; esperar retorno ao /login.
     expect(true).toBe(true)
   })
 
-  test("criar pesquisa com protocolo → cadastrar animal → preencher resultado → auditoria", async ({
-    page,
-  }) => {
+  test("criar pesquisa com protocolo → cadastrar animal → preencher resultado → auditoria", async () => {
     // 1. login como RESEARCHER/ORG_ADMIN.
     // 2. criar pesquisa com uma entrada de protocolo (órgão × patógeno × exame).
     // 3. cadastrar um animal na pesquisa; verificar a grade de análises gerada.
@@ -31,7 +29,7 @@ test.describe("Fluxos autenticados (pendente: Supabase de teste)", () => {
     expect(true).toBe(true)
   })
 
-  test("isolamento multi-org: trocar org ativa muda os dados visíveis", async ({ page }) => {
+  test("isolamento multi-org: trocar org ativa muda os dados visíveis", async () => {
     // 1. login como usuário com Membership em duas organizações.
     // 2. listar animais; trocar a organização ativa.
     // 3. verificar que a lista passa a mostrar apenas dados da org selecionada.

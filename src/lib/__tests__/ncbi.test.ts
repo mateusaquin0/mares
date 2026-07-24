@@ -29,7 +29,7 @@ describe("topLevelTaxa", () => {
 
 describe("lineageName", () => {
   it("extrai o nome científico de um rank da linhagem", () => {
-    const [first] = topLevelTaxa(xml)
+    const first = topLevelTaxa(xml)[0]!
     expect(lineageName(first, "family")).toBe("Delphinidae")
     expect(lineageName(first, "order")).toBe("Artiodactyla")
   })
@@ -46,7 +46,7 @@ describe("parseNcbiTaxa", () => {
       family: "Delphinidae",
       order: "Artiodactyla",
     })
-    expect(taxa[1].order).toBeNull() // sem ordem na linhagem do segundo
+    expect(taxa[1]!.order).toBeNull() // sem ordem na linhagem do segundo
   })
 
   it("descarta taxa sem TaxId numérico ou sem nome", () => {

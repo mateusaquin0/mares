@@ -69,7 +69,7 @@ function term(xml: string, localName: string): string | null {
   )
   const m = xml.match(re)
   if (!m) return null
-  const value = decodeEntities(m[1])
+  const value = decodeEntities(m[1] ?? "")
   return value === "" ? null : value
 }
 
@@ -89,7 +89,7 @@ function firstRecordBlock(xml: string): string {
     // eslint-disable-next-line security/detect-unsafe-regex
     /<(?:[A-Za-z0-9_]+:)?SimpleDarwinRecord\b[^>]*>([\s\S]*?)<\/(?:[A-Za-z0-9_]+:)?SimpleDarwinRecord>/i,
   )
-  return m ? m[1] : xml
+  return m?.[1] ?? xml
 }
 
 function toFloat(v: string | null): number | null {
@@ -122,7 +122,7 @@ function normalizeLifeStage(v: string | null): LifeStageValue {
 function toEventDate(v: string | null): string | null {
   if (!v) return null
   // Darwin Core costuma usar ISO 8601; pode vir com intervalo "start/end".
-  const iso = v.split("/")[0].trim()
+  const iso = v.split("/")[0]!.trim() // split sempre retorna >= 1 elemento
   const m = iso.match(/^(\d{4})-(\d{2})-(\d{2})/)
   if (m) return `${m[1]}-${m[2]}-${m[3]}`
   const d = new Date(iso)
