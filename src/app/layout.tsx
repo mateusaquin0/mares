@@ -1,4 +1,5 @@
 import type { Metadata } from "next"
+import { headers } from "next/headers"
 import { Inter } from "next/font/google"
 import { NextIntlClientProvider } from "next-intl"
 import { getLocale, getMessages, getTranslations } from "next-intl/server"
@@ -21,12 +22,15 @@ export default async function RootLayout({
 }>) {
   const locale = await getLocale()
   const messages = await getMessages()
+  // Nonce da CSP (definido no middleware) — repassado ao next-themes para que seu
+  // script inline anti-flash não seja bloqueado pela política.
+  const nonce = (await headers()).get("x-nonce") ?? undefined
 
   return (
     <html lang={locale} className={inter.variable} suppressHydrationWarning>
       <body className={`${inter.className} antialiased`}>
         <NextIntlClientProvider messages={messages}>
-          <Providers>
+          <Providers nonce={nonce}>
             {children}
             <Toaster position="top-right" richColors />
           </Providers>
