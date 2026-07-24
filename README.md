@@ -55,47 +55,56 @@ npm run db:seed      # repovoar catálogos
 npm run db:studio    # Prisma Studio
 ```
 
-## Estado do desenvolvimento
+## Funcionalidades
 
-### ✅ Fase 1 — Fundação e acesso
-- Setup Next.js + TypeScript + Tailwind + Prisma; integração Supabase (DB + Auth) + RLS
-- Schema inicial, migrations versionadas e seed dos catálogos
-- **Identidade e acesso** (cadastro fechado, multi-organização): login, solicitação de
-  acesso + aprovação pelo admin global, criação de pesquisadores por e-mail (convite Supabase),
-  vínculos `Membership` (papel por org) e organização ativa — ver [`docs/CADASTRO_E_ACESSO.md`](docs/CADASTRO_E_ACESSO.md)
+### Fundação
+- Next.js + TypeScript + Tailwind + Prisma; integração Supabase (DB + Auth) + RLS
+- Schema com 16 modelos, migrations versionadas e seed dos catálogos
+
+### Identidade e acesso
+- Cadastro fechado e multi-organização: login, solicitação de acesso + aprovação pelo admin
+  global, criação de pesquisadores por e-mail (convite Supabase), vínculos `Membership` (papel
+  por organização) e organização ativa — ver [`docs/CADASTRO_E_ACESSO.md`](docs/CADASTRO_E_ACESSO.md)
 - Middleware de proteção de rotas (`/app/*`, `/app/admin/*`) e tela "sem organização"
 
-### ✅ Fase 2 — Pesquisas, protocolos e catálogos
+### Pesquisas, protocolos e catálogos
 - CRUD de pesquisas com protocolo flexível (patógeno × exame por pesquisa)
 - Glossários/catálogos por organização (patógenos, grupos, órgãos, tipos de exame) com i18n
 
-### ✅ Fase 3 — Animais, amostras e análises
+### Animais, amostras e análises
 - Cadastro de animais (encalhe + necropsia), amostras e grade de análises
 - Compartilhamento de indivíduo entre pesquisas; mídia; `AuditLog` por animal
 - Autocomplete taxonômico (WoRMS/NCBI) e importação SIMBA (Darwin Core)
 
-### ✅ Fase 4 — Mapa interativo
+### Mapa interativo
 - Mapa por organização e **mapa público** (`/map`) com pontos de encalhe, heatmap,
   clustering e filtros; export CSV dos pontos filtrados
 
-### ✅ Fase 5 — Dashboard e gráficos
+### Dashboard e gráficos
 - Indicadores e gráficos (Recharts) sobre os registros da organização
 
-### ✅ Fase 6 — Exportação, visibilidade e segurança
+### Exportação e visibilidade
 - Exportação **Darwin Core** por pesquisa e planilha XLSX de animais
 - Controle de visibilidade granular (público = `animal.isPublic AND research.isPublic`)
-- Rate limiting nas rotas públicas/proxies externos (ver `src/lib/rate-limit.ts`)
 
-### ✅ Testes automatizados
-- **Unitários** (Fase 1) — 104 testes com Vitest: schemas Zod, parsers (Darwin Core/SIMBA,
-  NCBI, WoRMS) e utilitários (`npm test`).
-- **Integração** (Fase 2) — Vitest contra Postgres real: isolamento multi-org (anti-IDOR),
-  unicidade por org e visibilidade de export (`npm run test:integration`).
-- **E2E** (Fase 3) — Playwright: smoke da superfície pública (landing + mapa) (`npm run test:e2e`).
+### Segurança
+- Row Level Security (RLS) no PostgreSQL como defesa em profundidade, além da autorização na
+  aplicação (papel por organização + escopo por pesquisa)
+- Rate limiting nas rotas públicas/proxies externos (ver `src/lib/rate-limit.ts`)
+- Headers de segurança (HSTS, X-Frame-Options, nosniff, Referrer/Permissions-Policy) e
+  **CSP com nonce por requisição** montada no middleware (`src/lib/csp.ts`) — proteção contra
+  clickjacking e XSS. Ver [`docs/MIDDLEWARE.md`](docs/MIDDLEWARE.md) §7.
+
+### Testes automatizados
+- **Unitários** — 104 testes com Vitest: schemas Zod, parsers (Darwin Core/SIMBA, NCBI, WoRMS)
+  e utilitários (`npm test`).
+- **Integração** — Vitest contra Postgres real: isolamento multi-org (anti-IDOR), unicidade por
+  org e visibilidade de export (`npm run test:integration`).
+- **E2E** — Playwright: smoke da superfície pública (landing + mapa) (`npm run test:e2e`).
   Fluxos autenticados ficam como esqueleto até haver um Supabase de teste.
 - Plano completo em [`docs/ROADMAP_TESTES.md`](docs/ROADMAP_TESTES.md).
 
-### ✅ CI
+### CI
 - GitHub Actions (`.github/workflows/ci.yml`): typecheck + lint + Prettier + unitários, mais
   jobs de integração (Postgres) e E2E (Postgres + Chromium).
 
