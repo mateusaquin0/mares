@@ -1,8 +1,7 @@
 # MARES — Monitoramento e Análise de Registros de Espécies Marinhas
 
 Plataforma web para registro, consulta e análise de dados patológicos de fauna marinha
-encalhada (TCC — Engenharia da Computação). A especificação completa fica em `docs/`
-(documentação interna do TCC, não versionada — ver `.gitignore`).
+encalhada (TCC — Engenharia da Computação).
 
 ## Stack
 
@@ -64,7 +63,7 @@ npm run db:studio    # Prisma Studio
 ### Identidade e acesso
 - Cadastro fechado e multi-organização: login, solicitação de acesso + aprovação pelo admin
   global, criação de pesquisadores por e-mail (convite Supabase), vínculos `Membership` (papel
-  por organização) e organização ativa — ver [`docs/CADASTRO_E_ACESSO.md`](docs/CADASTRO_E_ACESSO.md)
+  por organização) e organização ativa
 - Middleware de proteção de rotas (`/app/*`, `/app/admin/*`) e tela "sem organização"
 
 ### Pesquisas, protocolos e catálogos
@@ -93,7 +92,7 @@ npm run db:studio    # Prisma Studio
 - Rate limiting nas rotas públicas/proxies externos (ver `src/lib/rate-limit.ts`)
 - Headers de segurança (HSTS, X-Frame-Options, nosniff, Referrer/Permissions-Policy) e
   **CSP com nonce por requisição** montada no middleware (`src/lib/csp.ts`) — proteção contra
-  clickjacking e XSS. Ver [`docs/MIDDLEWARE.md`](docs/MIDDLEWARE.md) §7.
+  clickjacking e XSS.
 
 ### Testes automatizados
 - **Unitários** — 104 testes com Vitest: schemas Zod, parsers (Darwin Core/SIMBA, NCBI, WoRMS)
@@ -102,7 +101,6 @@ npm run db:studio    # Prisma Studio
   org e visibilidade de export (`npm run test:integration`).
 - **E2E** — Playwright: smoke da superfície pública (landing + mapa) (`npm run test:e2e`).
   Fluxos autenticados ficam como esqueleto até haver um Supabase de teste.
-- Plano completo em [`docs/ROADMAP_TESTES.md`](docs/ROADMAP_TESTES.md).
 
 ### CI
 - GitHub Actions (`.github/workflows/ci.yml`): typecheck + lint + Prettier + unitários, mais
