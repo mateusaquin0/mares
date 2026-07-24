@@ -12,7 +12,10 @@ export async function GET(request: Request) {
   const tokenHash = searchParams.get("token_hash")
   const type = searchParams.get("type") as EmailOtpType | null
   const code = searchParams.get("code")
-  const next = searchParams.get("next") ?? "/auth/set-password"
+  const nextParam = searchParams.get("next")
+  // Só aceita caminho relativo interno: começa com "/" e não é "//" nem "/\",
+  // que permitiriam open-redirect para outro host. Senão, usa o destino padrão.
+  const next = nextParam && /^\/(?![/\\])/.test(nextParam) ? nextParam : "/auth/set-password"
 
   // A resposta é criada antes para que os cookies da sessão sejam anexados a ela.
   const response = NextResponse.redirect(`${origin}${next}`)
