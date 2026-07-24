@@ -110,6 +110,9 @@ jobs:
       NEXT_PUBLIC_SUPABASE_URL: https://dummy.supabase.co
       NEXT_PUBLIC_SUPABASE_ANON_KEY: dummy-anon-key
       NEXT_PUBLIC_APP_URL: http://localhost:3100
+      # A validação de env (src/env.ts) exige a service role no build; o smoke público
+      # nunca a usa, então um valor dummy basta para o `next build` não falhar.
+      SUPABASE_SERVICE_ROLE_KEY: dummy-service-role-key
     steps:
       - uses: actions/checkout@v7
 

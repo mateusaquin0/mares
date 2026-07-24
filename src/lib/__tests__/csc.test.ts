@@ -1,5 +1,9 @@
-import { describe, it, expect, vi, afterEach, beforeEach } from "vitest"
+import { describe, it, expect, vi, afterEach } from "vitest"
 import { getStates, getCities } from "@/lib/csc"
+
+// A chave é lida via módulo de env (src/env.ts), que snapshota process.env no import.
+// Mockar o módulo garante o valor independentemente da ordem de carga.
+vi.mock("@/env", () => ({ env: { CSC_API_KEY: "test-key" } }))
 
 function mockFetch(body: unknown) {
   return vi.spyOn(globalThis, "fetch").mockResolvedValue({
@@ -9,9 +13,6 @@ function mockFetch(body: unknown) {
   } as Response)
 }
 
-beforeEach(() => {
-  process.env.CSC_API_KEY = "test-key"
-})
 afterEach(() => vi.restoreAllMocks())
 
 describe("getStates — guarda anti-SSRF", () => {

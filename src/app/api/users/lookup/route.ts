@@ -18,7 +18,10 @@ export async function GET(req: NextRequest) {
     requireAnyOrgAdmin(user)
 
     const email = req.nextUrl.searchParams.get("email")?.toLowerCase().trim()
-    if (!email || !EMAIL_RE.test(email)) throw new ValidationError("E-mail inválido")
+    // Limite RFC 5321 (254) antes do regex: entradas longas com muitos "." causariam
+    // backtracking polinomial (ReDoS). Capar o tamanho elimina o problema e é validação correta.
+    if (!email || email.length > 254 || !EMAIL_RE.test(email))
+      throw new ValidationError("E-mail inválido")
 
     const found = await prisma.user.findUnique({
       where: { email },

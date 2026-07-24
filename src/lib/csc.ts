@@ -3,6 +3,8 @@
 // Cache em duas camadas: memória do processo (Map) + cache de fetch do Next (revalidate),
 // pois os dados de localidade são praticamente estáticos.
 
+import { env } from "@/env"
+
 const BASE = "https://api.countrystatecity.in/v1"
 const REVALIDATE_SECONDS = 60 * 60 * 24 * 30 // 30 dias
 
@@ -12,7 +14,7 @@ async function cscFetch<T>(path: string): Promise<T> {
   const cached = memory.get(path)
   if (cached) return cached as T
 
-  const key = process.env.CSC_API_KEY
+  const key = env.CSC_API_KEY
   if (!key) throw new Error("CSC_API_KEY não configurada")
 
   const res = await fetch(`${BASE}${path}`, {
