@@ -14,6 +14,14 @@ export default defineConfig({
       provider: "v8",
       include: ["src/schemas/**", "src/lib/**"],
       reporter: ["text", "html"],
+      // Piso (ratchet), não meta: fixa o nível atual para que a cobertura não CAIA
+      // silenciosamente. Conforme novos testes entrarem, suba estes números.
+      thresholds: {
+        statements: 30,
+        branches: 30,
+        functions: 26,
+        lines: 30,
+      },
     },
   },
 })
