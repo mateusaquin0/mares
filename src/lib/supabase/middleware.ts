@@ -3,6 +3,7 @@
 import { createServerClient } from "@supabase/ssr"
 import { NextResponse, type NextRequest } from "next/server"
 import { env } from "@/env"
+import { buildCsp, generateNonce } from "@/lib/csp"
 
 // Rotas públicas (não exigem sessão)
 // (Rotas /api são tratadas antes desta lista — validam a sessão nos handlers.)
@@ -14,14 +15,26 @@ function isPublic(pathname: string) {
 }
 
 export async function updateSession(request: NextRequest) {
-  let response = NextResponse.next({ request })
   const pathname = request.nextUrl.pathname
 
-  // Rotas de API validam a sessão nelas mesmas (getAuthUser → getUser) e, por
+  // Rotas de API validam a sessão nelas mesmas (getAuthUser → getClaims) e, por
   // serem Route Handlers, gravam o cookie de refresh na própria resposta.
-  // Retornar antes evita um getUser() redundante (round-trip ao Auth) por
-  // chamada de API — a principal fonte de latência em /api/*.
-  if (pathname.startsWith("/api")) return response
+  // Retornar antes evita um getClaims() redundante por chamada de API — a principal
+  // fonte de latência em /api/*. (Respostas JSON não precisam de CSP.)
+  if (pathname.startsWith("/api")) return NextResponse.next({ request })
+
+  // CSP por requisição: um nonce novo é aplicado aos scripts inline do Next. O nonce vai
+  // no header da REQUISIÇÃO (o Next lê e reaplica aos seus <script>) e no header da RESPOSTA
+  // (o navegador aplica a política). Ver src/lib/csp.ts e docs/MIDDLEWARE.md §CSP.
+  const nonce = generateNonce()
+  const csp = buildCsp(nonce, env.NEXT_PUBLIC_SUPABASE_URL)
+
+  const requestHeaders = new Headers(request.headers)
+  requestHeaders.set("x-nonce", nonce)
+  requestHeaders.set("content-security-policy", csp)
+
+  let response = NextResponse.next({ request: { headers: requestHeaders } })
+  response.headers.set("content-security-policy", csp)
 
   const supabase = createServerClient(
     env.NEXT_PUBLIC_SUPABASE_URL,
@@ -33,7 +46,8 @@ export async function updateSession(request: NextRequest) {
         },
         setAll(cookiesToSet) {
           cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
-          response = NextResponse.next({ request })
+          response = NextResponse.next({ request: { headers: requestHeaders } })
+          response.headers.set("content-security-policy", csp)
           cookiesToSet.forEach(({ name, value, options }) =>
             response.cookies.set(name, value, options),
           )

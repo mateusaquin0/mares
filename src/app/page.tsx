@@ -60,7 +60,7 @@ export default async function Home() {
           <div className="mt-9 flex flex-wrap gap-3">
             <Link
               href="/map"
-              className="group inline-flex items-center gap-2 rounded-lg bg-white px-5 py-3 text-sm font-semibold text-primary shadow-lg transition hover:bg-white/90"
+              className="group inline-flex items-center gap-2 rounded-lg bg-white px-5 py-3 text-sm font-semibold text-primary shadow-lg transition hover:bg-white/90 dark:text-primary-foreground"
             >
               <Map className="size-4" />
               {t("exploreMap")}
