@@ -10,6 +10,7 @@
 
 import { NotFoundError, ServiceUnavailableError } from "@/lib/errors"
 import { ERROR_CODES } from "@/lib/error-codes"
+import { env } from "@/env"
 import type { SexValue, LifeStageValue } from "@/lib/animal-enums"
 
 const DEFAULT_SIMBA_URL = "https://simba.petrobras.com.br/simba/web/api/v1/occurrences/public"
@@ -36,7 +37,7 @@ export type SimbaRecord = {
 }
 
 function endpointFor(recordNumber: string): string {
-  const base = process.env.SIMBA_API_URL || DEFAULT_SIMBA_URL
+  const base = env.SIMBA_API_URL || DEFAULT_SIMBA_URL
   const url = new URL(base)
   url.searchParams.set("record_number", recordNumber)
   if (!url.searchParams.has("language")) url.searchParams.set("language", "pt_BR")
@@ -161,8 +162,8 @@ export function parseDarwinCore(xml: string, recordNumber: string): SimbaRecord 
 export async function fetchSimbaRecord(recordNumber: string): Promise<SimbaRecord> {
   const url = endpointFor(recordNumber)
   const headers: Record<string, string> = { Accept: "application/xml, text/xml" }
-  if (process.env.SIMBA_API_TOKEN) {
-    headers.Authorization = `Bearer ${process.env.SIMBA_API_TOKEN}`
+  if (env.SIMBA_API_TOKEN) {
+    headers.Authorization = `Bearer ${env.SIMBA_API_TOKEN}`
   }
 
   let res: Response
