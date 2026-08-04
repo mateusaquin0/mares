@@ -23,4 +23,7 @@ export const organizationsService = {
 
   // Define a organização ativa (cookie) para o usuário.
   setActive: (orgId: string) => http.post("/api/active-org", { orgId }),
+
+  // Limpa a organização ativa. O cookie é httpOnly, então só o servidor a remove.
+  clearActive: () => http.del("/api/active-org"),
 }

@@ -5,6 +5,7 @@ import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
+import { useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
 import { Mail, Lock, ArrowRight } from "lucide-react"
 
@@ -22,6 +23,7 @@ function LoginForm() {
   const tc = useTranslations("common")
   const tval = useTranslations("validation")
   const router = useRouter()
+  const queryClient = useQueryClient()
   const searchParams = useSearchParams()
   const redirectTo = searchParams.get("redirectTo") || "/app/dashboard"
   const [loading, setLoading] = useState(false)
@@ -42,6 +44,13 @@ function LoginForm() {
       toast.error(t("errorTitle"), { description: error.message })
       return
     }
+
+    // Descarta qualquer cache de uma sessão anterior antes de entrar. O logout já limpa
+    // (ver useSignOut), mas nem todo caminho até aqui passa por ele: sessão expirada e
+    // redirecionada para /login, ou alguém que simplesmente navegou até esta tela, chegam
+    // com o QueryClient ainda povoado. Como as chaves não incluem o usuário, sem isto a
+    // conta que acabou de entrar veria os dados da anterior.
+    queryClient.clear()
 
     toast.success(t("success"))
     router.push(redirectTo)
