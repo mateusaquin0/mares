@@ -169,7 +169,6 @@
     "title": "Dashboard",
     "greeting": "Olá, {name}.",
     "activeOrg": "Grupo de pesquisa ativo: {org}.",
-    "adminMode": "Você está no modo de administração da aplicação.",
     "statResearch": "Pesquisas",
     "statAnimals": "Animais",
     "statOrgans": "Órgãos no glossário",
