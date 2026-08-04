@@ -90,9 +90,9 @@ export function ResearchDetail({
   const em = useErrorMessage()
 
   const researchQ = useResearch(id)
-  const organsQ = useOrgans(isOrgAdmin)
-  const pathogensQ = usePathogens(isOrgAdmin)
-  const examTypesQ = useExamTypes(isOrgAdmin)
+  const organsQ = useOrgans()
+  const pathogensQ = usePathogens()
+  const examTypesQ = useExamTypes()
   const updateM = useUpdateResearch(id)
   const addM = useAddProtocol(id)
   const statusM = useSetProtocolStatus(id)
@@ -113,7 +113,7 @@ export function ResearchDetail({
   const opts = (list: CatalogItem[] | undefined): ComboboxOption[] =>
     (list ?? []).map((c) => ({ value: c.id, label: txt(locale, c.name) }))
 
-  // Estado vazio do select de protocolo: leva o admin ao glossário já na aba certa.
+  // Estado vazio do select de protocolo: leva ao glossário já na aba certa.
   const glossaryLink = (tab: "organs" | "pathogens" | "exam-types") => (
     <Link href={`/app/catalogs?tab=${tab}`} className="text-sm font-medium text-primary underline">
       {tp("goToGlossary")}
@@ -244,52 +244,54 @@ export function ResearchDetail({
           <AccordionTrigger>{tp("title")}</AccordionTrigger>
           <AccordionContent className="space-y-3">
             <p className="text-sm text-muted-foreground">{tp("subtitle")}</p>
-            {isOrgAdmin && (
-              <div className="grid gap-2 rounded-lg border bg-muted/30 p-3 sm:grid-cols-[1fr_1fr_1fr_auto]">
-                <Combobox
-                  options={opts(examTypesQ.data)}
-                  value={examTypeId}
-                  onChange={setExamTypeId}
-                  placeholder={tp("examType")}
-                  searchPlaceholder={tc("search")}
-                  emptyText={tp("selectEmpty")}
-                  emptyAction={glossaryLink("exam-types")}
-                  loading={examTypesQ.isLoading}
-                />
-                <MultiCombobox
-                  options={(pathogensQ.data ?? []).map((c) => ({
-                    value: c.id,
-                    label: pathogenName(locale, c),
-                  }))}
-                  value={pathogenIds}
-                  onChange={setPathogenIds}
-                  placeholder={tp("pathogen")}
-                  summary={(n) => tp("pathogenSelected", { count: n })}
-                  searchPlaceholder={tc("search")}
-                  emptyText={tp("selectEmpty")}
-                  emptyAction={glossaryLink("pathogens")}
-                  loading={pathogensQ.isLoading}
-                />
-                <Combobox
-                  options={opts(organsQ.data)}
-                  value={organId}
-                  onChange={setOrganId}
-                  placeholder={tp("organ")}
-                  searchPlaceholder={tc("search")}
-                  emptyText={tp("selectEmpty")}
-                  emptyAction={glossaryLink("organs")}
-                  loading={organsQ.isLoading}
-                />
-                <Button
-                  onClick={addEntry}
-                  disabled={!organId || pathogenIds.length === 0 || !examTypeId}
-                  loading={addM.isPending}
-                >
-                  <Plus className="size-4" />
-                  {tc("add")}
-                </Button>
-              </div>
-            )}
+            {/* Sem gate de papel: gerir o protocolo = enxergar a pesquisa. O admin da org
+                enxerga todas as pesquisas da org; o pesquisador, só aquelas às quais está
+                vinculado. Se a pesquisa carregou aqui, o usuário já pode editá-la — a rota
+                aplica a mesma regra (RESEARCHER + assertResearchVisible). */}
+            <div className="grid gap-2 rounded-lg border bg-muted/30 p-3 sm:grid-cols-[1fr_1fr_1fr_auto]">
+              <Combobox
+                options={opts(examTypesQ.data)}
+                value={examTypeId}
+                onChange={setExamTypeId}
+                placeholder={tp("examType")}
+                searchPlaceholder={tc("search")}
+                emptyText={tp("selectEmpty")}
+                emptyAction={glossaryLink("exam-types")}
+                loading={examTypesQ.isLoading}
+              />
+              <MultiCombobox
+                options={(pathogensQ.data ?? []).map((c) => ({
+                  value: c.id,
+                  label: pathogenName(locale, c),
+                }))}
+                value={pathogenIds}
+                onChange={setPathogenIds}
+                placeholder={tp("pathogen")}
+                summary={(n) => tp("pathogenSelected", { count: n })}
+                searchPlaceholder={tc("search")}
+                emptyText={tp("selectEmpty")}
+                emptyAction={glossaryLink("pathogens")}
+                loading={pathogensQ.isLoading}
+              />
+              <Combobox
+                options={opts(organsQ.data)}
+                value={organId}
+                onChange={setOrganId}
+                placeholder={tp("organ")}
+                searchPlaceholder={tc("search")}
+                emptyText={tp("selectEmpty")}
+                emptyAction={glossaryLink("organs")}
+                loading={organsQ.isLoading}
+              />
+              <Button
+                onClick={addEntry}
+                disabled={!organId || pathogenIds.length === 0 || !examTypeId}
+                loading={addM.isPending}
+              >
+                <Plus className="size-4" />
+                {tc("add")}
+              </Button>
+            </div>
 
             <div className="flex flex-wrap items-center gap-3">
               <div className="relative max-w-sm flex-1">
@@ -318,16 +320,14 @@ export function ResearchDetail({
                     <TableHead>{tp("examType")}</TableHead>
                     <TableHead>{tp("pathogen")}</TableHead>
                     <TableHead>{tp("organ")}</TableHead>
-                    {isOrgAdmin && (
-                      <TableHead className="w-16 text-right">
-                        <ReloadButton />
-                      </TableHead>
-                    )}
+                    <TableHead className="w-16 text-right">
+                      <ReloadButton />
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filteredProtocols.length === 0 && (
-                    <TableEmpty colSpan={isOrgAdmin ? 4 : 3}>
+                    <TableEmpty colSpan={4}>
                       {research.protocols.length === 0 ? tp("empty") : tc("noResults")}
                     </TableEmpty>
                   )}
@@ -350,45 +350,50 @@ export function ResearchDetail({
                         <TableCell>
                           <Truncate>{txt(locale, p.organ.name)}</Truncate>
                         </TableCell>
-                        {isOrgAdmin && (
-                          <TableCell className="text-right">
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="size-8"
-                                  aria-label={tp("actions")}
-                                >
-                                  <MoreHorizontal className="size-4" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                {inactive ? (
-                                  <DropdownMenuItem onClick={() => setStatus(p.id, "ACTIVE")}>
-                                    <RotateCcw className="size-4" />
-                                    {tp("reactivate")}
-                                  </DropdownMenuItem>
-                                ) : (
-                                  <DropdownMenuItem
-                                    onClick={() => setConfirm({ id: p.id, mode: "deactivate" })}
-                                  >
-                                    <Ban className="size-4" />
-                                    {tp("deactivate")}
-                                  </DropdownMenuItem>
-                                )}
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem
-                                  className="text-destructive focus:text-destructive"
-                                  onClick={() => setConfirm({ id: p.id, mode: "delete" })}
-                                >
-                                  <Trash2 className="size-4" />
-                                  {tp("delete")}
+                        <TableCell className="text-right">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="size-8"
+                                aria-label={tp("actions")}
+                              >
+                                <MoreHorizontal className="size-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              {inactive ? (
+                                <DropdownMenuItem onClick={() => setStatus(p.id, "ACTIVE")}>
+                                  <RotateCcw className="size-4" />
+                                  {tp("reactivate")}
                                 </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </TableCell>
-                        )}
+                              ) : (
+                                <DropdownMenuItem
+                                  onClick={() => setConfirm({ id: p.id, mode: "deactivate" })}
+                                >
+                                  <Ban className="size-4" />
+                                  {tp("deactivate")}
+                                </DropdownMenuItem>
+                              )}
+                              {/* Excluir é irreversível (apaga as análises da combinação):
+                                  só admin da org ou criador da pesquisa — mesma regra da rota
+                                  DELETE. Os demais vinculados desativam. */}
+                              {canEditContent && (
+                                <>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem
+                                    className="text-destructive focus:text-destructive"
+                                    onClick={() => setConfirm({ id: p.id, mode: "delete" })}
+                                  >
+                                    <Trash2 className="size-4" />
+                                    {tp("delete")}
+                                  </DropdownMenuItem>
+                                </>
+                              )}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
                       </TableRow>
                     )
                   })}
