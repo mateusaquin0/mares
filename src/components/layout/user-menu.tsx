@@ -8,7 +8,7 @@ import { useLocale, useTranslations } from "next-intl"
 import { Check, ChevronDown, Loader2, LogOut, Monitor, Moon, Sun, User } from "lucide-react"
 
 import { cn } from "@/lib/utils"
-import { createClient } from "@/lib/supabase/client"
+import { useSignOut } from "@/hooks/use-sign-out"
 import { locales, localeNames, type Locale } from "@/i18n/config"
 import { setLocale } from "@/i18n/actions"
 import { LocaleFlag } from "@/components/flags"
@@ -41,7 +41,7 @@ export function UserMenu({
   const [mounted, setMounted] = useState(false)
   useEffect(() => setMounted(true), [])
   const [pending, startTransition] = useTransition()
-  const [signingOut, setSigningOut] = useState(false)
+  const { signOut, loading: signingOut } = useSignOut()
 
   const themeOptions = [
     { value: "light", label: t("themeLight"), icon: Sun },
@@ -63,14 +63,6 @@ export function UserMenu({
       await setLocale(next)
       router.refresh()
     })
-  }
-
-  async function handleSignOut() {
-    setSigningOut(true)
-    const supabase = createClient()
-    await supabase.auth.signOut()
-    router.push("/login")
-    router.refresh()
   }
 
   return (
@@ -150,7 +142,7 @@ export function UserMenu({
 
         <DropdownMenuSeparator />
         <DropdownMenuItem
-          onSelect={handleSignOut}
+          onSelect={signOut}
           disabled={signingOut}
           className="text-destructive focus:text-destructive"
         >
