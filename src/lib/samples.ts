@@ -37,7 +37,8 @@ export async function loadSampleOrg(id: string) {
 /** Confere que o órgão (catálogo) existe. */
 export async function assertOrgan(organId: string) {
   const organ = await prisma.organ.findUnique({ where: { id: organId }, select: { id: true } })
-  if (!organ) throw new NotFoundError("Órgão não encontrado", ERROR_CODES.organNotFound)
+  if (!organ)
+    throw new NotFoundError("Material biológico não encontrado", ERROR_CODES.organNotFound)
 }
 
 type Nullable<T> = T | null | undefined

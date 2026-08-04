@@ -171,7 +171,7 @@
     "activeOrg": "Grupo de pesquisa ativo: {org}.",
     "statResearch": "Pesquisas",
     "statAnimals": "Animais",
-    "statOrgans": "Órgãos no glossário",
+    "statOrgans": "Materiais biológicos no glossário",
     "statPathogens": "Patógenos no glossário",
     "statExams": "Tipos de exame",
     "hintActiveOrg": "do grupo de pesquisa ativo",
@@ -505,7 +505,7 @@
     "sampleNotFound": "Amostra não encontrada",
     "sampleHasAnalyses": "A amostra possui análises e não pode ser excluída",
     "sampleIdentificationDuplicate": "Já existe uma amostra com esta identificação",
-    "organNotFound": "Órgão não encontrado",
+    "organNotFound": "Material biológico não encontrado",
     "analysisInvalidCombo": "Esta combinação de patógeno e exame não faz parte do protocolo da pesquisa",
     "mediaNotFound": "Arquivo não encontrado",
     "mediaInvalidType": "Tipo de arquivo não suportado",
@@ -712,14 +712,14 @@
   "samples": {
     "new": "Nova amostra",
     "empty": "Nenhuma amostra registrada.",
-    "searchPlaceholder": "Buscar por identificação, tipo, órgão...",
+    "searchPlaceholder": "Buscar por identificação, tipo, material...",
     "allStatuses": "Todos os status",
-    "allOrgans": "Todos os órgãos",
+    "allOrgans": "Todos os materiais",
     "allResearch": "Todas as pesquisas",
     "clearFilters": "Limpar filtros",
     "colIdentification": "Identificação",
     "colResearch": "Pesquisa",
-    "colOrgan": "Órgão",
+    "colOrgan": "Material biológico",
     "colType": "Tipo",
     "colCollection": "Coleta",
     "colStorage": "Estoque",
@@ -728,11 +728,11 @@
     "colAnalyses": "Análises",
     "research": "Pesquisa",
     "researchLockedHint": "A pesquisa não pode ser alterada após a criação da amostra.",
-    "organ": "Órgão",
-    "organPlaceholder": "Selecione o órgão",
-    "organProtocolHint": "Apenas órgãos do(s) protocolo(s) da pesquisa.",
-    "organProtocolEmpty": "Nenhum órgão no protocolo desta pesquisa.",
-    "organAllHint": "Mostrando todos os órgãos.",
+    "organ": "Material biológico",
+    "organPlaceholder": "Selecione o material biológico",
+    "organProtocolHint": "Apenas materiais do(s) protocolo(s) da pesquisa.",
+    "organProtocolEmpty": "Nenhum material biológico no protocolo desta pesquisa.",
+    "organAllHint": "Mostrando todos os materiais.",
     "organShowAll": "Mostrar todos",
     "organShowProtocol": "Filtrar por protocolo(s)",
     "identification": "Identificação",
@@ -762,7 +762,7 @@
   "analyses": {
     "noProtocol": "A pesquisa deste animal não tem protocolo definido. Configure o protocolo para habilitar a grade de análises.",
     "noSamples": "Registre amostras na aba Amostras para preencher a grade de análises.",
-    "noApplicable": "Nenhuma combinação do protocolo se aplica ao órgão desta amostra.",
+    "noApplicable": "Nenhuma combinação do protocolo se aplica ao material desta amostra.",
     "showInactive": "Mostrar inativos",
     "inactive": "Inativo",
     "colPathogen": "Patógeno",
@@ -852,10 +852,10 @@
         ]
       },
       "glossary": {
-        "title": "3. Glossário (órgãos, patógenos, exames)",
+        "title": "3. Glossário (materiais biológicos, patógenos, exames)",
         "body": "O glossário reúne os termos padronizados usados nos protocolos e nas análises.",
         "points": [
-          "Órgãos, patógenos e tipos de exame são globais e compartilhados entre os grupos.",
+          "Materiais biológicos, patógenos e tipos de exame são globais e compartilhados entre os grupos.",
           "Qualquer admin de grupo pode adicionar termos; editar/remover é restrito ao admin da aplicação.",
           "Patógenos usam nome científico; exames podem ter uma medida quantitativa (ex.: Ct)."
         ]
@@ -864,7 +864,7 @@
         "title": "4. Pesquisa e protocolo",
         "body": "Cada estudo é uma 'pesquisa', que define o protocolo e quem enxerga seus dados.",
         "points": [
-          "Crie a pesquisa em 'Pesquisas' e monte o protocolo: combinações de órgão × patógeno × exame.",
+          "Crie a pesquisa em 'Pesquisas' e monte o protocolo: combinações de material × patógeno × exame.",
           "Vincule pesquisadores à pesquisa — só quem está vinculado enxerga seus animais, amostras e análises.",
           "Defina a visibilidade (pública ou privada) da pesquisa."
         ]
@@ -881,17 +881,17 @@
       },
       "samples": {
         "title": "6. Amostras",
-        "body": "As amostras são coletadas por órgão do indivíduo, na aba 'Amostras' do animal.",
+        "body": "As amostras são coletadas por material biológico do indivíduo, na aba 'Amostras' do animal.",
         "points": [
-          "Cadastre cada amostra com órgão, tipo, status e local de armazenamento.",
-          "O seletor de órgão lista apenas os órgãos do protocolo; use 'Mostrar todos' para coleta oportunista/biobanco."
+          "Cadastre cada amostra com material biológico, tipo, status e local de armazenamento.",
+          "O seletor de material lista apenas os materiais do protocolo; use 'Mostrar todos' para coleta oportunista/biobanco."
         ]
       },
       "analyses": {
         "title": "7. Análises e resultados",
         "body": "As análises registram os resultados laboratoriais por amostra.",
         "points": [
-          "A grade combina órgão × patógeno × exame do protocolo; marque cada resultado (positivo, negativo ou inconclusivo) e a medida, quando houver.",
+          "A grade combina material × patógeno × exame do protocolo; marque cada resultado (positivo, negativo ou inconclusivo) e a medida, quando houver.",
           "Resultados positivos aparecem como 'patógenos positivos' na listagem e nos filtros."
         ]
       },
@@ -961,26 +961,26 @@
     "colDate": "Data",
     "columns": "Colunas",
     "columnsEmpty": "Nenhuma coluna.",
-    "organs": "Órgãos",
-    "searchOrgan": "Buscar órgão...",
+    "organs": "Materiais biológicos",
+    "searchOrgan": "Buscar material...",
     "selectedCount": "{count, plural, one {# selecionado} other {# selecionados}}",
     "export": "Exportar",
     "exportDarwinCore": "Darwin Core (XML)",
     "exportXlsx": "Excel (.xlsx)",
-    "noSampleForOrgan": "Sem amostra deste órgão",
+    "noSampleForOrgan": "Sem amostra deste material",
     "showInactive": "Mostrar inativos",
     "noMatch": "Nenhum animal para o filtro.",
     "animalCount": "{count, plural, =0 {nenhum animal} one {# animal} other {# animais}}"
   },
   "protocol": {
     "title": "Protocolo",
-    "subtitle": "Combinações de exame × patógeno × órgão que compõem a pesquisa.",
-    "organ": "Órgão",
+    "subtitle": "Combinações de exame × patógeno × material que compõem a pesquisa.",
+    "organ": "Material biológico",
     "pathogen": "Patógeno",
     "pathogenSelected": "{count, plural, one {# patógeno} other {# patógenos}}",
     "examType": "Exame",
     "empty": "Nenhuma entrada no protocolo.",
-    "searchPlaceholder": "Buscar por órgão, patógeno ou exame...",
+    "searchPlaceholder": "Buscar por material, patógeno ou exame...",
     "selectEmpty": "Nenhum item cadastrado.",
     "goToGlossary": "Cadastrar no glossário",
     "added": "{count, plural, one {# entrada adicionada} other {# entradas adicionadas}}",
@@ -1003,13 +1003,13 @@
   },
   "catalogs": {
     "title": "Glossário",
-    "subtitle": "Órgãos, patógenos e tipos de exame — globais e compartilhados. Editar/remover é restrito ao admin da aplicação.",
+    "subtitle": "Materiais biológicos, patógenos e tipos de exame — globais e compartilhados. Editar/remover é restrito ao admin da aplicação.",
     "add": "Adicionar",
     "addTitle": "Adicionar item",
     "editTitle": "Editar item",
     "addDesc": "Informe o nome em português e inglês.",
     "addDescPathogen": "Informe o nome científico (latim) e, opcionalmente, o grupo em português e inglês.",
-    "tabOrgans": "Órgãos",
+    "tabOrgans": "Materiais biológicos",
     "tabPathogens": "Patógenos",
     "tabExamTypes": "Tipos de exame",
     "colName": "Nome",
@@ -1124,7 +1124,7 @@
     "status_PENDING": "Pendente",
     "status_APPROVED": "Aprovada",
     "status_REJECTED": "Rejeitada",
-    "type_ORGAN": "Órgão",
+    "type_ORGAN": "Material biológico",
     "type_PATHOGEN": "Patógeno",
     "type_EXAM_TYPE": "Tipo de exame",
     "fromGroup": "Pesquisador do grupo {group}",

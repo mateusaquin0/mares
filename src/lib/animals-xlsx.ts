@@ -126,7 +126,7 @@ const ANALYSIS_COLUMNS: { key: string; pt: string; en: string; width: number }[]
   { key: "species", pt: "Espécie", en: "Species", width: 24 },
   { key: "sample", pt: "Amostra", en: "Sample", width: 16 },
   { key: "research", pt: "Pesquisa", en: "Research", width: 24 },
-  { key: "organ", pt: "Órgão", en: "Organ", width: 18 },
+  { key: "organ", pt: "Material biológico", en: "Biological material", width: 22 },
   { key: "pathogen", pt: "Patógeno", en: "Pathogen", width: 24 },
   { key: "exam", pt: "Exame", en: "Exam", width: 18 },
   { key: "result", pt: "Resultado", en: "Result", width: 14 },

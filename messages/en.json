@@ -171,7 +171,7 @@
     "activeOrg": "Active research group: {org}.",
     "statResearch": "Research",
     "statAnimals": "Animals",
-    "statOrgans": "Organs in glossary",
+    "statOrgans": "Biological materials in glossary",
     "statPathogens": "Pathogens in glossary",
     "statExams": "Exam types",
     "hintActiveOrg": "in the active research group",
@@ -505,7 +505,7 @@
     "sampleNotFound": "Sample not found",
     "sampleHasAnalyses": "The sample has analyses and cannot be deleted",
     "sampleIdentificationDuplicate": "A sample with this identification already exists",
-    "organNotFound": "Organ not found",
+    "organNotFound": "Biological material not found",
     "analysisInvalidCombo": "This pathogen/exam combination is not part of the research protocol",
     "mediaNotFound": "File not found",
     "mediaInvalidType": "Unsupported file type",
@@ -712,14 +712,14 @@
   "samples": {
     "new": "New sample",
     "empty": "No samples recorded.",
-    "searchPlaceholder": "Search by identification, type, organ...",
+    "searchPlaceholder": "Search by identification, type, material...",
     "allStatuses": "All statuses",
-    "allOrgans": "All organs",
+    "allOrgans": "All materials",
     "allResearch": "All research",
     "clearFilters": "Clear filters",
     "colIdentification": "Identification",
     "colResearch": "Research",
-    "colOrgan": "Organ",
+    "colOrgan": "Biological material",
     "colType": "Type",
     "colCollection": "Collection",
     "colStorage": "Storage",
@@ -728,11 +728,11 @@
     "colAnalyses": "Analyses",
     "research": "Research",
     "researchLockedHint": "Research can't be changed after the sample is created.",
-    "organ": "Organ",
-    "organPlaceholder": "Select organ",
-    "organProtocolHint": "Only organs in the research protocol(s).",
-    "organProtocolEmpty": "No organs in this research's protocol.",
-    "organAllHint": "Showing all organs.",
+    "organ": "Biological material",
+    "organPlaceholder": "Select biological material",
+    "organProtocolHint": "Only materials in the research protocol(s).",
+    "organProtocolEmpty": "No biological material in this research's protocol.",
+    "organAllHint": "Showing all materials.",
     "organShowAll": "Show all",
     "organShowProtocol": "Filter by protocol(s)",
     "identification": "Identification",
@@ -762,7 +762,7 @@
   "analyses": {
     "noProtocol": "This animal's research has no protocol defined. Configure the protocol to enable the analysis grid.",
     "noSamples": "Record samples in the Samples tab to fill the analysis grid.",
-    "noApplicable": "No protocol combination applies to this sample's organ.",
+    "noApplicable": "No protocol combination applies to this sample's material.",
     "showInactive": "Show inactive",
     "inactive": "Inactive",
     "colPathogen": "Pathogen",
@@ -852,10 +852,10 @@
         ]
       },
       "glossary": {
-        "title": "3. Glossary (organs, pathogens, exams)",
+        "title": "3. Glossary (biological materials, pathogens, exams)",
         "body": "The glossary holds the standardized terms used in protocols and analyses.",
         "points": [
-          "Organs, pathogens and exam types are global and shared across groups.",
+          "Biological materials, pathogens and exam types are global and shared across groups.",
           "Any group admin can add terms; editing/removing is restricted to the application admin.",
           "Pathogens use scientific names; exams may have a quantitative measure (e.g. Ct)."
         ]
@@ -864,7 +864,7 @@
         "title": "4. Research and protocol",
         "body": "Each study is a 'research', which defines the protocol and who can see its data.",
         "points": [
-          "Create the research in 'Research' and build the protocol: organ × pathogen × exam combinations.",
+          "Create the research in 'Research' and build the protocol: material × pathogen × exam combinations.",
           "Assign researchers to the research — only assigned members see its animals, samples and analyses.",
           "Set the research visibility (public or private)."
         ]
@@ -881,17 +881,17 @@
       },
       "samples": {
         "title": "6. Samples",
-        "body": "Samples are collected per organ of the individual, in the animal's 'Samples' tab.",
+        "body": "Samples are collected per biological material of the individual, in the animal's 'Samples' tab.",
         "points": [
-          "Register each sample with organ, type, status and storage location.",
-          "The organ selector lists only the protocol's organs; use 'Show all' for opportunistic/biobank collection."
+          "Register each sample with biological material, type, status and storage location.",
+          "The material selector lists only the protocol's materials; use 'Show all' for opportunistic/biobank collection."
         ]
       },
       "analyses": {
         "title": "7. Analyses and results",
         "body": "Analyses record the lab results per sample.",
         "points": [
-          "The grid combines the protocol's organ × pathogen × exam; mark each result (positive, negative or inconclusive) and the measure, when applicable.",
+          "The grid combines the protocol's material × pathogen × exam; mark each result (positive, negative or inconclusive) and the measure, when applicable.",
           "Positive results appear as 'positive pathogens' in the listing and filters."
         ]
       },
@@ -961,26 +961,26 @@
     "colDate": "Date",
     "columns": "Columns",
     "columnsEmpty": "No columns.",
-    "organs": "Organs",
-    "searchOrgan": "Search organ...",
+    "organs": "Biological materials",
+    "searchOrgan": "Search material...",
     "selectedCount": "{count, plural, one {# selected} other {# selected}}",
     "export": "Export",
     "exportDarwinCore": "Darwin Core (XML)",
     "exportXlsx": "Excel (.xlsx)",
-    "noSampleForOrgan": "No sample for this organ",
+    "noSampleForOrgan": "No sample for this material",
     "showInactive": "Show inactive",
     "noMatch": "No animal matches the filter.",
     "animalCount": "{count, plural, =0 {no animals} one {# animal} other {# animals}}"
   },
   "protocol": {
     "title": "Protocol",
-    "subtitle": "Exam × pathogen × organ combinations that make up the research.",
-    "organ": "Organ",
+    "subtitle": "Exam × pathogen × material combinations that make up the research.",
+    "organ": "Biological material",
     "pathogen": "Pathogen",
     "pathogenSelected": "{count, plural, one {# pathogen} other {# pathogens}}",
     "examType": "Exam",
     "empty": "No protocol entries.",
-    "searchPlaceholder": "Search by organ, pathogen or exam...",
+    "searchPlaceholder": "Search by material, pathogen or exam...",
     "selectEmpty": "No items registered.",
     "goToGlossary": "Add in the glossary",
     "added": "{count, plural, one {# entry added} other {# entries added}}",
@@ -1003,13 +1003,13 @@
   },
   "catalogs": {
     "title": "Glossary",
-    "subtitle": "Organs, pathogens and exam types — global and shared. Editing/removing is restricted to the application admin.",
+    "subtitle": "Biological materials, pathogens and exam types — global and shared. Editing/removing is restricted to the application admin.",
     "add": "Add",
     "addTitle": "Add item",
     "editTitle": "Edit item",
     "addDesc": "Enter the name in Portuguese and English.",
     "addDescPathogen": "Enter the scientific name (Latin) and, optionally, the group in Portuguese and English.",
-    "tabOrgans": "Organs",
+    "tabOrgans": "Biological materials",
     "tabPathogens": "Pathogens",
     "tabExamTypes": "Exam types",
     "colName": "Name",
@@ -1124,7 +1124,7 @@
     "status_PENDING": "Pending",
     "status_APPROVED": "Approved",
     "status_REJECTED": "Rejected",
-    "type_ORGAN": "Organ",
+    "type_ORGAN": "Biological material",
     "type_PATHOGEN": "Pathogen",
     "type_EXAM_TYPE": "Exam type",
     "fromGroup": "Researcher from group {group}",
