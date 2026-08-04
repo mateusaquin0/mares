@@ -169,7 +169,6 @@
     "title": "Dashboard",
     "greeting": "Hello, {name}.",
     "activeOrg": "Active research group: {org}.",
-    "adminMode": "You are in application administration mode.",
     "statResearch": "Research",
     "statAnimals": "Animals",
     "statOrgans": "Organs in glossary",

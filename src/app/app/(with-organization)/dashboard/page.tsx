@@ -2,19 +2,21 @@ import { redirect } from "next/navigation"
 import { getTranslations } from "next-intl/server"
 
 import { getAuthUser, getActiveOrgId } from "@/lib/auth"
-import { DashboardClient } from "@/app/app/dashboard/dashboard-client"
+import { resolveDashboardAccess } from "@/lib/access-guards"
+import { DashboardClient } from "@/app/app/(with-organization)/dashboard/dashboard-client"
 
 export default async function DashboardPage() {
   const user = await getAuthUser()
   if (!user) redirect("/login")
 
-  const activeOrgId = await getActiveOrgId(user)
-  // Admin global não participa de organizações → não tem dados no dashboard.
-  // Sua tela inicial são as solicitações de acesso.
-  if (user.isSystemAdmin && !activeOrgId) redirect("/app/admin/access-requests")
+  // Este é o funil: TODAS as outras telas de (with-organization) redirecionam para cá
+  // quando não há organização ativa — inclusive quem perdeu o vínculo durante a navegação.
+  // A regra está em src/lib/access-guards.ts, junto da do layout do grupo.
+  const access = resolveDashboardAccess(user, await getActiveOrgId(user))
+  if (access.kind === "redirect") redirect(access.to)
+  const { activeOrg } = access
 
   const t = await getTranslations("dashboard")
-  const activeOrg = user.memberships.find((m) => m.orgId === activeOrgId) ?? null
 
   return (
     <div className="mx-auto max-w-6xl px-8 py-8">
@@ -22,7 +24,7 @@ export default async function DashboardPage() {
         <h1 className="text-3xl font-semibold tracking-tight text-foreground">{t("title")}</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           {t("greeting", { name: user.name ?? user.email })}{" "}
-          {activeOrg ? t("activeOrg", { org: activeOrg.orgName }) : t("adminMode")}
+          {t("activeOrg", { org: activeOrg.orgName })}
         </p>
         <p className="text-sm text-muted-foreground">{t("subtitle")}</p>
       </header>

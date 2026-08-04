@@ -73,33 +73,16 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
-  // Com sessão: descobre se é admin global e se tem algum vínculo (Membership)
-  // numa única chamada — o count de memberships vem embutido (embed do PostgREST).
-  const { data: dbUser } = await supabase
-    .from("User")
-    .select("isSystemAdmin, memberships:Membership(count)")
-    .eq("id", userId)
-    .maybeSingle()
-
-  const isAdmin = dbUser?.isSystemAdmin === true
-  const membershipCount = (dbUser?.memberships as { count: number }[] | null)?.[0]?.count ?? 0
-  const hasOrg = membershipCount > 0
-
-  // Área de admin global exige isSystemAdmin
-  if (pathname.startsWith("/app/admin") && !isAdmin) {
-    return NextResponse.redirect(new URL("/app/dashboard", request.url))
-  }
-
-  // Usuário sem organização (e que não é admin global) → tela dedicada.
-  // Exceção: o próprio perfil continua acessível (para editar dados ou excluir a conta).
-  if (
-    !hasOrg &&
-    !isAdmin &&
-    pathname !== "/app/no-organization" &&
-    !pathname.startsWith("/app/profile")
-  ) {
-    return NextResponse.redirect(new URL("/app/no-organization", request.url))
-  }
-
+  // O middleware trata AUTENTICAÇÃO. A AUTORIZAÇÃO (admin global, vínculo com organização)
+  // fica nos layouts de Server Component:
+  //   - admin global            → src/app/app/admin/layout.tsx
+  //   - vínculo com organização → src/app/app/layout.tsx
+  //
+  // Dois motivos para não fazer isso aqui. (1) Segurança: autorização na borda é o padrão
+  // que a CVE-2025-29927 do Next.js explorou, em que um header forjado pulava o middleware
+  // por completo — no layout a checagem acontece junto do render, onde os dados estão.
+  // (2) Custo: a consulta que ficava aqui rodava em TODA requisição, inclusive nos prefetch
+  // de <Link>; uma única carga de página com a sidebar disparava ~10 SELECTs idênticos.
+  // Nos layouts, getAuthUser é memoizado por requisição (React.cache) e custa uma consulta.
   return response
 }

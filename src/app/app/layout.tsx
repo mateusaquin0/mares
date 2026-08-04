@@ -3,6 +3,12 @@ import { redirect } from "next/navigation"
 import { getAuthUser, getActiveOrgId } from "@/lib/auth"
 import { Sidebar } from "@/components/layout/sidebar"
 
+// Casca da área logada: exige sessão e monta a barra lateral.
+//
+// A exigência de VÍNCULO com um grupo não mora aqui, e sim em (with-organization)/layout.tsx,
+// que cobre só as telas que de fato precisam dele. O perfil e a tela de "sem organização"
+// ficam fora daquele grupo justamente para continuarem alcançáveis por quem perdeu o vínculo
+// (para editar os dados ou excluir a conta).
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const user = await getAuthUser()
   if (!user) redirect("/login")
@@ -10,8 +16,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const activeOrgId = await getActiveOrgId(user)
   const activeOrg = user.memberships.find((m) => m.orgId === activeOrgId) ?? null
 
-  // Usuário sem organização e sem privilégio global: só a tela "sem organização"
-  // é alcançável (o middleware bloqueia o resto). Renderiza sem a sidebar.
+  // Sem organização e sem privilégio global: as únicas telas alcançáveis são as de fora do
+  // grupo, e elas renderizam sem a barra lateral (que não teria o que mostrar).
   if (!activeOrg && !user.isSystemAdmin) {
     return <main className="min-h-screen bg-background">{children}</main>
   }
