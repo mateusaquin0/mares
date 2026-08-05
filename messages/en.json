@@ -1060,6 +1060,7 @@
     "noAnimals": "No animal with samples in this research yet.",
     "test": "Exam",
     "searchPlaceholder": "Filter by species, ID, location...",
+    "result": "Result",
     "colId": "Control ID",
     "colSpecies": "Species",
     "colSexStage": "Sex / Stage",

@@ -1060,6 +1060,7 @@
     "noAnimals": "Nenhum animal com amostras nesta pesquisa ainda.",
     "test": "Exame",
     "searchPlaceholder": "Filtrar por espécie, ID, local...",
+    "result": "Resultado",
     "colId": "ID Controle",
     "colSpecies": "Espécie",
     "colSexStage": "Sexo / Fase",
