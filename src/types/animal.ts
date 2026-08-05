@@ -154,6 +154,8 @@ export type AnimalMedia = {
   mimeType: string
   label: string | null
   createdAt: string
+  // Autor do upload; nulo em arquivos anteriores à coluna (só admin os exclui).
+  uploadedById: string | null
 }
 
 // Entrada do histórico/auditoria (/api/animals/:id/audit).

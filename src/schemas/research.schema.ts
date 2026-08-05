@@ -11,14 +11,14 @@ export const protocolEntrySchema = z.object({
 })
 
 export const createResearchSchema = z.object({
-  name: z.string().min(3, "min3").max(LIMITS.name),
+  name: z.string().min(3, "min3").max(LIMITS.researchName, "max100"),
   description: z.string().max(LIMITS.longText).optional().or(z.literal("")),
   isPublic: z.boolean().optional(),
   protocols: z.array(protocolEntrySchema).optional(),
 })
 
 export const updateResearchSchema = z.object({
-  name: z.string().min(3, "min3").max(LIMITS.name).optional(),
+  name: z.string().min(3, "min3").max(LIMITS.researchName, "max100").optional(),
   description: z.string().max(LIMITS.longText).optional().or(z.literal("")),
   isPublic: z.boolean().optional(),
 })

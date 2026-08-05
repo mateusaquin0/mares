@@ -83,11 +83,13 @@ const SelectContent = React.forwardRef<
       {...props}
     >
       <SelectScrollUpButton />
+      {/* Popup na largura do gatilho: rótulos longos são cortados (ver ItemText) em vez de
+          esticarem o popup para fora do layout. O piso de 8rem acompanha o do Content. */}
       <SelectPrimitive.Viewport
         className={cn(
           "p-1",
           position === "popper" &&
-            "h-[var(--radix-select-trigger-height)] w-full min-w-[var(--radix-select-trigger-width)]",
+            "h-[var(--radix-select-trigger-height)] w-[var(--radix-select-trigger-width)] min-w-[8rem]",
         )}
       >
         {children}
@@ -118,6 +120,10 @@ const SelectItem = React.forwardRef<
     ref={ref}
     className={cn(
       "relative flex w-full cursor-pointer select-none items-center rounded-sm py-1.5 pl-2 pr-8 text-sm outline-none focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
+      // Rótulo (o span do ItemText) preso à largura do popup: quebra em até duas linhas,
+      // inclusive no meio de uma palavra sem espaços, e corta o resto com reticências.
+      // Vai por seletor porque o SelectItemText do Radix descarta `className`.
+      "[&>span:last-child]:line-clamp-2 [&>span:last-child]:min-w-0 [&>span:last-child]:break-words",
       className,
     )}
     {...props}

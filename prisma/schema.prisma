@@ -138,6 +138,8 @@ model User {
   researchAccessReviews  ResearchAccessRequest[] @relation("ResearchAccessReviewer")
   // Convites de compartilhamento de indivíduo que enviou.
   animalSharesInvited    AnimalResearch[]        @relation("AnimalResearchInviter")
+  mediaUploaded          AnimalMedia[]           @relation("AnimalMediaUploader")
+  samplesCreated         Sample[]                @relation("SampleCreator")
   feedbacks              Feedback[]              @relation("FeedbackAuthor")
   catalogRequests        CatalogRequest[]        @relation("CatalogRequestAuthor")
   createdAt              DateTime                @default(now())
@@ -444,6 +446,10 @@ model Sample {
   status          SampleStatus @default(STORED)
   notes           String?
   analyses        Analysis[]
+  // Autor (para a regra "pesquisador exclui a própria criação"); SetNull se o usuário for
+  // removido. Nulo nas amostras anteriores a esta coluna — só o admin da org as exclui.
+  createdById     String?
+  createdBy       User?        @relation("SampleCreator", fields: [createdById], references: [id], onDelete: SetNull)
   createdAt       DateTime     @default(now())
 
   @@unique([orgId, identification])
@@ -500,13 +506,17 @@ model SequenceRecord {
 
 // Arquivos anexados a um animal (fotos de campo, microscopia, laudos PDF)
 model AnimalMedia {
-  id        String   @id @default(uuid())
-  animalId  String
-  animal    Animal   @relation(fields: [animalId], references: [id], onDelete: Cascade)
-  url       String // URL no Supabase Storage
-  mimeType  String // "image/jpeg", "application/pdf" etc.
-  label     String? // descrição livre
-  createdAt DateTime @default(now())
+  id       String @id @default(uuid())
+  animalId String
+  animal   Animal @relation(fields: [animalId], references: [id], onDelete: Cascade)
+  url      String // URL no Supabase Storage
+  mimeType String // "image/jpeg", "application/pdf" etc.
+  label    String? // descrição livre
+  // Autor do upload (para a regra "quem enviou pode excluir"); SetNull se o usuário for
+  // removido. Nulo também nos arquivos anteriores a esta coluna — só admin os exclui.
+  uploadedById String?
+  uploadedBy   User?    @relation("AnimalMediaUploader", fields: [uploadedById], references: [id], onDelete: SetNull)
+  createdAt    DateTime @default(now())
 
   @@index([animalId])
 }

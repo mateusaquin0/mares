@@ -31,7 +31,14 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
     const media = await prisma.animalMedia.findMany({
       where: { animalId: id },
       orderBy: { createdAt: "desc" },
-      select: { id: true, url: true, mimeType: true, label: true, createdAt: true },
+      select: {
+        id: true,
+        url: true,
+        mimeType: true,
+        label: true,
+        createdAt: true,
+        uploadedById: true,
+      },
     })
 
     // Substitui o caminho do objeto por uma URL assinada temporária.
@@ -80,7 +87,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     }
 
     const media = await prisma.animalMedia.create({
-      data: { animalId: id, url: path, mimeType: contentType, label },
+      data: { animalId: id, url: path, mimeType: contentType, label, uploadedById: user.id },
       select: { id: true },
     })
     return NextResponse.json(media, { status: 201 })

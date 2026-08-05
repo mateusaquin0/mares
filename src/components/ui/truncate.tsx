@@ -4,9 +4,17 @@ import * as React from "react"
 
 import { cn } from "@/lib/utils"
 
-// Trunca o conteúdo em UMA linha com reticências e expõe o texto completo num tooltip nativo
-// (atributo `title`) — mas só quando o texto está realmente cortado. Mantém as linhas das
-// tabelas com altura uniforme (nada de quebra em várias linhas).
+// Classes estáticas: o Tailwind varre o código-fonte, então `line-clamp-${n}` não geraria CSS.
+const CLAMP: Record<number, string> = {
+  2: "line-clamp-2",
+  3: "line-clamp-3",
+}
+
+// Trunca o conteúdo com reticências e expõe o texto completo num tooltip nativo (atributo
+// `title`) — mas só quando o texto está realmente cortado. Mantém as linhas das tabelas com
+// altura uniforme (nada de quebra em várias linhas).
+//
+// `lines` permite quebrar em até N linhas antes de cortar (padrão: 1).
 //
 // A largura máxima vem de `max-w-*` no `className` (padrão: 16rem). Em tabelas com layout
 // automático, é o `max-width` deste elemento interno que faz o truncamento funcionar e limita
@@ -15,8 +23,9 @@ export function Truncate({
   children,
   className,
   title,
+  lines = 1,
   ...props
-}: React.HTMLAttributes<HTMLSpanElement>) {
+}: React.HTMLAttributes<HTMLSpanElement> & { lines?: 1 | 2 | 3 }) {
   const ref = React.useRef<HTMLSpanElement>(null)
   const [tip, setTip] = React.useState<string | undefined>(undefined)
 
@@ -24,19 +33,24 @@ export function Truncate({
     const el = ref.current
     if (!el) return
     const check = () => {
-      const overflowing = el.scrollWidth > el.clientWidth + 1
+      // Em uma linha o texto transborda na horizontal; com `line-clamp`, ele quebra e o que
+      // sobra transborda na vertical.
+      const overflowing =
+        lines > 1 ? el.scrollHeight > el.clientHeight + 1 : el.scrollWidth > el.clientWidth + 1
       setTip(overflowing ? (title ?? el.textContent ?? undefined) : undefined)
     }
     check()
     const ro = new ResizeObserver(check)
     ro.observe(el)
     return () => ro.disconnect()
-  }, [children, title])
+  }, [children, title, lines])
 
   return (
     <span
       ref={ref}
-      className={cn("block max-w-[16rem] truncate", className)}
+      // `line-clamp` já define o `display` (-webkit-box); emitir `block` junto deixaria a
+      // precedência das duas regras a cargo da ordem do CSS.
+      className={cn("max-w-[16rem]", lines > 1 ? CLAMP[lines] : "block truncate", className)}
       title={tip}
       {...props}
     >

@@ -3,8 +3,10 @@
 // para que o limite exibido ao usuário e o validado no backend nunca divirjam.
 
 export const LIMITS = {
-  // Nomes e rótulos de tamanho padrão (nome de grupo/pesquisa, espécie, órgão, exame...).
+  // Nomes e rótulos de tamanho padrão (nome de grupo, espécie, órgão, exame...).
   name: 255,
+  // Nome de pesquisa: aparece como título e dentro de selos/selects pela aplicação inteira.
+  researchName: 100,
   // Identificadores e campos curtos (ID de controle, SIMBA, município, UF, táxon).
   shortText: 120,
   // Campos muito curtos (condição corporal, estágio de decomposição, rótulo de medida).

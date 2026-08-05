@@ -30,6 +30,9 @@ export const ERROR_CODES = {
   // Fase 2 — pesquisas, protocolos e catálogos
   researchNotFound: "researchNotFound",
   researchHasAnimals: "researchHasAnimals",
+  // Recusas de edição separadas: o motivo muda o que o usuário deve fazer.
+  researchVisibilityAdminOnly: "researchVisibilityAdminOnly",
+  researchEditNotCreator: "researchEditNotCreator",
   researchMemberExists: "researchMemberExists",
   researchMemberNotFound: "researchMemberNotFound",
   researchMemberIsCreator: "researchMemberIsCreator",
@@ -73,6 +76,7 @@ export const ERROR_CODES = {
   animalShareCannotDecide: "animalShareCannotDecide",
   sampleNotFound: "sampleNotFound",
   sampleHasAnalyses: "sampleHasAnalyses",
+  sampleDeleteNotCreator: "sampleDeleteNotCreator",
   sampleIdentificationDuplicate: "sampleIdentificationDuplicate",
   organNotFound: "organNotFound",
   analysisInvalidCombo: "analysisInvalidCombo",
@@ -81,6 +85,7 @@ export const ERROR_CODES = {
   confirmationParentNotPositive: "confirmationParentNotPositive",
   confirmationDuplicate: "confirmationDuplicate",
   mediaNotFound: "mediaNotFound",
+  mediaDeleteNotUploader: "mediaDeleteNotUploader",
   mediaInvalidType: "mediaInvalidType",
   mediaTooLarge: "mediaTooLarge",
   mediaUploadFailed: "mediaUploadFailed",

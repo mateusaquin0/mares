@@ -21,6 +21,7 @@ export async function loadSampleOrg(id: string) {
       id: true,
       animalId: true,
       organId: true,
+      createdById: true,
       animal: { select: { researchId: true, research: { select: { orgId: true } } } },
     },
   })
@@ -29,6 +30,7 @@ export async function loadSampleOrg(id: string) {
     id: sample.id,
     animalId: sample.animalId,
     organId: sample.organId,
+    createdById: sample.createdById,
     researchId: sample.animal.researchId,
     orgId: sample.animal.research.orgId,
   }
@@ -79,6 +81,7 @@ export const sampleSelect = {
   status: true,
   notes: true,
   createdAt: true,
+  createdById: true,
   organ: { select: { id: true, name: true } },
   research: { select: { id: true, name: true } },
   _count: { select: { analyses: true } },

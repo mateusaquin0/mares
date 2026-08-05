@@ -44,6 +44,11 @@ export function useRemoveUser() {
   })
 }
 
+// Não invalida a lista: o status continua INVITED até o usuário definir a senha.
+export function useResendUserInvite() {
+  return useMutation({ mutationFn: (id: string) => adminService.resendUserInvite(id) })
+}
+
 export function useActOnRequest() {
   const qc = useQueryClient()
   return useMutation({

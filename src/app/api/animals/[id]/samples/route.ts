@@ -56,6 +56,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
           identification: data.identification.trim(),
           sampleType: data.sampleType.trim(),
           orgId: animal.orgId, // denormalizado p/ unicidade por organização
+          createdBy: { connect: { id: user.id } },
           animal: { connect: { id } },
           research: { connect: { id: data.researchId } },
           organ: { connect: { id: data.organId } },

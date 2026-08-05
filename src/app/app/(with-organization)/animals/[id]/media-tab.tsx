@@ -13,7 +13,15 @@ import { Input } from "@/components/ui/input"
 import { TableSkeleton } from "@/components/ui/skeleton"
 import { ConfirmDialog } from "@/components/confirm-dialog"
 
-export function MediaTab({ animalId, isOrgAdmin }: { animalId: string; isOrgAdmin: boolean }) {
+export function MediaTab({
+  animalId,
+  isOrgAdmin,
+  selfId,
+}: {
+  animalId: string
+  isOrgAdmin: boolean
+  selfId: string
+}) {
   const t = useTranslations("media")
   const tc = useTranslations("common")
   const locale = useLocale()
@@ -55,6 +63,8 @@ export function MediaTab({ animalId, isOrgAdmin }: { animalId: string; isOrgAdmi
   }
 
   const fmtDate = (iso: string) => new Date(iso).toLocaleDateString(locale)
+  // Espelha a rota: admin do grupo, ou quem enviou o arquivo.
+  const canDelete = (m: AnimalMedia) => isOrgAdmin || m.uploadedById === selfId
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-6">
@@ -123,7 +133,7 @@ export function MediaTab({ animalId, isOrgAdmin }: { animalId: string; isOrgAdmi
                       {fmtDate(m.createdAt)}
                     </p>
                   </div>
-                  {isOrgAdmin && (
+                  {canDelete(m) && (
                     <Button
                       variant="ghost"
                       size="icon"
