@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import Link from "next/link"
 import { useLocale, useTranslations } from "next-intl"
 import { Download, Search, X } from "lucide-react"
@@ -59,6 +59,9 @@ const cellKey = (sampleId: string, pathogenId: string, examTypeId: string) =>
 
 const RESULT_PRIORITY: Record<ResultValue, number> = { POSITIVO: 3, INCONCLUSIVO: 2, NEGATIVO: 1 }
 
+// Valor do filtro para "amostra existente, mas ainda sem resultado" (o anel vazio da grade).
+const UNTESTED = "UNTESTED"
+
 export function ResultsManager() {
   const t = useTranslations("results")
   const ta = useTranslations("analyses")
@@ -79,6 +82,7 @@ export function ResultsManager() {
 
   const [testKeySel, setTestKeySel] = useState("")
   const [query, setQuery] = useState("")
+  const [resultSel, setResultSel] = useState<string[]>([])
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(20)
   const [showInactive, setShowInactive] = useState(false)
@@ -93,6 +97,17 @@ export function ResultsManager() {
     { value: "sexStage", label: t("colSexStage") },
     { value: "location", label: t("colLocation") },
     { value: "date", label: t("colDate") },
+  ]
+
+  const resultOptions = [
+    { value: "POSITIVO", label: ta("resultPositive"), icon: <ResultDot result="POSITIVO" /> },
+    { value: "NEGATIVO", label: ta("resultNegative"), icon: <ResultDot result="NEGATIVO" /> },
+    {
+      value: "INCONCLUSIVO",
+      label: ta("resultInconclusive"),
+      icon: <ResultDot result="INCONCLUSIVO" />,
+    },
+    { value: UNTESTED, label: ta("resultUntested"), icon: <ResultDot result={null} /> },
   ]
 
   const hasInactive = (data?.protocol ?? []).some((p) => p.status === "INACTIVE")
@@ -122,10 +137,11 @@ export function ResultsManager() {
     return [...map.values()]
   }, [data, showInactive])
 
-  // Ao trocar de pesquisa/dados, volta para o primeiro exame e limpa o filtro.
+  // Ao trocar de pesquisa/dados, volta para o primeiro exame e limpa os filtros.
   useEffect(() => {
     setTestKeySel(tests[0]?.key ?? "")
     setQuery("")
+    setResultSel([])
   }, [tests])
 
   const test = tests.find((x) => x.key === testKeySel) ?? tests[0] ?? null
@@ -185,36 +201,52 @@ export function ResultsManager() {
 
   // Resultado agregado de um animal num órgão para o exame atual. `hasSample` distingue
   // "sem amostra deste órgão" (—) de "amostra sem resultado" (anel vazio).
-  const cellOf = (animal: ResultsAnimal, organId: string) => {
-    if (!test) return { hasSample: false, result: null as ResultValue | null }
-    const samples = animal.samples.filter((s) => s.organ.id === organId)
-    if (samples.length === 0) return { hasSample: false, result: null as ResultValue | null }
-    let best: ResultValue | null = null
-    for (const s of samples) {
-      const r = resultByCell.get(cellKey(s.id, test.pathogenId, test.examTypeId)) ?? null
-      if (r && (!best || RESULT_PRIORITY[r] > RESULT_PRIORITY[best])) best = r
-    }
-    return { hasSample: true, result: best }
-  }
+  const cellOf = useCallback(
+    (animal: ResultsAnimal, organId: string) => {
+      if (!test) return { hasSample: false, result: null as ResultValue | null }
+      const samples = animal.samples.filter((s) => s.organ.id === organId)
+      if (samples.length === 0) return { hasSample: false, result: null as ResultValue | null }
+      let best: ResultValue | null = null
+      for (const s of samples) {
+        const r = resultByCell.get(cellKey(s.id, test.pathogenId, test.examTypeId)) ?? null
+        if (r && (!best || RESULT_PRIORITY[r] > RESULT_PRIORITY[best])) best = r
+      }
+      return { hasSample: true, result: best }
+    },
+    [test, resultByCell],
+  )
 
   const search = query.trim().toLowerCase()
   const animals = useMemo(() => {
-    const list = data?.animals ?? []
-    if (!search) return list
-    return list.filter((a) =>
-      [a.controlId, a.simbaRecordNumber, a.species, a.municipality, a.state, a.strandingBeach]
-        .filter(Boolean)
-        .join(" ")
-        .toLowerCase()
-        .includes(search),
-    )
-  }, [data, search])
+    let list = data?.animals ?? []
+    if (search) {
+      list = list.filter((a) =>
+        [a.controlId, a.simbaRecordNumber, a.species, a.municipality, a.state, a.strandingBeach]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase()
+          .includes(search),
+      )
+    }
+    // Filtro por resultado: mantém o animal que tenha ao menos um material biológico visível
+    // com um dos resultados marcados, no exame selecionado.
+    if (resultSel.length > 0) {
+      list = list.filter((a) =>
+        visibleOrganIds.some((organId) => {
+          const { hasSample, result } = cellOf(a, organId)
+          if (!hasSample) return false
+          return resultSel.includes(result ?? UNTESTED)
+        }),
+      )
+    }
+    return list
+  }, [data, search, resultSel, visibleOrganIds, cellOf])
 
   // Paginação client-side sobre a lista filtrada. Volta à primeira página quando o conjunto
-  // muda (busca, troca de exame ou de pesquisa).
+  // muda (busca, filtro de resultado, troca de exame ou de pesquisa).
   useEffect(() => {
     setPage(1)
-  }, [search, testKeySel, data])
+  }, [search, resultSel, testKeySel, data])
   const pageCount = Math.max(1, Math.ceil(animals.length / pageSize))
   const currentPage = Math.min(page, pageCount)
   const pagedAnimals = animals.slice((currentPage - 1) * pageSize, currentPage * pageSize)
@@ -320,6 +352,16 @@ export function ResultsManager() {
                 />
               </div>
               <MultiSelect
+                options={resultOptions}
+                value={resultSel}
+                onChange={setResultSel}
+                placeholder={t("result")}
+                emptyText={t("columnsEmpty")}
+                summary={(n) => `${t("result")} · ${t("selectedCount", { count: n })}`}
+                searchable={false}
+                triggerClassName="h-9 w-auto min-w-40"
+              />
+              <MultiSelect
                 options={columnOptions}
                 value={visibleColumns}
                 onChange={setVisibleColumns}
@@ -353,10 +395,13 @@ export function ResultsManager() {
                   {t("showInactive")}
                 </label>
               )}
-              {query && (
+              {(query || resultSel.length > 0) && (
                 <button
                   type="button"
-                  onClick={() => setQuery("")}
+                  onClick={() => {
+                    setQuery("")
+                    setResultSel([])
+                  }}
                   className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
                 >
                   <X className="size-3.5" />
