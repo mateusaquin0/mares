@@ -3,7 +3,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { Prisma } from "@prisma/client"
 import { prisma } from "@/lib/prisma"
-import { getAuthUser, getActiveOrgId, requireOrgRole, orgRole } from "@/lib/auth"
+import { getAuthUser, getActiveOrgId, requireOrgRole } from "@/lib/auth"
 import { getResearchScope } from "@/lib/research-access"
 import { apiError, unauthorized } from "@/lib/api"
 import { createResearchSchema } from "@/schemas/research.schema"
@@ -53,15 +53,12 @@ export async function POST(req: NextRequest) {
     const body = await req.json().catch(() => null)
     const data = createResearchSchema.parse(body)
 
-    // Visibilidade pública só pode ser definida por admin da organização.
-    const isOrgAdmin = orgRole(user, orgId) === "ORG_ADMIN"
-    const isPublic = isOrgAdmin ? (data.isPublic ?? false) : false
-
     const research = await prisma.research.create({
       data: {
         name: data.name.trim(),
         description: data.description?.trim() || null,
-        isPublic,
+        // Quem cria é o criador: decide a visibilidade da própria pesquisa.
+        isPublic: data.isPublic ?? false,
         orgId,
         createdById: user.id,
         // O criador entra automaticamente como membro (escopo de visibilidade).

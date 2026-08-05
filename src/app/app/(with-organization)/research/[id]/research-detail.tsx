@@ -2,8 +2,6 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import { useForm } from "react-hook-form"
-import { zodResolver } from "@hookform/resolvers/zod"
 import { useLocale, useTranslations } from "next-intl"
 import { toast } from "sonner"
 import {
@@ -17,7 +15,7 @@ import {
   Trash2,
 } from "lucide-react"
 
-import { updateResearchSchema, type UpdateResearchData } from "@/schemas/research.schema"
+import { type CreateResearchData } from "@/schemas/research.schema"
 import {
   useResearch,
   useUpdateResearch,
@@ -31,8 +29,6 @@ import { txt, pathogenName } from "@/lib/catalog-i18n"
 import { useErrorMessage } from "@/lib/use-error-message"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Badge } from "@/components/ui/badge"
 import {
@@ -45,6 +41,7 @@ import { Skeleton, TableSkeleton } from "@/components/ui/skeleton"
 import { Combobox, type ComboboxOption } from "@/components/ui/combobox"
 import { MultiCombobox } from "@/components/ui/multi-combobox"
 import { ResearchMembers } from "./research-members"
+import { ResearchFormDialog } from "../research-form-dialog"
 import {
   Table,
   TableBody,
@@ -56,14 +53,6 @@ import {
 } from "@/components/ui/table"
 import { Truncate } from "@/components/ui/truncate"
 import { ReloadButton } from "@/components/ui/reload-button"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -85,7 +74,6 @@ export function ResearchDetail({
   const t = useTranslations("research")
   const tp = useTranslations("protocol")
   const tc = useTranslations("common")
-  const tval = useTranslations("validation")
   const locale = useLocale()
   const em = useErrorMessage()
 
@@ -134,21 +122,15 @@ export function ResearchDetail({
     )
   })
 
-  const editForm = useForm<UpdateResearchData>({
-    resolver: zodResolver(updateResearchSchema),
-  })
+  const editValues = research
+    ? {
+        name: research.name,
+        description: research.description ?? "",
+        isPublic: research.isPublic,
+      }
+    : undefined
 
-  function openEdit() {
-    if (!research) return
-    editForm.reset({
-      name: research.name,
-      description: research.description ?? "",
-      isPublic: research.isPublic,
-    })
-    setEditOpen(true)
-  }
-
-  async function onEdit(data: UpdateResearchData) {
+  async function onEdit(data: CreateResearchData) {
     try {
       await updateM.mutateAsync(data)
       toast.success(t("edited"))
@@ -215,15 +197,19 @@ export function ResearchDetail({
       </Link>
 
       <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-3xl font-semibold tracking-tight">{research.name}</h1>
-            <Badge variant={research.isPublic ? "public" : "private"}>
+        <div className="min-w-0">
+          <div className="flex min-w-0 flex-wrap items-center gap-2">
+            <h1 className="min-w-0 break-words text-3xl font-semibold tracking-tight">
+              {research.name}
+            </h1>
+            <Badge variant={research.isPublic ? "public" : "private"} className="shrink-0">
               {research.isPublic ? t("public") : t("private")}
             </Badge>
           </div>
           {research.description && (
-            <p className="mt-1 max-w-2xl text-sm text-muted-foreground">{research.description}</p>
+            <p className="mt-1 max-w-2xl break-words text-sm text-muted-foreground">
+              {research.description}
+            </p>
           )}
           <p className="mt-1 text-xs text-muted-foreground">
             {t("animalsCount", { count: research._count.animals })}
@@ -231,7 +217,7 @@ export function ResearchDetail({
         </div>
         <div className="flex items-center gap-2">
           {canEditContent && (
-            <Button variant="outline" onClick={openEdit}>
+            <Button variant="outline" onClick={() => setEditOpen(true)}>
               <Pencil className="size-4" />
               {tc("edit")}
             </Button>
@@ -430,50 +416,13 @@ export function ResearchDetail({
         }}
       />
 
-      <Dialog open={editOpen} onOpenChange={setEditOpen}>
-        <DialogContent dirty={editForm.formState.isDirty}>
-          <DialogHeader>
-            <DialogTitle>{t("editTitle")}</DialogTitle>
-            <DialogDescription>{t("createDesc")}</DialogDescription>
-          </DialogHeader>
-          <form onSubmit={editForm.handleSubmit(onEdit)} className="space-y-4">
-            <div className="space-y-1">
-              <Label htmlFor="ename">{t("nameLabel")}</Label>
-              <Input id="ename" {...editForm.register("name")} />
-              {editForm.formState.errors.name && (
-                <p className="text-xs text-destructive">
-                  {tval(editForm.formState.errors.name.message!)}
-                </p>
-              )}
-            </div>
-            <div className="space-y-1">
-              <Label htmlFor="edesc">{t("descriptionLabel")}</Label>
-              <Textarea id="edesc" rows={3} {...editForm.register("description")} />
-            </div>
-            {isOrgAdmin && (
-              <div className="flex items-start gap-2">
-                <Checkbox
-                  id="eisPublic"
-                  checked={editForm.watch("isPublic")}
-                  onCheckedChange={(v) => editForm.setValue("isPublic", v === true)}
-                  className="mt-0.5"
-                />
-                <Label htmlFor="eisPublic" className="text-sm font-normal text-muted-foreground">
-                  {t("isPublicHint")}
-                </Label>
-              </div>
-            )}
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setEditOpen(false)}>
-                {tc("cancel")}
-              </Button>
-              <Button type="submit" loading={editForm.formState.isSubmitting}>
-                {tc("save")}
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
+      <ResearchFormDialog
+        open={editOpen}
+        onOpenChange={setEditOpen}
+        canEditVisibility={canEditContent}
+        initial={editValues}
+        onSubmit={onEdit}
+      />
     </div>
   )
 }

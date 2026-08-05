@@ -2,7 +2,7 @@
 // Regras (docs/PERMISSOES.md §Pesquisas):
 //  - Ver: qualquer membro da org.
 //  - Editar nome/descrição: admin da org, ou o pesquisador que a criou.
-//  - Alterar isPublic: só admin da org.
+//  - Alterar isPublic: admin da org, ou o pesquisador que a criou.
 //  - Excluir: só admin da org; bloqueado se houver animais (409).
 
 import { NextRequest, NextResponse } from "next/server"
@@ -17,7 +17,7 @@ import { ERROR_CODES } from "@/lib/error-codes"
 async function loadResearch(id: string) {
   const research = await prisma.research.findUnique({
     where: { id },
-    select: { id: true, orgId: true, createdById: true },
+    select: { id: true, orgId: true, createdById: true, isPublic: true },
   })
   if (!research) throw new NotFoundError("Pesquisa não encontrada", ERROR_CODES.researchNotFound)
   return research
@@ -76,18 +76,23 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     const data = updateResearchSchema.parse(body)
 
     const isOrgAdmin = orgRole(user, research.orgId) === "ORG_ADMIN"
+    // O criador decide sobre a própria pesquisa — inclusive publicá-la.
+    const canEdit = isOrgAdmin || research.createdById === user.id
 
-    // Só admin altera visibilidade.
-    if (data.isPublic !== undefined && !isOrgAdmin) {
+    // Reenviar o valor ATUAL não é alteração: o formulário manda a pesquisa inteira,
+    // inclusive para quem não enxerga esse campo.
+    if (data.isPublic !== undefined && data.isPublic !== research.isPublic && !canEdit) {
       throw new ForbiddenError(
-        "Apenas administradores alteram a visibilidade",
-        ERROR_CODES.forbidden,
+        "Apenas o criador ou um administrador altera a visibilidade",
+        ERROR_CODES.researchVisibilityAdminOnly,
       )
     }
-    // Pesquisador só edita nome/descrição da própria pesquisa.
     const editsContent = data.name !== undefined || data.description !== undefined
-    if (editsContent && !isOrgAdmin && research.createdById !== user.id) {
-      throw new ForbiddenError("Você só pode editar a pesquisa que criou", ERROR_CODES.forbidden)
+    if (editsContent && !canEdit) {
+      throw new ForbiddenError(
+        "Você só pode editar a pesquisa que criou",
+        ERROR_CODES.researchEditNotCreator,
+      )
     }
 
     const updated = await prisma.research.update({
@@ -95,7 +100,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
       data: {
         name: data.name?.trim(),
         description: data.description === undefined ? undefined : data.description.trim() || null,
-        isPublic: isOrgAdmin ? data.isPublic : undefined,
+        isPublic: canEdit ? data.isPublic : undefined,
       },
       select: { id: true, name: true, description: true, isPublic: true },
     })
