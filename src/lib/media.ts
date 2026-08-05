@@ -107,9 +107,15 @@ export async function loadMediaOrg(id: string) {
     select: {
       id: true,
       url: true,
+      uploadedById: true,
       animal: { select: { research: { select: { orgId: true } } } },
     },
   })
   if (!media) throw new NotFoundError("Arquivo não encontrado", ERROR_CODES.mediaNotFound)
-  return { id: media.id, path: media.url, orgId: media.animal.research.orgId }
+  return {
+    id: media.id,
+    path: media.url,
+    uploadedById: media.uploadedById,
+    orgId: media.animal.research.orgId,
+  }
 }

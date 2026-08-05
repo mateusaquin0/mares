@@ -19,5 +19,5 @@ export default async function AnimalDetailPage({ params }: { params: Promise<{ i
   const role = orgRole(user, animal.research.orgId)
   if (!role) redirect("/app/animals")
 
-  return <AnimalDetail id={id} isOrgAdmin={role === "ORG_ADMIN"} />
+  return <AnimalDetail id={id} isOrgAdmin={role === "ORG_ADMIN"} selfId={user.id} />
 }

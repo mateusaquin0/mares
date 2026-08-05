@@ -16,11 +16,16 @@ import { useResearch } from "@/hooks/use-research"
 import type { Sample, SampleStatus } from "@/types/sample"
 import { Button } from "@/components/ui/button"
 import { Combobox } from "@/components/ui/combobox"
+import {
+  SampleStatusBadge,
+  SampleStatusIcon,
+  SAMPLE_STATUSES,
+  useSampleStatusLabel,
+} from "@/components/sample-status-badge"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { CharCounter } from "@/components/ui/char-counter"
-import { Badge } from "@/components/ui/badge"
 import { TableSkeleton } from "@/components/ui/skeleton"
 import { ConfirmDialog } from "@/components/confirm-dialog"
 import {
@@ -81,21 +86,16 @@ const emptyForm: FormState = {
 }
 
 const ALL = "__all__"
-const STATUSES: SampleStatus[] = ["STORED", "IN_USE", "DEPLETED", "DEGRADED"]
-const statusVariant: Record<SampleStatus, "default" | "secondary" | "destructive" | "outline"> = {
-  STORED: "secondary",
-  IN_USE: "default",
-  DEPLETED: "outline",
-  DEGRADED: "destructive",
-}
 
 export function SamplesTab({
   animalId,
   isOrgAdmin,
+  selfId,
   researches,
 }: {
   animalId: string
   isOrgAdmin: boolean
+  selfId: string
   // Pesquisas do indivíduo (primária + participações). A amostra pertence a uma delas.
   researches: { id: string; name: string }[]
 }) {
@@ -104,6 +104,7 @@ export function SamplesTab({
   const tval = useTranslations("validation")
   const locale = useLocale()
   const em = useErrorMessage()
+  const statusLabel = useSampleStatusLabel()
 
   const samplesQ = useSamples(animalId)
   const items = samplesQ.data ?? []
@@ -153,13 +154,6 @@ export function SamplesTab({
   const [fResearch, setFResearch] = useState(ALL)
 
   const set = (patch: Partial<FormState>) => setForm((f) => ({ ...f, ...patch }))
-  const statusLabel = (s: SampleStatus) =>
-    ({
-      STORED: t("statusStored"),
-      IN_USE: t("statusInUse"),
-      DEPLETED: t("statusDepleted"),
-      DEGRADED: t("statusDegraded"),
-    })[s]
 
   function openCreate() {
     setErrors({})
@@ -233,6 +227,8 @@ export function SamplesTab({
   }
 
   const fmtDate = (iso: string | null) => formatDateOnly(iso, locale)
+  // Espelha a rota: admin do grupo, ou quem cadastrou a amostra.
+  const canDelete = (s: Sample) => isOrgAdmin || s.createdById === selfId
 
   // Opções de órgão e pesquisa derivadas das amostras existentes (ordenadas por rótulo).
   const organOptions = [
@@ -307,9 +303,12 @@ export function SamplesTab({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value={ALL}>{t("allStatuses")}</SelectItem>
-                {STATUSES.map((s) => (
+                {SAMPLE_STATUSES.map((s) => (
                   <SelectItem key={s} value={s}>
-                    {statusLabel(s)}
+                    <span className="flex items-center gap-2">
+                      <SampleStatusIcon status={s} />
+                      {statusLabel(s)}
+                    </span>
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -363,7 +362,7 @@ export function SamplesTab({
                   <TableHead>{t("colCollection")}</TableHead>
                   <TableHead>{t("colStorage")}</TableHead>
                   <TableHead className="text-right">{t("colTemp")}</TableHead>
-                  <TableHead>{t("colStatus")}</TableHead>
+                  <TableHead className="text-center">{t("colStatus")}</TableHead>
                   <TableHead className="text-right">{t("colAnalyses")}</TableHead>
                   <TableHead className="w-12 text-right">
                     <ReloadButton />
@@ -381,7 +380,9 @@ export function SamplesTab({
                     </TableCell>
                     {multiResearch && (
                       <TableCell>
-                        <Badge variant="outline">{s.research.name}</Badge>
+                        <Truncate lines={2} className="max-w-[10rem]">
+                          {s.research.name}
+                        </Truncate>
                       </TableCell>
                     )}
                     <TableCell>
@@ -399,8 +400,8 @@ export function SamplesTab({
                     <TableCell className="text-right text-muted-foreground">
                       {s.storageTemp ?? ""}
                     </TableCell>
-                    <TableCell>
-                      <Badge variant={statusVariant[s.status]}>{statusLabel(s.status)}</Badge>
+                    <TableCell className="text-center">
+                      <SampleStatusBadge status={s.status} iconOnly />
                     </TableCell>
                     <TableCell className="text-right">{s._count.analyses}</TableCell>
                     <TableCell className="text-right">
@@ -415,7 +416,7 @@ export function SamplesTab({
                           <DropdownMenuItem onSelect={() => openEdit(s)}>
                             {tc("edit")}
                           </DropdownMenuItem>
-                          {isOrgAdmin && (
+                          {canDelete(s) && (
                             <DropdownMenuItem
                               className="text-destructive focus:text-destructive"
                               onSelect={() => setConfirm(s)}
@@ -551,9 +552,12 @@ export function SamplesTab({
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      {STATUSES.map((s) => (
+                      {SAMPLE_STATUSES.map((s) => (
                         <SelectItem key={s} value={s}>
-                          {statusLabel(s)}
+                          <span className="flex items-center gap-2">
+                            <SampleStatusIcon status={s} />
+                            {statusLabel(s)}
+                          </span>
                         </SelectItem>
                       ))}
                     </SelectContent>

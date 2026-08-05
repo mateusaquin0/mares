@@ -31,7 +31,15 @@ const PointMap = dynamic(() => import("@/components/map/point-map"), {
   loading: () => <div className="h-full w-full animate-pulse bg-accent/40" />,
 })
 
-export function AnimalDetail({ id, isOrgAdmin }: { id: string; isOrgAdmin: boolean }) {
+export function AnimalDetail({
+  id,
+  isOrgAdmin,
+  selfId,
+}: {
+  id: string
+  isOrgAdmin: boolean
+  selfId: string
+}) {
   const t = useTranslations("animals")
   const tc = useTranslations("common")
   const locale = useLocale()
@@ -223,6 +231,7 @@ export function AnimalDetail({ id, isOrgAdmin }: { id: string; isOrgAdmin: boole
                 <SamplesTab
                   animalId={id}
                   isOrgAdmin={isOrgAdmin}
+                  selfId={selfId}
                   // Só as pesquisas que de fato participam: um convite pendente ainda não
                   // pode ser dona de amostra.
                   researches={[
@@ -247,7 +256,7 @@ export function AnimalDetail({ id, isOrgAdmin }: { id: string; isOrgAdmin: boole
           {tab === "media" && (
             <Card className="flex min-h-0 flex-1 flex-col">
               <CardContent className="flex min-h-0 flex-1 flex-col overflow-hidden pt-6">
-                <MediaTab animalId={id} isOrgAdmin={isOrgAdmin} />
+                <MediaTab animalId={id} isOrgAdmin={isOrgAdmin} selfId={selfId} />
               </CardContent>
             </Card>
           )}
