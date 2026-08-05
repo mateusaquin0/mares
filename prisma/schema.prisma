@@ -447,7 +447,8 @@ model Sample {
   notes           String?
   analyses        Analysis[]
   // Autor (para a regra "pesquisador exclui a própria criação"); SetNull se o usuário for
-  // removido. Nulo nas amostras anteriores a esta coluna — só o admin da org as exclui.
+  // removido. Nulo = amostra ÓRFÃ (anterior à coluna e sem evento de auditoria que permitisse
+  // o backfill, ou autor removido): sem dono, qualquer membro da pesquisa pode excluí-la.
   createdById     String?
   createdBy       User?        @relation("SampleCreator", fields: [createdById], references: [id], onDelete: SetNull)
   createdAt       DateTime     @default(now())
@@ -513,7 +514,8 @@ model AnimalMedia {
   mimeType     String // "image/jpeg", "application/pdf" etc.
   label        String? // descrição livre
   // Autor do upload (para a regra "quem enviou pode excluir"); SetNull se o usuário for
-  // removido. Nulo também nos arquivos anteriores a esta coluna — só admin os exclui.
+  // removido. Nulo = arquivo ÓRFÃO (anterior à coluna ou autor removido): sem dono, qualquer
+  // membro da pesquisa do indivíduo pode excluí-lo.
   uploadedById String?
   uploadedBy   User?    @relation("AnimalMediaUploader", fields: [uploadedById], references: [id], onDelete: SetNull)
   createdAt    DateTime @default(now())

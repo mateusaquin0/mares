@@ -1,10 +1,13 @@
 // MARES — Excluir um arquivo de mídia (Fase 3).
-// Regras (docs/PERMISSOES.md §Mídia): excluir = admin da org, ou quem enviou o arquivo.
+// Regras (docs/PERMISSOES.md §Mídia): excluir = admin da org, quem enviou o arquivo, ou
+// qualquer membro se o arquivo não tem autor conhecido.
 
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { createAdminClient } from "@/lib/supabase/admin"
 import { getAuthUser, requireOrgRole, orgRole } from "@/lib/auth"
+import { assertAnimalVisible } from "@/lib/research-access"
+import { canDeleteAuthored } from "@/lib/authorship"
 import { apiError, unauthorized } from "@/lib/api"
 import { ForbiddenError } from "@/lib/errors"
 import { ERROR_CODES } from "@/lib/error-codes"
@@ -17,10 +20,13 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
     const { id } = await params
     const media = await loadMediaOrg(id)
     requireOrgRole(user, media.orgId, "RESEARCHER")
+    // Só exclui arquivo de indivíduo que enxerga — indispensável para a regra de órfão abaixo,
+    // que de outro modo abriria o arquivo sem autor a qualquer pesquisador da organização.
+    await assertAnimalVisible(user, media.orgId, media.animalId)
 
-    // Arquivos anteriores à coluna `uploadedById` têm autor nulo: seguem só com o admin.
+    // Admin da org, quem enviou, ou qualquer membro se o arquivo está sem autor.
     const isOrgAdmin = orgRole(user, media.orgId) === "ORG_ADMIN"
-    if (!isOrgAdmin && media.uploadedById !== user.id) {
+    if (!canDeleteAuthored({ isOrgAdmin, selfId: user.id, authorId: media.uploadedById })) {
       throw new ForbiddenError(
         "Você só pode excluir arquivos que enviou",
         ERROR_CODES.mediaDeleteNotUploader,

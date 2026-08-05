@@ -9,6 +9,7 @@ import { txt } from "@/lib/catalog-i18n"
 import { formatDateOnly } from "@/lib/date"
 import { LIMITS } from "@/schemas/limits"
 import { useErrorMessage } from "@/lib/use-error-message"
+import { canDeleteAuthored } from "@/lib/authorship"
 import { type SamplePayload } from "@/services/samples"
 import { useSamples, useCreateSample, useUpdateSample, useDeleteSample } from "@/hooks/use-samples"
 import { useOrgans } from "@/hooks/use-catalog"
@@ -227,8 +228,9 @@ export function SamplesTab({
   }
 
   const fmtDate = (iso: string | null) => formatDateOnly(iso, locale)
-  // Espelha a rota: admin do grupo, ou quem cadastrou a amostra.
-  const canDelete = (s: Sample) => isOrgAdmin || s.createdById === selfId
+  // Espelha a rota: admin do grupo, quem cadastrou, ou qualquer um se a amostra não tem autor.
+  const canDelete = (s: Sample) =>
+    canDeleteAuthored({ isOrgAdmin, selfId, authorId: s.createdById })
 
   // Opções de órgão e pesquisa derivadas das amostras existentes (ordenadas por rótulo).
   const organOptions = [

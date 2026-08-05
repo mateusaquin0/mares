@@ -6,6 +6,7 @@ import { toast } from "sonner"
 import { FileText, Trash2, Upload } from "lucide-react"
 
 import { useErrorMessage } from "@/lib/use-error-message"
+import { canDeleteAuthored } from "@/lib/authorship"
 import { useAnimalMedia, useUploadAnimalMedia, useDeleteAnimalMedia } from "@/hooks/use-animals"
 import type { AnimalMedia } from "@/types/animal"
 import { Button } from "@/components/ui/button"
@@ -63,8 +64,9 @@ export function MediaTab({
   }
 
   const fmtDate = (iso: string) => new Date(iso).toLocaleDateString(locale)
-  // Espelha a rota: admin do grupo, ou quem enviou o arquivo.
-  const canDelete = (m: AnimalMedia) => isOrgAdmin || m.uploadedById === selfId
+  // Espelha a rota: admin do grupo, quem enviou, ou qualquer um se o arquivo não tem autor.
+  const canDelete = (m: AnimalMedia) =>
+    canDeleteAuthored({ isOrgAdmin, selfId, authorId: m.uploadedById })
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-6">

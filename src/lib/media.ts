@@ -100,7 +100,11 @@ export async function signMediaUrl(path: string): Promise<string | null> {
   return data?.signedUrl ?? null
 }
 
-/** Carrega a mídia com o orgId (via animal -> pesquisa) para checagem de papel. */
+/**
+ * Carrega a mídia com o orgId (via animal -> pesquisa) para checagem de papel. O `animalId`
+ * sai junto porque o arquivo não tem pesquisa própria: a visibilidade é a do indivíduo
+ * (assertAnimalVisible).
+ */
 export async function loadMediaOrg(id: string) {
   const media = await prisma.animalMedia.findUnique({
     where: { id },
@@ -108,6 +112,7 @@ export async function loadMediaOrg(id: string) {
       id: true,
       url: true,
       uploadedById: true,
+      animalId: true,
       animal: { select: { research: { select: { orgId: true } } } },
     },
   })
@@ -116,6 +121,7 @@ export async function loadMediaOrg(id: string) {
     id: media.id,
     path: media.url,
     uploadedById: media.uploadedById,
+    animalId: media.animalId,
     orgId: media.animal.research.orgId,
   }
 }
