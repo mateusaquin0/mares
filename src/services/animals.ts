@@ -10,6 +10,9 @@ import type {
   AnimalListQuery,
   AnimalMedia,
   AuditEntry,
+  IdentifierLookup,
+  PendingShare,
+  ShareStatus,
   SimbaLookup,
 } from "@/types/animal"
 import type { AnalysisGrid } from "@/types/analysis"
@@ -47,11 +50,27 @@ export const animalsService = {
     http.put<{ id: string; species: string }>(`/api/animals/${id}`, data),
   remove: (id: string) => http.del(`/api/animals/${id}`),
 
-  // Compartilhamento do indivíduo entre pesquisas (participações).
-  addResearch: (animalId: string, researchId: string) =>
-    http.post<void>(`/api/animals/${animalId}/researches`, { researchId }),
+  // Compartilhamento do indivíduo entre pesquisas. A DIREÇÃO (convite × pedido) é decidida
+  // no servidor a partir do escopo de quem chama — o cliente só diz a pesquisa envolvida.
+  shareWithResearch: (animalId: string, researchId: string, message?: string) =>
+    http.post<{ status: ShareStatus }>(`/api/animals/${animalId}/researches`, {
+      researchId,
+      message: message ?? "",
+    }),
+  acceptShare: (animalId: string, researchId: string) =>
+    http.patch(`/api/animals/${animalId}/researches/${researchId}`),
+  // Serve para recusar, cancelar o que se pediu e desvincular uma participação já aceita.
   removeResearch: (animalId: string, researchId: string) =>
     http.del(`/api/animals/${animalId}/researches/${researchId}`),
+  pendingShares: () => http.get<PendingShare[]>("/api/animal-shares"),
+
+  // Confere se um identificador já existe na organização ANTES de preencher o formulário.
+  lookupIdentifier: (by: { controlId?: string; simbaRecordNumber?: string }) => {
+    const p = new URLSearchParams()
+    if (by.controlId) p.set("controlId", by.controlId)
+    if (by.simbaRecordNumber) p.set("simbaRecordNumber", by.simbaRecordNumber)
+    return http.get<IdentifierLookup>(`/api/animals/lookup?${p.toString()}`)
+  },
 
   // SIMBA — busca por número de registro (pré-preenchimento do formulário).
   lookupSimba: (recordNumber: string) =>

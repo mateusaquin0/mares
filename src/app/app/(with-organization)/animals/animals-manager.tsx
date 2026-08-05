@@ -15,6 +15,7 @@ import { TableSkeleton } from "@/components/ui/skeleton"
 import { ConfirmDialog } from "@/components/confirm-dialog"
 import { AnimalsTable } from "./animals-table"
 import { AnimalFormDialog } from "./animal-form"
+import { PendingSharesDialog } from "./pending-shares-dialog"
 
 const DEFAULT_QUERY: AnimalListQuery = {
   q: "",
@@ -88,10 +89,14 @@ export function AnimalsManager({ isOrgAdmin }: { isOrgAdmin: boolean }) {
           <h1 className="text-3xl font-semibold tracking-tight">{t("title")}</h1>
           <p className="mt-1 text-sm text-muted-foreground">{t("subtitle")}</p>
         </div>
-        <Button onClick={() => setDialog({ mode: "create" })} disabled={noResearch}>
-          <Plus className="size-4" />
-          {t("new")}
-        </Button>
+        <div className="flex items-center gap-2">
+          {/* Compartilhamentos aguardando resposta — só aparece quando há pendências. */}
+          <PendingSharesDialog />
+          <Button onClick={() => setDialog({ mode: "create" })} disabled={noResearch}>
+            <Plus className="size-4" />
+            {t("new")}
+          </Button>
+        </div>
       </div>
 
       {firstLoad ? (

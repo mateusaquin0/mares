@@ -65,6 +65,58 @@ export type AnimalFacets = {
   pathogens: { id: string; label: string }[]
 }
 
+// Resultado da consulta prévia de identificador (/api/animals/lookup). Quando o indivíduo
+// existe mas está fora do escopo, vem a identidade mínima para a pessoa decidir entre pedir
+// o compartilhamento e corrigir o identificador digitado.
+export type IdentifierLookup =
+  | { found: false }
+  | { found: true; visible: true; animalId: string; research: string }
+  | {
+      found: true
+      visible: false
+      animalId: string
+      research: string
+      species: string
+      eventDate: string
+      location: string
+    }
+
+// Estado do compartilhamento de um indivíduo com outra pesquisa.
+export type ShareStatus = "PENDING" | "ACCEPTED"
+
+// Participação (ou convite) de uma pesquisa num indivíduo.
+export type AnimalParticipation = {
+  status: ShareStatus
+  research: { id: string; name: string }
+  invitedBy: { name: string | null; email: string } | null
+}
+
+// Quem iniciou o compartilhamento — define quem responde (ver docs/PERMISSOES.md):
+//   INVITE  → outra pesquisa ofereceu o indivíduo a uma pesquisa sua; você aceita.
+//   REQUEST → alguém quer um indivíduo de uma pesquisa sua; você aprova.
+export type ShareOrigin = "INVITE" | "REQUEST"
+
+// Compartilhamento pendente aguardando a resposta do usuário (/api/animal-shares).
+export type PendingShare = {
+  origin: ShareOrigin
+  message: string | null
+  createdAt: string
+  animal: {
+    id: string
+    species: string | null
+    controlId: string | null
+    simbaRecordNumber: string | null
+    municipality: string | null
+    state: string | null
+    eventDate: string | null
+  }
+  // `research` = a pesquisa que passa a estudar o indivíduo se houver aceite;
+  // `fromResearch` = a pesquisa primária (de origem) do indivíduo.
+  research: { id: string; name: string }
+  fromResearch: { id: string; name: string }
+  invitedBy: { name: string | null; email: string } | null
+}
+
 // Detalhe completo de um animal (/api/animals/:id).
 export type AnimalDetail = {
   id: string
@@ -89,8 +141,9 @@ export type AnimalDetail = {
   macroscopicNotes: string | null
   isPublic: boolean
   research: { id: string; name: string }
-  // Pesquisas adicionais (mesma org) que compartilham este indivíduo.
-  participations: { research: { id: string; name: string } }[]
+  // Pesquisas adicionais (mesma org) que compartilham este indivíduo. PENDING = convite
+  // enviado, ainda sem aceite da pesquisa de destino (não dá acesso a nada).
+  participations: AnimalParticipation[]
   _count: { samples: number; media: number }
 }
 

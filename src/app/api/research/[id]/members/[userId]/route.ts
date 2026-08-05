@@ -1,6 +1,10 @@
 // MARES — Remove um membro (vínculo) de uma pesquisa.
-// Regras: admin da org OU criador da pesquisa. Qualquer membro pode ser removido (inclusive o
-// criador); a pesquisa pode ficar sem membros.
+//
+// Regras: admin da org OU criador da pesquisa podem remover qualquer membro (inclusive o
+// criador); a pesquisa pode ficar sem membros. Além disso, **qualquer membro pode sair da
+// pesquisa por conta própria** — o vínculo é só escopo de visibilidade, ninguém precisa de
+// autorização para deixar de ver dados. Sair não apaga nada: as amostras e análises que a
+// pessoa lançou pertencem à PESQUISA, não a ela. Ver docs/PERMISSOES.md §Escopo por pesquisa.
 
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
@@ -25,7 +29,9 @@ export async function DELETE(
     })
     if (!research) throw new NotFoundError("Pesquisa não encontrada", ERROR_CODES.researchNotFound)
     requireOrgRole(user, research.orgId, "RESEARCHER")
-    if (!canManageResearch(user, research.orgId, research)) {
+    // Sair da própria pesquisa não exige permissão de gestão.
+    const isSelf = userId === user.id
+    if (!isSelf && !canManageResearch(user, research.orgId, research)) {
       throw new ForbiddenError("Sem permissão para gerir membros", ERROR_CODES.forbidden)
     }
 

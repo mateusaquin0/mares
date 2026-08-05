@@ -13,6 +13,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { useAnimalForm } from "./use-animal-form"
+import { ShareConflictDialog, VisibleConflictDialog } from "./share-conflict-dialog"
 import { IdentificationSection, StrandingSection, ConditionSection, NotesSection } from "./sections"
 
 export type ResearchOption = { id: string; name: string }
@@ -49,6 +50,10 @@ export function AnimalFormDialog({
     onSaved,
   })
 
+  // Nome da pesquisa escolhida no formulário — é ela que receberá o indivíduo, se o pedido
+  // de compartilhamento for aceito.
+  const researchName = researches.find((r) => r.id === f.form.researchId)?.name ?? ""
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
@@ -74,6 +79,8 @@ export function AnimalFormDialog({
               fetchingSimba={f.fetchingSimba}
               speciesIndet={f.speciesIndet}
               toggleSpeciesIndet={f.toggleSpeciesIndet}
+              checkIdentifier={f.checkIdentifier}
+              checkingId={f.checkingId}
             />
             <StrandingSection
               form={f.form}
@@ -99,6 +106,22 @@ export function AnimalFormDialog({
             </Button>
           </DialogFooter>
         </form>
+
+        {/* Indivíduo já cadastrado numa pesquisa que o usuário não acessa: em vez de um erro
+            sem saída, mostra o registro existente e oferece pedir o compartilhamento. */}
+        {f.shareConflict && (
+          <ShareConflictDialog
+            conflict={f.shareConflict}
+            researchName={researchName}
+            onClose={f.dismissShareConflict}
+            onRequest={f.requestShare}
+          />
+        )}
+        {/* Identificador de um indivíduo que o usuário já enxerga: atalho para abrir o
+            registro existente em nova aba. */}
+        {f.visibleConflict && (
+          <VisibleConflictDialog conflict={f.visibleConflict} onClose={f.dismissVisibleConflict} />
+        )}
       </DialogContent>
     </Dialog>
   )

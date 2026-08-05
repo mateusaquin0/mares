@@ -405,7 +405,13 @@ export function ResearchDetail({
         <AccordionItem value="members">
           <AccordionTrigger>{t("membersTitle")}</AccordionTrigger>
           <AccordionContent>
-            <ResearchMembers researchId={id} orgId={research.orgId} />
+            <ResearchMembers
+              researchId={id}
+              researchName={research.name}
+              orgId={research.orgId}
+              selfId={selfId}
+              isOrgAdmin={isOrgAdmin}
+            />
           </AccordionContent>
         </AccordionItem>
       </Accordion>

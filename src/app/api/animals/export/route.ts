@@ -9,6 +9,7 @@ import { getLocale } from "next-intl/server"
 import { prisma } from "@/lib/prisma"
 import { getAuthUser, getActiveOrgId, requireOrgRole } from "@/lib/auth"
 import { getResearchScope } from "@/lib/research-access"
+import { inResearches } from "@/lib/animal-participation"
 import { apiError, unauthorized } from "@/lib/api"
 import { buildDarwinCoreXml, dwcAnimalSelect } from "@/lib/darwin-core"
 import { buildAnimalsXlsx } from "@/lib/animals-xlsx"
@@ -64,10 +65,7 @@ export async function POST(req: NextRequest) {
     const scope = await getResearchScope(user, orgId)
     const animalWhere: Prisma.AnimalWhereInput = { id: { in: ids }, research: { orgId } }
     if (!scope.all) {
-      animalWhere.OR = [
-        { researchId: { in: scope.ids } },
-        { participations: { some: { researchId: { in: scope.ids } } } },
-      ]
+      animalWhere.OR = inResearches(scope.ids)
     }
 
     const animals = await prisma.animal.findMany({

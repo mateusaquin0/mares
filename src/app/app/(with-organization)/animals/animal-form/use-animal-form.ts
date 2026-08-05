@@ -10,7 +10,9 @@ import {
   type CreateAnimalData,
 } from "@/schemas/animal.schema"
 import { useAnimal, useCreateAnimal, useUpdateAnimal, useSimbaLookup } from "@/hooks/use-animals"
+import { animalsService } from "@/services/animals"
 import type { AnimalDetail } from "@/types/animal"
+import { apiErrorBody } from "@/lib/http"
 import { useErrorMessage } from "@/lib/use-error-message"
 
 // Estado do formulário — tudo string (inputs controlados); convertido no submit.
@@ -140,6 +142,22 @@ function mapAnimalToForm(full: AnimalDetail): FormState {
 // Erros de validação por campo: chave do campo -> chave de mensagem (namespace `validation`).
 export type FieldErrors = Record<string, string>
 
+// Indivíduo já cadastrado numa pesquisa fora do escopo: identifica o registro em conflito e
+// a pesquisa que o detém, para oferecer o pedido de compartilhamento. A identidade mínima
+// (espécie/data/local) permite comparar com o que a pessoa digitou — se divergir, o caso é
+// de identificador errado, não de indivíduo repetido.
+export type ShareConflict = {
+  animalId: string
+  research: string
+  species: string
+  eventDate: string
+  location: string
+}
+
+// Identificador pertence a um indivíduo que o usuário ENXERGA: em vez de pedir nada, a
+// saída é abrir o registro existente (em nova aba, preservando o formulário).
+export type VisibleConflict = { animalId: string; research: string }
+
 // API que o formulário expõe para as seções e o diálogo.
 export type AnimalFormApi = {
   form: FormState
@@ -156,6 +174,16 @@ export type AnimalFormApi = {
   fetchingSimba: boolean
   fetchSimba: () => Promise<void>
   submit: (e: FormEvent) => Promise<void>
+  // Conflito com indivíduo de outra pesquisa: alimenta o diálogo que oferece pedi-lo.
+  shareConflict: ShareConflict | null
+  dismissShareConflict: () => void
+  requestShare: () => Promise<void>
+  // Identificador de um indivíduo VISÍVEL: diálogo com atalho para abrir o registro.
+  visibleConflict: VisibleConflict | null
+  dismissVisibleConflict: () => void
+  // Consulta prévia do identificador (evita preencher o formulário para levar 409 no fim).
+  checkingId: boolean
+  checkIdentifier: (field: "controlId" | "simbaRecordNumber") => Promise<void>
 }
 
 export function useAnimalForm({
@@ -182,6 +210,9 @@ export function useAnimalForm({
   // Espécie indeterminada (carcaça não identificável): mesmo padrão dos campos de encalhe,
   // porém com estado próprio, pois limpar espécie também limpa o vínculo WoRMS/família/ordem.
   const [speciesIndet, setSpeciesIndet] = useState(false)
+  const [shareConflict, setShareConflict] = useState<ShareConflict | null>(null)
+  const [visibleConflict, setVisibleConflict] = useState<VisibleConflict | null>(null)
+  const [checkingId, setCheckingId] = useState(false)
   const initialForm = useRef<FormState>(emptyForm)
   const initialDisabled = useRef<Partial<Record<ToggleableField, boolean>>>({})
   const initialSpeciesIndet = useRef(false)
@@ -200,6 +231,8 @@ export function useAnimalForm({
   useEffect(() => {
     if (!open) return
     setErrors({})
+    setShareConflict(null)
+    setVisibleConflict(null)
     if (mode === "create") {
       const init = { ...emptyForm, researchId: defaultResearchId }
       setForm(init)
@@ -293,6 +326,10 @@ export function useAnimalForm({
         return next
       })
       toast.success(t("simbaFetched"))
+      // Conferência silenciosa: se o registro SIMBA já foi cadastrado por alguém do grupo,
+      // melhor descobrir AGORA do que depois de revisar o formulário inteiro. Silenciosa
+      // porque "está livre" aqui seria ruído — só fala quando há conflito.
+      await checkIdentifier("simbaRecordNumber", { silent: true })
     } catch (err) {
       toast.error(t("simbaFetchError"), { description: em(err) })
     }
@@ -360,9 +397,125 @@ export function useAnimalForm({
       toast.success(isEdit ? t("updated") : t("created"))
       onSaved()
     } catch (err) {
-      toast.error(isEdit ? t("updateError") : t("createError"), {
-        description: em(err),
+      // Conflitos de identificador têm diálogo próprio (as ações NÃO podem viver num toast:
+      // este formulário é um Dialog do Radix, que marca `pointer-events: none` fora do modal
+      // e deixa botões de toast inclicáveis). Quando um diálogo abre, ele substitui o toast
+      // de erro — as duas coisas juntas seriam ruído.
+      const conflict = outOfScopeConflict(err)
+      if (conflict && !isEdit && form.researchId) {
+        setShareConflict(conflict)
+        return
+      }
+      const visible = visibleDuplicate(err)
+      if (visible) {
+        setVisibleConflict(visible)
+        return
+      }
+      toast.error(isEdit ? t("updateError") : t("createError"), { description: em(err) })
+    }
+  }
+
+  // Erro de identificador duplicado cujo dono está fora do escopo do usuário — carrega o id
+  // do indivíduo em conflito e o nome da pesquisa que o detém (ver animalDuplicateConflict
+  // em src/lib/animals.ts).
+  function outOfScopeConflict(err: unknown): ShareConflict | null {
+    const body = apiErrorBody(err) as
+      { code?: string; params?: Partial<ShareConflict> } | null | undefined
+    const isOutOfScope =
+      body?.code === "animalControlDuplicateOutOfScope" ||
+      body?.code === "animalSimbaDuplicateOutOfScope"
+    const p = body?.params
+    if (!isOutOfScope || !p?.animalId) return null
+    return {
+      animalId: p.animalId,
+      research: p.research ?? "",
+      species: p.species ?? "",
+      eventDate: p.eventDate ?? "",
+      location: p.location ?? "",
+    }
+  }
+
+  // Duplicado numa pesquisa que o usuário ENXERGA — a saída é abrir o registro existente.
+  function visibleDuplicate(err: unknown): VisibleConflict | null {
+    const body = apiErrorBody(err) as
+      { code?: string; params?: { animalId?: string; research?: string } } | null | undefined
+    const match =
+      body?.code === "animalControlDuplicateInResearch" ||
+      body?.code === "animalSimbaDuplicateInResearch"
+    if (!match || !body?.params?.animalId) return null
+    return { animalId: body.params.animalId, research: body.params.research ?? "" }
+  }
+
+  /**
+   * Confere, ANTES de preencher o resto do formulário, se o identificador já pertence a um
+   * indivíduo do grupo. Todo desfecho tem uma saída acionável:
+   *   • livre                     → segue o cadastro;
+   *   • é o PRÓPRIO registro      → (edição) confirma que está tudo certo;
+   *   • existe e é visível        → diálogo com atalho para abrir o registro em nova aba;
+   *   • existe fora do escopo     → diálogo do conflito, oferecendo pedir o indivíduo
+   *     (só no cadastro — no meio de uma edição o caso é identificador digitado errado).
+   *
+   * `silent` suprime o "está livre" (usado na conferência automática pós-importação SIMBA,
+   * onde só vale a pena falar quando há problema).
+   */
+  async function checkIdentifier(
+    field: "controlId" | "simbaRecordNumber",
+    opts: { silent?: boolean } = {},
+  ) {
+    const value = form[field].trim()
+    if (!value) return
+    try {
+      setCheckingId(true)
+      const found = await animalsService.lookupIdentifier({ [field]: value })
+      if (!found.found) {
+        if (!opts.silent) toast.success(t("idAvailable"))
+        return
+      }
+      // Edição: o identificador apontar para o registro em edição não é conflito.
+      if (mode === "edit" && found.animalId === animalId) {
+        if (!opts.silent) toast.success(t("idOwnRecord"))
+        return
+      }
+      if (found.visible) {
+        setVisibleConflict({ animalId: found.animalId, research: found.research })
+        return
+      }
+      if (mode === "edit") {
+        toast.warning(t("idTaken"), { description: t("idTakenIn", { research: found.research }) })
+        return
+      }
+      setShareConflict({
+        animalId: found.animalId,
+        research: found.research,
+        species: found.species,
+        eventDate: found.eventDate,
+        location: found.location,
       })
+    } catch (err) {
+      toast.error(t("idCheckError"), { description: em(err) })
+    } finally {
+      setCheckingId(false)
+    }
+  }
+
+  // Pede que o indivíduo em conflito seja compartilhado com a pesquisa escolhida no
+  // formulário. Quem decide é a pesquisa de origem (ver POST /api/animals/[id]/researches).
+  async function requestShare() {
+    if (!shareConflict) return
+    try {
+      await animalsService.shareWithResearch(shareConflict.animalId, form.researchId)
+      toast.success(t("shareRequestSent"), { description: t("shareRequestSentDesc") })
+      setShareConflict(null)
+    } catch (err) {
+      // Pedido repetido não é falha: alguém (talvez a própria pessoa, noutro momento) já o
+      // abriu e ele segue aguardando a pesquisa de origem. Informa e encerra o diálogo.
+      const body = apiErrorBody(err) as { code?: string } | null
+      if (body?.code === "animalSharePending") {
+        toast.info(t("sharePendingAlready"), { description: t("shareRequestSentDesc") })
+        setShareConflict(null)
+        return
+      }
+      toast.error(t("shareError"), { description: em(err) })
     }
   }
 
@@ -384,5 +537,12 @@ export function useAnimalForm({
     fetchingSimba,
     fetchSimba,
     submit,
+    shareConflict,
+    dismissShareConflict: () => setShareConflict(null),
+    requestShare,
+    visibleConflict,
+    dismissVisibleConflict: () => setVisibleConflict(null),
+    checkingId,
+    checkIdentifier,
   }
 }

@@ -11,6 +11,7 @@
 import { cache } from "react"
 import { prisma } from "@/lib/prisma"
 import { orgRole, type AuthUser } from "@/lib/auth"
+import { inResearches } from "@/lib/animal-participation"
 import { ForbiddenError } from "@/lib/errors"
 
 // { all: true } = admin (sem restrição por pesquisa, ainda escopado pela org).
@@ -54,7 +55,7 @@ export async function assertResearchVisible(user: AuthUser, orgId: string, resea
 }
 
 // Garante que o animal é visível: o conjunto efetivo de pesquisas do indivíduo
-// (primária ∪ participações) deve interceptar o escopo do usuário. Admin: sempre visível
+// (primária ∪ participações ACEITAS — convite pendente não conta) deve interceptar o escopo. Admin: sempre visível
 // dentro da própria org. Retorna as pesquisas visíveis do animal (útil para escopar amostras).
 export async function assertAnimalVisible(
   user: AuthUser,
@@ -62,19 +63,24 @@ export async function assertAnimalVisible(
   animalId: string,
 ): Promise<ResearchScope> {
   const scope = await getResearchScope(user, orgId)
-  if (scope.all) return scope
+  if (!(await isAnimalVisible(user, orgId, animalId))) throw new ForbiddenError()
+  return scope
+}
+
+// Versão booleana do guard acima. Usada onde a invisibilidade NÃO é um erro, mas muda o
+// caminho: no compartilhamento, quem não enxerga o indivíduo pode PEDI-LO para a própria
+// pesquisa (em vez de convidar outra) — ver POST /api/animals/[id]/researches.
+export async function isAnimalVisible(
+  user: AuthUser,
+  orgId: string,
+  animalId: string,
+): Promise<boolean> {
+  const scope = await getResearchScope(user, orgId)
+  if (scope.all) return true
 
   const animal = await prisma.animal.findFirst({
-    where: {
-      id: animalId,
-      orgId,
-      OR: [
-        { researchId: { in: scope.ids } },
-        { participations: { some: { researchId: { in: scope.ids } } } },
-      ],
-    },
+    where: { id: animalId, orgId, OR: inResearches(scope.ids) },
     select: { id: true },
   })
-  if (!animal) throw new ForbiddenError()
-  return scope
+  return !!animal
 }

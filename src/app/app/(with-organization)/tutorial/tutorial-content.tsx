@@ -18,6 +18,7 @@ const SECTIONS = [
   "glossary",
   "research",
   "animal",
+  "sharing",
   "samples",
   "analyses",
   "history",

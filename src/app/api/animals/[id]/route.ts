@@ -8,10 +8,10 @@ import { NextRequest, NextResponse } from "next/server"
 import { Prisma } from "@prisma/client"
 import { prisma } from "@/lib/prisma"
 import { getAuthUser, requireOrgRole, orgRole } from "@/lib/auth"
-import { assertAnimalVisible } from "@/lib/research-access"
+import { assertAnimalVisible, getResearchScope } from "@/lib/research-access"
 import { apiError, unauthorized } from "@/lib/api"
 import { updateAnimalSchema } from "@/schemas/animal.schema"
-import { animalData, animalDuplicateError, loadAnimalOrg } from "@/lib/animals"
+import { animalData, animalDuplicateConflict, loadAnimalOrg } from "@/lib/animals"
 import { diffFields, writeAudit } from "@/lib/audit"
 import { ConflictError, ForbiddenError } from "@/lib/errors"
 import { ERROR_CODES } from "@/lib/error-codes"
@@ -52,8 +52,14 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
       where: { id },
       include: {
         research: { select: { id: true, name: true } },
+        // Inclui os convites PENDENTES: quem enxerga o indivíduo acompanha o que já
+        // convidou (e pode cancelar). O status distingue participação de convite em aberto.
         participations: {
-          select: { research: { select: { id: true, name: true } } },
+          select: {
+            status: true,
+            research: { select: { id: true, name: true } },
+            invitedBy: { select: { name: true, email: true } },
+          },
           orderBy: { createdAt: "asc" },
         },
         _count: { select: { samples: true, media: true } },
@@ -101,7 +107,12 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
       return NextResponse.json({ id: animal.id, species: animal.species })
     } catch (e) {
       if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
-        throw animalDuplicateError(e)
+        throw await animalDuplicateConflict(e, {
+          orgId: base.orgId,
+          scope: await getResearchScope(user, base.orgId),
+          controlId: data.controlId,
+          simbaRecordNumber: data.simbaRecordNumber,
+        })
       }
       throw e
     }

@@ -497,6 +497,8 @@
     "animalDuplicate": "An animal with this ID already exists",
     "animalControlDuplicate": "An animal with this control ID already exists",
     "animalSimbaDuplicate": "An animal with this SIMBA identifier already exists",
+    "animalControlDuplicateOutOfScope": "An animal with this control ID already exists in research \"{research}\", which you cannot access. You can request the individual for your research.",
+    "animalSimbaDuplicateOutOfScope": "An animal with this SIMBA identifier already exists in research \"{research}\", which you cannot access. You can request the individual for your research.",
     "animalHasSamples": "The animal has samples and cannot be deleted",
     "animalResearchExists": "This research already shares the individual",
     "animalResearchPrimary": "This is already the individual's primary research",
@@ -521,7 +523,16 @@
     "analysisNotFound": "Analysis not found",
     "confirmationParentNotPositive": "Only a positive screening can receive species confirmation",
     "confirmationDuplicate": "This species has already been confirmed for this sample",
-    "pathogenNcbiRequired": "Select the scientific name from the NCBI database"
+    "pathogenNcbiRequired": "Select the scientific name from the NCBI database",
+    "researchAccessRequestNotFound": "Access request not found",
+    "researchAccessRequestPending": "Your request is already awaiting an answer",
+    "researchAccessRequestProcessed": "This request has already been answered",
+    "researchAccessAlreadyMember": "You already belong to this research",
+    "animalSharePending": "There is already an open share request for this research",
+    "animalShareNotFound": "Share not found",
+    "animalShareCannotDecide": "Only the other research can answer this share",
+    "animalControlDuplicateInResearch": "An animal with this control ID already exists in research \"{research}\".",
+    "animalSimbaDuplicateInResearch": "An animal with this SIMBA identifier already exists in research \"{research}\"."
   },
   "location": {
     "country": "Country",
@@ -536,7 +547,7 @@
   },
   "research": {
     "title": "Research",
-    "subtitle": "Studies of the active research group. Each research defines an analysis protocol.",
+    "subtitle": "Studies of the active research group. You can see every research in the group; to access the data of one, request access.",
     "new": "New research",
     "empty": "No research yet.",
     "colName": "Name",
@@ -580,7 +591,35 @@
     "memberRemoved": "Member removed",
     "memberRemoveError": "Could not remove the member",
     "memberRemoveTitle": "Remove member",
-    "memberRemoveDesc": "Remove {name} from this research? They will lose access to its data."
+    "memberRemoveDesc": "Remove {name} from this research? They will lose access to its data.",
+    "colAccess": "Access",
+    "accessMember": "Member",
+    "accessPending": "Request sent",
+    "accessRequest": "Request access",
+    "accessRejected": "Your previous request was declined. You can ask again.",
+    "accessRequested": "Request sent",
+    "accessRequestedDesc": "Whoever manages the research will review your request.",
+    "accessRequestError": "Could not send the request",
+    "accessQueueTitle": "Access requests",
+    "accessQueueDesc": "Researchers asking for access to the researches you manage. Approving creates the link to the research.",
+    "accessQueueLine": "{user} requested access to \"{research}\"",
+    "accessApprove": "Approve",
+    "accessReject": "Decline",
+    "accessApproved": "Access granted",
+    "accessRejectedDone": "Request declined",
+    "accessReviewError": "Could not answer the request",
+    "accessQueueButton": "Requests ({count})",
+    "leave": "Leave research",
+    "leaveTitle": "Leave research",
+    "leaveDesc": "Leave \"{name}\"? You will stop seeing its animals, samples and analyses. Nothing is deleted — the data belongs to the research — and you can request access again later.",
+    "leftResearch": "You left the research",
+    "leftResearchDesc": "Its data no longer shows up for you.",
+    "leaveError": "Could not leave the research",
+    "leaveDescAdmin": "Leave \"{name}\"? You will no longer be listed as a member. As a group admin, you keep seeing this research's data.",
+    "leftResearchAdmin": "You left the member list",
+    "leftResearchAdminDesc": "As a group admin, your access to the data remains.",
+    "accessByRole": "Admin",
+    "accessByRoleHint": "Access through the group admin role — not a member of this research."
   },
   "animals": {
     "title": "Animals",
@@ -671,7 +710,7 @@
     "macroscopicNotes": "Observations",
     "strandingLocationMap": "Stranding location",
     "shareTitle": "Research groups",
-    "shareDesc": "Research groups studying this individual. The primary one is the creator; add others to share the same individual.",
+    "shareDesc": "Researches in the group studying this individual. The primary one created it; when you involve another research, the link only counts once it accepts.",
     "sharePrimary": "primary",
     "shareAddPlaceholder": "Add research…",
     "shareAddButton": "Add",
@@ -707,7 +746,48 @@
     "lifeStageAdult": "Adult",
     "lifeStageUndetermined": "Undetermined",
     "isHiddenHint": "Hide this animal from public data (only applies when the research is public)",
-    "hidden": "Hidden"
+    "hidden": "Hidden",
+    "shareInviteSent": "Invitation sent — waiting for the other research",
+    "shareInviteCancel": "Cancel invitation",
+    "shareInviteCanceled": "Invitation canceled",
+    "sharePendingTag": "pending",
+    "sharePendingHint": "Waiting for the other research to answer. Until then it cannot see this individual.",
+    "sharesQueueTitle": "Pending shares",
+    "sharesQueueDesc": "Individuals offered to your researches, and requests about the individuals they registered.",
+    "shareInviteTag": "Invitation",
+    "shareRequestTag": "Request",
+    "shareInviteLine": "Research \"{from}\" offered individual {animal} to your research \"{to}\"",
+    "shareRequestLine": "{user} wants individual {animal} for research \"{to}\"",
+    "shareAccept": "Accept",
+    "shareReject": "Decline",
+    "shareAccepted": "Share accepted",
+    "shareRejected": "Share declined",
+    "shareRequestAction": "Request this individual",
+    "shareRequestSent": "Request sent",
+    "shareRequestSentDesc": "The originating research will review your request. If accepted, it will appear in your animal list.",
+    "sharesQueueButton": "Shares ({count})",
+    "shareConflictTitle": "Individual already registered in another research",
+    "shareConflictDesc": "This identifier belongs to an individual in research \"{research}\", which you cannot access. Do you want to request it to be shared with \"{to}\"? The originating research decides.",
+    "accessEnded": "You no longer have access to this individual.",
+    "sharePrimaryLabel": "Originating research",
+    "shareAlsoLabel": "Also studying",
+    "sharePendingLabel": "Awaiting answer",
+    "shareNone": "None",
+    "shareConflictExisting": "Existing record",
+    "shareConflictOwner": "Originating research",
+    "shareConflictHint": "If this does not match the individual you are registering, the identifier was mistyped — fix it instead of requesting the share.",
+    "shareConflictFix": "Fix the identifier",
+    "idCheck": "Check whether it already exists in the group",
+    "idAvailable": "Identifier available",
+    "idTaken": "Identifier already registered",
+    "idTakenIn": "It belongs to an individual in research \"{research}\".",
+    "idCheckError": "Could not check the identifier",
+    "location": "Location",
+    "idOwnRecord": "This is this record's own identifier.",
+    "idFoundTitle": "Individual already registered in the group",
+    "idFoundOpen": "Open record",
+    "shareConflictSelectResearch": "Select the research in the form to be able to request the share.",
+    "sharePendingAlready": "This request is already open"
   },
   "samples": {
     "new": "New sample",
@@ -864,8 +944,10 @@
         "title": "4. Research and protocol",
         "body": "Each study is a 'research', which defines the protocol and who can see its data.",
         "points": [
-          "Create the research in 'Research' and build the protocol: material × pathogen × exam combinations.",
-          "Assign researchers to the research — only assigned members see its animals, samples and analyses.",
+          "Create the research under 'Researches' and set up the protocol: material × pathogen × exam combinations.",
+          "Everyone in the group CAN SEE the research list (name, description, owner), but the data — animals, samples and analyses — belongs only to its members.",
+          "Not a member and need the data? Use 'Request access' in the list; whoever created the research (or the group admin) approves.",
+          "Requests awaiting your answer appear at the top of the 'Researches' screen. Approving links the person to the research.",
           "Set the research visibility (public or private)."
         ]
       },
@@ -873,14 +955,26 @@
         "title": "5. Register the animal (individual)",
         "body": "The animal represents the physical stranded individual.",
         "points": [
-          "Register it in 'Animals', choosing the owning research. You can import SIMBA data by record number.",
-          "Stranding fields (date, location, coordinates) can be marked as 'no information' when unavailable.",
+          "Register under 'Animals', choosing the originating research. You can import SIMBA data by record number.",
+          "Before filling in the rest, use the magnifier next to the control ID to check whether the individual already exists in the group — including in researches you cannot access.",
+          "Stranding fields (date, place, coordinates) can be marked as 'no information' when unavailable.",
           "The animal's effective public visibility requires both it AND the research to be public.",
-          "The same individual can be shared by more than one research in the group."
+          "The control ID and SIMBA number are unique across the whole group: if another research already registered the individual, the record is rejected — see the next topic."
+        ]
+      },
+      "sharing": {
+        "title": "6. Sharing individuals between researches",
+        "body": "The same individual can be studied by more than one research in the group, with no duplicate record. The link only counts when both researches agree.",
+        "points": [
+          "On the animal page, under 'Researches', pick another research in the group to share the individual with.",
+          "If that research is not yours, an invitation is sent: it must accept before seeing the individual (until then it shows as 'pending').",
+          "The other way around: when you register an animal whose control ID or SIMBA number already exists in a research you cannot access, the warning offers to request the individual — the originating research decides.",
+          "Requests and invitations awaiting YOUR answer appear at the top of the 'Animals' screen.",
+          "Sharing grants access to the individual (identity, stranding), never to the other research's samples and analyses — each keeps its own."
         ]
       },
       "samples": {
-        "title": "6. Samples",
+        "title": "7. Samples",
         "body": "Samples are collected per biological material of the individual, in the animal's 'Samples' tab.",
         "points": [
           "Register each sample with biological material, type, status and storage location.",
@@ -888,7 +982,7 @@
         ]
       },
       "analyses": {
-        "title": "7. Analyses and results",
+        "title": "8. Analyses and results",
         "body": "Analyses record the lab results per sample.",
         "points": [
           "The grid combines the protocol's material × pathogen × exam; mark each result (positive, negative or inconclusive) and the measure, when applicable.",
@@ -896,14 +990,14 @@
         ]
       },
       "history": {
-        "title": "8. Animal history",
+        "title": "9. Animal history",
         "body": "Each individual has a timeline of changes.",
         "points": [
           "The 'History' tab gathers animal edits, sample creation/edits and analysis changes, with author and date."
         ]
       },
       "map": {
-        "title": "9. Map and public data",
+        "title": "10. Map and public data",
         "body": "Strandings appear on a browsable map.",
         "points": [
           "The internal map shows the animals you can see; the public map (no login) shows only the effectively public ones.",
@@ -911,7 +1005,7 @@
         ]
       },
       "export": {
-        "title": "10. Export",
+        "title": "11. Export",
         "body": "Export the data for external analysis.",
         "points": [
           "Select animals (or use 'select all' of the current filter) and export to Excel or Darwin Core."

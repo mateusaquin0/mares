@@ -6,17 +6,20 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useTranslations } from "next-intl"
 import { toast } from "sonner"
-import { MoreHorizontal, Plus, Search, Globe, Lock } from "lucide-react"
+import { MoreHorizontal, Plus, Search, Globe, Lock, Clock, CircleAlert } from "lucide-react"
 
 import { createResearchSchema, type CreateResearchData } from "@/schemas/research.schema"
 import { LIMITS } from "@/schemas/limits"
 import {
-  useResearchList,
+  useResearchCatalog,
   useCreateResearch,
   useUpdateResearch,
   useDeleteResearch,
+  useRequestResearchAccess,
+  useLeaveResearch,
 } from "@/hooks/use-research"
-import type { ResearchListItem } from "@/types/research"
+import type { ResearchCatalogItem } from "@/types/research"
+import { AccessRequestsDialog } from "./access-requests-dialog"
 import { useErrorMessage } from "@/lib/use-error-message"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -53,24 +56,77 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 
+// Coluna "acesso" do catálogo: participa, pedido em andamento, ou botão para pedir.
+// Um pedido recusado pode ser refeito — a decisão anterior fica registrada, mas não é uma
+// punição permanente (a situação da pesquisa muda com o tempo).
+function AccessCell({
+  item,
+  pending,
+  onRequest,
+}: {
+  item: ResearchCatalogItem
+  pending: boolean
+  onRequest: () => void
+}) {
+  const t = useTranslations("research")
+
+  if (item.isMember) return <Badge variant="secondary">{t("accessMember")}</Badge>
+  // Admin da org sem vínculo: acessa (e edita) pelo PAPEL, não por participar da pesquisa.
+  // O selo distingue isso de "Participa" e deixa claro que não há o que solicitar aqui.
+  if (item.canSeeData) {
+    return (
+      <Badge variant="outline" className="text-muted-foreground" title={t("accessByRoleHint")}>
+        {t("accessByRole")}
+      </Badge>
+    )
+  }
+  if (item.requestStatus === "PENDING") {
+    return (
+      <Badge variant="outline" className="gap-1 text-muted-foreground">
+        <Clock className="size-3" />
+        {t("accessPending")}
+      </Badge>
+    )
+  }
+  return (
+    <div className="flex items-center gap-1.5">
+      <Button size="sm" variant="outline" onClick={onRequest} disabled={pending}>
+        {t("accessRequest")}
+      </Button>
+      {/* Recusa anterior: um ícone discreto explica por que o botão reaparece, sem poluir a
+          célula com uma frase. O tooltip é o `title` nativo, padrão do resto das tabelas. */}
+      {item.requestStatus === "REJECTED" && (
+        <span role="img" aria-label={t("accessRejected")} title={t("accessRejected")}>
+          <CircleAlert className="size-4 shrink-0 text-muted-foreground" />
+        </span>
+      )}
+    </div>
+  )
+}
+
 export function ResearchManager({ isOrgAdmin, selfId }: { isOrgAdmin: boolean; selfId: string }) {
   const t = useTranslations("research")
   const tc = useTranslations("common")
   const tval = useTranslations("validation")
   const em = useErrorMessage()
   const router = useRouter()
-  const researchQ = useResearchList()
+  // Catálogo: TODAS as pesquisas do grupo. Quem não é membro vê os metadados e pode pedir
+  // acesso; os dados (animais, protocolos) continuam restritos. Ver docs/PERMISSOES.md.
+  const researchQ = useResearchCatalog()
   const items = researchQ.data ?? []
   const loading = researchQ.isLoading
   const [query, setQuery] = useState("")
   const filtered = items.filter((r) => r.name.toLowerCase().includes(query.trim().toLowerCase()))
   const [open, setOpen] = useState(false)
-  const [editing, setEditing] = useState<ResearchListItem | null>(null)
-  const [confirm, setConfirm] = useState<ResearchListItem | null>(null)
+  const [editing, setEditing] = useState<ResearchCatalogItem | null>(null)
+  const [confirm, setConfirm] = useState<ResearchCatalogItem | null>(null)
+  const [leaving, setLeaving] = useState<ResearchCatalogItem | null>(null)
 
   const createM = useCreateResearch()
   const updateM = useUpdateResearch(editing?.id ?? "")
   const deleteM = useDeleteResearch()
+  const requestM = useRequestResearchAccess()
+  const leaveM = useLeaveResearch()
 
   const form = useForm<CreateResearchData>({
     resolver: zodResolver(createResearchSchema),
@@ -83,7 +139,7 @@ export function ResearchManager({ isOrgAdmin, selfId }: { isOrgAdmin: boolean; s
     setOpen(true)
   }
 
-  function openEdit(r: ResearchListItem) {
+  function openEdit(r: ResearchCatalogItem) {
     setEditing(r)
     form.reset({ name: r.name, description: r.description ?? "", isPublic: r.isPublic })
     setOpen(true)
@@ -108,12 +164,37 @@ export function ResearchManager({ isOrgAdmin, selfId }: { isOrgAdmin: boolean; s
     }
   }
 
-  async function remove(r: ResearchListItem) {
+  async function remove(r: ResearchCatalogItem) {
     try {
       await deleteM.mutateAsync(r.id)
       toast.success(t("deleted"))
     } catch (err) {
       toast.error(t("deleteError"), { description: em(err) })
+    }
+  }
+
+  // Sair da pesquisa: some do escopo (dados deixam de aparecer), mas nada é apagado — as
+  // amostras/análises lançadas pertencem à pesquisa. Dá para pedir acesso de novo depois.
+  //
+  // Para o admin do grupo é outra coisa: ele enxerga as pesquisas por PAPEL, não por vínculo,
+  // então sair só o tira da lista de membros — o acesso continua. A mensagem reflete isso.
+  async function leave(r: ResearchCatalogItem) {
+    try {
+      await leaveM.mutateAsync({ researchId: r.id, userId: selfId })
+      toast.success(isOrgAdmin ? t("leftResearchAdmin") : t("leftResearch"), {
+        description: isOrgAdmin ? t("leftResearchAdminDesc") : t("leftResearchDesc"),
+      })
+    } catch (err) {
+      toast.error(t("leaveError"), { description: em(err) })
+    }
+  }
+
+  async function requestAccess(r: ResearchCatalogItem) {
+    try {
+      await requestM.mutateAsync({ researchId: r.id })
+      toast.success(t("accessRequested"), { description: t("accessRequestedDesc") })
+    } catch (err) {
+      toast.error(t("accessRequestError"), { description: em(err) })
     }
   }
 
@@ -124,10 +205,14 @@ export function ResearchManager({ isOrgAdmin, selfId }: { isOrgAdmin: boolean; s
           <h1 className="text-3xl font-semibold tracking-tight">{t("title")}</h1>
           <p className="mt-1 text-sm text-muted-foreground">{t("subtitle")}</p>
         </div>
-        <Button onClick={openCreate}>
-          <Plus className="size-4" />
-          {t("new")}
-        </Button>
+        <div className="flex items-center gap-2">
+          {/* Fila de pedidos de acesso — só aparece para quem tem o que responder. */}
+          <AccessRequestsDialog />
+          <Button onClick={openCreate}>
+            <Plus className="size-4" />
+            {t("new")}
+          </Button>
+        </div>
       </div>
 
       {loading ? (
@@ -152,6 +237,7 @@ export function ResearchManager({ isOrgAdmin, selfId }: { isOrgAdmin: boolean; s
                 <TableRow>
                   <TableHead>{t("colName")}</TableHead>
                   <TableHead>{t("colVisibility")}</TableHead>
+                  <TableHead>{t("colAccess")}</TableHead>
                   <TableHead className="text-right">{t("colProtocols")}</TableHead>
                   <TableHead className="text-right">{t("colAnimals")}</TableHead>
                   <TableHead className="w-24 text-right">
@@ -161,15 +247,20 @@ export function ResearchManager({ isOrgAdmin, selfId }: { isOrgAdmin: boolean; s
               </TableHeader>
               <TableBody>
                 {filtered.length === 0 && (
-                  <TableEmpty colSpan={5}>
+                  <TableEmpty colSpan={6}>
                     {items.length === 0 ? t("empty") : tc("noResults")}
                   </TableEmpty>
                 )}
                 {filtered.map((r) => (
                   <TableRow
                     key={r.id}
-                    onClick={() => router.push(`/app/research/${r.id}`)}
-                    className="cursor-pointer transition-colors hover:bg-muted/50"
+                    // Sem acesso aos dados não há detalhe a abrir: a linha é só a vitrine.
+                    onClick={r.canSeeData ? () => router.push(`/app/research/${r.id}`) : undefined}
+                    className={
+                      r.canSeeData
+                        ? "cursor-pointer transition-colors hover:bg-muted/50"
+                        : undefined
+                    }
                   >
                     <TableCell className="font-medium">
                       <Truncate className="max-w-[24rem]">{r.name}</Truncate>
@@ -187,32 +278,49 @@ export function ResearchManager({ isOrgAdmin, selfId }: { isOrgAdmin: boolean; s
                         </Badge>
                       )}
                     </TableCell>
-                    <TableCell className="text-right">{r._count.protocols}</TableCell>
-                    <TableCell className="text-right">{r._count.animals}</TableCell>
+                    <TableCell onClick={(e) => e.stopPropagation()}>
+                      <AccessCell
+                        item={r}
+                        pending={requestM.isPending}
+                        onRequest={() => requestAccess(r)}
+                      />
+                    </TableCell>
+                    {/* Volume de dados só para quem participa (o catálogo expõe metadados). */}
+                    <TableCell className="text-right">{r._count?.protocols ?? "—"}</TableCell>
+                    <TableCell className="text-right">{r._count?.animals ?? "—"}</TableCell>
                     <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="size-8">
-                            <MoreHorizontal className="size-4" />
-                            <span className="sr-only">{t("colActions")}</span>
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          {(isOrgAdmin || r.createdById === selfId) && (
-                            <DropdownMenuItem onSelect={() => openEdit(r)}>
-                              {tc("edit")}
-                            </DropdownMenuItem>
-                          )}
-                          {isOrgAdmin && (
-                            <DropdownMenuItem
-                              className="text-destructive focus:text-destructive"
-                              onSelect={() => setConfirm(r)}
-                            >
-                              {tc("delete")}
-                            </DropdownMenuItem>
-                          )}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                      {/* O menu aparece para quem gere a pesquisa E para quem só participa
+                          (a ação de sair do vínculo). */}
+                      {(isOrgAdmin || r.createdById === selfId || r.isMember) && (
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="size-8">
+                              <MoreHorizontal className="size-4" />
+                              <span className="sr-only">{t("colActions")}</span>
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            {(isOrgAdmin || r.createdById === selfId) && (
+                              <DropdownMenuItem onSelect={() => openEdit(r)}>
+                                {tc("edit")}
+                              </DropdownMenuItem>
+                            )}
+                            {r.isMember && (
+                              <DropdownMenuItem onSelect={() => setLeaving(r)}>
+                                {t("leave")}
+                              </DropdownMenuItem>
+                            )}
+                            {isOrgAdmin && (
+                              <DropdownMenuItem
+                                className="text-destructive focus:text-destructive"
+                                onSelect={() => setConfirm(r)}
+                              >
+                                {tc("delete")}
+                              </DropdownMenuItem>
+                            )}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      )}
                     </TableCell>
                   </TableRow>
                 ))}
@@ -220,6 +328,18 @@ export function ResearchManager({ isOrgAdmin, selfId }: { isOrgAdmin: boolean; s
             </Table>
           </div>
         </div>
+      )}
+
+      {leaving && (
+        <ConfirmDialog
+          open={!!leaving}
+          onOpenChange={(o) => !o && setLeaving(null)}
+          title={t("leaveTitle")}
+          description={t(isOrgAdmin ? "leaveDescAdmin" : "leaveDesc", { name: leaving.name })}
+          confirmLabel={t("leave")}
+          destructive
+          onConfirm={() => leave(leaving)}
+        />
       )}
 
       {confirm && (

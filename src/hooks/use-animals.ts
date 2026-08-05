@@ -5,6 +5,7 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 
 import { animalsService } from "@/services/animals"
+import { pendingCountsKeys } from "@/hooks/use-pending-counts"
 import type { CreateAnimalData, UpdateAnimalData } from "@/schemas/animal.schema"
 import type { AnimalListQuery } from "@/types/animal"
 
@@ -16,6 +17,8 @@ export const animalKeys = {
   grid: (id: string) => ["animal-grid", id] as const,
   media: (id: string) => ["animal-media", id] as const,
   audit: (id: string) => ["animal-audit", id] as const,
+  // Caixa de compartilhamentos pendentes (não é por animal: é do usuário).
+  shares: () => ["animal-shares"] as const,
 }
 
 // Listagem paginada (server-side). Mantém a página anterior visível durante o refetch.
@@ -100,26 +103,50 @@ export function useDeleteAnimal() {
   })
 }
 
-export function useAddAnimalResearch(animalId: string) {
+// ── Compartilhamento do indivíduo entre pesquisas ────────────────────────────
+// Toda mutação aqui mexe na caixa de pendências e na bolinha do menu, por isso
+// invalidam também `animalKeys.shares` e `pendingCountsKeys`.
+
+// Convida OU pede o indivíduo (o servidor decide a direção pelo escopo de quem chama).
+export function useShareAnimal(animalId: string) {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (researchId: string) => animalsService.addResearch(animalId, researchId),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: animalKeys.detail(animalId) })
-      qc.invalidateQueries({ queryKey: animalKeys.all })
-    },
+    mutationFn: ({ researchId, message }: { researchId: string; message?: string }) =>
+      animalsService.shareWithResearch(animalId, researchId, message),
+    onSuccess: () => invalidateShares(qc, animalId),
   })
 }
 
+export function useAcceptAnimalShare(animalId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (researchId: string) => animalsService.acceptShare(animalId, researchId),
+    onSuccess: () => invalidateShares(qc, animalId),
+  })
+}
+
+// Recusa, cancela ou desvincula — a autorização de cada caso fica no servidor.
 export function useRemoveAnimalResearch(animalId: string) {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (researchId: string) => animalsService.removeResearch(animalId, researchId),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: animalKeys.detail(animalId) })
-      qc.invalidateQueries({ queryKey: animalKeys.all })
-    },
+    onSuccess: () => invalidateShares(qc, animalId),
   })
+}
+
+// Caixa de entrada: compartilhamentos aguardando a resposta do usuário (os dois sentidos).
+export function usePendingShares() {
+  return useQuery({
+    queryKey: animalKeys.shares(),
+    queryFn: () => animalsService.pendingShares(),
+  })
+}
+
+function invalidateShares(qc: ReturnType<typeof useQueryClient>, animalId: string) {
+  qc.invalidateQueries({ queryKey: animalKeys.detail(animalId) })
+  qc.invalidateQueries({ queryKey: animalKeys.all })
+  qc.invalidateQueries({ queryKey: animalKeys.shares() })
+  qc.invalidateQueries({ queryKey: pendingCountsKeys.all })
 }
 
 // Busca no SIMBA sob demanda (ação imperativa) — sem cache.

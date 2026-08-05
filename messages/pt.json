@@ -497,6 +497,8 @@
     "animalDuplicate": "Já existe um animal com este ID",
     "animalControlDuplicate": "Já existe um animal com este ID de controle",
     "animalSimbaDuplicate": "Já existe um animal com este Identificador SIMBA",
+    "animalControlDuplicateOutOfScope": "Já existe um animal com este ID de controle na pesquisa \"{research}\", à qual você não tem acesso. Você pode pedir o indivíduo para a sua pesquisa.",
+    "animalSimbaDuplicateOutOfScope": "Já existe um animal com este Identificador SIMBA na pesquisa \"{research}\", à qual você não tem acesso. Você pode pedir o indivíduo para a sua pesquisa.",
     "animalHasSamples": "O animal possui amostras e não pode ser excluído",
     "animalResearchExists": "Esta pesquisa já compartilha o indivíduo",
     "animalResearchPrimary": "Esta já é a pesquisa primária do indivíduo",
@@ -521,7 +523,16 @@
     "analysisNotFound": "Análise não encontrada",
     "confirmationParentNotPositive": "Só um rastreio positivo pode receber confirmação de espécie",
     "confirmationDuplicate": "Esta espécie já foi confirmada nesta amostra",
-    "pathogenNcbiRequired": "Selecione o nome científico na base NCBI"
+    "pathogenNcbiRequired": "Selecione o nome científico na base NCBI",
+    "researchAccessRequestNotFound": "Pedido de acesso não encontrado",
+    "researchAccessRequestPending": "Seu pedido já está aguardando resposta",
+    "researchAccessRequestProcessed": "Este pedido já foi respondido",
+    "researchAccessAlreadyMember": "Você já participa desta pesquisa",
+    "animalSharePending": "Já existe um pedido de compartilhamento em aberto para esta pesquisa",
+    "animalShareNotFound": "Compartilhamento não encontrado",
+    "animalShareCannotDecide": "Apenas a outra pesquisa pode responder a este compartilhamento",
+    "animalControlDuplicateInResearch": "Já existe um animal com este ID de controle na pesquisa \"{research}\".",
+    "animalSimbaDuplicateInResearch": "Já existe um animal com este Identificador SIMBA na pesquisa \"{research}\"."
   },
   "location": {
     "country": "País",
@@ -536,7 +547,7 @@
   },
   "research": {
     "title": "Pesquisas",
-    "subtitle": "Estudos do grupo de pesquisa ativo. Cada pesquisa define um protocolo de análises.",
+    "subtitle": "Estudos do grupo de pesquisa ativo. Você vê todas as pesquisas do grupo; para acessar os dados de uma delas, peça acesso.",
     "new": "Nova pesquisa",
     "empty": "Nenhuma pesquisa ainda.",
     "colName": "Nome",
@@ -580,7 +591,35 @@
     "memberRemoved": "Membro removido",
     "memberRemoveError": "Não foi possível remover o membro",
     "memberRemoveTitle": "Remover membro",
-    "memberRemoveDesc": "Remover {name} desta pesquisa? Ele perderá o acesso aos dados dela."
+    "memberRemoveDesc": "Remover {name} desta pesquisa? Ele perderá o acesso aos dados dela.",
+    "colAccess": "Acesso",
+    "accessMember": "Participa",
+    "accessPending": "Pedido enviado",
+    "accessRequest": "Solicitar acesso",
+    "accessRejected": "Seu pedido anterior foi recusado. Você pode pedir de novo.",
+    "accessRequested": "Pedido enviado",
+    "accessRequestedDesc": "Quem gere a pesquisa vai avaliar seu pedido.",
+    "accessRequestError": "Não foi possível enviar o pedido",
+    "accessQueueTitle": "Pedidos de acesso",
+    "accessQueueDesc": "Pesquisadores do grupo pedindo acesso às pesquisas que você gere. Aprovar cria o vínculo com a pesquisa.",
+    "accessQueueLine": "{user} pediu acesso à pesquisa \"{research}\"",
+    "accessApprove": "Aprovar",
+    "accessReject": "Recusar",
+    "accessApproved": "Acesso concedido",
+    "accessRejectedDone": "Pedido recusado",
+    "accessReviewError": "Não foi possível responder ao pedido",
+    "accessQueueButton": "Pedidos ({count})",
+    "leave": "Sair da pesquisa",
+    "leaveTitle": "Sair da pesquisa",
+    "leaveDesc": "Sair de \"{name}\"? Você deixa de ver os animais, amostras e análises dela. Nada é apagado — os dados pertencem à pesquisa — e você pode solicitar acesso de novo depois.",
+    "leftResearch": "Você saiu da pesquisa",
+    "leftResearchDesc": "Os dados dela não aparecem mais para você.",
+    "leaveError": "Não foi possível sair da pesquisa",
+    "leaveDescAdmin": "Sair de \"{name}\"? Você deixa de constar como membro. Como administrador do grupo, continua enxergando os dados desta pesquisa.",
+    "leftResearchAdmin": "Você saiu da lista de membros",
+    "leftResearchAdminDesc": "Como administrador do grupo, seu acesso aos dados continua.",
+    "accessByRole": "Administra",
+    "accessByRoleHint": "Acesso pelo papel de administrador do grupo — sem vínculo com esta pesquisa."
   },
   "animals": {
     "title": "Animais",
@@ -671,7 +710,7 @@
     "macroscopicNotes": "Observações",
     "strandingLocationMap": "Local do encalhe",
     "shareTitle": "Pesquisas",
-    "shareDesc": "Pesquisas do grupo que estudam este indivíduo. A primária é a criadora; adicione outras para compartilhar o mesmo indivíduo.",
+    "shareDesc": "Pesquisas do grupo que estudam este indivíduo. A primária é a criadora; ao envolver outra pesquisa, o vínculo só vale depois que ela aceitar.",
     "sharePrimary": "primária",
     "shareAddPlaceholder": "Adicionar pesquisa…",
     "shareAddButton": "Adicionar",
@@ -707,7 +746,48 @@
     "lifeStageAdult": "Adulto",
     "lifeStageUndetermined": "Indeterminado",
     "isHiddenHint": "Ocultar este animal dos dados públicos (aplica-se apenas quando a pesquisa é pública)",
-    "hidden": "Oculto"
+    "hidden": "Oculto",
+    "shareInviteSent": "Convite enviado — aguardando a outra pesquisa",
+    "shareInviteCancel": "Cancelar convite",
+    "shareInviteCanceled": "Convite cancelado",
+    "sharePendingTag": "aguardando",
+    "sharePendingHint": "Aguardando a resposta da outra pesquisa. Até lá, ela não enxerga este indivíduo.",
+    "sharesQueueTitle": "Compartilhamentos pendentes",
+    "sharesQueueDesc": "Indivíduos oferecidos às suas pesquisas e pedidos sobre os indivíduos delas.",
+    "shareInviteTag": "Convite",
+    "shareRequestTag": "Pedido",
+    "shareInviteLine": "A pesquisa \"{from}\" ofereceu o indivíduo {animal} à sua pesquisa \"{to}\"",
+    "shareRequestLine": "{user} quer o indivíduo {animal} para a pesquisa \"{to}\"",
+    "shareAccept": "Aceitar",
+    "shareReject": "Recusar",
+    "shareAccepted": "Compartilhamento aceito",
+    "shareRejected": "Compartilhamento recusado",
+    "shareRequestAction": "Pedir compartilhamento",
+    "shareRequestSent": "Pedido enviado",
+    "shareRequestSentDesc": "A pesquisa de origem do indivíduo vai avaliar seu pedido. Se aceitarem, ele aparece na sua lista de animais.",
+    "sharesQueueButton": "Compartilhamentos ({count})",
+    "shareConflictTitle": "Indivíduo já cadastrado em outra pesquisa",
+    "shareConflictDesc": "Este identificador pertence a um indivíduo da pesquisa \"{research}\", que você não acessa. Quer pedir que ele seja compartilhado com a pesquisa \"{to}\"? Quem decide é a pesquisa de origem.",
+    "accessEnded": "Você não tem mais acesso a este indivíduo.",
+    "sharePrimaryLabel": "Pesquisa de origem",
+    "shareAlsoLabel": "Também estudam",
+    "sharePendingLabel": "Aguardando resposta",
+    "shareNone": "Nenhuma",
+    "shareConflictExisting": "Registro já existente",
+    "shareConflictOwner": "Pesquisa de origem",
+    "shareConflictHint": "Se estes dados não correspondem ao indivíduo que você está cadastrando, o identificador foi digitado errado — corrija-o em vez de pedir o compartilhamento.",
+    "shareConflictFix": "Corrigir o identificador",
+    "idCheck": "Verificar se já existe no grupo",
+    "idAvailable": "Identificador disponível",
+    "idTaken": "Identificador já cadastrado",
+    "idTakenIn": "Pertence a um indivíduo da pesquisa \"{research}\".",
+    "idCheckError": "Não foi possível verificar o identificador",
+    "location": "Local",
+    "idOwnRecord": "É o identificador deste próprio registro.",
+    "idFoundTitle": "Indivíduo já cadastrado no grupo",
+    "idFoundOpen": "Abrir registro",
+    "shareConflictSelectResearch": "Selecione a pesquisa no formulário para poder pedir o compartilhamento.",
+    "sharePendingAlready": "Este pedido já está em aberto"
   },
   "samples": {
     "new": "Nova amostra",
@@ -865,7 +945,9 @@
         "body": "Cada estudo é uma 'pesquisa', que define o protocolo e quem enxerga seus dados.",
         "points": [
           "Crie a pesquisa em 'Pesquisas' e monte o protocolo: combinações de material × patógeno × exame.",
-          "Vincule pesquisadores à pesquisa — só quem está vinculado enxerga seus animais, amostras e análises.",
+          "Todo mundo do grupo VÊ a lista de pesquisas (nome, descrição, responsável), mas os dados — animais, amostras e análises — são só de quem participa.",
+          "Não participa de uma pesquisa e precisa dos dados dela? Use 'Solicitar acesso' na listagem; quem criou a pesquisa (ou o admin do grupo) aprova.",
+          "Os pedidos que aguardam a sua resposta aparecem no topo da tela 'Pesquisas'. Aprovar vincula a pessoa à pesquisa.",
           "Defina a visibilidade (pública ou privada) da pesquisa."
         ]
       },
@@ -873,14 +955,26 @@
         "title": "5. Cadastrar o animal (indivíduo)",
         "body": "O animal representa o indivíduo físico encalhado.",
         "points": [
-          "Cadastre em 'Animais', escolhendo a pesquisa dona. É possível importar dados do SIMBA pelo número de registro.",
+          "Cadastre em 'Animais', escolhendo a pesquisa de origem. É possível importar dados do SIMBA pelo número de registro.",
+          "Antes de preencher o resto, use a lupa ao lado do ID de controle para conferir se o indivíduo já existe no grupo — inclusive em pesquisas que você não acessa.",
           "Campos de encalhe (data, local, coordenadas) podem ser marcados como 'sem informação' quando não disponíveis.",
           "A visibilidade pública efetiva do animal exige que ele E a pesquisa sejam públicos.",
-          "Um mesmo indivíduo pode ser compartilhado por mais de uma pesquisa do grupo."
+          "O ID de controle e o nº SIMBA são únicos no grupo inteiro: se o indivíduo já foi cadastrado por outra pesquisa, o cadastro é recusado — veja o tópico seguinte."
+        ]
+      },
+      "sharing": {
+        "title": "6. Compartilhar indivíduos entre pesquisas",
+        "body": "O mesmo indivíduo pode ser estudado por mais de uma pesquisa do grupo, sem cadastro duplicado. O vínculo só vale quando as duas pesquisas concordam.",
+        "points": [
+          "Na ficha do animal, em 'Pesquisas', escolha outra pesquisa do grupo para compartilhar o indivíduo.",
+          "Se a pesquisa escolhida não for sua, vai um convite: ela precisa aceitar antes de enxergar o indivíduo (até lá, aparece como 'aguardando').",
+          "No sentido inverso: ao cadastrar um animal cujo ID de controle ou SIMBA já existe numa pesquisa que você não acessa, o aviso oferece pedir o indivíduo — quem decide é a pesquisa de origem.",
+          "Os pedidos e convites que aguardam a SUA resposta ficam no topo da tela 'Animais'.",
+          "Compartilhar dá acesso ao indivíduo (identidade, encalhe), nunca às amostras e análises da outra pesquisa — cada uma mantém as suas."
         ]
       },
       "samples": {
-        "title": "6. Amostras",
+        "title": "7. Amostras",
         "body": "As amostras são coletadas por material biológico do indivíduo, na aba 'Amostras' do animal.",
         "points": [
           "Cadastre cada amostra com material biológico, tipo, status e local de armazenamento.",
@@ -888,7 +982,7 @@
         ]
       },
       "analyses": {
-        "title": "7. Análises e resultados",
+        "title": "8. Análises e resultados",
         "body": "As análises registram os resultados laboratoriais por amostra.",
         "points": [
           "A grade combina material × patógeno × exame do protocolo; marque cada resultado (positivo, negativo ou inconclusivo) e a medida, quando houver.",
@@ -896,14 +990,14 @@
         ]
       },
       "history": {
-        "title": "8. Histórico do animal",
+        "title": "9. Histórico do animal",
         "body": "Cada indivíduo tem uma linha do tempo de alterações.",
         "points": [
           "A aba 'Histórico' reúne edições do animal, criação/edição de amostras e mudanças de análises, com autor e data."
         ]
       },
       "map": {
-        "title": "9. Mapa e dados públicos",
+        "title": "10. Mapa e dados públicos",
         "body": "Os encalhes aparecem em um mapa navegável.",
         "points": [
           "O mapa interno mostra os animais que você enxerga; o mapa público (sem login) mostra apenas os efetivamente públicos.",
@@ -911,7 +1005,7 @@
         ]
       },
       "export": {
-        "title": "10. Exportação",
+        "title": "11. Exportação",
         "body": "Exporte os dados para análise externa.",
         "points": [
           "Selecione animais (ou use 'selecionar todos' do filtro atual) e exporte em Excel ou Darwin Core."

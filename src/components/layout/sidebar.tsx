@@ -83,6 +83,10 @@ export function Sidebar({
     "/app/catalogs": pending?.glossaryRequests ?? 0,
     "/app/admin/access-requests": pending?.accessRequests ?? 0,
     "/app/admin/feedback": pending?.feedback ?? 0,
+    // Pendências do grupo: pedidos de acesso às pesquisas que o usuário gere e
+    // compartilhamentos de indivíduo aguardando a resposta dele.
+    "/app/research": pending?.researchAccess ?? 0,
+    "/app/animals": pending?.animalShares ?? 0,
   }
   const dotTitle = (count: number) => t("pending", { count })
 

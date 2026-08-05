@@ -37,7 +37,18 @@ export const addResearchMemberSchema = z.object({
   userId: z.string().min(1),
 })
 
+// Pedido de acesso a uma pesquisa do grupo (justificativa opcional).
+export const requestResearchAccessSchema = z.object({
+  message: z.string().trim().max(LIMITS.longText).optional().or(z.literal("")),
+})
+
+// Decisão sobre um pedido de acesso.
+export const reviewAccessRequestSchema = z.object({
+  action: z.enum(["approve", "reject"]),
+})
+
 export type CreateResearchData = z.infer<typeof createResearchSchema>
 export type UpdateResearchData = z.infer<typeof updateResearchSchema>
 export type ProtocolEntry = z.infer<typeof protocolEntrySchema>
 export type PatchProtocolData = z.infer<typeof patchProtocolSchema>
+export type RequestResearchAccessData = z.infer<typeof requestResearchAccessSchema>

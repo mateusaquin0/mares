@@ -8,6 +8,7 @@
 
 import type { Prisma } from "@prisma/client"
 import { prisma } from "@/lib/prisma"
+import { inResearches } from "@/lib/animal-participation"
 import { pathogenName, type I18nText } from "@/lib/catalog-i18n"
 
 // Ponto serializado enviado ao cliente (JSON-safe: datas como ISO string).
@@ -126,10 +127,7 @@ export async function orgMapPoints(
 ): Promise<MapPoint[]> {
   const where: Prisma.AnimalWhereInput = { ...HAS_COORDS, research: { orgId } }
   if (researchIds) {
-    where.OR = [
-      { researchId: { in: researchIds } },
-      { participations: { some: { researchId: { in: researchIds } } } },
-    ]
+    where.OR = inResearches(researchIds)
   }
   const rows = await prisma.animal.findMany({
     where,

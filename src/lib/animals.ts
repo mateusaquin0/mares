@@ -4,25 +4,171 @@
 
 import { Prisma } from "@prisma/client"
 import { prisma } from "@/lib/prisma"
+import { ACCEPTED_PARTICIPATION } from "@/lib/animal-participation"
 import { ConflictError, NotFoundError, ValidationError } from "@/lib/errors"
 import { ERROR_CODES } from "@/lib/error-codes"
+import type { ResearchScope } from "@/lib/research-access"
 import { pathogenName, type I18nText } from "@/lib/catalog-i18n"
+
+/** Qual identificador único o P2002 violou (a partir de `meta.target`). */
+function duplicateField(e: Prisma.PrismaClientKnownRequestError): "simba" | "control" | null {
+  const target = Array.isArray(e.meta?.target)
+    ? e.meta.target.join(",")
+    : String(e.meta?.target ?? "")
+  if (/simba/i.test(target)) return "simba"
+  if (/control/i.test(target)) return "control"
+  return null
+}
 
 /**
  * Traduz a violação de unicidade (P2002) do animal no erro mais específico possível,
  * indicando QUAL identificador está duplicado (ID de controle ou Nº SIMBA).
  */
 export function animalDuplicateError(e: Prisma.PrismaClientKnownRequestError): ConflictError {
-  const target = Array.isArray(e.meta?.target)
-    ? e.meta.target.join(",")
-    : String(e.meta?.target ?? "")
-  if (/simba/i.test(target)) {
-    return new ConflictError("Identificador SIMBA já cadastrado", ERROR_CODES.animalSimbaDuplicate)
+  switch (duplicateField(e)) {
+    case "simba":
+      return new ConflictError(
+        "Identificador SIMBA já cadastrado",
+        ERROR_CODES.animalSimbaDuplicate,
+      )
+    case "control":
+      return new ConflictError("ID de controle já cadastrado", ERROR_CODES.animalControlDuplicate)
+    default:
+      return new ConflictError("ID já cadastrado", ERROR_CODES.animalDuplicate)
   }
-  if (/control/i.test(target)) {
-    return new ConflictError("ID de controle já cadastrado", ERROR_CODES.animalControlDuplicate)
+}
+
+/**
+ * Versão contextualizada de `animalDuplicateError`: os identificadores são únicos por
+ * ORGANIZAÇÃO (`@@unique([orgId, controlId])`), mas a listagem de animais é filtrada por
+ * PESQUISA — a mensagem genérica ("já cadastrado") deixa a pessoa procurando um registro
+ * que pode estar em qualquer lugar. Aqui localizamos o animal em conflito e SEMPRE nomeamos
+ * a pesquisa que o detém; o que muda é o desfecho:
+ *
+ *   • pesquisa VISÍVEL ao usuário → basta apontar onde está (ele abre e confere);
+ *   • pesquisa FORA do escopo     → além de nomear, devolvemos a identidade mínima do
+ *     indivíduo e o `animalId`, para a UI oferecer pedir o compartilhamento.
+ *
+ * A identidade mínima (espécie, data do evento, local) existe porque sem ela a pessoa não
+ * consegue decidir o que fazer: se é o MESMO indivíduo, ela pede o compartilhamento; se os
+ * dados divergem, o que há é um identificador digitado errado — e ela corrige. É informação
+ * de identificação do mesmo indivíduo físico, não dados científicos da outra pesquisa
+ * (amostras e análises seguem inacessíveis).
+ *
+ * Cai no erro genérico quando o valor em conflito não foi informado (ex.: PUT parcial que
+ * não mexe no campo) ou quando o animal não é localizável.
+ */
+export async function animalDuplicateConflict(
+  e: Prisma.PrismaClientKnownRequestError,
+  ctx: {
+    orgId: string
+    scope: ResearchScope
+    controlId?: string | null
+    simbaRecordNumber?: string | null
+  },
+): Promise<ConflictError> {
+  const field = duplicateField(e)
+  const value =
+    field === "simba" ? ctx.simbaRecordNumber : field === "control" ? ctx.controlId : null
+  if (!field || !value) return animalDuplicateError(e)
+
+  const clash = await findAnimalByIdentifier(ctx.orgId, ctx.scope, {
+    [field === "simba" ? "simbaRecordNumber" : "controlId"]: value,
+  })
+  if (!clash) return animalDuplicateError(e)
+
+  const { research, visible } = clash
+
+  if (visible) {
+    // `animalId` permite à UI oferecer "abrir o registro" — que é a saída natural quando a
+    // pessoa já enxerga o duplicado (identidade extra é desnecessária: ela abre e confere).
+    const params = { research, animalId: clash.animalId }
+    return field === "simba"
+      ? new ConflictError(
+          `Identificador SIMBA já cadastrado na pesquisa "${research}"`,
+          ERROR_CODES.animalSimbaDuplicateInResearch,
+          params,
+        )
+      : new ConflictError(
+          `ID de controle já cadastrado na pesquisa "${research}"`,
+          ERROR_CODES.animalControlDuplicateInResearch,
+          params,
+        )
   }
-  return new ConflictError("ID já cadastrado", ERROR_CODES.animalDuplicate)
+
+  // `animalId` e a identidade não interpolam a mensagem: viajam junto para a UI oferecer
+  // "pedir o indivíduo para a minha pesquisa" (ver POST /api/animals/[id]/researches).
+  const params = {
+    research,
+    animalId: clash.animalId,
+    species: clash.species,
+    eventDate: clash.eventDate,
+    location: clash.location,
+  }
+  return field === "simba"
+    ? new ConflictError(
+        `Identificador SIMBA já cadastrado na pesquisa "${research}"`,
+        ERROR_CODES.animalSimbaDuplicateOutOfScope,
+        params,
+      )
+    : new ConflictError(
+        `ID de controle já cadastrado na pesquisa "${research}"`,
+        ERROR_CODES.animalControlDuplicateOutOfScope,
+        params,
+      )
+}
+
+/**
+ * Localiza o indivíduo de uma organização por um dos identificadores únicos e diz se ele é
+ * VISÍVEL ao usuário, junto da identidade mínima.
+ *
+ * Fonte única para as duas portas que fazem a mesma pergunta — "este identificador já existe
+ * no grupo?": a busca prévia do formulário (GET /api/animals/lookup) e o conflito do POST
+ * (`animalDuplicateConflict`). Se divergissem, a busca diria "livre" e o envio recusaria, ou
+ * pior, a busca exporia o que o conflito protege.
+ */
+export async function findAnimalByIdentifier(
+  orgId: string,
+  scope: ResearchScope,
+  by: { controlId?: string; simbaRecordNumber?: string },
+) {
+  const where: Prisma.AnimalWhereInput = by.simbaRecordNumber
+    ? { orgId, simbaRecordNumber: by.simbaRecordNumber }
+    : { orgId, controlId: by.controlId }
+  if (!by.simbaRecordNumber && !by.controlId) return null
+
+  const animal = await prisma.animal.findFirst({
+    where,
+    select: {
+      id: true,
+      researchId: true,
+      species: true,
+      eventDate: true,
+      municipality: true,
+      state: true,
+      research: { select: { name: true } },
+      // Só as participações ACEITAS: um convite pendente ainda não dá acesso ao indivíduo.
+      participations: { where: ACCEPTED_PARTICIPATION, select: { researchId: true } },
+    },
+  })
+  if (!animal) return null
+
+  // Visível = admin da org, ou alguma pesquisa do conjunto efetivo (primária ∪ participações
+  // aceitas) está no escopo do usuário.
+  const visible =
+    scope.all ||
+    scope.ids.includes(animal.researchId) ||
+    animal.participations.some((p) => scope.ids.includes(p.researchId))
+
+  return {
+    animalId: animal.id,
+    research: animal.research.name,
+    researchId: animal.researchId,
+    visible,
+    species: animal.species ?? "",
+    eventDate: animal.eventDate?.toISOString() ?? "",
+    location: [animal.municipality, animal.state].filter(Boolean).join(", "),
+  }
 }
 
 /** Carrega o animal com o orgId da pesquisa (para checagem de papel). */
@@ -130,7 +276,11 @@ export const animalListSelect = {
   // research.isPublic (ver publicMapPoints / docs/PERMISSOES.md).
   research: { select: { id: true, name: true, isPublic: true } },
   // Pesquisas adicionais que compartilham o indivíduo (para exibição e filtro por pesquisa).
-  participations: { select: { research: { select: { id: true, name: true } } } },
+  // Só as ACEITAS: convite pendente não aparece como participante na listagem.
+  participations: {
+    where: ACCEPTED_PARTICIPATION,
+    select: { research: { select: { id: true, name: true } } },
+  },
   _count: { select: { samples: true } },
   samples: {
     select: {
@@ -169,8 +319,30 @@ export function toAnimalListItem(locale: string, a: RawListAnimal) {
 
 // ── Compartilhamento de indivíduo entre pesquisas (participações) ──────────────
 
-/** Adiciona uma pesquisa (da mesma org) como participante do indivíduo. */
-export async function addAnimalResearch(animalId: string, orgId: string, researchId: string) {
+/**
+ * Cria o vínculo entre o indivíduo e OUTRA pesquisa da mesma org. O vínculo nasce PENDING e
+ * só vale quando o lado que ainda não consentiu aceita — `origin` diz quem é esse lado:
+ *
+ *   INVITE  → partiu de quem já enxerga o indivíduo; responde a pesquisa CONVIDADA.
+ *   REQUEST → partiu de quem quer o indivíduo na sua pesquisa; responde a pesquisa PRIMÁRIA.
+ *
+ * É o que permite abrir o catálogo de pesquisas do grupo sem que ninguém empurre dados para
+ * dentro do escopo alheio nem se sirva do escopo alheio.
+ *
+ * `autoAccept` cobre o caso em que quem age já enxerga OS DOIS lados (membro das duas
+ * pesquisas, ou admin da org): não faz sentido pedir a própria autorização.
+ */
+export async function createAnimalShare(
+  animalId: string,
+  orgId: string,
+  researchId: string,
+  opts: {
+    origin: "INVITE" | "REQUEST"
+    invitedById: string
+    autoAccept: boolean
+    message?: string | null
+  },
+) {
   const animal = await prisma.animal.findUnique({
     where: { id: animalId },
     select: { researchId: true },
@@ -185,16 +357,153 @@ export async function addAnimalResearch(animalId: string, orgId: string, researc
   // Garante que a pesquisa existe e pertence à mesma organização do indivíduo.
   await assertResearchInOrg(researchId, orgId)
   try {
-    await prisma.animalResearch.create({ data: { animalId, researchId } })
+    await prisma.animalResearch.create({
+      data: {
+        animalId,
+        researchId,
+        origin: opts.origin,
+        status: opts.autoAccept ? "ACCEPTED" : "PENDING",
+        invitedById: opts.invitedById,
+        message: opts.message ?? null,
+        respondedAt: opts.autoAccept ? new Date() : null,
+      },
+    })
+    return opts.autoAccept ? ("ACCEPTED" as const) : ("PENDING" as const)
   } catch (e) {
     if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
+      // Distingue "já participa" de "já existe pedido em aberto" — ações diferentes para
+      // quem recebe a mensagem (nada a fazer × aguardar a resposta do outro lado).
+      const existing = await prisma.animalResearch.findUnique({
+        where: { animalId_researchId: { animalId, researchId } },
+        select: { status: true },
+      })
       throw new ConflictError(
-        "Esta pesquisa já compartilha o indivíduo",
-        ERROR_CODES.animalResearchExists,
+        existing?.status === "PENDING"
+          ? "Já existe um pedido de compartilhamento em aberto"
+          : "Esta pesquisa já compartilha o indivíduo",
+        existing?.status === "PENDING"
+          ? ERROR_CODES.animalSharePending
+          : ERROR_CODES.animalResearchExists,
       )
     }
     throw e
   }
+}
+
+/**
+ * Carrega um vínculo pendente/aceito com o que as rotas precisam para autorizar a resposta:
+ * a pesquisa que decide (`deciderResearchId`) depende da origem.
+ */
+export async function loadAnimalShare(animalId: string, researchId: string) {
+  const share = await prisma.animalResearch.findUnique({
+    where: { animalId_researchId: { animalId, researchId } },
+    select: {
+      status: true,
+      origin: true,
+      researchId: true,
+      animal: { select: { orgId: true, researchId: true } },
+    },
+  })
+  if (!share) {
+    throw new NotFoundError("Compartilhamento não encontrado", ERROR_CODES.animalShareNotFound)
+  }
+  return {
+    status: share.status,
+    origin: share.origin,
+    orgId: share.animal.orgId,
+    // Quem responde é sempre o lado que ainda não consentiu.
+    deciderResearchId: share.origin === "INVITE" ? share.researchId : share.animal.researchId,
+    // O outro lado — quem pode CANCELAR o que iniciou.
+    requesterResearchId: share.origin === "INVITE" ? share.animal.researchId : share.researchId,
+  }
+}
+
+/**
+ * Aceita o compartilhamento. Quem chama já validou que o usuário pertence à pesquisa que
+ * decide (ver `loadAnimalShare`).
+ */
+export async function acceptAnimalShare(animalId: string, researchId: string) {
+  const share = await prisma.animalResearch.findUnique({
+    where: { animalId_researchId: { animalId, researchId } },
+    select: { status: true },
+  })
+  if (!share) {
+    throw new NotFoundError("Compartilhamento não encontrado", ERROR_CODES.animalShareNotFound)
+  }
+  // Idempotente: aceitar de novo (dois membros clicando junto) não é erro.
+  if (share.status === "ACCEPTED") return
+  await prisma.animalResearch.update({
+    where: { animalId_researchId: { animalId, researchId } },
+    data: { status: "ACCEPTED", respondedAt: new Date() },
+  })
+}
+
+/**
+ * Where das pendências que o usuário PODE responder: convite dirigido a uma pesquisa sua, ou
+ * pedido sobre um indivíduo cuja pesquisa primária é sua. `researchIds` undefined = admin da
+ * org (responde por todas as pesquisas do grupo).
+ */
+function pendingShareWhere(orgId: string, researchIds?: string[]): Prisma.AnimalResearchWhereInput {
+  const base: Prisma.AnimalResearchWhereInput = {
+    status: "PENDING",
+    animal: { orgId },
+  }
+  if (!researchIds) return base
+  return {
+    ...base,
+    OR: [
+      { origin: "INVITE", researchId: { in: researchIds } },
+      { origin: "REQUEST", animal: { orgId, researchId: { in: researchIds } } },
+    ],
+  }
+}
+
+/**
+ * Compartilhamentos PENDENTES que o usuário pode responder (a caixa de entrada). Traz os dois
+ * sentidos: convites recebidos e pedidos feitos sobre os indivíduos das pesquisas dele.
+ */
+export async function listPendingShares(orgId: string, researchIds?: string[]) {
+  if (researchIds?.length === 0) return []
+  const rows = await prisma.animalResearch.findMany({
+    where: pendingShareWhere(orgId, researchIds),
+    orderBy: { createdAt: "desc" },
+    select: {
+      origin: true,
+      message: true,
+      createdAt: true,
+      research: { select: { id: true, name: true } },
+      invitedBy: { select: { name: true, email: true } },
+      animal: {
+        select: {
+          id: true,
+          species: true,
+          controlId: true,
+          simbaRecordNumber: true,
+          municipality: true,
+          state: true,
+          eventDate: true,
+          research: { select: { id: true, name: true } },
+        },
+      },
+    },
+  })
+  return rows.map(({ animal, research, ...r }) => {
+    const { research: fromResearch, ...rest } = animal
+    return {
+      ...r,
+      createdAt: r.createdAt.toISOString(),
+      animal: { ...rest, eventDate: rest.eventDate?.toISOString() ?? null },
+      // `research` = a pesquisa que ganha o indivíduo; `fromResearch` = a de origem (primária).
+      research,
+      fromResearch,
+    }
+  })
+}
+
+/** Quantas pendências de compartilhamento aguardam resposta do usuário. */
+export async function countPendingShares(orgId: string, researchIds?: string[]) {
+  if (researchIds?.length === 0) return 0
+  return prisma.animalResearch.count({ where: pendingShareWhere(orgId, researchIds) })
 }
 
 /**
@@ -206,7 +515,10 @@ export async function assertResearchOnAnimal(animalId: string, researchId: strin
     where: { id: animalId },
     select: {
       researchId: true,
-      participations: { where: { researchId }, select: { researchId: true } },
+      participations: {
+        where: { researchId, ...ACCEPTED_PARTICIPATION },
+        select: { researchId: true },
+      },
     },
   })
   if (!animal) throw new NotFoundError("Animal não encontrado", ERROR_CODES.animalNotFound)

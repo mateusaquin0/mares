@@ -48,5 +48,13 @@ export const createAnimalSchema = animalBaseSchema.extend({
 
 export const updateAnimalSchema = animalBaseSchema.partial()
 
+// Compartilhamento do indivíduo com outra pesquisa do grupo. `message` é a justificativa de
+// quem PEDE o indivíduo (ignorada quando a direção é convite — ver a rota).
+export const shareAnimalSchema = z.object({
+  researchId: z.string().min(1, "required"),
+  message: optionalText(LIMITS.longText),
+})
+
 export type CreateAnimalData = z.infer<typeof createAnimalSchema>
 export type UpdateAnimalData = z.infer<typeof updateAnimalSchema>
+export type ShareAnimalData = z.infer<typeof shareAnimalSchema>
