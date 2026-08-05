@@ -18,6 +18,7 @@ import type {
   SampleLite,
 } from "@/types/analysis"
 import { MeasureInput, NotesInput, ResultSelect } from "@/components/analysis-cells"
+import { SampleStatusBadge } from "@/components/sample-status-badge"
 import { ConfirmationPanel } from "./confirmation-panel"
 import { Truncate } from "@/components/ui/truncate"
 import {
@@ -103,14 +104,6 @@ export function AnalysesTab({ animalId }: { animalId: string }) {
     list.push(a)
     childrenByParent.set(a.parentAnalysisId, list)
   }
-
-  const statusLabel = (s: string) =>
-    ({
-      STORED: ts("statusStored"),
-      IN_USE: ts("statusInUse"),
-      DEPLETED: ts("statusDepleted"),
-      DEGRADED: ts("statusDegraded"),
-    })[s] ?? s
 
   const resultLabel = (r: string) =>
     ({
@@ -299,15 +292,15 @@ export function AnalysesTab({ animalId }: { animalId: string }) {
                 {samples.map(({ sample, entries }) => (
                   <AccordionItem key={sample.id} value={sample.id}>
                     <AccordionTrigger>
-                      <span className="flex flex-wrap items-center gap-2">
+                      <span className="flex flex-1 flex-wrap items-center gap-2">
                         <span className="font-semibold">
                           {txt(locale, sample.organ.name)}
                           <span className="font-normal"> ({sample.sampleType})</span>
                         </span>
-                        <Badge variant="secondary">{statusLabel(sample.status)}</Badge>
-                        <span className="text-xs font-normal text-muted-foreground">
+                        <span className="ml-auto shrink-0 text-xs font-normal text-muted-foreground">
                           {t("entryCount", { count: entries.length })}
                         </span>
+                        <SampleStatusBadge status={sample.status} className="shrink-0" />
                       </span>
                     </AccordionTrigger>
                     <AccordionContent>

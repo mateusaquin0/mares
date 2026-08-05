@@ -22,6 +22,7 @@ import { useErrorMessage } from "@/lib/use-error-message"
 import type { AnimalDetail } from "@/types/animal"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { Truncate } from "@/components/ui/truncate"
 import {
   Select,
   SelectContent,
@@ -99,7 +100,9 @@ export function ResearchShare({
           "também estuda" e "ainda não respondeu" viram a mesma coisa aos olhos. */}
       <div className="grid gap-4 sm:grid-cols-2">
         <ShareGroup label={t("sharePrimaryLabel")}>
-          <Badge variant="secondary">{animal.research.name}</Badge>
+          <Badge variant="secondary">
+            <ShareName>{animal.research.name}</ShareName>
+          </Badge>
         </ShareGroup>
 
         <ShareGroup
@@ -112,7 +115,7 @@ export function ResearchShare({
               variant="outline"
               className={canUnlink(p.research.id) ? "gap-1 pr-1" : undefined}
             >
-              {p.research.name}
+              <ShareName>{p.research.name}</ShareName>
               {canUnlink(p.research.id) && (
                 <RemoveButton
                   label={t("shareRemove")}
@@ -132,8 +135,8 @@ export function ResearchShare({
                 variant="outline"
                 className="gap-1 border-dashed pr-1 text-muted-foreground"
               >
-                <Clock className="size-3" />
-                {p.research.name}
+                <Clock className="size-3 shrink-0" />
+                <ShareName>{p.research.name}</ShareName>
                 {canUnlink(p.research.id) && (
                   <RemoveButton
                     label={t("shareInviteCancel")}
@@ -168,6 +171,12 @@ export function ResearchShare({
       )}
     </div>
   )
+}
+
+// Nome da pesquisa dentro do selo: nomes longos são a regra, então corta com reticências
+// (o texto completo fica no tooltip) para o selo não dominar a linha.
+function ShareName({ children }: { children: React.ReactNode }) {
+  return <Truncate className="max-w-[10rem]">{children}</Truncate>
 }
 
 // Um grupo rotulado de selos (de origem / também estudam / em aberto).
