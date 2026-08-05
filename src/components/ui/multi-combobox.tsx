@@ -51,7 +51,8 @@ export function MultiCombobox({
   }
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    // `modal` para o popover assumir o lock de rolagem dentro de Dialogs (ver Combobox).
+    <Popover open={open} onOpenChange={setOpen} modal>
       <PopoverTrigger asChild>
         <Button
           type="button"
