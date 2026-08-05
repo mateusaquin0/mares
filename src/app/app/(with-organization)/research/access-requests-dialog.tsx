@@ -17,6 +17,7 @@ import { useErrorMessage } from "@/lib/use-error-message"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogDescription,
   DialogHeader,
@@ -59,42 +60,45 @@ export function AccessRequestsDialog() {
             <DialogTitle>{t("accessQueueTitle")}</DialogTitle>
             <DialogDescription>{t("accessQueueDesc")}</DialogDescription>
           </DialogHeader>
-          <ul className="divide-y">
-            {items.map((r) => (
-              <li key={r.id} className="flex flex-wrap items-center gap-3 py-3">
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm">
-                    {t("accessQueueLine", {
-                      user: r.user.name || r.user.email,
-                      research: r.research.name,
-                    })}
-                  </p>
-                  {r.message && <p className="text-xs text-muted-foreground">{r.message}</p>}
-                </div>
-                {/* shrink-0: a folga sobra para o texto, não para as ações. */}
-                <div className="flex shrink-0 items-center gap-2">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => review(r.id, "approve")}
-                    disabled={reviewM.isPending}
-                  >
-                    <Check className="size-4" />
-                    {t("accessApprove")}
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => review(r.id, "reject")}
-                    disabled={reviewM.isPending}
-                  >
-                    <X className="size-4" />
-                    {t("accessReject")}
-                  </Button>
-                </div>
-              </li>
-            ))}
-          </ul>
+          {/* DialogBody: a fila pode ter muitos pedidos — só a lista rola, o cabeçalho fica. */}
+          <DialogBody>
+            <ul className="divide-y">
+              {items.map((r) => (
+                <li key={r.id} className="flex flex-wrap items-center gap-3 py-3">
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm">
+                      {t("accessQueueLine", {
+                        user: r.user.name || r.user.email,
+                        research: r.research.name,
+                      })}
+                    </p>
+                    {r.message && <p className="text-xs text-muted-foreground">{r.message}</p>}
+                  </div>
+                  {/* shrink-0: a folga sobra para o texto, não para as ações. */}
+                  <div className="flex shrink-0 items-center gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => review(r.id, "approve")}
+                      disabled={reviewM.isPending}
+                    >
+                      <Check className="size-4" />
+                      {t("accessApprove")}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => review(r.id, "reject")}
+                      disabled={reviewM.isPending}
+                    >
+                      <X className="size-4" />
+                      {t("accessReject")}
+                    </Button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </DialogBody>
         </DialogContent>
       </Dialog>
     </>
