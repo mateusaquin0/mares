@@ -1,11 +1,14 @@
 "use client"
 
-import { type ReactNode, useState } from "react"
+import { type ReactNode, useEffect, useState } from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import dynamic from "next/dynamic"
 import { useLocale, useTranslations } from "next-intl"
+import { toast } from "sonner"
 import { ArrowLeft, Fish, Pencil } from "lucide-react"
 
+import { ApiError } from "@/lib/http"
 import { useAnimal } from "@/hooks/use-animals"
 import { useResearchList } from "@/hooks/use-research"
 import { formatDateOnly } from "@/lib/date"
@@ -32,6 +35,7 @@ export function AnimalDetail({ id, isOrgAdmin }: { id: string; isOrgAdmin: boole
   const t = useTranslations("animals")
   const tc = useTranslations("common")
   const locale = useLocale()
+  const router = useRouter()
   const animalQ = useAnimal(id)
   const animal = animalQ.data ?? null
   const loading = animalQ.isLoading
@@ -41,6 +45,19 @@ export function AnimalDetail({ id, isOrgAdmin }: { id: string; isOrgAdmin: boole
   const [tab, setTab] = useState("info")
   const researchQ = useResearchList()
   const researches = (researchQ.data ?? []).map((r) => ({ id: r.id, name: r.name }))
+
+  // Acesso a um indivíduo pode terminar ENQUANTO a página está aberta: desfazendo o vínculo
+  // da única pesquisa que dava acesso a ele (logo abaixo, em ResearchShare), ou porque outra
+  // pessoa removeu esse vínculo/o usuário da pesquisa. Como a visibilidade é reavaliada no
+  // servidor a cada refetch, tratamos o 403/404 como "perdeu o acesso" e voltamos à lista —
+  // em vez de deixar a tela com dados obsoletos que não podem mais ser recarregados.
+  const status = animalQ.error instanceof ApiError ? animalQ.error.status : null
+  const lostAccess = status === 403 || status === 404
+  useEffect(() => {
+    if (!lostAccess) return
+    toast.info(t("accessEnded"))
+    router.replace("/app/animals")
+  }, [lostAccess, router, t])
 
   const sexLabel = (s: string | null) => {
     const o = SEX_OPTIONS.find((x) => x.value === s)
@@ -61,6 +78,7 @@ export function AnimalDetail({ id, isOrgAdmin }: { id: string; isOrgAdmin: boole
       </div>
     )
   }
+  if (lostAccess) return null
   if (!animal) {
     return <p className="p-8 text-sm text-muted-foreground">{t("notFound")}</p>
   }
@@ -170,7 +188,7 @@ export function AnimalDetail({ id, isOrgAdmin }: { id: string; isOrgAdmin: boole
                     ))}
                   </dl>
                   <div className="border-t pt-4">
-                    <ResearchShare animal={animal} />
+                    <ResearchShare animal={animal} isOrgAdmin={isOrgAdmin} />
                   </div>
                   {hasCoords && (
                     <div className="border-t pt-4">
@@ -205,7 +223,14 @@ export function AnimalDetail({ id, isOrgAdmin }: { id: string; isOrgAdmin: boole
                 <SamplesTab
                   animalId={id}
                   isOrgAdmin={isOrgAdmin}
-                  researches={[animal.research, ...animal.participations.map((p) => p.research)]}
+                  // Só as pesquisas que de fato participam: um convite pendente ainda não
+                  // pode ser dona de amostra.
+                  researches={[
+                    animal.research,
+                    ...animal.participations
+                      .filter((p) => p.status === "ACCEPTED")
+                      .map((p) => p.research),
+                  ]}
                 />
               </CardContent>
             </Card>

@@ -75,43 +75,72 @@ enum CatalogRequestStatus {
   REJECTED // recusada (duplicata, inválida etc.)
 }
 
+// Estado do compartilhamento de um indivíduo com OUTRA pesquisa (ver AnimalResearch).
+// O convite só vira acesso depois que a pesquisa de destino aceita: quem convida não
+// consegue empurrar dados para dentro do escopo alheio.
+enum AnimalResearchStatus {
+  PENDING // aguardando resposta do outro lado
+  ACCEPTED // participação efetiva: a pesquisa enxerga o indivíduo
+}
+
+// Quem começou o compartilhamento — define QUEM responde ao pedido pendente:
+//   INVITE  → partiu de quem já enxerga o indivíduo; decide a pesquisa CONVIDADA.
+//   REQUEST → partiu de quem quer o indivíduo; decide a pesquisa PRIMÁRIA do indivíduo.
+// Nos dois casos quem decide é o lado que ainda não consentiu.
+enum AnimalResearchOrigin {
+  INVITE
+  REQUEST
+}
+
+// Estado do pedido de um pesquisador para entrar numa pesquisa do próprio grupo.
+enum ResearchAccessRequestStatus {
+  PENDING // aguardando quem gere a pesquisa
+  APPROVED // aprovado → ResearchMember criado
+  REJECTED // recusado
+}
+
 // ─────────────────────────────────────────────────────────────
 // Organização e usuários
 // ─────────────────────────────────────────────────────────────
 
 model Organization {
-  id          String       @id @default(uuid())
-  name        String
+  id            String       @id @default(uuid())
+  name          String
   // Localização (opcional) — usada em relatórios geográficos e no mapa de encalhes.
-  city        String?
-  state       String? // UF / província
-  country     String?
+  city          String?
+  state         String? // UF / província
+  country       String?
   // Desativação: um grupo que fica SEM membros é desativado (deactivatedAt = data), não
   // excluído. Seus dados públicos continuam visíveis no mapa público (que filtra só por
   // isPublic). Readicionar um membro reativa (deactivatedAt = null). Ver docs/CADASTRO_E_ACESSO.md.
   deactivatedAt DateTime?
-  memberships Membership[]
-  researches  Research[]
-  createdAt   DateTime     @default(now())
+  memberships   Membership[]
+  researches    Research[]
+  createdAt     DateTime     @default(now())
 }
 
 model User {
   // id corresponde ao id do usuário no Supabase Auth (auth.users.id)
-  id            String       @id
-  email         String       @unique
-  name          String?
-  isSystemAdmin Boolean      @default(false)
-  status        UserStatus   @default(INVITED)
+  id                     String                  @id
+  email                  String                  @unique
+  name                   String?
+  isSystemAdmin          Boolean                 @default(false)
+  status                 UserStatus              @default(INVITED)
   // Aceite dos Termos de Uso (registrado ao solicitar acesso e ao aceitar convite).
-  termsVersion    String?
-  termsAcceptedAt DateTime?
-  memberships   Membership[]
-  researchesCreated Research[] @relation("ResearchCreator")
+  termsVersion           String?
+  termsAcceptedAt        DateTime?
+  memberships            Membership[]
+  researchesCreated      Research[]              @relation("ResearchCreator")
   // Pesquisas às quais o usuário está vinculado como pesquisador (escopo de visibilidade).
-  researchMemberships ResearchMember[]
-  feedbacks     Feedback[]   @relation("FeedbackAuthor")
-  catalogRequests CatalogRequest[] @relation("CatalogRequestAuthor")
-  createdAt     DateTime     @default(now())
+  researchMemberships    ResearchMember[]
+  // Pedidos de acesso a pesquisas: os que fez e os que revisou.
+  researchAccessRequests ResearchAccessRequest[] @relation("ResearchAccessRequester")
+  researchAccessReviews  ResearchAccessRequest[] @relation("ResearchAccessReviewer")
+  // Convites de compartilhamento de indivíduo que enviou.
+  animalSharesInvited    AnimalResearch[]        @relation("AnimalResearchInviter")
+  feedbacks              Feedback[]              @relation("FeedbackAuthor")
+  catalogRequests        CatalogRequest[]        @relation("CatalogRequestAuthor")
+  createdAt              DateTime                @default(now())
 }
 
 // Vínculo N:N entre usuário e organização, com o papel do usuário naquela org.
@@ -147,25 +176,27 @@ model JoinRequest {
 // ─────────────────────────────────────────────────────────────
 
 model Research {
-  id           String             @id @default(uuid())
-  name         String
-  description  String?
-  isPublic     Boolean            @default(false)
-  orgId        String
-  organization Organization       @relation(fields: [orgId], references: [id])
+  id             String                  @id @default(uuid())
+  name           String
+  description    String?
+  isPublic       Boolean                 @default(false)
+  orgId          String
+  organization   Organization            @relation(fields: [orgId], references: [id])
   // Autor (para a regra "pesquisador edita a própria criação"); SetNull se o usuário for removido.
-  createdById  String?
-  createdBy    User?              @relation("ResearchCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  createdById    String?
+  createdBy      User?                   @relation("ResearchCreator", fields: [createdById], references: [id], onDelete: SetNull)
   // Pesquisadores vinculados a esta pesquisa (escopo de visibilidade). O criador e o admin
   // da org têm acesso independentemente do vínculo (ver docs/PERMISSOES.md).
-  members      ResearchMember[]
-  protocols    ResearchProtocol[]
-  animals      Animal[]
+  members        ResearchMember[]
+  // Pedidos de pesquisadores do grupo para entrar nesta pesquisa.
+  accessRequests ResearchAccessRequest[]
+  protocols      ResearchProtocol[]
+  animals        Animal[]
   // Indivíduos compartilhados de outra pesquisa que esta também estuda (ver AnimalResearch).
-  animalLinks  AnimalResearch[]
+  animalLinks    AnimalResearch[]
   // Amostras coletadas por esta pesquisa (o indivíduo pode ter amostras de várias pesquisas).
-  samples      Sample[]
-  createdAt    DateTime           @default(now())
+  samples        Sample[]
+  createdAt      DateTime                @default(now())
 
   @@index([orgId])
   @@index([createdById])
@@ -263,17 +294,17 @@ model Pathogen {
 }
 
 model ExamType {
-  id          String             @id @default(uuid())
-  key         String             @unique // ex: "npcr"
-  name        Json // { pt: "nPCR", en: "nested PCR (nPCR)" }
+  id           String             @id @default(uuid())
+  key          String             @unique // ex: "npcr"
+  name         Json // { pt: "nPCR", en: "nested PCR (nPCR)" }
   // Medida quantitativa opcional do exame (ex.: Ct no qPCR, Título nas serologias, OD no
   // ELISA). measureLabel ausente = exame só qualitativo (sem valor). measureUnit é uma
   // anotação curta opcional (ex.: "ciclos"). Ver docs/BANCO_DE_DADOS.md.
   measureLabel Json? // { pt, en } — rótulo da coluna de valor na grade de análises
   measureUnit  String? // unidade/anotação curta opcional
-  createdById String?            @map("created_by_id")
-  protocols   ResearchProtocol[]
-  analyses    Analysis[]
+  createdById  String?            @map("created_by_id")
+  protocols    ResearchProtocol[]
+  analyses     Analysis[]
 
   @@index([createdById])
 }
@@ -283,7 +314,7 @@ model ExamType {
 // ─────────────────────────────────────────────────────────────
 
 model Animal {
-  id                 String        @id @default(uuid())
+  id                 String           @id @default(uuid())
   controlId          String? // ID de controle interno, único por organização (ver @@unique abaixo)
   simbaRecordNumber  String? // Identificador SIMBA, único por organização (ver @@unique abaixo)
   species            String? // NULL = espécie indeterminada (carcaça não identificável)
@@ -308,10 +339,10 @@ model Animal {
   state              String?
   eventDate          DateTime?
   macroscopicNotes   String? // "Exame externo" (occurrenceRemarks no SIMBA)
-  source             String        @default("manual")
-  isPublic           Boolean       @default(false)
+  source             String           @default("manual")
+  isPublic           Boolean          @default(false)
   researchId         String
-  research           Research      @relation(fields: [researchId], references: [id])
+  research           Research         @relation(fields: [researchId], references: [id])
   // Organização dona, denormalizada de research, para o controlId ser único POR ORG.
   // Definida na criação; a pesquisa (e portanto a org) do animal não muda depois.
   orgId              String
@@ -320,7 +351,7 @@ model Animal {
   // Pesquisas ADICIONAIS que também estudam este indivíduo (mesma org). A pesquisa
   // primária/criadora é `researchId`; o conjunto efetivo = {researchId} ∪ participations.
   participations     AnimalResearch[]
-  createdAt          DateTime      @default(now())
+  createdAt          DateTime         @default(now())
 
   @@unique([orgId, controlId])
   @@unique([orgId, simbaRecordNumber])
@@ -335,15 +366,60 @@ model Animal {
 // e análises. A pesquisa primária/criadora é `Animal.researchId`; esta tabela registra as
 // pesquisas ADICIONAIS (do MESMO grupo) que compartilham o indivíduo, sem duplicar a
 // identidade. Conjunto efetivo de pesquisas de um animal = {researchId} ∪ participations.
+//
+// O vínculo exige consentimento dos DOIS lados: nasce PENDING e só passa a valer quando o
+// lado que ainda não consentiu aceita (ver docs/PERMISSOES.md §Compartilhamento de indivíduo).
+// `origin` diz quem começou e, portanto, quem responde. Enquanto pendente, a pesquisa NÃO
+// enxerga o indivíduo — todo caminho de leitura filtra por ACCEPTED.
 model AnimalResearch {
-  animalId   String
-  animal     Animal   @relation(fields: [animalId], references: [id], onDelete: Cascade)
-  researchId String
-  research   Research @relation(fields: [researchId], references: [id], onDelete: Cascade)
-  createdAt  DateTime @default(now())
+  animalId    String
+  animal      Animal               @relation(fields: [animalId], references: [id], onDelete: Cascade)
+  researchId  String
+  research    Research             @relation(fields: [researchId], references: [id], onDelete: Cascade)
+  // Default ACCEPTED para que os vínculos anteriores ao convite continuem valendo e para o
+  // atalho do ORG_ADMIN (que já enxerga as duas pesquisas). O convite grava PENDING explícito.
+  status      AnimalResearchStatus @default(ACCEPTED)
+  origin      AnimalResearchOrigin @default(INVITE)
+  // Quem iniciou (SetNull se o usuário sair) — exibido para quem decide.
+  invitedById String?
+  invitedBy   User?                @relation("AnimalResearchInviter", fields: [invitedById], references: [id], onDelete: SetNull)
+  // Justificativa opcional de quem PEDE o indivíduo (origin = REQUEST).
+  message     String?
+  respondedAt DateTime?
+  createdAt   DateTime             @default(now())
 
   @@id([animalId, researchId])
   @@index([researchId])
+  // Suporta tanto o filtro de visibilidade (só ACCEPTED) quanto a caixa de convites.
+  @@index([researchId, status])
+  // Caixa de pedidos da pesquisa PRIMÁRIA: pendentes de um conjunto de animais.
+  @@index([status, origin])
+}
+
+// Pedido de um pesquisador para ser vinculado a uma pesquisa do próprio grupo.
+//
+// A LISTAGEM de pesquisas é aberta a todo membro da organização (catálogo: nome, descrição,
+// autor), mas os DADOS (animais, amostras, análises) continuam restritos a quem é membro da
+// pesquisa. Este pedido é a ponte entre os dois: quem gere a pesquisa (admin da org ou
+// criador) aprova e o ResearchMember é criado. Ver docs/PERMISSOES.md.
+model ResearchAccessRequest {
+  id           String                      @id @default(uuid())
+  researchId   String
+  research     Research                    @relation(fields: [researchId], references: [id], onDelete: Cascade)
+  userId       String
+  user         User                        @relation("ResearchAccessRequester", fields: [userId], references: [id], onDelete: Cascade)
+  // Justificativa opcional do solicitante.
+  message      String?
+  status       ResearchAccessRequestStatus @default(PENDING)
+  reviewedById String?
+  reviewedBy   User?                       @relation("ResearchAccessReviewer", fields: [reviewedById], references: [id], onDelete: SetNull)
+  reviewedAt   DateTime?
+  createdAt    DateTime                    @default(now())
+
+  // Um pedido por par: repetir um pedido recusado reabre a MESMA linha (volta a PENDING).
+  @@unique([researchId, userId])
+  @@index([researchId, status])
+  @@index([userId])
 }
 
 // Amostra física coletada durante a necrópsia
@@ -376,28 +452,28 @@ model Sample {
 }
 
 model Analysis {
-  id         String   @id @default(uuid())
-  sampleId   String
-  sample     Sample   @relation(fields: [sampleId], references: [id], onDelete: Cascade)
-  pathogenId String
-  pathogen   Pathogen @relation(fields: [pathogenId], references: [id])
-  examTypeId String
-  examType   ExamType @relation(fields: [examTypeId], references: [id])
-  result     Result? // NULL = ainda não testado
+  id               String           @id @default(uuid())
+  sampleId         String
+  sample           Sample           @relation(fields: [sampleId], references: [id], onDelete: Cascade)
+  pathogenId       String
+  pathogen         Pathogen         @relation(fields: [pathogenId], references: [id])
+  examTypeId       String
+  examType         ExamType         @relation(fields: [examTypeId], references: [id])
+  result           Result? // NULL = ainda não testado
   // Valor quantitativo conforme ExamType.measureLabel (ex.: Ct no qPCR, título nas
   // serologias). NULL quando não aplicável ou não medido.
-  measureValue Float? @map("ctValue")
-  notes      String?
+  measureValue     Float?           @map("ctValue")
+  notes            String?
   // Confirmação de espécie (ver docs/PLANO_CONFIRMACAO_SEQUENCIAMENTO.md):
   // NULL = análise de RASTREIO (aparece na grade, definida pelo protocolo). Preenchido = análise
   // de CONFIRMAÇÃO (sequenciamento) pendurada num rastreio POSITIVO; carrega a espécie resolvida
   // (pathogenId) e não exige entrada de ResearchProtocol. Cascade: apagar o rastreio apaga suas
   // confirmações (importante: deleteProtocolCascade mira o rastreio; os filhos caem por aqui).
-  parentAnalysisId String?    @map("parent_analysis_id")
-  parentAnalysis   Analysis?  @relation("AnalysisConfirmation", fields: [parentAnalysisId], references: [id], onDelete: Cascade)
-  confirmations    Analysis[] @relation("AnalysisConfirmation")
+  parentAnalysisId String?          @map("parent_analysis_id")
+  parentAnalysis   Analysis?        @relation("AnalysisConfirmation", fields: [parentAnalysisId], references: [id], onDelete: Cascade)
+  confirmations    Analysis[]       @relation("AnalysisConfirmation")
   sequences        SequenceRecord[]
-  createdAt  DateTime @default(now())
+  createdAt        DateTime         @default(now())
 
   @@unique([sampleId, pathogenId, examTypeId])
   @@index([sampleId])

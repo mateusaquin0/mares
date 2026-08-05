@@ -13,7 +13,7 @@ import { apiError, unauthorized } from "@/lib/api"
 import { createAnimalSchema } from "@/schemas/animal.schema"
 import {
   animalData,
-  animalDuplicateError,
+  animalDuplicateConflict,
   animalListSelect,
   assertResearchInOrg,
   toAnimalListItem,
@@ -107,9 +107,16 @@ export async function POST(req: NextRequest) {
       })
       return NextResponse.json(animal, { status: 201 })
     } catch (e) {
-      // Viola unique de controlId / simbaRecordNumber.
+      // Viola unique de controlId / simbaRecordNumber. Os identificadores são únicos por
+      // org, então o duplicado pode estar numa pesquisa que o usuário não enxerga — o erro
+      // nomeia a pesquisa nesse caso, senão ele não teria como localizar o registro.
       if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
-        throw animalDuplicateError(e)
+        throw await animalDuplicateConflict(e, {
+          orgId,
+          scope: await getResearchScope(user, orgId),
+          controlId: data.controlId,
+          simbaRecordNumber: data.simbaRecordNumber,
+        })
       }
       throw e
     }

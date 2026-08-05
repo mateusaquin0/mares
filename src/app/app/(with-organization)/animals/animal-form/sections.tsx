@@ -54,6 +54,8 @@ export function IdentificationSection({
   fetchingSimba,
   speciesIndet,
   toggleSpeciesIndet,
+  checkIdentifier,
+  checkingId,
 }: SectionProps & {
   mode: "create" | "edit"
   researches: ResearchOption[]
@@ -61,6 +63,8 @@ export function IdentificationSection({
   fetchingSimba: boolean
   speciesIndet: boolean
   toggleSpeciesIndet: () => void
+  checkIdentifier: (field: "controlId" | "simbaRecordNumber") => void
+  checkingId: boolean
 }) {
   const t = useTranslations("animals")
 
@@ -136,14 +140,32 @@ export function IdentificationSection({
       </Field>
 
       <div className="grid grid-cols-2 gap-3">
-        <TextField
-          id="controlId"
-          label={t("controlId")}
-          value={form.controlId}
-          error={errors.controlId}
-          maxLength={LIMITS.shortText}
-          onChange={(v) => set({ controlId: v })}
-        />
+        {/* O ID de controle é único por ORGANIZAÇÃO, mas a listagem é filtrada por pesquisa:
+            a lupa confere se o identificador já existe no grupo antes de a pessoa preencher
+            o resto do formulário — inclusive em pesquisas que ela não enxerga. */}
+        <Field htmlFor="controlId" label={t("controlId")} error={errors.controlId}>
+          <div className="flex items-center gap-2">
+            <Input
+              id="controlId"
+              value={form.controlId}
+              maxLength={LIMITS.shortText}
+              aria-invalid={!!errors.controlId || undefined}
+              onChange={(e) => set({ controlId: e.target.value })}
+            />
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              className="shrink-0"
+              onClick={() => checkIdentifier("controlId")}
+              loading={checkingId}
+              disabled={!form.controlId.trim()}
+              title={t("idCheck")}
+            >
+              {!checkingId && <Search className="size-4" />}
+            </Button>
+          </div>
+        </Field>
         <Field
           htmlFor="simba"
           label={t("simbaRecordNumber")}

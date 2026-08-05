@@ -59,13 +59,25 @@ describe("buildAnimalWhere", () => {
     expect(andOf(where)[0]).toEqual({ research: { orgId: "org1" } })
   })
 
-  it("restringe às pesquisas do escopo (primária ou participação)", () => {
+  // A participação só conta quando ACEITA: um convite pendente não pode fazer o indivíduo
+  // aparecer na listagem de quem ainda não respondeu (ver src/lib/animal-participation.ts).
+  it("restringe às pesquisas do escopo (primária ou participação ACEITA)", () => {
     const where = buildAnimalWhere("org1", ["r1", "r2"], parse(""))
-    expect(andOf(where)[0]).toMatchObject({
+    expect(andOf(where)[0]).toEqual({
       research: { orgId: "org1" },
       OR: [
         { researchId: { in: ["r1", "r2"] } },
-        { participations: { some: { researchId: { in: ["r1", "r2"] } } } },
+        { participations: { some: { researchId: { in: ["r1", "r2"] }, status: "ACCEPTED" } } },
+      ],
+    })
+  })
+
+  it("o filtro por pesquisa também ignora convites pendentes", () => {
+    const and = andOf(buildAnimalWhere("org1", undefined, parse("research=r9")))
+    expect(and).toContainEqual({
+      OR: [
+        { researchId: { in: ["r9"] } },
+        { participations: { some: { researchId: { in: ["r9"] }, status: "ACCEPTED" } } },
       ],
     })
   })

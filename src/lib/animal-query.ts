@@ -3,6 +3,7 @@
 
 import { Prisma } from "@prisma/client"
 
+import { inResearches } from "@/lib/animal-participation"
 import type { AnimalSortKey } from "@/types/animal"
 
 export const ANIMAL_PAGE_SIZES = [10, 20, 30] as const
@@ -102,10 +103,7 @@ export function animalResultsSearchWhere(q: string): Prisma.AnimalWhereInput | n
 export function animalScopeWhere(orgId: string, scopeIds?: string[]): Prisma.AnimalWhereInput {
   const where: Prisma.AnimalWhereInput = { research: { orgId } }
   if (scopeIds) {
-    where.OR = [
-      { researchId: { in: scopeIds } },
-      { participations: { some: { researchId: { in: scopeIds } } } },
-    ]
+    where.OR = inResearches(scopeIds)
   }
   return where
 }
@@ -123,14 +121,9 @@ export function buildAnimalWhere(
   if (f.lifeStage.length) and.push({ lifeStage: { in: f.lifeStage } })
   if (f.state.length) and.push({ state: { in: f.state } })
 
-  // Pesquisa: considera primária OU participação (compartilhamento do indivíduo).
+  // Pesquisa: considera primária OU participação aceita (compartilhamento do indivíduo).
   if (f.research.length) {
-    and.push({
-      OR: [
-        { researchId: { in: f.research } },
-        { participations: { some: { researchId: { in: f.research } } } },
-      ],
-    })
+    and.push({ OR: inResearches(f.research) })
   }
 
   // Patógeno positivo: existe amostra com análise POSITIVO para o patógeno.

@@ -1,17 +1,23 @@
 "use client"
 
-// MARES — Compartilhamento de um indivíduo entre pesquisas do mesmo grupo (Etapa 1).
-// Exibe a pesquisa primária + as participações e permite adicionar/remover pesquisas da org.
-// Cada pesquisa mantém suas próprias amostras/análises sobre o indivíduo (grade por pesquisa
-// na Etapa 2). Aqui tratamos apenas o vínculo (quem estuda o indivíduo).
+// MARES — Compartilhamento de um indivíduo entre pesquisas do mesmo grupo.
+//
+// Exibe a pesquisa primária, as participações ACEITAS e os pedidos ainda PENDENTES, e permite
+// envolver outra pesquisa do grupo. O destino sai do CATÁLOGO (todas as pesquisas da org), não
+// do escopo do usuário: era justamente isso que travava quem só participa da própria pesquisa.
+//
+// O vínculo só passa a valer quando o outro lado aceita — quem convida não decide sozinho.
+// Cada pesquisa mantém suas próprias amostras/análises sobre o indivíduo; aqui tratamos
+// apenas o vínculo (quem estuda o indivíduo).
 
+import * as React from "react"
 import { useMemo, useState } from "react"
 import { useTranslations } from "next-intl"
 import { toast } from "sonner"
-import { X } from "lucide-react"
+import { Clock, X } from "lucide-react"
 
-import { useResearchList } from "@/hooks/use-research"
-import { useAddAnimalResearch, useRemoveAnimalResearch } from "@/hooks/use-animals"
+import { useResearchCatalog, useResearchList } from "@/hooks/use-research"
+import { useShareAnimal, useRemoveAnimalResearch } from "@/hooks/use-animals"
 import { useErrorMessage } from "@/lib/use-error-message"
 import type { AnimalDetail } from "@/types/animal"
 import { Badge } from "@/components/ui/badge"
@@ -24,75 +30,125 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 
-export function ResearchShare({ animal }: { animal: AnimalDetail }) {
+export function ResearchShare({
+  animal,
+  isOrgAdmin,
+}: {
+  animal: AnimalDetail
+  isOrgAdmin: boolean
+}) {
   const t = useTranslations("animals")
   const em = useErrorMessage()
-  const researchQ = useResearchList()
-  const addM = useAddAnimalResearch(animal.id)
+  const catalogQ = useResearchCatalog()
+  // Pesquisas do PRÓPRIO escopo (não o catálogo): definem o que o usuário pode desfazer.
+  const myResearchQ = useResearchList()
+  const shareM = useShareAnimal(animal.id)
   const removeM = useRemoveAnimalResearch(animal.id)
   const [toAdd, setToAdd] = useState("")
 
-  const participations = animal.participations.map((p) => p.research)
-  // IDs já vinculados (primária + participações) — excluídos das opções de adicionar.
+  const accepted = animal.participations.filter((p) => p.status === "ACCEPTED")
+  const pending = animal.participations.filter((p) => p.status === "PENDING")
+
+  // Desfazer um vínculo é prerrogativa dos DOIS lados dele — a pesquisa de origem do indivíduo e
+  // a pesquisa vinculada — nunca de uma terceira que apenas também estuda o indivíduo. O
+  // servidor aplica essa regra (ver DELETE .../researches/[researchId]); aqui só evitamos
+  // oferecer um botão que responderia 403.
+  const mine = useMemo(() => new Set((myResearchQ.data ?? []).map((r) => r.id)), [myResearchQ.data])
+  const ownsAnimal = isOrgAdmin || mine.has(animal.research.id)
+  const canUnlink = (researchId: string) => ownsAnimal || mine.has(researchId)
+
+  // IDs já envolvidos (primária + participações + pendentes) — fora das opções de adicionar.
   const linkedIds = useMemo(
-    () => new Set([animal.research.id, ...participations.map((r) => r.id)]),
-    [animal.research.id, participations],
+    () => new Set([animal.research.id, ...animal.participations.map((p) => p.research.id)]),
+    [animal.research.id, animal.participations],
   )
-  const available = (researchQ.data ?? []).filter((r) => !linkedIds.has(r.id))
+  const available = (catalogQ.data ?? []).filter((r) => !linkedIds.has(r.id))
 
   async function add() {
     if (!toAdd) return
     try {
-      await addM.mutateAsync(toAdd)
+      const { status } = await shareM.mutateAsync({ researchId: toAdd })
       setToAdd("")
-      toast.success(t("shareAdded"))
+      // Compartilhar com uma pesquisa que o próprio usuário integra vale na hora; com uma
+      // pesquisa de terceiros, fica aguardando o aceite dela.
+      toast.success(status === "ACCEPTED" ? t("shareAdded") : t("shareInviteSent"))
     } catch (err) {
       toast.error(t("shareError"), { description: em(err) })
     }
   }
 
-  async function remove(researchId: string) {
+  async function remove(researchId: string, wasPending: boolean) {
     try {
       await removeM.mutateAsync(researchId)
-      toast.success(t("shareRemoved"))
+      toast.success(wasPending ? t("shareInviteCanceled") : t("shareRemoved"))
     } catch (err) {
       toast.error(t("shareError"), { description: em(err) })
     }
   }
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       <div>
         <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
           {t("shareTitle")}
         </p>
-        <p className="text-xs text-muted-foreground">{t("shareDesc")}</p>
+        <p className="mt-0.5 text-xs text-muted-foreground">{t("shareDesc")}</p>
       </div>
 
-      <div className="flex flex-wrap items-center gap-2">
-        <Badge variant="secondary" className="gap-1.5">
-          {animal.research.name}
-          <span className="text-[10px] font-normal uppercase opacity-70">{t("sharePrimary")}</span>
-        </Badge>
-        {participations.map((r) => (
-          <Badge key={r.id} variant="outline" className="gap-1 pr-1">
-            {r.name}
-            <button
-              type="button"
-              onClick={() => remove(r.id)}
-              disabled={removeM.isPending}
-              className="rounded-full p-0.5 text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-50"
-              aria-label={t("shareRemove")}
-              title={t("shareRemove")}
+      {/* Três grupos rotulados em vez de uma fileira única de selos: sem o rótulo, "de origem",
+          "também estuda" e "ainda não respondeu" viram a mesma coisa aos olhos. */}
+      <div className="grid gap-4 sm:grid-cols-2">
+        <ShareGroup label={t("sharePrimaryLabel")}>
+          <Badge variant="secondary">{animal.research.name}</Badge>
+        </ShareGroup>
+
+        <ShareGroup
+          label={t("shareAlsoLabel")}
+          empty={accepted.length === 0 ? t("shareNone") : null}
+        >
+          {accepted.map((p) => (
+            <Badge
+              key={p.research.id}
+              variant="outline"
+              className={canUnlink(p.research.id) ? "gap-1 pr-1" : undefined}
             >
-              <X className="size-3" />
-            </button>
-          </Badge>
-        ))}
+              {p.research.name}
+              {canUnlink(p.research.id) && (
+                <RemoveButton
+                  label={t("shareRemove")}
+                  disabled={removeM.isPending}
+                  onClick={() => remove(p.research.id, false)}
+                />
+              )}
+            </Badge>
+          ))}
+        </ShareGroup>
+
+        {pending.length > 0 && (
+          <ShareGroup label={t("sharePendingLabel")} hint={t("sharePendingHint")}>
+            {pending.map((p) => (
+              <Badge
+                key={p.research.id}
+                variant="outline"
+                className="gap-1 border-dashed pr-1 text-muted-foreground"
+              >
+                <Clock className="size-3" />
+                {p.research.name}
+                {canUnlink(p.research.id) && (
+                  <RemoveButton
+                    label={t("shareInviteCancel")}
+                    disabled={removeM.isPending}
+                    onClick={() => remove(p.research.id, true)}
+                  />
+                )}
+              </Badge>
+            ))}
+          </ShareGroup>
+        )}
       </div>
 
       {available.length > 0 && (
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2 border-t pt-3">
           <Select value={toAdd} onValueChange={setToAdd}>
             <SelectTrigger className="h-9 w-64">
               <SelectValue placeholder={t("shareAddPlaceholder")} />
@@ -105,11 +161,60 @@ export function ResearchShare({ animal }: { animal: AnimalDetail }) {
               ))}
             </SelectContent>
           </Select>
-          <Button size="sm" variant="outline" onClick={add} disabled={!toAdd || addM.isPending}>
+          <Button size="sm" variant="outline" onClick={add} disabled={!toAdd || shareM.isPending}>
             {t("shareAddButton")}
           </Button>
         </div>
       )}
     </div>
+  )
+}
+
+// Um grupo rotulado de selos (de origem / também estudam / em aberto).
+function ShareGroup({
+  label,
+  hint,
+  empty,
+  children,
+}: {
+  label: string
+  hint?: string
+  empty?: string | null
+  children: React.ReactNode
+}) {
+  return (
+    <div className="flex flex-col gap-1.5">
+      <p className="text-xs text-muted-foreground" title={hint}>
+        {label}
+      </p>
+      {empty ? (
+        <span className="text-sm text-muted-foreground">{empty}</span>
+      ) : (
+        <div className="flex flex-wrap items-center gap-2">{children}</div>
+      )}
+    </div>
+  )
+}
+
+function RemoveButton({
+  label,
+  disabled,
+  onClick,
+}: {
+  label: string
+  disabled: boolean
+  onClick: () => void
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      className="rounded-full p-0.5 text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-50"
+      aria-label={label}
+      title={label}
+    >
+      <X className="size-3" />
+    </button>
   )
 }

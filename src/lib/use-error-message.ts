@@ -13,8 +13,11 @@ export function useErrorMessage() {
     const b = (input instanceof ApiError ? input.body : input) as {
       code?: string
       error?: unknown
+      params?: Record<string, string>
     } | null
-    if (b?.code && KNOWN_ERROR_CODES.has(b.code)) return te(b.code)
+    // `params` interpola placeholders ICU da mensagem (ex.: `{research}`); ausente na
+    // maioria dos códigos, que são textos fixos.
+    if (b?.code && KNOWN_ERROR_CODES.has(b.code)) return te(b.code, b.params)
     return typeof b?.error === "string" ? b.error : undefined
   }
 }
