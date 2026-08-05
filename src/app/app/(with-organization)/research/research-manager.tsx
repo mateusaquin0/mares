@@ -2,14 +2,11 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { useForm } from "react-hook-form"
-import { zodResolver } from "@hookform/resolvers/zod"
 import { useTranslations } from "next-intl"
 import { toast } from "sonner"
 import { MoreHorizontal, Plus, Search, Globe, Lock, Clock, CircleAlert } from "lucide-react"
 
-import { createResearchSchema, type CreateResearchData } from "@/schemas/research.schema"
-import { LIMITS } from "@/schemas/limits"
+import { type CreateResearchData } from "@/schemas/research.schema"
 import {
   useResearchCatalog,
   useCreateResearch,
@@ -20,13 +17,10 @@ import {
 } from "@/hooks/use-research"
 import type { ResearchCatalogItem } from "@/types/research"
 import { AccessRequestsDialog } from "./access-requests-dialog"
+import { ResearchFormDialog } from "./research-form-dialog"
 import { useErrorMessage } from "@/lib/use-error-message"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { CharCounter } from "@/components/ui/char-counter"
-import { Checkbox } from "@/components/ui/checkbox"
 import { Badge } from "@/components/ui/badge"
 import { TableSkeleton } from "@/components/ui/skeleton"
 import { ConfirmDialog } from "@/components/confirm-dialog"
@@ -41,14 +35,6 @@ import {
 } from "@/components/ui/table"
 import { Truncate } from "@/components/ui/truncate"
 import { ReloadButton } from "@/components/ui/reload-button"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -107,7 +93,6 @@ function AccessCell({
 export function ResearchManager({ isOrgAdmin, selfId }: { isOrgAdmin: boolean; selfId: string }) {
   const t = useTranslations("research")
   const tc = useTranslations("common")
-  const tval = useTranslations("validation")
   const em = useErrorMessage()
   const router = useRouter()
   // Catálogo: TODAS as pesquisas do grupo. Quem não é membro vê os metadados e pode pedir
@@ -128,20 +113,17 @@ export function ResearchManager({ isOrgAdmin, selfId }: { isOrgAdmin: boolean; s
   const requestM = useRequestResearchAccess()
   const leaveM = useLeaveResearch()
 
-  const form = useForm<CreateResearchData>({
-    resolver: zodResolver(createResearchSchema),
-    defaultValues: { name: "", description: "", isPublic: false },
-  })
+  const editingValues = editing
+    ? { name: editing.name, description: editing.description ?? "", isPublic: editing.isPublic }
+    : undefined
 
   function openCreate() {
     setEditing(null)
-    form.reset({ name: "", description: "", isPublic: false })
     setOpen(true)
   }
 
   function openEdit(r: ResearchCatalogItem) {
     setEditing(r)
-    form.reset({ name: r.name, description: r.description ?? "", isPublic: r.isPublic })
     setOpen(true)
   }
 
@@ -150,7 +132,6 @@ export function ResearchManager({ isOrgAdmin, selfId }: { isOrgAdmin: boolean; s
       if (editing) {
         await updateM.mutateAsync(data)
         toast.success(t("edited"))
-        form.reset({ name: "", description: "", isPublic: false })
         setOpen(false)
         setEditing(null)
         return
@@ -354,71 +335,17 @@ export function ResearchManager({ isOrgAdmin, selfId }: { isOrgAdmin: boolean; s
         />
       )}
 
-      <Dialog
+      <ResearchFormDialog
         open={open}
         onOpenChange={(o) => {
           setOpen(o)
           if (!o) setEditing(null)
         }}
-      >
-        <DialogContent dirty={form.formState.isDirty}>
-          <DialogHeader>
-            <DialogTitle>{editing ? t("editTitle") : t("createTitle")}</DialogTitle>
-            <DialogDescription>{t("createDesc")}</DialogDescription>
-          </DialogHeader>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <div className="space-y-1">
-              <Label htmlFor="name">{t("nameLabel")}</Label>
-              <Input id="name" maxLength={LIMITS.name} {...form.register("name")} />
-              {form.formState.errors.name && (
-                <p className="text-xs text-destructive">
-                  {tval(form.formState.errors.name.message!)}
-                </p>
-              )}
-            </div>
-            <div className="space-y-1">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="description">{t("descriptionLabel")}</Label>
-                <CharCounter value={form.watch("description")} max={LIMITS.longText} />
-              </div>
-              <Textarea
-                id="description"
-                rows={3}
-                maxLength={LIMITS.longText}
-                {...form.register("description")}
-              />
-            </div>
-            {isOrgAdmin && (
-              <div className="flex items-start gap-2">
-                <Checkbox
-                  id="isPublic"
-                  checked={form.watch("isPublic")}
-                  onCheckedChange={(v) => form.setValue("isPublic", v === true)}
-                  className="mt-0.5"
-                />
-                <Label htmlFor="isPublic" className="text-sm font-normal text-muted-foreground">
-                  {t("isPublicHint")}
-                </Label>
-              </div>
-            )}
-            <DialogFooter>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => {
-                  setOpen(false)
-                  setEditing(null)
-                }}
-              >
-                {tc("cancel")}
-              </Button>
-              <Button type="submit" loading={form.formState.isSubmitting}>
-                {editing ? tc("save") : t("create")}
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
+        // Na criação o usuário é o próprio criador; na edição, precisa ser admin ou autor.
+        canEditVisibility={!editing || isOrgAdmin || editing.createdById === selfId}
+        initial={editingValues}
+        onSubmit={onSubmit}
+      />
     </div>
   )
 }
