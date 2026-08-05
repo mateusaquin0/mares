@@ -506,12 +506,12 @@ model SequenceRecord {
 
 // Arquivos anexados a um animal (fotos de campo, microscopia, laudos PDF)
 model AnimalMedia {
-  id       String @id @default(uuid())
-  animalId String
-  animal   Animal @relation(fields: [animalId], references: [id], onDelete: Cascade)
-  url      String // URL no Supabase Storage
-  mimeType String // "image/jpeg", "application/pdf" etc.
-  label    String? // descrição livre
+  id           String   @id @default(uuid())
+  animalId     String
+  animal       Animal   @relation(fields: [animalId], references: [id], onDelete: Cascade)
+  url          String // URL no Supabase Storage
+  mimeType     String // "image/jpeg", "application/pdf" etc.
+  label        String? // descrição livre
   // Autor do upload (para a regra "quem enviou pode excluir"); SetNull se o usuário for
   // removido. Nulo também nos arquivos anteriores a esta coluna — só admin os exclui.
   uploadedById String?
@@ -535,7 +535,9 @@ model AuditLog {
   @@index([entity, entityId])
 }
 
-// Sugestões e relatos de bug enviados por usuários autenticados; visíveis ao admin global.
+// Sugestões e relatos de bug enviados por usuários autenticados; triados pelo admin global.
+// O autor acompanha os próprios envios em /app/feedback: vê status e `resolutionNote`, NUNCA
+// `adminNote`. Descartar (WONT_FIX) exige justificativa — ver docs/FEEDBACK.md.
 model Feedback {
   id             String         @id @default(uuid())
   type           FeedbackType
@@ -543,7 +545,12 @@ model Feedback {
   message        String
   pageUrl        String? // de onde o usuário enviou (contexto)
   status         FeedbackStatus @default(NEW)
-  adminNote      String? // anotação do admin ao triar
+  adminNote      String? // anotação INTERNA do admin (nunca exposta ao autor)
+  // Resposta ao autor, visível para ele. Obrigatória quando o status é WONT_FIX.
+  resolutionNote String?
+  // Quem triou por último e quando (trilha de auditoria; sem FK, igual a CatalogRequest).
+  reviewedById   String?
+  reviewedAt     DateTime?
   // Autor; SetNull para preservar o histórico se o usuário for removido.
   createdById    String?
   createdBy      User?          @relation("FeedbackAuthor", fields: [createdById], references: [id], onDelete: SetNull)
@@ -554,6 +561,8 @@ model Feedback {
 
   @@index([status])
   @@index([createdAt])
+  // Listagem "meus envios" (autor, mais novo → mais antigo).
+  @@index([createdById, createdAt])
 }
 
 // Solicitação de inclusão de item no glossário global aberta por um pesquisador.

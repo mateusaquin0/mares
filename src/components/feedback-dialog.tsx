@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { toast } from "sonner"
@@ -159,6 +160,14 @@ export function FeedbackDialog({ collapsed }: { collapsed?: boolean }) {
           </div>
 
           <DialogFooter>
+            {/* Atalho para acompanhar o que já foi enviado (status + resposta). */}
+            <Link
+              href="/app/feedback"
+              onClick={() => setOpen(false)}
+              className="mr-auto self-center text-xs text-muted-foreground underline-offset-4 hover:underline"
+            >
+              {t("seeMine")}
+            </Link>
             <Button
               type="button"
               variant="ghost"

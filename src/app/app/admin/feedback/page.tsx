@@ -9,6 +9,8 @@ import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
 import { TableSkeleton } from "@/components/ui/skeleton"
 import { ReloadButton } from "@/components/ui/reload-button"
 import {
@@ -36,9 +38,11 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import { FEEDBACK_RESOLUTION_MAX, FEEDBACK_RESOLUTION_MIN } from "@/schemas/feedback.schema"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -84,13 +88,67 @@ export default function AdminFeedbackPage() {
 
   const updateM = useUpdateFeedback()
   const [busy, setBusy] = useState<string | null>(null)
-  const [selected, setSelected] = useState<FeedbackItem | null>(null)
+  // Guarda o id (não o objeto): assim o modal reflete o item recarregado após cada triagem.
+  const [selectedId, setSelectedId] = useState<string | null>(null)
+  const selected = selectedId ? (all.find((f) => f.id === selectedId) ?? null) : null
+
+  // Edição da resposta ao autor, dentro do modal de detalhes.
+  const [editingNote, setEditingNote] = useState(false)
+  const [noteDraft, setNoteDraft] = useState("")
+  // Descarte: exige justificativa, então passa por um diálogo próprio (nunca em um clique).
+  const [discardId, setDiscardId] = useState<string | null>(null)
+  const [discardNote, setDiscardNote] = useState("")
+
+  // Enquanto o feedback está descartado, a resposta não pode ficar vazia/curta — o botão
+  // de salvar já reflete a regra que o servidor aplica.
+  const resolutionTooShort =
+    selected?.status === "WONT_FIX" && noteDraft.trim().length < FEEDBACK_RESOLUTION_MIN
+  const discardTooShort = discardNote.trim().length < FEEDBACK_RESOLUTION_MIN
 
   async function setStatus(id: string, status: FeedbackStatus) {
     setBusy(id)
     try {
       await updateM.mutateAsync({ id, status })
       toast.success(t("updated"))
+    } catch (err) {
+      toast.error(t("opError"), { description: em(err) })
+    } finally {
+      setBusy(null)
+    }
+  }
+
+  // Abre o diálogo de descarte já com a resposta atual (se houver) para o admin completar.
+  function openDiscard(f: FeedbackItem) {
+    setDiscardId(f.id)
+    setDiscardNote(f.resolutionNote ?? "")
+  }
+
+  async function confirmDiscard() {
+    if (!discardId) return
+    setBusy(discardId)
+    try {
+      await updateM.mutateAsync({
+        id: discardId,
+        status: "WONT_FIX",
+        resolutionNote: discardNote.trim(),
+      })
+      toast.success(t("discarded"))
+      setDiscardId(null)
+      setDiscardNote("")
+    } catch (err) {
+      toast.error(t("opError"), { description: em(err) })
+    } finally {
+      setBusy(null)
+    }
+  }
+
+  async function saveResolution() {
+    if (!selected) return
+    setBusy(selected.id)
+    try {
+      await updateM.mutateAsync({ id: selected.id, resolutionNote: noteDraft.trim() || null })
+      toast.success(t("resolutionSaved"))
+      setEditingNote(false)
     } catch (err) {
       toast.error(t("opError"), { description: em(err) })
     } finally {
@@ -202,7 +260,7 @@ export default function AdminFeedbackPage() {
                 {items.map((f) => (
                   <TableRow
                     key={f.id}
-                    onClick={() => setSelected(f)}
+                    onClick={() => setSelectedId(f.id)}
                     className="cursor-pointer"
                     title={t("viewDetails")}
                   >
@@ -235,11 +293,19 @@ export default function AdminFeedbackPage() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          {STATUSES.filter((s) => s !== f.status).map((s) => (
-                            <DropdownMenuItem key={s} onSelect={() => setStatus(f.id, s)}>
-                              {t("setStatus", { status: t(`status_${s}`) })}
-                            </DropdownMenuItem>
-                          ))}
+                          {STATUSES.filter((s) => s !== f.status).map((s) =>
+                            // Descartar abre o diálogo (justificativa obrigatória); os demais
+                            // status seguem em um clique.
+                            s === "WONT_FIX" ? (
+                              <DropdownMenuItem key={s} onSelect={() => openDiscard(f)}>
+                                {t("discard")}
+                              </DropdownMenuItem>
+                            ) : (
+                              <DropdownMenuItem key={s} onSelect={() => setStatus(f.id, s)}>
+                                {t("setStatus", { status: t(`status_${s}`) })}
+                              </DropdownMenuItem>
+                            ),
+                          )}
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>
@@ -252,7 +318,14 @@ export default function AdminFeedbackPage() {
       )}
 
       {/* Modal de detalhes (clique na linha) */}
-      <Dialog open={!!selected} onOpenChange={(o) => !o && setSelected(null)}>
+      <Dialog
+        open={!!selected}
+        onOpenChange={(o) => {
+          if (o) return
+          setSelectedId(null)
+          setEditingNote(false)
+        }}
+      >
         <DialogContent>
           {selected && (
             <>
@@ -299,11 +372,94 @@ export default function AdminFeedbackPage() {
                   </div>
                 </section>
 
+                {/* Resposta ao autor: editável em QUALQUER status; obrigatória em WONT_FIX
+                    (o servidor recusa deixá-la vazia enquanto o feedback estiver descartado). */}
+                <section>
+                  <div className="mb-1.5 flex flex-wrap items-center gap-2">
+                    <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                      {t("detailResolution")}
+                    </h3>
+                    <Badge variant="outline">{t("resolutionVisible")}</Badge>
+                    {!editingNote && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="ml-auto h-7"
+                        onClick={() => {
+                          setNoteDraft(selected.resolutionNote ?? "")
+                          setEditingNote(true)
+                        }}
+                      >
+                        {t("edit")}
+                      </Button>
+                    )}
+                  </div>
+
+                  {editingNote ? (
+                    <div className="space-y-2">
+                      <Textarea
+                        value={noteDraft}
+                        onChange={(e) => setNoteDraft(e.target.value)}
+                        placeholder={t("resolutionPlaceholder")}
+                        maxLength={FEEDBACK_RESOLUTION_MAX}
+                        rows={4}
+                      />
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="text-xs text-muted-foreground">
+                          {noteDraft.trim().length}/{FEEDBACK_RESOLUTION_MAX}
+                        </span>
+                        {resolutionTooShort && (
+                          <span className="text-xs text-destructive">
+                            {t("resolutionMin", { min: FEEDBACK_RESOLUTION_MIN })}
+                          </span>
+                        )}
+                        <div className="ml-auto flex gap-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setEditingNote(false)}
+                            disabled={busy === selected.id}
+                          >
+                            {t("cancel")}
+                          </Button>
+                          <Button
+                            size="sm"
+                            onClick={saveResolution}
+                            loading={busy === selected.id}
+                            disabled={resolutionTooShort}
+                          >
+                            {t("save")}
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <p
+                      className={cn(
+                        "whitespace-pre-wrap text-sm leading-relaxed [overflow-wrap:anywhere]",
+                        !selected.resolutionNote && "text-muted-foreground",
+                      )}
+                    >
+                      {selected.resolutionNote || t("resolutionEmpty")}
+                    </p>
+                  )}
+
+                  {selected.reviewedAt && (
+                    <p className="mt-1.5 text-xs text-muted-foreground">
+                      {t("reviewedAt", { date: fmtDate(selected.reviewedAt) })}
+                    </p>
+                  )}
+                </section>
+
+                {/* Anotação interna do admin — nunca sai para o autor (ver mineSelect). */}
                 {selected.adminNote && (
                   <section>
-                    <h3 className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                      {t("detailAdminNote")}
-                    </h3>
+                    <div className="mb-1.5 flex flex-wrap items-center gap-2">
+                      <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                        {t("detailAdminNote")}
+                      </h3>
+                      <Badge variant="faded">{t("adminNoteVisible")}</Badge>
+                    </div>
                     <p className="whitespace-pre-wrap text-sm leading-relaxed [overflow-wrap:anywhere]">
                       {selected.adminNote}
                     </p>
@@ -323,6 +479,64 @@ export default function AdminFeedbackPage() {
               </div>
             </>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Descarte: só conclui com justificativa, que o autor lê em /app/feedback. */}
+      <Dialog
+        open={!!discardId}
+        onOpenChange={(o) => {
+          if (o) return
+          setDiscardId(null)
+          setDiscardNote("")
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t("discardTitle")}</DialogTitle>
+            <DialogDescription>{t("discardDesc")}</DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <Label htmlFor="discard-note">{t("detailResolution")}</Label>
+              <span className="text-xs text-muted-foreground">
+                {discardNote.trim().length}/{FEEDBACK_RESOLUTION_MAX}
+              </span>
+            </div>
+            <Textarea
+              id="discard-note"
+              value={discardNote}
+              onChange={(e) => setDiscardNote(e.target.value)}
+              placeholder={t("resolutionPlaceholder")}
+              maxLength={FEEDBACK_RESOLUTION_MAX}
+              rows={4}
+              autoFocus
+            />
+            {discardTooShort && (
+              <p className="text-xs text-muted-foreground">
+                {t("resolutionMin", { min: FEEDBACK_RESOLUTION_MIN })}
+              </p>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="ghost"
+              onClick={() => setDiscardId(null)}
+              disabled={busy === discardId}
+            >
+              {t("cancel")}
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={confirmDiscard}
+              loading={busy === discardId}
+              disabled={discardTooShort}
+            >
+              {t("discardConfirm")}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
