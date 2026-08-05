@@ -50,14 +50,11 @@ export function PendingSharesDialog() {
       </Button>
 
       <Dialog open={open} onOpenChange={setOpen}>
-        {/* Mais largo que o padrão (max-w-lg): cada linha é um selo + uma frase + duas
-            ações, que no tamanho padrão quebram em três linhas. */}
         <DialogContent className="sm:max-w-3xl">
           <DialogHeader>
             <DialogTitle>{t("sharesQueueTitle")}</DialogTitle>
             <DialogDescription>{t("sharesQueueDesc")}</DialogDescription>
           </DialogHeader>
-          {/* DialogBody: a fila pode ter muitas pendências — só a lista rola, o cabeçalho fica. */}
           <DialogBody>
             <ul className="divide-y">
               {items.map((s) => (
@@ -121,7 +118,6 @@ function ShareRow({ share, onDone }: { share: PendingShare; onDone: () => void }
         </p>
         {share.message && <p className="text-xs text-muted-foreground">{share.message}</p>}
       </div>
-      {/* shrink-0: a folga sobra para o texto, não para as ações. */}
       <div className="flex shrink-0 items-center gap-2">
         <Button size="sm" variant="outline" onClick={() => respond(true)} disabled={busy}>
           <Check className="size-4" />

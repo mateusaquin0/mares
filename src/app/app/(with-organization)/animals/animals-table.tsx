@@ -7,6 +7,7 @@ import { toast } from "sonner"
 import { Download, Globe, Lock, MoreHorizontal, X } from "lucide-react"
 
 import type { AnimalFacets, AnimalListItem, AnimalListQuery, AnimalSortKey } from "@/types/animal"
+import { cn } from "@/lib/utils"
 import { formatDateOnly } from "@/lib/date"
 import { SEX_OPTIONS, LIFE_STAGE_OPTIONS } from "@/lib/animal-enums"
 import { downloadAnimalsExport, type ExportFormat } from "@/lib/export-download"
@@ -227,7 +228,6 @@ export function AnimalsTable({
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-3">
-      {/* Barra de filtros estruturados */}
       <div className="flex flex-wrap items-end gap-3 rounded-xl border bg-card p-3 shadow-card">
         {filterField(
           t("filterSpecies"),
@@ -400,9 +400,10 @@ export function AnimalsTable({
         )}
       </div>
 
-      {/* Card da tabela ocupa o espaço restante; a rolagem fica contida no <div> interno. */}
-      <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border bg-card shadow-card [&>div]:min-h-0 [&>div]:flex-1">
-        <Table className={loading ? "opacity-60 transition-opacity" : undefined}>
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border bg-card shadow-card [&>div]:min-h-0 [&>div]:flex-1 [&>div]:overflow-x-hidden">
+        <Table
+          className={cn("table-fixed [&_td]:truncate", loading && "opacity-60 transition-opacity")}
+        >
           <TableHeader className="sticky top-0 z-10 [&_th]:bg-accent">
             <TableRow>
               <TableHead className="w-10">
@@ -417,6 +418,7 @@ export function AnimalsTable({
                 sortKey="control"
                 sort={{ key: query.sort, dir: query.dir }}
                 onToggle={toggleSort}
+                className="w-[15%]"
               >
                 {t("colControl")}
               </SortableHead>
@@ -424,6 +426,7 @@ export function AnimalsTable({
                 sortKey="species"
                 sort={{ key: query.sort, dir: query.dir }}
                 onToggle={toggleSort}
+                className="w-[16%]"
               >
                 {t("colSpecies")}
               </SortableHead>
@@ -431,6 +434,7 @@ export function AnimalsTable({
                 sortKey="sex"
                 sort={{ key: query.sort, dir: query.dir }}
                 onToggle={toggleSort}
+                className="w-[9%]"
               >
                 {t("colSex")}
               </SortableHead>
@@ -438,6 +442,7 @@ export function AnimalsTable({
                 sortKey="location"
                 sort={{ key: query.sort, dir: query.dir }}
                 onToggle={toggleSort}
+                className="w-[17%]"
               >
                 {t("colLocation")}
               </SortableHead>
@@ -445,6 +450,7 @@ export function AnimalsTable({
                 sortKey="date"
                 sort={{ key: query.sort, dir: query.dir }}
                 onToggle={toggleSort}
+                className="w-[11%]"
               >
                 {t("colDate")}
               </SortableHead>
@@ -452,6 +458,7 @@ export function AnimalsTable({
                 sortKey="isPublic"
                 sort={{ key: query.sort, dir: query.dir }}
                 onToggle={toggleSort}
+                className="w-[12%]"
               >
                 {t("colVisibility")}
               </SortableHead>
@@ -460,10 +467,11 @@ export function AnimalsTable({
                 sort={{ key: query.sort, dir: query.dir }}
                 onToggle={toggleSort}
                 align="right"
+                className="w-[8%]"
               >
                 {t("colSamples")}
               </SortableHead>
-              <TableHead className="w-16 text-right">
+              <TableHead className="w-14 px-2 text-right">
                 <ReloadButton />
               </TableHead>
             </TableRow>
@@ -491,14 +499,14 @@ export function AnimalsTable({
                     />
                   </TableCell>
                   <TableCell className="font-medium">
-                    <Truncate>
+                    <Truncate className="max-w-full">
                       {controlOf(a) || (
                         <span className="text-muted-foreground">{t("notInformed")}</span>
                       )}
                     </Truncate>
                   </TableCell>
                   <TableCell>
-                    <Truncate>
+                    <Truncate className="max-w-full">
                       {a.species ? (
                         <span className="italic">{a.species}</span>
                       ) : (
@@ -506,26 +514,36 @@ export function AnimalsTable({
                       )}
                     </Truncate>
                   </TableCell>
-                  <TableCell className="text-muted-foreground">{sexLabel(a.sex)}</TableCell>
                   <TableCell className="text-muted-foreground">
-                    <Truncate>{locationOf(a)}</Truncate>
+                    <Truncate className="max-w-full">{sexLabel(a.sex)}</Truncate>
+                  </TableCell>
+                  <TableCell className="text-muted-foreground">
+                    <Truncate className="max-w-full">{locationOf(a)}</Truncate>
                   </TableCell>
                   <TableCell className="text-muted-foreground">{fmtDate(a.eventDate)}</TableCell>
                   <TableCell>
                     {isEffectivePublic(a) ? (
-                      <Badge variant="public" className="gap-1" title={visibilityTooltip(a)}>
-                        <Globe className="size-3" />
-                        {t("public")}
+                      <Badge
+                        variant="public"
+                        className="max-w-full gap-1"
+                        title={visibilityTooltip(a)}
+                      >
+                        <Globe className="size-3 shrink-0" />
+                        <span className="truncate">{t("public")}</span>
                       </Badge>
                     ) : (
-                      <Badge variant="private" className="gap-1" title={visibilityTooltip(a)}>
-                        <Lock className="size-3" />
-                        {t("private")}
+                      <Badge
+                        variant="private"
+                        className="max-w-full gap-1"
+                        title={visibilityTooltip(a)}
+                      >
+                        <Lock className="size-3 shrink-0" />
+                        <span className="truncate">{t("private")}</span>
                       </Badge>
                     )}
                   </TableCell>
                   <TableCell className="text-right">{a._count.samples}</TableCell>
-                  <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
+                  <TableCell className="px-2 text-right" onClick={(e) => e.stopPropagation()}>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="ghost" size="icon" className="size-8">

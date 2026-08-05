@@ -42,8 +42,6 @@ type NavItem = {
   disabled?: boolean
 }
 
-// Indicador de pendências (bolinha laranja). Expandido: à direita do label.
-// Recolhido: sobreposta no canto superior direito do ícone (o link é `relative`).
 function NavDot({ count, collapsed, title }: { count: number; collapsed: boolean; title: string }) {
   if (count <= 0) return null
   return (
@@ -91,9 +89,16 @@ export function Sidebar({
   }
   const dotTitle = (count: number) => t("pending", { count })
 
+  // Abaixo de 1280px a barra recolhe sozinha (o conteúdo das telas precisa da largura);
+  // acima disso vale a preferência salva.
   const [collapsed, setCollapsed] = useState(false)
   useEffect(() => {
-    setCollapsed(localStorage.getItem("mares:sidebar-collapsed") === "1")
+    const narrow = window.matchMedia("(max-width: 1279px)")
+    const sync = () =>
+      setCollapsed(narrow.matches || localStorage.getItem("mares:sidebar-collapsed") === "1")
+    sync()
+    narrow.addEventListener("change", sync)
+    return () => narrow.removeEventListener("change", sync)
   }, [])
   function toggleCollapsed() {
     setCollapsed((c) => {

@@ -5,10 +5,14 @@ import { useTranslations } from "next-intl"
 
 import { Label } from "@/components/ui/label"
 
-// "(opcional)" ao lado do rótulo de campos não obrigatórios.
-export function OptionalHint() {
+// "*" ao lado do rótulo de campos obrigatórios.
+export function RequiredMark() {
   const tc = useTranslations("common")
-  return <span className="font-normal text-muted-foreground">({tc("optional")})</span>
+  return (
+    <span className="text-destructive" title={tc("required")} aria-hidden>
+      *
+    </span>
+  )
 }
 
 // Mensagem de erro de um campo. Traduz a chave do namespace `validation`; se não
@@ -19,25 +23,25 @@ export function FieldError({ msg }: { msg?: string }) {
   return <p className="text-xs text-destructive">{tval.has(msg) ? tval(msg) : msg}</p>
 }
 
-// Envolve um controle de formulário com rótulo (+ "(opcional)") e mensagem de erro.
+// Envolve um controle de formulário com rótulo (+ "*" quando obrigatório) e mensagem de erro.
 // Reutilizável por qualquer campo — os *Field abaixo apenas plugam o controle.
 export function Field({
   htmlFor,
   label,
   error,
-  optional,
+  required,
   children,
 }: {
   htmlFor?: string
   label: string
   error?: string
-  optional?: boolean
+  required?: boolean
   children: ReactNode
 }) {
   return (
     <div className="space-y-1">
       <Label htmlFor={htmlFor}>
-        {label} {optional && <OptionalHint />}
+        {label} {required && <RequiredMark />}
       </Label>
       {children}
       <FieldError msg={error} />

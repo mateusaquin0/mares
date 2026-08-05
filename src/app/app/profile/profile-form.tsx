@@ -75,7 +75,6 @@ export function ProfileForm({ name, email }: { name: string; email: string }) {
 
   return (
     <div className="space-y-6">
-      {/* Dados básicos */}
       <Card>
         <CardHeader>
           <CardTitle className="text-lg">{t("nameSection")}</CardTitle>
@@ -103,7 +102,6 @@ export function ProfileForm({ name, email }: { name: string; email: string }) {
         </CardContent>
       </Card>
 
-      {/* Senha */}
       <Card>
         <CardHeader>
           <CardTitle className="text-lg">{t("passwordSection")}</CardTitle>
@@ -143,7 +141,6 @@ export function ProfileForm({ name, email }: { name: string; email: string }) {
         </CardContent>
       </Card>
 
-      {/* Zona de perigo — exclusão de perfil */}
       <Card className="border-destructive/40">
         <CardHeader>
           <CardTitle className="text-lg text-destructive">{t("dangerZone")}</CardTitle>

@@ -6,7 +6,6 @@ function Skeleton({ className, ...props }: React.HTMLAttributes<HTMLDivElement>)
 
 /**
  * Placeholder para listas/tabelas enquanto os dados carregam.
- * Reproduz o card + linhas para evitar salto de layout ("carregando..." → tabela).
  */
 function TableSkeleton({ rows = 5, className }: { rows?: number; className?: string }) {
   return (

@@ -288,7 +288,6 @@ export function SamplesTab({
         <p className="text-sm text-muted-foreground">{t("empty")}</p>
       ) : (
         <>
-          {/* Barra de filtros */}
           <div className="flex flex-wrap items-center gap-3">
             <div className="relative min-w-0 flex-1 sm:max-w-xs">
               <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
@@ -499,7 +498,6 @@ export function SamplesTab({
                   )}
                 </div>
               )}
-              {/* Órgão em linha própria: rótulo à esquerda e a escotilha do filtro à direita. */}
               <div className="space-y-1">
                 <div className="flex items-center justify-between gap-2">
                   <Label htmlFor="organ">{t("organ")}</Label>

@@ -14,9 +14,6 @@ import {
 
 const UNTESTED = "UNTESTED"
 
-// Cores dos marcadores de resultado, compartilhadas entre o seletor, a legenda e a grade
-// de resultados. Mantêm a convenção do app: verde = positivo, laranja = inconclusivo,
-// cinza = negativo. "Não testado" é um anel vazio (distingue de negativo preenchido).
 export const RESULT_DOT: Record<string, string> = {
   POSITIVO: "bg-[hsl(123_41%_45%)]",
   NEGATIVO: "bg-muted-foreground/40",
@@ -31,8 +28,6 @@ export function ResultDot({
   result: ResultValue | null
   className?: string
 }) {
-  // `shrink-0`: como flex item, o marcador seria achatado em elipse quando o rótulo ao lado
-  // precisa encolher.
   if (!result)
     return (
       <span

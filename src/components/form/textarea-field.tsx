@@ -14,7 +14,7 @@ export function TextareaField({
   value,
   onChange,
   error,
-  optional,
+  required,
   max,
   ...props
 }: {
@@ -23,11 +23,11 @@ export function TextareaField({
   value: string
   onChange: (value: string) => void
   error?: string
-  optional?: boolean
+  required?: boolean
   max?: number
 } & Omit<ComponentProps<typeof Textarea>, "id" | "value" | "onChange">) {
   return (
-    <Field htmlFor={id} label={label} error={error} optional={optional}>
+    <Field htmlFor={id} label={label} error={error} required={required}>
       <Textarea
         id={id}
         value={value}

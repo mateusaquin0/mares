@@ -56,21 +56,30 @@ function AccessCell({
 }) {
   const t = useTranslations("research")
 
-  if (item.isMember) return <Badge variant="secondary">{t("accessMember")}</Badge>
+  if (item.isMember)
+    return (
+      <Badge variant="secondary" className="max-w-full">
+        <span className="truncate">{t("accessMember")}</span>
+      </Badge>
+    )
   // Admin da org sem vínculo: acessa (e edita) pelo PAPEL, não por participar da pesquisa.
   // O selo distingue isso de "Participa" e deixa claro que não há o que solicitar aqui.
   if (item.canSeeData) {
     return (
-      <Badge variant="outline" className="text-muted-foreground" title={t("accessByRoleHint")}>
-        {t("accessByRole")}
+      <Badge
+        variant="outline"
+        className="max-w-full text-muted-foreground"
+        title={t("accessByRoleHint")}
+      >
+        <span className="truncate">{t("accessByRole")}</span>
       </Badge>
     )
   }
   if (item.requestStatus === "PENDING") {
     return (
-      <Badge variant="outline" className="gap-1 text-muted-foreground">
-        <Clock className="size-3" />
-        {t("accessPending")}
+      <Badge variant="outline" className="max-w-full gap-1 text-muted-foreground">
+        <Clock className="size-3 shrink-0" />
+        <span className="truncate">{t("accessPending")}</span>
       </Badge>
     )
   }
@@ -79,8 +88,6 @@ function AccessCell({
       <Button size="sm" variant="outline" onClick={onRequest} disabled={pending}>
         {t("accessRequest")}
       </Button>
-      {/* Recusa anterior: um ícone discreto explica por que o botão reaparece, sem poluir a
-          célula com uma frase. O tooltip é o `title` nativo, padrão do resto das tabelas. */}
       {item.requestStatus === "REJECTED" && (
         <span role="img" aria-label={t("accessRejected")} title={t("accessRejected")}>
           <CircleAlert className="size-4 shrink-0 text-muted-foreground" />
@@ -180,7 +187,7 @@ export function ResearchManager({ isOrgAdmin, selfId }: { isOrgAdmin: boolean; s
   }
 
   return (
-    <div className="mx-auto flex h-full max-w-6xl flex-col gap-6 p-8">
+    <div className="mx-auto flex h-full min-h-[42rem] max-w-6xl flex-col gap-6 p-8">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-3xl font-semibold tracking-tight">{t("title")}</h1>
@@ -211,17 +218,16 @@ export function ResearchManager({ isOrgAdmin, selfId }: { isOrgAdmin: boolean; s
               />
             </div>
           </div>
-          {/* Rolagem contida na tabela (o <div overflow-auto> interno recebe h-full). */}
-          <div className="min-h-0 flex-1 [&>div]:h-full">
-            <Table>
+          <div className="min-h-0 flex-1 [&>div]:h-full [&>div]:overflow-x-hidden">
+            <Table className="table-fixed [&_td]:truncate">
               <TableHeader className="sticky top-0 z-10 [&_th]:bg-accent">
                 <TableRow>
-                  <TableHead>{t("colName")}</TableHead>
-                  <TableHead>{t("colVisibility")}</TableHead>
-                  <TableHead>{t("colAccess")}</TableHead>
-                  <TableHead className="text-right">{t("colProtocols")}</TableHead>
-                  <TableHead className="text-right">{t("colAnimals")}</TableHead>
-                  <TableHead className="w-24 text-right">
+                  <TableHead className="w-[32%]">{t("colName")}</TableHead>
+                  <TableHead className="w-[13%]">{t("colVisibility")}</TableHead>
+                  <TableHead className="w-[23%]">{t("colAccess")}</TableHead>
+                  <TableHead className="w-[10%] text-right">{t("colProtocols")}</TableHead>
+                  <TableHead className="w-[10%] text-right">{t("colAnimals")}</TableHead>
+                  <TableHead className="w-14 px-2 text-right">
                     <ReloadButton />
                   </TableHead>
                 </TableRow>
@@ -244,18 +250,18 @@ export function ResearchManager({ isOrgAdmin, selfId }: { isOrgAdmin: boolean; s
                     }
                   >
                     <TableCell className="font-medium">
-                      <Truncate className="max-w-[24rem]">{r.name}</Truncate>
+                      <Truncate className="max-w-full">{r.name}</Truncate>
                     </TableCell>
                     <TableCell>
                       {r.isPublic ? (
-                        <Badge variant="public" className="gap-1">
-                          <Globe className="size-3" />
-                          {t("public")}
+                        <Badge variant="public" className="max-w-full gap-1">
+                          <Globe className="size-3 shrink-0" />
+                          <span className="truncate">{t("public")}</span>
                         </Badge>
                       ) : (
-                        <Badge variant="private" className="gap-1">
-                          <Lock className="size-3" />
-                          {t("private")}
+                        <Badge variant="private" className="max-w-full gap-1">
+                          <Lock className="size-3 shrink-0" />
+                          <span className="truncate">{t("private")}</span>
                         </Badge>
                       )}
                     </TableCell>
@@ -269,7 +275,7 @@ export function ResearchManager({ isOrgAdmin, selfId }: { isOrgAdmin: boolean; s
                     {/* Volume de dados só para quem participa (o catálogo expõe metadados). */}
                     <TableCell className="text-right">{r._count?.protocols ?? "—"}</TableCell>
                     <TableCell className="text-right">{r._count?.animals ?? "—"}</TableCell>
-                    <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
+                    <TableCell className="px-2 text-right" onClick={(e) => e.stopPropagation()}>
                       {/* O menu aparece para quem gere a pesquisa E para quem só participa
                           (a ação de sair do vínculo). */}
                       {(isOrgAdmin || r.createdById === selfId || r.isMember) && (

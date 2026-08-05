@@ -62,12 +62,12 @@ export function MyOrganizations({
       </div>
 
       <div className="max-w-3xl overflow-hidden rounded-xl border bg-card shadow-card">
-        <Table>
+        <Table className="table-fixed [&_td]:truncate">
           <TableHeader>
             <TableRow>
-              <TableHead>{t("colOrg")}</TableHead>
-              <TableHead>{t("colRole")}</TableHead>
-              <TableHead className="w-24 text-right">
+              <TableHead className="w-[50%]">{t("colOrg")}</TableHead>
+              <TableHead className="w-[22%]">{t("colRole")}</TableHead>
+              <TableHead className="w-[28%] text-right">
                 <ReloadButton />
               </TableHead>
             </TableRow>
@@ -77,11 +77,16 @@ export function MyOrganizations({
             {list.map((m) => (
               <TableRow key={m.orgId}>
                 <TableCell className="font-medium">
-                  <Truncate>{m.orgName}</Truncate>
+                  <Truncate className="max-w-full">{m.orgName}</Truncate>
                 </TableCell>
                 <TableCell>
-                  <Badge variant={m.role === "ORG_ADMIN" ? "default" : "secondary"}>
-                    {m.role === "ORG_ADMIN" ? tc("roleAdmin") : tc("roleResearcher")}
+                  <Badge
+                    variant={m.role === "ORG_ADMIN" ? "default" : "secondary"}
+                    className="max-w-full"
+                  >
+                    <span className="truncate">
+                      {m.role === "ORG_ADMIN" ? tc("roleAdmin") : tc("roleResearcher")}
+                    </span>
                   </Badge>
                 </TableCell>
                 <TableCell className="text-right">

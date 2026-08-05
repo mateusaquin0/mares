@@ -117,7 +117,6 @@ export function AuditTab({ animalId }: { animalId: string }) {
   return (
     <div className="min-h-0 flex-1 overflow-y-auto">
       <div className="relative ml-4">
-        {/* Vertical timeline line */}
         <div className="absolute left-0 top-0 bottom-0 w-px bg-border" />
 
         <div className="space-y-6">
@@ -127,11 +126,9 @@ export function AuditTab({ animalId }: { animalId: string }) {
             const isCreated = r.field === "created"
             return (
               <div key={r.id} className="relative pl-8">
-                {/* Timeline dot */}
                 <div className="absolute left-0 top-2 -translate-x-1/2 size-3 rounded-full border-2 border-accent-foreground bg-card" />
 
                 <div className="rounded-lg border bg-card p-4 shadow-sm">
-                  {/* Header: entity + date + author */}
                   <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
                     <span className="inline-flex items-center gap-1 font-medium text-foreground">
                       <Icon className="size-3.5" />
@@ -147,12 +144,10 @@ export function AuditTab({ animalId }: { animalId: string }) {
                     </span>
                   </div>
 
-                  {/* Context (sample · organ · pathogen · exam) */}
                   {contextOf(r) && (
                     <p className="mt-1 text-xs text-muted-foreground">{contextOf(r)}</p>
                   )}
 
-                  {/* Change detail */}
                   <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
                     <span className="font-medium text-foreground">{fieldLabel(r)}</span>
                     {isCreated ? (

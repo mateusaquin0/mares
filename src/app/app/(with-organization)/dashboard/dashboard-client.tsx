@@ -50,8 +50,6 @@ const SPECIES_COLORS = [
   "#0ea5e9",
 ]
 const NAVY = "#003366"
-// inverse-primary do tema escuro (--primary do .dark em globals.css): azul claro legível
-// sobre o fundo escuro. Usado na linha do tempo quando o tema é dark.
 const PRIMARY_DARK = "#a7c8ff"
 
 // Estilo do tooltip do recharts. Como `contentStyle`/`labelStyle`/`itemStyle` viram `style`
@@ -141,9 +139,7 @@ export function DashboardClient() {
   // Recharts seta `stroke`/`fill` como atributos SVG, onde `var()` não resolve — por isso
   // estas cores são escolhidas em JS conforme o tema resolvido (equivalem aos tokens do DS).
   const isDark = resolvedTheme === "dark"
-  // Linha do tempo: o navy do DS some no dark; usa o inverse-primary claro (#a7c8ff).
   const timelineColor = isDark ? PRIMARY_DARK : NAVY
-  // Ticks dos eixos (muted-foreground) e linhas de grade (border), legíveis nos dois temas.
   const axisTick = isDark ? "#9ba7b5" : "#43474f"
   const gridStroke = isDark ? "#283443" : "#e2e8f0"
 
@@ -189,7 +185,6 @@ export function DashboardClient() {
 
   return (
     <div className={isLoading ? "opacity-60 transition-opacity" : "transition-opacity"}>
-      {/* Filtros globais */}
       <div className="mb-6 flex flex-wrap items-end gap-3 rounded-lg border bg-card p-3 shadow-sm">
         <label className="flex flex-col gap-1 text-xs">
           <span className="font-semibold uppercase tracking-wide text-muted-foreground">
@@ -255,7 +250,6 @@ export function DashboardClient() {
         )}
       </div>
 
-      {/* Métricas principais */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
         {stats.map((s) => {
           const Icon = s.icon
@@ -300,7 +294,6 @@ export function DashboardClient() {
         })}
       </div>
 
-      {/* Espécies + Positividade */}
       <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
         <Card>
           <CardHeader>
@@ -385,7 +378,6 @@ export function DashboardClient() {
         </Card>
       </div>
 
-      {/* Linha do tempo */}
       <Card className="mt-6">
         <CardHeader>
           <CardTitle className="text-lg">{t("chartTimelineTitle")}</CardTitle>
@@ -433,7 +425,6 @@ export function DashboardClient() {
         </CardContent>
       </Card>
 
-      {/* Heatmap geográfico */}
       <Card className="mt-6">
         <CardHeader>
           <CardTitle className="text-lg">{t("heatmapTitle")}</CardTitle>

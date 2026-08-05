@@ -196,7 +196,6 @@ export function ConfirmationPanel({
         </p>
       )}
 
-      {/* Lista de confirmações existentes */}
       {confirmations.length === 0 && !editing ? (
         <p className="text-xs text-muted-foreground">{t("confirmEmpty")}</p>
       ) : (
@@ -248,7 +247,6 @@ export function ConfirmationPanel({
         </ul>
       )}
 
-      {/* Editor (novo ou edição) */}
       {editing && (
         <div className="space-y-3 rounded border bg-background p-3">
           <div className="grid gap-3 sm:grid-cols-2">
@@ -296,7 +294,6 @@ export function ConfirmationPanel({
             </label>
           </div>
 
-          {/* Sequências */}
           <div className="space-y-2">
             <span className="text-xs font-medium">{t("seqTitle")}</span>
             {form.sequences.map((s, i) => (

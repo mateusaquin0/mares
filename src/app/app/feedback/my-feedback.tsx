@@ -39,7 +39,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 
-// Mesmas cores da tela de triagem (adminFeedback), para o usuário reconhecer o estado.
 type BadgeVariant = React.ComponentProps<typeof Badge>["variant"]
 const statusVariant: Record<FeedbackStatus, BadgeVariant> = {
   NEW: "inconclusive",
@@ -183,7 +182,6 @@ export function MyFeedback() {
         </div>
       )}
 
-      {/* Detalhe: a mensagem enviada e a resposta da administração por inteiro. */}
       <Dialog
         open={!!selected}
         onOpenChange={(o) => {
@@ -196,7 +194,6 @@ export function MyFeedback() {
           {selected && (
             <>
               <DialogHeader className="min-w-0">
-                {/* pr-8: reserva o canto do X de fechar, senão "Editar" fica por cima dele. */}
                 <div className="flex flex-wrap items-center gap-2 pr-8">
                   {typeBadge(selected.type)}
                   <Badge variant={statusVariant[selected.status]}>

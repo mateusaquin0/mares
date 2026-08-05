@@ -17,8 +17,8 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 
 export type MultiSelectOption = { value: string; label: string; icon?: React.ReactNode }
 
-// Combobox de múltipla seleção (Popover + Command com checkboxes). Controlado por um array de
-// valores. O gatilho mostra os rótulos selecionados (truncados); vazio mostra o placeholder.
+// Combobox de múltipla seleção (Popover + Command com checkboxes), controlado por um array
+// de valores.
 export function MultiSelect({
   options,
   value,

@@ -52,8 +52,6 @@ import {
 
 const STATUSES: FeedbackStatus[] = ["NEW", "IN_REVIEW", "RESOLVED", "WONT_FIX"]
 
-// Cores distintas por status (variantes semânticas do Badge, ver design.md §Chips/Badges):
-// NEW âmbar (a triar) · IN_REVIEW marca (em andamento) · RESOLVED verde · WONT_FIX cinza.
 type BadgeVariant = React.ComponentProps<typeof Badge>["variant"]
 const statusVariant: Record<FeedbackStatus, BadgeVariant> = {
   NEW: "inconclusive",
@@ -168,7 +166,6 @@ export default function AdminFeedbackPage() {
 
   const fmtDate = (iso: string) => new Date(iso).toLocaleString(locale)
 
-  // Campo de filtro rotulado, no mesmo estilo das outras tabelas.
   const filterField = (label: string, control: React.ReactNode, widthClass = "w-44") => (
     <label className={cn("flex flex-col gap-1 text-xs", widthClass)}>
       <span className="font-semibold uppercase tracking-wide text-muted-foreground">{label}</span>
@@ -189,7 +186,6 @@ export default function AdminFeedbackPage() {
         <p className="text-sm text-muted-foreground">{t("empty")}</p>
       ) : (
         <>
-          {/* Status: tabs (mesmo modelo da tela de glossário) */}
           <Tabs
             value={statusFilter}
             onValueChange={(v) => setStatusFilter(v as FeedbackStatus | "ALL")}
@@ -204,7 +200,6 @@ export default function AdminFeedbackPage() {
             </TabsList>
           </Tabs>
 
-          {/* Tipo (select) + autor (input), no estilo das outras tabelas */}
           <div className="flex flex-wrap items-end gap-3 rounded-xl border bg-card p-3 shadow-card">
             {filterField(
               t("filterType"),
@@ -317,7 +312,6 @@ export default function AdminFeedbackPage() {
         </>
       )}
 
-      {/* Modal de detalhes (clique na linha) */}
       <Dialog
         open={!!selected}
         onOpenChange={(o) => {
@@ -330,7 +324,6 @@ export default function AdminFeedbackPage() {
           {selected && (
             <>
               <DialogHeader className="min-w-0">
-                {/* Badges de tipo e status, lado a lado, no topo. */}
                 <div className="flex flex-wrap items-center gap-2">
                   {typeBadge(selected.type)}
                   <Badge variant={statusVariant[selected.status]}>
@@ -362,7 +355,6 @@ export default function AdminFeedbackPage() {
                   </DialogDescription>
                 </section>
 
-                {/* Mensagem: quebra palavras longas (mesmo sem espaços) e rola se for grande. */}
                 <section>
                   <h3 className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                     {t("detailMessage")}

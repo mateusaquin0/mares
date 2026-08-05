@@ -12,6 +12,7 @@ import "leaflet.markercluster/dist/MarkerCluster.css"
 import "leaflet.markercluster/dist/MarkerCluster.Default.css"
 
 import type { MapPoint } from "@/lib/map-points"
+import { useHasSize } from "./use-has-size"
 
 // Rótulos do popup (traduzidos no MapExplorer e repassados — o Leaflet monta HTML imperativo).
 export type PopupLabels = {
@@ -110,13 +111,14 @@ export default function LeafletMap({ points, labels, linkBase, locale }: Props) 
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<L.Map | null>(null)
   const clusterRef = useRef<L.MarkerClusterGroup | null>(null)
+  const hasSize = useHasSize(containerRef)
 
   const iconPublic = useMemo(() => pinIcon(NAVY), [])
   const iconHidden = useMemo(() => pinIcon(AMBER), [])
 
   // Inicializa o mapa uma única vez.
   useEffect(() => {
-    if (!containerRef.current || mapRef.current) return
+    if (!hasSize || !containerRef.current || mapRef.current) return
     const map = L.map(containerRef.current, { center: [-15, -47], zoom: 4, scrollWheelZoom: true })
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
@@ -128,12 +130,12 @@ export default function LeafletMap({ points, labels, linkBase, locale }: Props) 
       mapRef.current = null
       clusterRef.current = null
     }
-  }, [])
+  }, [hasSize])
 
   // (Re)desenha os marcadores quando os pontos mudam (filtros).
   useEffect(() => {
     const map = mapRef.current
-    if (!map) return
+    if (!map || !hasSize) return
     if (clusterRef.current) {
       map.removeLayer(clusterRef.current)
       clusterRef.current = null
@@ -149,7 +151,7 @@ export default function LeafletMap({ points, labels, linkBase, locale }: Props) 
     if (points.length > 0) {
       map.fitBounds(cluster.getBounds().pad(0.2), { maxZoom: 12 })
     }
-  }, [points, labels, linkBase, locale, iconPublic, iconHidden])
+  }, [points, labels, linkBase, locale, iconPublic, iconHidden, hasSize])
 
   return <div ref={containerRef} className="h-full w-full" />
 }

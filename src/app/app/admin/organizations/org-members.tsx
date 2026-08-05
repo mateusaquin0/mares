@@ -177,11 +177,9 @@ export function OrgMembers({ org }: { org: AdminOrg }) {
         )}
       </div>
 
-      {/* Adicionar membro */}
       <form onSubmit={form.handleSubmit(onAdd)} className="space-y-4 rounded-md border p-4">
         <p className="text-sm font-medium">{t("addMemberTitle")}</p>
 
-        {/* E-mail (chave da busca) + lupa, em destaque no topo. */}
         <div className="space-y-1">
           <Label htmlFor="add-email">{t("addEmailLabel")}</Label>
           <div className="flex items-center gap-2">
@@ -218,7 +216,6 @@ export function OrgMembers({ org }: { org: AdminOrg }) {
           {lookup?.found && <p className="text-xs text-bio">{t("addLookupFound")}</p>}
         </div>
 
-        {/* Nome + tipo, lado a lado. */}
         <div className="grid gap-3 sm:grid-cols-2">
           <div className="space-y-1">
             <Label htmlFor="add-name">{t("addNameLabel")}</Label>
@@ -253,7 +250,6 @@ export function OrgMembers({ org }: { org: AdminOrg }) {
           </div>
         </div>
 
-        {/* Rodapé: botão à direita. */}
         <div className="flex justify-end border-t pt-3">
           <Button type="submit" loading={form.formState.isSubmitting} className="w-full sm:w-auto">
             <UserPlus className="size-4" />

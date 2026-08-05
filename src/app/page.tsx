@@ -23,7 +23,6 @@ export default async function Home() {
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
-      {/* Hero — único gradiente de marca do sistema (navy → cyan), com marca-d'água. */}
       <section
         className="relative overflow-hidden text-white"
         style={{ background: "linear-gradient(160deg, #002147 0%, #003366 55%, #006876 130%)" }}
@@ -78,7 +77,6 @@ export default async function Home() {
         <Logo className="pointer-events-none absolute -bottom-24 -right-16 size-96 text-white/[0.05]" />
       </section>
 
-      {/* Destaques */}
       <section className="mx-auto w-full max-w-6xl px-6 py-16 sm:py-20">
         <h2 className="text-2xl font-semibold tracking-tight text-foreground">
           {t("featuresTitle")}
@@ -105,7 +103,6 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* Rodapé */}
       <footer className="mt-auto border-t border-border bg-background">
         <div className="mx-auto flex w-full max-w-6xl flex-col items-center justify-between gap-3 px-6 py-8 text-sm text-muted-foreground sm:flex-row">
           <span className="flex items-center gap-2">
