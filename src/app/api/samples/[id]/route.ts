@@ -1,6 +1,6 @@
 // MARES — Editar e excluir uma amostra (Fase 3).
-// Regras (docs/PERMISSOES.md §Amostras): editar = qualquer membro; excluir = admin da org
-// ou quem criou a amostra.
+// Regras (docs/PERMISSOES.md §Amostras): editar = qualquer membro; excluir = admin da org,
+// quem criou a amostra, ou qualquer membro se a amostra não tem autor conhecido.
 // Exclusão bloqueada (409) se houver análises vinculadas (preserva rastreabilidade).
 
 import { NextRequest, NextResponse } from "next/server"
@@ -17,6 +17,7 @@ import {
   sampleDuplicateError,
   sampleSelect,
 } from "@/lib/samples"
+import { canDeleteAuthored } from "@/lib/authorship"
 import { diffFields, writeAudit } from "@/lib/audit"
 import { ConflictError, ForbiddenError } from "@/lib/errors"
 import { ERROR_CODES } from "@/lib/error-codes"
@@ -78,10 +79,13 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
     const { id } = await params
     const sample = await loadSampleOrg(id)
     requireOrgRole(user, sample.orgId, "RESEARCHER")
+    // Só exclui amostra de pesquisa que enxerga — indispensável para a regra de órfã abaixo,
+    // que de outro modo abriria a amostra sem autor a qualquer pesquisador da organização.
+    await assertResearchVisible(user, sample.orgId, sample.researchId)
 
-    // Amostras anteriores à coluna `createdById` têm autor nulo: seguem só com o admin.
+    // Admin da org, quem cadastrou, ou qualquer membro se a amostra está sem autor.
     const isOrgAdmin = orgRole(user, sample.orgId) === "ORG_ADMIN"
-    if (!isOrgAdmin && sample.createdById !== user.id) {
+    if (!canDeleteAuthored({ isOrgAdmin, selfId: user.id, authorId: sample.createdById })) {
       throw new ForbiddenError(
         "Você só pode excluir amostras que cadastrou",
         ERROR_CODES.sampleDeleteNotCreator,
