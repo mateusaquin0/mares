@@ -105,7 +105,7 @@ export function MyFeedback() {
   }
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6 p-8">
+    <div className="mx-auto max-w-6xl space-y-6 p-8">
       <div>
         <h1 className="text-3xl font-semibold tracking-tight">{t("title")}</h1>
         <p className="mt-1 text-sm text-muted-foreground">{t("subtitle")}</p>
@@ -196,7 +196,8 @@ export function MyFeedback() {
           {selected && (
             <>
               <DialogHeader className="min-w-0">
-                <div className="flex flex-wrap items-center gap-2">
+                {/* pr-8: reserva o canto do X de fechar, senão "Editar" fica por cima dele. */}
+                <div className="flex flex-wrap items-center gap-2 pr-8">
                   {typeBadge(selected.type)}
                   <Badge variant={statusVariant[selected.status]}>
                     {t(`status_${selected.status}`)}

@@ -27,6 +27,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogDescription,
   DialogHeader,
@@ -56,15 +57,18 @@ export function PendingSharesDialog() {
             <DialogTitle>{t("sharesQueueTitle")}</DialogTitle>
             <DialogDescription>{t("sharesQueueDesc")}</DialogDescription>
           </DialogHeader>
-          <ul className="divide-y">
-            {items.map((s) => (
-              <ShareRow
-                key={`${s.animal.id}:${s.research.id}`}
-                share={s}
-                onDone={() => items.length === 1 && setOpen(false)}
-              />
-            ))}
-          </ul>
+          {/* DialogBody: a fila pode ter muitas pendências — só a lista rola, o cabeçalho fica. */}
+          <DialogBody>
+            <ul className="divide-y">
+              {items.map((s) => (
+                <ShareRow
+                  key={`${s.animal.id}:${s.research.id}`}
+                  share={s}
+                  onDone={() => items.length === 1 && setOpen(false)}
+                />
+              ))}
+            </ul>
+          </DialogBody>
         </DialogContent>
       </Dialog>
     </>
