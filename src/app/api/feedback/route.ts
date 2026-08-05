@@ -8,6 +8,7 @@ import { getAuthUser, getActiveOrgId, requireSystemAdmin } from "@/lib/auth"
 import { apiError, tooManyRequests, unauthorized } from "@/lib/api"
 import { rateLimit } from "@/lib/rate-limit"
 import { createFeedbackSchema } from "@/schemas/feedback.schema"
+import { listFeedback } from "@/lib/feedback"
 
 export async function POST(req: NextRequest) {
   try {
@@ -48,12 +49,12 @@ export async function GET(req: NextRequest) {
 
     const statusParam = req.nextUrl.searchParams.get("status")
     const valid: FeedbackStatus[] = ["NEW", "IN_REVIEW", "RESOLVED", "WONT_FIX"]
-    const where =
+    const status =
       statusParam && valid.includes(statusParam as FeedbackStatus)
-        ? { status: statusParam as FeedbackStatus }
-        : {}
+        ? (statusParam as FeedbackStatus)
+        : undefined
 
-    const items = await prisma.feedback.findMany({ where, orderBy: { createdAt: "desc" } })
+    const items = await listFeedback(status)
     return NextResponse.json(items)
   } catch (err) {
     return apiError(err)

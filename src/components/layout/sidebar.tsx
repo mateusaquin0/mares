@@ -15,6 +15,7 @@ import {
   Library,
   BookOpen,
   ClipboardList,
+  MessagesSquare,
   PanelLeftClose,
   PanelLeft,
 } from "lucide-react"
@@ -309,6 +310,18 @@ export function Sidebar({
           {!collapsed && <span className="truncate">{t("tutorial")}</span>}
         </Link>
         <FeedbackDialog collapsed={collapsed} />
+        {/* Acompanhar os próprios envios (status + resposta da administração). */}
+        <Link
+          href="/app/feedback"
+          title={t("myFeedback")}
+          className={cn(
+            "flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-foreground/70 transition-colors hover:bg-muted hover:text-foreground",
+            collapsed && "justify-center px-0",
+          )}
+        >
+          <MessagesSquare className="size-4 shrink-0" />
+          {!collapsed && <span className="truncate">{t("myFeedback")}</span>}
+        </Link>
         <UserMenu userName={userName} email={email} roleLabel={roleLabel} collapsed={collapsed} />
       </div>
     </aside>

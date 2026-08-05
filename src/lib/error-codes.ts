@@ -94,6 +94,11 @@ export const ERROR_CODES = {
   simbaUnavailable: "simbaUnavailable",
   // Feedback (sugestões / bugs)
   feedbackNotFound: "feedbackNotFound",
+  // Descartar (WONT_FIX) exige justificativa visível ao autor — inclusive ao tentar apagar
+  // a justificativa de um feedback que já está descartado.
+  feedbackResolutionRequired: "feedbackResolutionRequired",
+  // O autor só corrige o próprio relato enquanto ele ainda não foi triado (status NEW).
+  feedbackNotEditable: "feedbackNotEditable",
   // Solicitações de glossário
   catalogRequestNotFound: "catalogRequestNotFound",
   catalogRequestProcessed: "catalogRequestProcessed",

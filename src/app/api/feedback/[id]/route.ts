@@ -1,12 +1,11 @@
-// MARES — Feedback: triagem pelo admin global (mudar status / anotar).
+// MARES — Feedback: triagem pelo admin global (status, anotação interna e resposta ao autor).
+// Descartar (WONT_FIX) exige justificativa — regra em src/lib/feedback.ts.
 
 import { NextRequest, NextResponse } from "next/server"
-import { prisma } from "@/lib/prisma"
 import { getAuthUser, requireSystemAdmin } from "@/lib/auth"
 import { apiError, unauthorized } from "@/lib/api"
-import { NotFoundError } from "@/lib/errors"
-import { ERROR_CODES } from "@/lib/error-codes"
 import { updateFeedbackSchema } from "@/schemas/feedback.schema"
+import { updateFeedback } from "@/lib/feedback"
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -18,20 +17,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     const body = await req.json().catch(() => null)
     const data = updateFeedbackSchema.parse(body)
 
-    const existing = await prisma.feedback.findUnique({ where: { id }, select: { id: true } })
-    if (!existing) {
-      throw new NotFoundError("Feedback não encontrado", ERROR_CODES.feedbackNotFound)
-    }
-
-    const updated = await prisma.feedback.update({
-      where: { id },
-      data: {
-        status: data.status,
-        // undefined = não altera; string vazia/null = limpa.
-        adminNote: data.adminNote === undefined ? undefined : data.adminNote?.trim() || null,
-      },
-      select: { id: true, status: true },
-    })
+    const updated = await updateFeedback(id, user.id, data)
     return NextResponse.json(updated)
   } catch (err) {
     return apiError(err)
