@@ -8,6 +8,8 @@ import L from "leaflet"
 import "leaflet.heat"
 import "leaflet/dist/leaflet.css"
 
+import { useHasSize } from "./use-has-size"
+
 type Props = {
   // Pontos de encalhe: [lat, lon].
   points: [number, number][]
@@ -17,9 +19,10 @@ export default function HeatMap({ points }: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<L.Map | null>(null)
   const heatRef = useRef<L.HeatLayer | null>(null)
+  const hasSize = useHasSize(containerRef)
 
   useEffect(() => {
-    if (!containerRef.current || mapRef.current) return
+    if (!hasSize || !containerRef.current || mapRef.current) return
     const map = L.map(containerRef.current, { center: [-15, -47], zoom: 4, scrollWheelZoom: true })
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
@@ -31,11 +34,11 @@ export default function HeatMap({ points }: Props) {
       mapRef.current = null
       heatRef.current = null
     }
-  }, [])
+  }, [hasSize])
 
   useEffect(() => {
     const map = mapRef.current
-    if (!map) return
+    if (!map || !hasSize) return
     if (heatRef.current) {
       map.removeLayer(heatRef.current)
       heatRef.current = null
@@ -58,7 +61,7 @@ export default function HeatMap({ points }: Props) {
     heatRef.current = heat
     const bounds = L.latLngBounds(points as L.LatLngTuple[])
     map.fitBounds(bounds.pad(0.2), { maxZoom: 11 })
-  }, [points])
+  }, [points, hasSize])
 
   return <div ref={containerRef} className="h-full w-full" />
 }

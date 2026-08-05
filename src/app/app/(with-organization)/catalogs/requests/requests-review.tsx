@@ -198,7 +198,6 @@ export function RequestsReview({ isSystemAdmin }: { isSystemAdmin: boolean }) {
         </div>
       )}
 
-      {/* Detalhe + curadoria */}
       <Dialog open={!!selected} onOpenChange={(o) => !o && closeAll()}>
         <DialogContent>
           {selected && (

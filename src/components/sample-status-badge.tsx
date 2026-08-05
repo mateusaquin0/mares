@@ -7,8 +7,6 @@ import { cn } from "@/lib/utils"
 import { Badge, type BadgeProps } from "@/components/ui/badge"
 import type { SampleStatus } from "@/types/sample"
 
-// Situação da amostra: ícone, cor e rótulo em um só lugar. Verde e âmbar ficam reservados aos
-// resultados de análise (positivo/inconclusivo), que aparecem nas mesmas telas.
 export const SAMPLE_STATUS_META: Record<
   SampleStatus,
   { icon: LucideIcon; labelKey: string; variant: BadgeProps["variant"] }
@@ -34,8 +32,6 @@ export function SampleStatusIcon({ status, className }: { status: string; classN
   return Icon ? <Icon className={cn("size-3.5 shrink-0", className)} aria-hidden /> : null
 }
 
-// `iconOnly` para colunas estreitas: o rótulo continua acessível pelo tooltip e pelo leitor
-// de tela.
 export function SampleStatusBadge({
   status,
   iconOnly = false,

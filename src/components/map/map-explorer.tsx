@@ -240,7 +240,6 @@ export function MapExplorer({ points, linkBase, showVisibility }: Props) {
 
   return (
     <div className="flex h-full flex-col gap-3" data-testid="map-explorer">
-      {/* Barra de filtros */}
       <div className="flex flex-wrap items-end gap-3 rounded-lg border bg-card p-3 shadow-sm">
         <Field label={t("filterSpecies")}>
           <div className="w-48">
@@ -397,8 +396,6 @@ export function MapExplorer({ points, linkBase, showVisibility }: Props) {
         </div>
       </div>
 
-      {/* Mapa — sempre renderizado (mesmo sem pontos, exibe o mapa-base). Quando não há
-          nada a mostrar, um aviso flutuante e não-bloqueante aparece sobre o mapa. */}
       <div className="relative min-h-[420px] flex-1 overflow-hidden rounded-lg border shadow-sm">
         <LeafletMap points={filtered} labels={labels} linkBase={linkBase} locale={locale} />
         {filtered.length === 0 && (

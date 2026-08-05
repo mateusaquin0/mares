@@ -96,8 +96,6 @@ export function ResearchShare({
         <p className="mt-0.5 text-xs text-muted-foreground">{t("shareDesc")}</p>
       </div>
 
-      {/* Três grupos rotulados em vez de uma fileira única de selos: sem o rótulo, "de origem",
-          "também estuda" e "ainda não respondeu" viram a mesma coisa aos olhos. */}
       <div className="grid gap-4 sm:grid-cols-2">
         <ShareGroup label={t("sharePrimaryLabel")}>
           <Badge variant="secondary">

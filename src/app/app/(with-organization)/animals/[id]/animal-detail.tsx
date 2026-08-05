@@ -48,8 +48,6 @@ export function AnimalDetail({
   const animal = animalQ.data ?? null
   const loading = animalQ.isLoading
   const [editing, setEditing] = useState(false)
-  // Abas controladas: só o conteúdo da aba ativa é renderizado (as demais nem entram no DOM),
-  // para que ele ocupe toda a altura sem que painéis ocultos disputem espaço no flex.
   const [tab, setTab] = useState("info")
   const researchQ = useResearchList()
   const researches = (researchQ.data ?? []).map((r) => ({ id: r.id, name: r.name }))
@@ -124,7 +122,7 @@ export function AnimalDetail({
   ]
 
   return (
-    <div className="mx-auto flex h-full max-w-5xl flex-col gap-6 p-8">
+    <div className="mx-auto flex h-full min-h-[42rem] max-w-5xl flex-col gap-6 p-8">
       <Link
         href="/app/animals"
         className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"

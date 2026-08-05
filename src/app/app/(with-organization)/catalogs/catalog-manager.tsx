@@ -296,7 +296,7 @@ export function CatalogManager({
   })
 
   return (
-    <div className="mx-auto flex h-full max-w-6xl flex-col gap-6 p-8">
+    <div className="mx-auto flex h-full min-h-[42rem] max-w-6xl flex-col gap-6 p-8">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-3xl font-semibold tracking-tight">{t("title")}</h1>
@@ -307,7 +307,6 @@ export function CatalogManager({
             <Button asChild variant="outline">
               <Link href="/app/catalogs/requests">
                 {t("reviewQueue")}
-                {/* Bolinha laranja de pendência (mesmo indicador do menu lateral). */}
                 {pendingCount > 0 && (
                   <span
                     role="status"
@@ -352,7 +351,6 @@ export function CatalogManager({
             className="max-w-sm"
           />
           <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border bg-card shadow-card">
-            {/* Rolagem contida na tabela (o <div overflow-auto> interno recebe h-full). */}
             <div className="min-h-0 flex-1 [&>div]:h-full">
               <Table>
                 <TableHeader className="sticky top-0 z-10 [&_th]:bg-accent">

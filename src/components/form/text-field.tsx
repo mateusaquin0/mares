@@ -13,7 +13,7 @@ export function TextField({
   value,
   onChange,
   error,
-  optional,
+  required,
   ...inputProps
 }: {
   id: string
@@ -21,10 +21,10 @@ export function TextField({
   value: string
   onChange: (value: string) => void
   error?: string
-  optional?: boolean
+  required?: boolean
 } & Omit<ComponentProps<typeof Input>, "id" | "value" | "onChange">) {
   return (
-    <Field htmlFor={id} label={label} error={error} optional={optional}>
+    <Field htmlFor={id} label={label} error={error} required={required}>
       <Input
         id={id}
         value={value}

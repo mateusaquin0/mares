@@ -21,7 +21,7 @@ export function SelectField({
   options,
   placeholder,
   error,
-  optional,
+  required,
 }: {
   id: string
   label: string
@@ -30,10 +30,10 @@ export function SelectField({
   options: SelectOption[]
   placeholder?: string
   error?: string
-  optional?: boolean
+  required?: boolean
 }) {
   return (
-    <Field htmlFor={id} label={label} error={error} optional={optional}>
+    <Field htmlFor={id} label={label} error={error} required={required}>
       <Select value={value || undefined} onValueChange={onValueChange}>
         <SelectTrigger id={id} aria-invalid={!!error || undefined}>
           <SelectValue placeholder={placeholder} />

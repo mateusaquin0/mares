@@ -28,7 +28,7 @@
     "hidePassword": "Hide password",
     "search": "Search...",
     "noResults": "No results for your search.",
-    "optional": "optional",
+    "required": "Required",
     "reload": "Refresh"
   },
   "authPanel": {
@@ -133,6 +133,10 @@
   "noOrg": {
     "title": "You don't belong to any research group",
     "description": "Your account is not linked to a research group yet. Ask an administrator of your research group to add you, or wait for your access request to be approved. If you don't recognize this account, contact us to request the deletion of your profile."
+  },
+  "minWidth": {
+    "title": "Screen too narrow",
+    "description": "MARES is designed for screens of at least 1024x600 pixels. Enlarge the window or use a desktop computer to continue."
   },
   "sidebar": {
     "dashboard": "Dashboard",
@@ -682,7 +686,7 @@
     "notFound": "Animal not found.",
     "createTitle": "New animal",
     "editTitle": "Edit animal",
-    "createDesc": "Record the stranding. Only species and research are required.",
+    "createDesc": "Record the stranding. Fields marked with * are required.",
     "sectionIdentification": "Identification",
     "sectionStranding": "Stranding",
     "sectionCondition": "Condition",

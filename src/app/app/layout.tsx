@@ -2,6 +2,7 @@ import { redirect } from "next/navigation"
 
 import { getAuthUser, getActiveOrgId } from "@/lib/auth"
 import { Sidebar } from "@/components/layout/sidebar"
+import { MinWidthGate } from "@/components/layout/min-width-gate"
 
 // Casca da área logada: exige sessão e monta a barra lateral.
 //
@@ -19,19 +20,25 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   // Sem organização e sem privilégio global: as únicas telas alcançáveis são as de fora do
   // grupo, e elas renderizam sem a barra lateral (que não teria o que mostrar).
   if (!activeOrg && !user.isSystemAdmin) {
-    return <main className="min-h-screen bg-background">{children}</main>
+    return (
+      <MinWidthGate>
+        <main className="min-h-screen bg-background">{children}</main>
+      </MinWidthGate>
+    )
   }
 
   return (
-    <div className="flex h-screen overflow-hidden">
-      <Sidebar
-        userName={user.name ?? user.email}
-        email={user.email}
-        isSystemAdmin={user.isSystemAdmin}
-        activeOrg={activeOrg}
-        memberships={user.memberships}
-      />
-      <main className="flex-1 overflow-y-auto bg-background">{children}</main>
-    </div>
+    <MinWidthGate>
+      <div className="flex h-screen overflow-hidden">
+        <Sidebar
+          userName={user.name ?? user.email}
+          email={user.email}
+          isSystemAdmin={user.isSystemAdmin}
+          activeOrg={activeOrg}
+          memberships={user.memberships}
+        />
+        <main className="flex-1 overflow-y-auto bg-background">{children}</main>
+      </div>
+    </MinWidthGate>
   )
 }

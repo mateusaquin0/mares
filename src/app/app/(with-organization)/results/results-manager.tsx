@@ -232,7 +232,7 @@ export function ResultsManager() {
   const canExport = !!researchId && (data?.animals.length ?? 0) > 0
 
   return (
-    <div className="mx-auto flex h-full max-w-7xl flex-col gap-6 p-8">
+    <div className="mx-auto flex h-full min-h-[42rem] max-w-7xl flex-col gap-6 p-8">
       <div className="flex items-start justify-between gap-4">
         <div>
           <h1 className="text-3xl font-semibold tracking-tight">{t("title")}</h1>
@@ -258,7 +258,6 @@ export function ResultsManager() {
         )}
       </div>
 
-      {/* Seletores de pesquisa + exame, lado a lado */}
       <div className="flex flex-wrap items-end gap-4">
         <div className="w-full space-y-1 sm:w-64">
           <label className="text-sm font-medium">{t("research")}</label>
@@ -309,7 +308,6 @@ export function ResultsManager() {
         <p className="text-sm text-muted-foreground">{t("noAnimals")}</p>
       ) : (
         <>
-          {/* Busca + legenda na mesma linha */}
           <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3">
             <div className="flex flex-wrap items-center gap-3">
               <div className="relative min-w-0 flex-1 sm:w-72 sm:flex-none">
@@ -367,7 +365,6 @@ export function ResultsManager() {
               )}
             </div>
 
-            {/* Legenda + contagem de animais (legenda à esquerda, badge à direita) */}
             <div className="flex w-full flex-wrap items-center justify-between gap-x-4 gap-y-1.5">
               <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-muted-foreground">
                 <span className="flex items-center gap-1.5">
@@ -390,8 +387,6 @@ export function ResultsManager() {
           {animals.length === 0 ? (
             <p className="text-sm text-muted-foreground">{t("noMatch")}</p>
           ) : (
-            // Wrapper ocupa a altura restante; a rolagem (vertical e horizontal) fica contida no
-            // <div overflow-auto> interno da tabela (via [&>div]:h-full), sem rolar a página.
             <div className="min-h-0 flex-1 overflow-hidden rounded-lg border [&>div]:h-full">
               <Table ref={attachDrag}>
                 <TableHeader className="sticky top-0 z-10 [&_th]:bg-accent">

@@ -83,7 +83,7 @@ export function AnimalsManager({ isOrgAdmin }: { isOrgAdmin: boolean }) {
   const defaultResearchId = researches.length === 1 ? researches[0]!.id : ""
 
   return (
-    <div className="mx-auto flex h-full max-w-6xl flex-col gap-6 p-8">
+    <div className="mx-auto flex h-full min-h-[48rem] max-w-6xl flex-col gap-6 p-8">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-3xl font-semibold tracking-tight">{t("title")}</h1>

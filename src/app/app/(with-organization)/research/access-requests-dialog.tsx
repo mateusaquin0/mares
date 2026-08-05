@@ -53,14 +53,11 @@ export function AccessRequestsDialog() {
       </Button>
 
       <Dialog open={open} onOpenChange={setOpen}>
-        {/* Mais largo que o padrão (max-w-lg): cada linha é uma frase + duas ações, que no
-            tamanho padrão quebram em três linhas. */}
         <DialogContent className="sm:max-w-3xl">
           <DialogHeader>
             <DialogTitle>{t("accessQueueTitle")}</DialogTitle>
             <DialogDescription>{t("accessQueueDesc")}</DialogDescription>
           </DialogHeader>
-          {/* DialogBody: a fila pode ter muitos pedidos — só a lista rola, o cabeçalho fica. */}
           <DialogBody>
             <ul className="divide-y">
               {items.map((r) => (
@@ -74,7 +71,6 @@ export function AccessRequestsDialog() {
                     </p>
                     {r.message && <p className="text-xs text-muted-foreground">{r.message}</p>}
                   </div>
-                  {/* shrink-0: a folga sobra para o texto, não para as ações. */}
                   <div className="flex shrink-0 items-center gap-2">
                     <Button
                       size="sm"

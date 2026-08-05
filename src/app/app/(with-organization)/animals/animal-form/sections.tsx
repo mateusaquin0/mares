@@ -18,8 +18,6 @@ import type { ResearchOption } from "."
 // Props comuns a todas as seções: a fatia de estado/erros/mutação do formulário.
 type SectionProps = Pick<AnimalFormApi, "form" | "errors" | "set">
 
-// Seção colapsável (accordion) com cabeçalho de ícone + título + chevron.
-// Usa <details> nativo (acessível); aberta por padrão para não esconder campos.
 function Section({
   title,
   icon: Icon,
@@ -71,13 +69,14 @@ export function IdentificationSection({
   return (
     <Section title={t("sectionIdentification")} icon={Fish}>
       {mode === "edit" ? (
-        <Field htmlFor="research" label={t("research")} error={errors.researchId}>
+        <Field htmlFor="research" label={t("research")} required error={errors.researchId}>
           <Input disabled value={researches.find((r) => r.id === form.researchId)?.name ?? ""} />
         </Field>
       ) : (
         <SelectField
           id="research"
           label={t("research")}
+          required
           value={form.researchId}
           onValueChange={(v) => set({ researchId: v })}
           placeholder={t("researchPlaceholder")}
@@ -91,6 +90,7 @@ export function IdentificationSection({
       <Field
         htmlFor="species"
         label={t("species")}
+        required={!speciesIndet}
         error={speciesIndet ? undefined : errors.species}
       >
         <div className="flex items-center gap-2">
@@ -143,7 +143,7 @@ export function IdentificationSection({
         {/* O ID de controle é único por ORGANIZAÇÃO, mas a listagem é filtrada por pesquisa:
             a lupa confere se o identificador já existe no grupo antes de a pessoa preencher
             o resto do formulário — inclusive em pesquisas que ela não enxerga. */}
-        <Field htmlFor="controlId" label={t("controlId")} error={errors.controlId}>
+        <Field htmlFor="controlId" label={t("controlId")} required error={errors.controlId}>
           <div className="flex items-center gap-2">
             <Input
               id="controlId"
@@ -166,12 +166,7 @@ export function IdentificationSection({
             </Button>
           </div>
         </Field>
-        <Field
-          htmlFor="simba"
-          label={t("simbaRecordNumber")}
-          optional
-          error={errors.simbaRecordNumber}
-        >
+        <Field htmlFor="simba" label={t("simbaRecordNumber")} error={errors.simbaRecordNumber}>
           <div className="flex items-center gap-2">
             <Input
               id="simba"
@@ -226,7 +221,7 @@ function StrandingField({
 }) {
   const t = useTranslations("animals")
   return (
-    <Field htmlFor={id} label={label} error={disabled ? undefined : error}>
+    <Field htmlFor={id} label={label} required={!disabled} error={disabled ? undefined : error}>
       <div className="flex items-center gap-2">
         <Input
           id={id}
@@ -287,7 +282,6 @@ export function StrandingSection({
         <TextField
           id="beach"
           label={t("strandingBeach")}
-          optional
           value={form.strandingBeach}
           error={errors.strandingBeach}
           maxLength={LIMITS.name}
@@ -354,6 +348,7 @@ export function ConditionSection({ form, errors, set }: SectionProps) {
         <SelectField
           id="sex"
           label={t("sex")}
+          required
           value={form.sex}
           onValueChange={(v) => set({ sex: v })}
           placeholder={t("sexPlaceholder")}
@@ -363,6 +358,7 @@ export function ConditionSection({ form, errors, set }: SectionProps) {
         <SelectField
           id="lifeStage"
           label={t("lifeStage")}
+          required
           value={form.lifeStage}
           onValueChange={(v) => set({ lifeStage: v })}
           placeholder={t("lifeStagePlaceholder")}
@@ -372,7 +368,6 @@ export function ConditionSection({ form, errors, set }: SectionProps) {
         <TextField
           id="bodyCondition"
           label={t("bodyCondition")}
-          optional
           value={form.bodyCondition}
           error={errors.bodyCondition}
           maxLength={LIMITS.tinyText}
@@ -381,7 +376,6 @@ export function ConditionSection({ form, errors, set }: SectionProps) {
         <TextField
           id="decomp"
           label={t("decompositionStage")}
-          optional
           value={form.decompositionStage}
           error={errors.decompositionStage}
           maxLength={LIMITS.tinyText}
@@ -390,7 +384,6 @@ export function ConditionSection({ form, errors, set }: SectionProps) {
         <TextField
           id="deathCondition"
           label={t("deathCondition")}
-          optional
           value={form.deathCondition}
           error={errors.deathCondition}
           maxLength={LIMITS.tinyText}
@@ -399,7 +392,6 @@ export function ConditionSection({ form, errors, set }: SectionProps) {
         <TextField
           id="necropsyDate"
           label={t("necropsyDate")}
-          optional
           type="date"
           value={form.necropsyDate}
           error={errors.necropsyDate}
@@ -424,7 +416,6 @@ export function NotesSection({
       <TextareaField
         id="notes"
         label={t("macroscopicNotes")}
-        optional
         rows={3}
         max={LIMITS.hugeText}
         value={form.macroscopicNotes}

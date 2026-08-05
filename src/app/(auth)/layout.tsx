@@ -8,7 +8,6 @@ export default async function AuthLayout({ children }: { children: React.ReactNo
 
   return (
     <div className="flex min-h-screen">
-      {/* Painel de marca — o único gradiente do sistema (navy → cyan), com marca-d'água. */}
       <aside
         className="relative hidden flex-col justify-between overflow-hidden p-12 text-white lg:flex lg:w-[46%]"
         style={{
@@ -32,7 +31,6 @@ export default async function AuthLayout({ children }: { children: React.ReactNo
         <Logo className="pointer-events-none absolute -bottom-20 -right-20 size-80 text-white/[0.06]" />
       </aside>
 
-      {/* Painel do formulário */}
       <main className="relative flex flex-1 items-center justify-center bg-background px-6 py-12">
         <div className="absolute right-4 top-4 text-muted-foreground">
           <LocaleSwitcher />

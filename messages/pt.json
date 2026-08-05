@@ -28,7 +28,7 @@
     "hidePassword": "Ocultar senha",
     "search": "Pesquisar...",
     "noResults": "Nenhum resultado para a busca.",
-    "optional": "opcional",
+    "required": "Campo obrigatório",
     "reload": "Atualizar"
   },
   "authPanel": {
@@ -133,6 +133,10 @@
   "noOrg": {
     "title": "Você não pertence a nenhum grupo de pesquisa",
     "description": "Sua conta ainda não está vinculada a um grupo de pesquisa. Peça a um administrador do seu grupo de pesquisa para adicioná-lo, ou aguarde a aprovação da sua solicitação de acesso. Se você não reconhece este cadastro, entre em contato para solicitar a exclusão do seu perfil."
+  },
+  "minWidth": {
+    "title": "Tela muito estreita",
+    "description": "O MARES foi feito para telas de pelo menos 1024x600 pixels. Aumente a janela ou use um computador para continuar."
   },
   "sidebar": {
     "dashboard": "Dashboard",
@@ -682,7 +686,7 @@
     "notFound": "Animal não encontrado.",
     "createTitle": "Novo animal",
     "editTitle": "Editar animal",
-    "createDesc": "Registre o encalhe. Apenas espécie e pesquisa são obrigatórios.",
+    "createDesc": "Registre o encalhe. Campos marcados com * são obrigatórios.",
     "sectionIdentification": "Identificação",
     "sectionStranding": "Encalhe",
     "sectionCondition": "Condição",

@@ -34,14 +34,14 @@ export default async function PublicMapPage() {
         </div>
       </header>
 
-      <div className="flex min-h-0 flex-1 flex-col gap-3 p-4">
+      <div className="flex min-h-fit flex-1 flex-col gap-3 p-4">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight text-foreground">
             {t("publicTitle")}
           </h1>
           <p className="mt-0.5 text-sm text-muted-foreground">{t("publicSubtitle")}</p>
         </div>
-        <div className="min-h-0 flex-1">
+        <div className="min-h-fit flex-1">
           <MapExplorer points={points} />
         </div>
       </div>
