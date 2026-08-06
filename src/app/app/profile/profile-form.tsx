@@ -21,6 +21,7 @@ import { Label } from "@/components/ui/label"
 import { PasswordInput } from "@/components/ui/password-input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { ConfirmDialog } from "@/components/confirm-dialog"
+import { SampleTypesCard } from "./sample-types-card"
 
 export function ProfileForm({ name, email }: { name: string; email: string }) {
   const t = useTranslations("profile")
@@ -140,6 +141,8 @@ export function ProfileForm({ name, email }: { name: string; email: string }) {
           </form>
         </CardContent>
       </Card>
+
+      <SampleTypesCard />
 
       <Card className="border-destructive/40">
         <CardHeader>

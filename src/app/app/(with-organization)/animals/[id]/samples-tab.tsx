@@ -12,6 +12,7 @@ import { useErrorMessage } from "@/lib/use-error-message"
 import { canDeleteAuthored } from "@/lib/authorship"
 import { type SamplePayload } from "@/services/samples"
 import { useSamples, useCreateSample, useUpdateSample, useDeleteSample } from "@/hooks/use-samples"
+import { useUserSampleTypes, useRememberSampleType } from "@/hooks/use-user-sample-types"
 import { useOrgans } from "@/hooks/use-catalog"
 import { useResearch } from "@/hooks/use-research"
 import type { Sample, SampleStatus } from "@/types/sample"
@@ -38,6 +39,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { TextSuggest } from "@/components/ui/text-suggest"
 import { Truncate } from "@/components/ui/truncate"
 import { ReloadButton } from "@/components/ui/reload-button"
 import {
@@ -110,6 +112,10 @@ export function SamplesTab({
   const samplesQ = useSamples(animalId)
   const items = samplesQ.data ?? []
   const { data: organs = [] } = useOrgans()
+  // Tipos que o usuário já usou, sugeridos no formulário e realimentados a cada amostra
+  // salva (gerenciáveis em "Meu perfil").
+  const { data: savedTypes = [] } = useUserSampleTypes()
+  const rememberSampleType = useRememberSampleType(savedTypes)
   const loading = samplesQ.isLoading
   const createM = useCreateSample(animalId)
   const updateM = useUpdateSample(animalId)
@@ -211,6 +217,7 @@ export function SamplesTab({
     try {
       if (isEdit) await updateM.mutateAsync({ id: dialog!.row!.id, data: payload })
       else await createM.mutateAsync(payload)
+      rememberSampleType(payload.sampleType)
       toast.success(isEdit ? t("updated") : t("created"))
       setDialog(null)
     } catch (err) {
@@ -529,14 +536,14 @@ export function SamplesTab({
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">
                   <Label htmlFor="sampleType">{t("sampleType")}</Label>
-                  <Input
+                  <TextSuggest
                     id="sampleType"
                     name="sampleType"
-                    autoComplete="on"
                     placeholder={t("sampleTypePlaceholder")}
                     maxLength={LIMITS.name}
+                    suggestions={savedTypes.map((s) => s.value)}
                     value={form.sampleType}
-                    onChange={(e) => set({ sampleType: e.target.value })}
+                    onChange={(v) => set({ sampleType: v })}
                   />
                   {errors.sampleType && (
                     <p className="text-xs text-destructive">{tval("required")}</p>

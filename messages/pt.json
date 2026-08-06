@@ -110,7 +110,7 @@
   },
   "profile": {
     "title": "Meu perfil",
-    "subtitle": "Gerencie seus dados de conta, senha e exclusão de perfil.",
+    "subtitle": "Gerencie seus dados de conta, senha, atalhos de preenchimento e exclusão de perfil.",
     "nameSection": "Dados da conta",
     "emailLabel": "E-mail",
     "emailHint": "O e-mail é sua identidade de acesso e não pode ser alterado aqui.",
@@ -128,7 +128,20 @@
     "deleteTitle": "Excluir seu perfil?",
     "deleteConfirmDesc": "Sua conta e seus vínculos serão removidos definitivamente. Os dados científicos já publicados permanecem na plataforma. Esta ação não pode ser desfeita.",
     "deleteButton": "Excluir meu perfil",
-    "deleteError": "Não foi possível excluir o perfil"
+    "deleteError": "Não foi possível excluir o perfil",
+    "sampleTypes": {
+      "title": "Meus tipos de amostra",
+      "description": "Atalhos para o campo \"Tipo de amostra\" do formulário de amostras. A lista é só sua e cresce sozinha: cada tipo que você registra entra aqui. Alterar ou remover um item não muda nenhuma amostra já cadastrada.",
+      "addLabel": "Novo tipo de amostra",
+      "addPlaceholder": "Ex.: tecido fresco, DNA extraído, lâmina",
+      "add": "Adicionar",
+      "addError": "Não foi possível adicionar",
+      "renameLabel": "Editar tipo de amostra",
+      "renameError": "Não foi possível salvar",
+      "removeError": "Não foi possível remover",
+      "empty": "Nenhum tipo salvo ainda. Adicione aqui ou registre uma amostra — o tipo usado é guardado automaticamente.",
+      "full": "Sua lista chegou ao limite. Remova algum item para adicionar outro."
+    }
   },
   "noOrg": {
     "title": "Você não pertence a nenhum grupo de pesquisa",
@@ -536,6 +549,9 @@
     "catalogRequestProcessed": "Esta solicitação já foi processada.",
     "catalogRequestSelfReview": "Você não pode revisar a própria solicitação.",
     "catalogRequestDuplicatePending": "Você já tem uma solicitação pendente para este item.",
+    "sampleTypeNotFound": "Tipo de amostra não encontrado na sua lista.",
+    "sampleTypeDuplicate": "Este tipo de amostra já está na sua lista.",
+    "sampleTypeLimit": "Sua lista de tipos de amostra está cheia. Remova algum item para adicionar outro.",
     "analysisNotFound": "Análise não encontrada",
     "confirmationParentNotPositive": "Só um rastreio positivo pode receber confirmação de espécie",
     "confirmationDuplicate": "Esta espécie já foi confirmada nesta amostra",

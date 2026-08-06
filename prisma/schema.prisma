@@ -142,7 +142,23 @@ model User {
   samplesCreated         Sample[]                @relation("SampleCreator")
   feedbacks              Feedback[]              @relation("FeedbackAuthor")
   catalogRequests        CatalogRequest[]        @relation("CatalogRequestAuthor")
+  sampleTypes            UserSampleType[]
   createdAt              DateTime                @default(now())
+}
+
+// Tipos de amostra que o usuário guarda para reaproveitar no formulário de amostra.
+// `Sample.sampleType` é texto livre (não é catálogo da organização): esta lista é uma
+// conveniência PESSOAL, sem efeito sobre os dados científicos nem sobre outros usuários.
+model UserSampleType {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  value     String
+  createdAt DateTime @default(now())
+
+  // Unicidade exata; a rota também recusa duplicata que só difira em caixa/acento.
+  @@unique([userId, value])
+  @@index([userId])
 }
 
 // Vínculo N:N entre usuário e organização, com o papel do usuário naquela org.
