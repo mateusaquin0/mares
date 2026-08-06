@@ -104,6 +104,10 @@ export const ERROR_CODES = {
   catalogRequestProcessed: "catalogRequestProcessed",
   catalogRequestSelfReview: "catalogRequestSelfReview",
   catalogRequestDuplicatePending: "catalogRequestDuplicatePending",
+  // Lista pessoal de tipos de amostra (atalho do formulário de amostra)
+  sampleTypeNotFound: "sampleTypeNotFound",
+  sampleTypeDuplicate: "sampleTypeDuplicate",
+  sampleTypeLimit: "sampleTypeLimit",
 } as const
 
 export type ErrorCode = (typeof ERROR_CODES)[keyof typeof ERROR_CODES]

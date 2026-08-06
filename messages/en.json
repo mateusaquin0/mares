@@ -110,7 +110,7 @@
   },
   "profile": {
     "title": "My profile",
-    "subtitle": "Manage your account details, password and profile deletion.",
+    "subtitle": "Manage your account details, password, form shortcuts and profile deletion.",
     "nameSection": "Account details",
     "emailLabel": "Email",
     "emailHint": "Your email is your sign-in identity and can't be changed here.",
@@ -128,7 +128,20 @@
     "deleteTitle": "Delete your profile?",
     "deleteConfirmDesc": "Your account and memberships will be permanently removed. Scientific data already published remains on the platform. This action cannot be undone.",
     "deleteButton": "Delete my profile",
-    "deleteError": "Couldn't delete your profile"
+    "deleteError": "Couldn't delete your profile",
+    "sampleTypes": {
+      "title": "My sample types",
+      "description": "Shortcuts for the \"Sample type\" field in the sample form. The list is yours alone and fills itself: every type you record is added here. Editing or removing an item does not change any sample already recorded.",
+      "addLabel": "New sample type",
+      "addPlaceholder": "e.g. fresh tissue, extracted DNA, slide",
+      "add": "Add",
+      "addError": "Couldn't add",
+      "renameLabel": "Edit sample type",
+      "renameError": "Couldn't save",
+      "removeError": "Couldn't remove",
+      "empty": "No types saved yet. Add one here or record a sample — the type you use is saved automatically.",
+      "full": "Your list has reached its limit. Remove an item to add another."
+    }
   },
   "noOrg": {
     "title": "You don't belong to any research group",
@@ -536,6 +549,9 @@
     "catalogRequestProcessed": "This request has already been processed.",
     "catalogRequestSelfReview": "You cannot review your own request.",
     "catalogRequestDuplicatePending": "You already have a pending request for this item.",
+    "sampleTypeNotFound": "Sample type not found in your list.",
+    "sampleTypeDuplicate": "This sample type is already in your list.",
+    "sampleTypeLimit": "Your sample type list is full. Remove an item to add another.",
     "analysisNotFound": "Analysis not found",
     "confirmationParentNotPositive": "Only a positive screening can receive species confirmation",
     "confirmationDuplicate": "This species has already been confirmed for this sample",
