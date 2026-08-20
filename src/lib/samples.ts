@@ -13,7 +13,15 @@ export function sampleDuplicateError(): ConflictError {
   )
 }
 
-/** Carrega a amostra com orgId/organId/researchId (via animal -> pesquisa) para checagens. */
+/**
+ * Carrega a amostra com orgId/organId/researchId para checagens.
+ *
+ * `researchId` é o da PRÓPRIA amostra (Sample.researchId), não o da pesquisa primária do
+ * animal: num indivíduo compartilhado, cada amostra pertence a UMA das pesquisas dele
+ * (primária ou participante). Quem chama usa esse id para o escopo de visibilidade e para
+ * casar a célula com o protocolo — usar o do animal barra o autor da amostra na pesquisa
+ * participante e consulta o protocolo errado.
+ */
 export async function loadSampleOrg(id: string) {
   const sample = await prisma.sample.findUnique({
     where: { id },
@@ -22,18 +30,12 @@ export async function loadSampleOrg(id: string) {
       animalId: true,
       organId: true,
       createdById: true,
-      animal: { select: { researchId: true, research: { select: { orgId: true } } } },
+      researchId: true,
+      orgId: true,
     },
   })
   if (!sample) throw new NotFoundError("Amostra não encontrada", ERROR_CODES.sampleNotFound)
-  return {
-    id: sample.id,
-    animalId: sample.animalId,
-    organId: sample.organId,
-    createdById: sample.createdById,
-    researchId: sample.animal.researchId,
-    orgId: sample.animal.research.orgId,
-  }
+  return sample
 }
 
 /** Confere que o órgão (catálogo) existe. */
