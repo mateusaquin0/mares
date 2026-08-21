@@ -531,12 +531,16 @@ export async function assertResearchOnAnimal(animalId: string, researchId: strin
 
 /** Remove a participação de uma pesquisa no indivíduo (idempotente). */
 export async function removeAnimalResearch(animalId: string, researchId: string) {
-  // Bloqueia se a pesquisa tem amostras neste indivíduo (perderiam a dona). O usuário deve
-  // remover/reatribuir as amostras antes de desvincular a pesquisa.
-  const samples = await prisma.sample.count({ where: { animalId, researchId } })
-  if (samples > 0) {
+  // Bloqueia se a pesquisa tem amostras OU arquivos neste indivíduo (perderiam a dona: ficariam
+  // pendurados numa pesquisa que não estuda mais o indivíduo, fora do alcance de todo mundo).
+  // O usuário deve remover/reatribuir esses registros antes de desvincular a pesquisa.
+  const [samples, media] = await Promise.all([
+    prisma.sample.count({ where: { animalId, researchId } }),
+    prisma.animalMedia.count({ where: { animalId, researchId } }),
+  ])
+  if (samples > 0 || media > 0) {
     throw new ConflictError(
-      "A pesquisa possui amostras neste indivíduo",
+      "A pesquisa possui amostras ou arquivos neste indivíduo",
       ERROR_CODES.animalResearchHasData,
     )
   }

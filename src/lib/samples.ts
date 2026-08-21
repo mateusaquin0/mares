@@ -5,10 +5,16 @@ import { prisma } from "@/lib/prisma"
 import { ConflictError, NotFoundError } from "@/lib/errors"
 import { ERROR_CODES } from "@/lib/error-codes"
 
-/** Erro de identificação de amostra duplicada (única violação de unicidade possível). */
+/**
+ * Erro de identificação de amostra duplicada (única violação de unicidade possível).
+ *
+ * O conflito é sempre DENTRO da pesquisa dona (@@unique([researchId, identification])) — e
+ * quem cadastra a amostra necessariamente enxerga essa pesquisa, então a amostra em conflito
+ * está à vista e a mensagem não precisa nomear onde ela está.
+ */
 export function sampleDuplicateError(): ConflictError {
   return new ConflictError(
-    "Identificação de amostra já cadastrada",
+    "Identificação de amostra já cadastrada nesta pesquisa",
     ERROR_CODES.sampleIdentificationDuplicate,
   )
 }

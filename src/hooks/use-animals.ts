@@ -167,6 +167,19 @@ export function useUploadAnimalMedia(animalId: string) {
   })
 }
 
+// Edição da legenda: não mexe no arquivo nem no _count do animal, então basta reinvalidar a
+// lista de mídia.
+export function useUpdateAnimalMedia(animalId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ mediaId, label }: { mediaId: string; label: string | null }) =>
+      animalsService.updateMedia(mediaId, { label }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: animalKeys.media(animalId) })
+    },
+  })
+}
+
 export function useDeleteAnimalMedia(animalId: string) {
   const qc = useQueryClient()
   return useMutation({

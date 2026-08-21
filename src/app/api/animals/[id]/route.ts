@@ -46,7 +46,11 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
     const { id } = await params
     const base = await loadAnimalOrg(id)
     requireOrgRole(user, base.orgId, "RESEARCHER")
-    await assertAnimalVisible(user, base.orgId, id)
+    const scope = await assertAnimalVisible(user, base.orgId, id)
+    // As contagens dos rótulos das abas seguem o MESMO escopo das listas (amostras e mídia são
+    // por pesquisa): sem isso, o indivíduo compartilhado mostrava "Mídia (3)" e abria uma lista
+    // com um arquivo só — além de revelar o volume de dados da pesquisa vizinha.
+    const countScope = scope.all ? {} : { where: { researchId: { in: scope.ids } } }
 
     const animal = await prisma.animal.findUnique({
       where: { id },
@@ -62,7 +66,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
           },
           orderBy: { createdAt: "asc" },
         },
-        _count: { select: { samples: true, media: true } },
+        _count: { select: { samples: countScope, media: countScope } },
       },
     })
     return NextResponse.json(animal)

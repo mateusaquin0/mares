@@ -3,6 +3,7 @@
 
 import { http } from "@/lib/http"
 import type { CreateAnimalData, UpdateAnimalData } from "@/schemas/animal.schema"
+import type { UpdateMediaData } from "@/schemas/media.schema"
 import type {
   AnimalDetail,
   AnimalFacets,
@@ -80,6 +81,8 @@ export const animalsService = {
   listMedia: (animalId: string) => http.get<AnimalMedia[]>(`/api/animals/${animalId}/media`),
   uploadMedia: (animalId: string, form: FormData) =>
     http.postForm<AnimalMedia>(`/api/animals/${animalId}/media`, form),
+  updateMedia: (mediaId: string, data: UpdateMediaData) =>
+    http.patch<{ id: string; label: string | null }>(`/api/media/${mediaId}`, data),
   removeMedia: (mediaId: string) => http.del(`/api/media/${mediaId}`),
 
   // Grade de análises e auditoria
