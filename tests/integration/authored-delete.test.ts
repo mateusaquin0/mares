@@ -91,6 +91,7 @@ async function makeMedia(key: string, uploadedById: string | null) {
   const row = await prisma.animalMedia.create({
     data: {
       animalId: animalA,
+      researchId: researchA,
       url: `${animalA}/${randomUUID()}_arquivo.pdf`,
       mimeType: "application/pdf",
       uploadedById,

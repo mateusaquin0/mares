@@ -254,7 +254,19 @@ export function AnimalDetail({
           {tab === "media" && (
             <Card className="flex min-h-0 flex-1 flex-col">
               <CardContent className="flex min-h-0 flex-1 flex-col overflow-hidden pt-6">
-                <MediaTab animalId={id} isOrgAdmin={isOrgAdmin} selfId={selfId} />
+                <MediaTab
+                  animalId={id}
+                  isOrgAdmin={isOrgAdmin}
+                  selfId={selfId}
+                  // Mesma regra das amostras: só as pesquisas que de fato participam podem
+                  // ser donas de um arquivo.
+                  researches={[
+                    animal.research,
+                    ...animal.participations
+                      .filter((p) => p.status === "ACCEPTED")
+                      .map((p) => p.research),
+                  ]}
+                />
               </CardContent>
             </Card>
           )}

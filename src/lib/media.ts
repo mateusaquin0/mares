@@ -101,9 +101,11 @@ export async function signMediaUrl(path: string): Promise<string | null> {
 }
 
 /**
- * Carrega a mídia com o orgId (via animal -> pesquisa) para checagem de papel. O `animalId`
- * sai junto porque o arquivo não tem pesquisa própria: a visibilidade é a do indivíduo
- * (assertAnimalVisible).
+ * Carrega a mídia com a pesquisa DONA e o orgId dela, para as checagens de papel e de escopo.
+ *
+ * A visibilidade do arquivo é a da sua pesquisa (assertResearchVisible), não a do indivíduo:
+ * num indivíduo compartilhado, cada projeto vê os próprios arquivos. O `animalId` sai junto
+ * para quem precisa do contexto do indivíduo (caminho no storage, invalidação de cache).
  */
 export async function loadMediaOrg(id: string) {
   const media = await prisma.animalMedia.findUnique({
@@ -113,7 +115,8 @@ export async function loadMediaOrg(id: string) {
       url: true,
       uploadedById: true,
       animalId: true,
-      animal: { select: { research: { select: { orgId: true } } } },
+      researchId: true,
+      research: { select: { orgId: true } },
     },
   })
   if (!media) throw new NotFoundError("Arquivo não encontrado", ERROR_CODES.mediaNotFound)
@@ -122,6 +125,7 @@ export async function loadMediaOrg(id: string) {
     path: media.url,
     uploadedById: media.uploadedById,
     animalId: media.animalId,
-    orgId: media.animal.research.orgId,
+    researchId: media.researchId,
+    orgId: media.research.orgId,
   }
 }

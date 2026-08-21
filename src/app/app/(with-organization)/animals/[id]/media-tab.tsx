@@ -1,16 +1,40 @@
 "use client"
 
-import { useRef, useState } from "react"
+import { useMemo, useRef, useState } from "react"
 import { useLocale, useTranslations } from "next-intl"
 import { toast } from "sonner"
-import { FileText, Trash2, Upload } from "lucide-react"
+import { FileText, Pencil, Trash2, Upload } from "lucide-react"
 
 import { useErrorMessage } from "@/lib/use-error-message"
 import { canDeleteAuthored } from "@/lib/authorship"
-import { useAnimalMedia, useUploadAnimalMedia, useDeleteAnimalMedia } from "@/hooks/use-animals"
+import { LIMITS } from "@/schemas/limits"
+import {
+  useAnimalMedia,
+  useUploadAnimalMedia,
+  useUpdateAnimalMedia,
+  useDeleteAnimalMedia,
+} from "@/hooks/use-animals"
+import { useResearchList } from "@/hooks/use-research"
 import type { AnimalMedia } from "@/types/animal"
 import { Button } from "@/components/ui/button"
+import { CharCounter } from "@/components/ui/char-counter"
+import {
+  Dialog,
+  DialogBody,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { TableSkeleton } from "@/components/ui/skeleton"
 import { ConfirmDialog } from "@/components/confirm-dialog"
 
@@ -18,10 +42,13 @@ export function MediaTab({
   animalId,
   isOrgAdmin,
   selfId,
+  researches,
 }: {
   animalId: string
   isOrgAdmin: boolean
   selfId: string
+  // Pesquisas do indivíduo (primária + participações). O arquivo pertence a uma delas.
+  researches: { id: string; name: string }[]
 }) {
   const t = useTranslations("media")
   const tc = useTranslations("common")
@@ -33,16 +60,31 @@ export function MediaTab({
   const items = mediaQ.data ?? []
   const loading = mediaQ.isLoading
   const uploadM = useUploadAnimalMedia(animalId)
+  const updateM = useUpdateAnimalMedia(animalId)
   const deleteM = useDeleteAnimalMedia(animalId)
   const [file, setFile] = useState<File | null>(null)
   const [label, setLabel] = useState("")
   const [confirm, setConfirm] = useState<AnimalMedia | null>(null)
+  const [editing, setEditing] = useState<AnimalMedia | null>(null)
+  const [editLabel, setEditLabel] = useState("")
+  const multiResearch = researches.length > 1
+
+  // Pesquisa dona do arquivo. O padrão é a primeira do PRÓPRIO escopo — num indivíduo
+  // compartilhado, a primária costuma ser de outro projeto, e enviar por ela responderia 403.
+  const myResearchQ = useResearchList()
+  const defaultResearchId = useMemo(() => {
+    const mine = new Set((myResearchQ.data ?? []).map((r) => r.id))
+    return (researches.find((r) => mine.has(r.id)) ?? researches[0])?.id ?? ""
+  }, [myResearchQ.data, researches])
+  const [researchId, setResearchId] = useState("")
+  const ownerResearchId = researchId || defaultResearchId
 
   async function upload() {
     if (!file) return
     const body = new FormData()
     body.append("file", file)
     if (label.trim()) body.append("label", label.trim())
+    if (ownerResearchId) body.append("researchId", ownerResearchId)
     try {
       await uploadM.mutateAsync(body)
       toast.success(t("uploaded"))
@@ -51,6 +93,22 @@ export function MediaTab({
       if (fileRef.current) fileRef.current.value = ""
     } catch (err) {
       toast.error(t("uploadError"), { description: em(err) })
+    }
+  }
+
+  function openEdit(m: AnimalMedia) {
+    setEditing(m)
+    setEditLabel(m.label ?? "")
+  }
+
+  async function saveLabel() {
+    if (!editing) return
+    try {
+      await updateM.mutateAsync({ mediaId: editing.id, label: editLabel.trim() || null })
+      toast.success(t("labelSaved"))
+      setEditing(null)
+    } catch (err) {
+      toast.error(t("labelSaveError"), { description: em(err) })
     }
   }
 
@@ -87,9 +145,29 @@ export function MediaTab({
             value={label}
             onChange={(e) => setLabel(e.target.value)}
             placeholder={t("labelPlaceholder")}
+            maxLength={LIMITS.longText}
             className="max-w-xs"
           />
         </div>
+        {multiResearch && (
+          <div className="space-y-1">
+            <Label htmlFor="media-research" className="text-xs text-muted-foreground">
+              {t("research")}
+            </Label>
+            <Select value={ownerResearchId} onValueChange={setResearchId}>
+              <SelectTrigger id="media-research" className="max-w-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {researches.map((r) => (
+                  <SelectItem key={r.id} value={r.id}>
+                    {r.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
         <Button onClick={upload} disabled={!file} loading={uploadM.isPending}>
           <Upload className="size-4" />
           {t("upload")}
@@ -134,24 +212,70 @@ export function MediaTab({
                     <p className="mt-0.5 text-[10px] text-muted-foreground">
                       {fmtDate(m.createdAt)}
                     </p>
+                    {multiResearch && (
+                      <p
+                        className="mt-0.5 truncate text-[10px] text-muted-foreground"
+                        title={m.research.name}
+                      >
+                        {m.research.name}
+                      </p>
+                    )}
                   </div>
-                  {canDelete(m) && (
+                  <div className="flex shrink-0 items-center">
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="size-7 shrink-0 text-destructive"
-                      onClick={() => setConfirm(m)}
+                      className="size-7"
+                      onClick={() => openEdit(m)}
                     >
-                      <Trash2 className="size-4" />
-                      <span className="sr-only">{tc("delete")}</span>
+                      <Pencil className="size-4" />
+                      <span className="sr-only">{t("editLabel")}</span>
                     </Button>
-                  )}
+                    {canDelete(m) && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="size-7 text-destructive"
+                        onClick={() => setConfirm(m)}
+                      >
+                        <Trash2 className="size-4" />
+                        <span className="sr-only">{tc("delete")}</span>
+                      </Button>
+                    )}
+                  </div>
                 </div>
               </div>
             )
           })}
         </div>
       )}
+
+      <Dialog open={!!editing} onOpenChange={(o) => !o && setEditing(null)}>
+        <DialogContent dirty={!!editing && editLabel !== (editing.label ?? "")}>
+          <DialogHeader>
+            <DialogTitle>{t("editLabel")}</DialogTitle>
+          </DialogHeader>
+          <DialogBody className="space-y-1">
+            <Label htmlFor="media-label">{t("label")}</Label>
+            <Input
+              id="media-label"
+              value={editLabel}
+              placeholder={t("labelPlaceholder")}
+              maxLength={LIMITS.longText}
+              onChange={(e) => setEditLabel(e.target.value)}
+            />
+            <CharCounter value={editLabel} max={LIMITS.longText} />
+          </DialogBody>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setEditing(null)}>
+              {tc("cancel")}
+            </Button>
+            <Button onClick={saveLabel} loading={updateM.isPending}>
+              {tc("save")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {confirm && (
         <ConfirmDialog

@@ -156,6 +156,8 @@ export type AnimalMedia = {
   createdAt: string
   // Autor do upload; nulo em arquivos anteriores à coluna (só admin os exclui).
   uploadedById: string | null
+  // Pesquisa dona do arquivo — define quem o enxerga (indivíduo compartilhado).
+  research: { id: string; name: string }
 }
 
 // Entrada do histórico/auditoria (/api/animals/:id/audit).

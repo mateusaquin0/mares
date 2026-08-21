@@ -214,6 +214,8 @@ model Research {
   animalLinks    AnimalResearch[]
   // Amostras coletadas por esta pesquisa (o indivíduo pode ter amostras de várias pesquisas).
   samples        Sample[]
+  // Arquivos enviados por esta pesquisa (mesma lógica das amostras).
+  media          AnimalMedia[]
   createdAt      DateTime                @default(now())
 
   @@index([orgId])
@@ -451,10 +453,10 @@ model Sample {
   research        Research     @relation(fields: [researchId], references: [id])
   organId         String
   organ           Organ        @relation(fields: [organId], references: [id])
-  // Organização dona, denormalizada de animal→pesquisa, para a unicidade da identificação
-  // ser POR ORGANIZAÇÃO (não global). Definida na criação; o animal nunca muda de org.
+  // Organização dona, denormalizada de animal→pesquisa: resolve o papel de quem mexe na
+  // amostra sem o join até a pesquisa. Definida na criação; o animal nunca muda de org.
   orgId           String
-  identification  String // identificação/código da amostra, obrigatória e única por organização (ex.: "AM-001")
+  identification  String // identificação/código da amostra, obrigatória e única na pesquisa (ex.: "AM-001")
   sampleType      String // "tecido fresco", "DNA extraído", "lâmina", "parafina", "soro"
   collectionDate  DateTime?
   storageLocation String? // ex: "Freezer A, caixa 3, posição B2"
@@ -469,9 +471,12 @@ model Sample {
   createdBy       User?        @relation("SampleCreator", fields: [createdById], references: [id], onDelete: SetNull)
   createdAt       DateTime     @default(now())
 
-  @@unique([orgId, identification])
+  // Identificação única POR PESQUISA, não por organização: o rótulo do tubo vem do indivíduo
+  // (ex.: "150/23 FIG" = ID de controle + órgão), então duas pesquisas que estudam o MESMO
+  // indivíduo compartilhado chegam sempre ao mesmo código para as suas próprias amostras.
+  // Por organização, a segunda pesquisa era barrada por uma amostra que sequer enxerga.
+  @@unique([researchId, identification])
   @@index([animalId])
-  @@index([researchId])
 }
 
 model Analysis {
@@ -526,17 +531,23 @@ model AnimalMedia {
   id           String   @id @default(uuid())
   animalId     String
   animal       Animal   @relation(fields: [animalId], references: [id], onDelete: Cascade)
+  // Pesquisa dona do arquivo: UMA das pesquisas do indivíduo (primária ou participante),
+  // como em Sample.researchId. Num indivíduo compartilhado, a foto de necrópsia de um
+  // projeto não é dado do outro — a visibilidade acompanha a pesquisa, não o indivíduo.
+  researchId   String
+  research     Research @relation(fields: [researchId], references: [id])
   url          String // URL no Supabase Storage
   mimeType     String // "image/jpeg", "application/pdf" etc.
   label        String? // descrição livre
   // Autor do upload (para a regra "quem enviou pode excluir"); SetNull se o usuário for
   // removido. Nulo = arquivo ÓRFÃO (anterior à coluna ou autor removido): sem dono, qualquer
-  // membro da pesquisa do indivíduo pode excluí-lo.
+  // membro da pesquisa dona pode excluí-lo.
   uploadedById String?
   uploadedBy   User?    @relation("AnimalMediaUploader", fields: [uploadedById], references: [id], onDelete: SetNull)
   createdAt    DateTime @default(now())
 
   @@index([animalId])
+  @@index([researchId])
 }
 
 // Rastreabilidade de alterações em dados científicos

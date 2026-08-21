@@ -11,15 +11,15 @@ import { ERROR_CODES } from "@/lib/error-codes"
 import { analysisRowSelect } from "@/lib/analyses"
 import type { SequenceRecordData, UpsertConfirmationData } from "@/schemas/analysis.schema"
 
-// Escopo (org/pesquisa) de uma análise, via sample -> animal -> research.
+// Escopo (org/pesquisa) de uma análise, pela AMOSTRA dona. A pesquisa é a da amostra, não a
+// primária do animal: num indivíduo compartilhado a amostra pode pertencer a uma pesquisa
+// participante, e é o vínculo com ELA que autoriza mexer na confirmação.
 const scopeSelect = {
   id: true,
   sampleId: true,
   parentAnalysisId: true,
   result: true,
-  sample: {
-    select: { animal: { select: { researchId: true, research: { select: { orgId: true } } } } },
-  },
+  sample: { select: { researchId: true, orgId: true } },
 } satisfies Prisma.AnalysisSelect
 
 type AnalysisScope = {
@@ -47,8 +47,8 @@ export async function loadPositiveParent(parentId: string): Promise<AnalysisScop
   return {
     id: parent.id,
     sampleId: parent.sampleId,
-    orgId: parent.sample.animal.research.orgId,
-    researchId: parent.sample.animal.researchId,
+    orgId: parent.sample.orgId,
+    researchId: parent.sample.researchId,
   }
 }
 
@@ -61,8 +61,8 @@ export async function loadConfirmation(childId: string): Promise<AnalysisScope> 
   return {
     id: child.id,
     sampleId: child.sampleId,
-    orgId: child.sample.animal.research.orgId,
-    researchId: child.sample.animal.researchId,
+    orgId: child.sample.orgId,
+    researchId: child.sample.researchId,
   }
 }
 
