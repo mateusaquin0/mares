@@ -1,15 +1,22 @@
 // MARES — Agregações do Dashboard (Fase 5). Calcula, no servidor, os números e séries
 // que alimentam os gráficos e o heatmap, respeitando os filtros globais (pesquisa e período).
 // Tudo é escopado à organização ativa (orgId) — o dashboard nunca cruza organizações.
+//
+// Escopo por pesquisa (docs/PERMISSOES.md §1.1), em dois níveis distintos:
+//   • INDIVÍDUO — conta para a pesquisa pelo conjunto EFETIVO (primária ∪ participações
+//     aceitas): um indivíduo compartilhado pertence a todas as pesquisas que o estudam.
+//   • AMOSTRA/ANÁLISE — conta para a pesquisa DONA (`Sample.researchId`), que não é
+//     necessariamente a primária do indivíduo. Cada pesquisa mede só o que ela mesma coletou.
 
 import type { Prisma } from "@prisma/client"
 import { prisma } from "@/lib/prisma"
+import { inResearches } from "@/lib/animal-participation"
 import { txt, type I18nText } from "@/lib/catalog-i18n"
 
 export type DashboardFilters = {
   researchId?: string
   // Escopo de visibilidade por pesquisa (undefined = admin, sem restrição). Quando presente,
-  // o dashboard agrega apenas os animais cuja pesquisa primária está no conjunto.
+  // o dashboard agrega apenas o que pertence a alguma pesquisa do conjunto.
   researchIds?: string[]
   // Patógeno: quando presente, restringe TODO o dashboard aos dados daquele patógeno —
   // população = animais com ≥1 análise do patógeno; métricas de análise filtradas por ele.
@@ -44,18 +51,32 @@ export function positivityRate(positives: number, denominator: number): number {
   return denominator > 0 ? (positives / denominator) * 100 : 0
 }
 
-// Monta o filtro Prisma dos animais a partir do escopo (org) + filtros globais.
-function animalWhere(orgId: string, f: DashboardFilters): Prisma.AnimalWhereInput {
-  // Filtro por pesquisa: o filtro explícito (dropdown) tem prioridade; senão, o escopo de
-  // visibilidade do pesquisador (researchIds). Admin sem escopo → todas as pesquisas da org.
-  const researchIdFilter = f.researchId
-    ? { id: f.researchId }
-    : f.researchIds
-      ? { id: { in: f.researchIds } }
-      : {}
-  const where: Prisma.AnimalWhereInput = {
-    research: { orgId, ...researchIdFilter },
-  }
+/**
+ * Pesquisas sobre as quais o dashboard agrega. O filtro explícito (dropdown) tem prioridade —
+ * a rota já garantiu que ele está dentro do escopo do usuário; senão vale o escopo inteiro.
+ * `undefined` = admin sem filtro: todas as pesquisas da org.
+ */
+export function dashboardResearchIds(f: DashboardFilters): string[] | undefined {
+  if (f.researchId) return [f.researchId]
+  return f.researchIds
+}
+
+/**
+ * Escopo das amostras (e, por tabela-mãe, das análises): a pesquisa DONA da amostra precisa
+ * estar no conjunto. Sem isto, um indivíduo compartilhado traria para o dashboard de uma
+ * pesquisa as amostras que a pesquisa vizinha coletou sobre ele.
+ */
+export function dashboardSampleWhere(f: DashboardFilters): Prisma.SampleWhereInput {
+  const ids = dashboardResearchIds(f)
+  return ids ? { researchId: { in: ids } } : {}
+}
+
+/** Monta o filtro Prisma dos animais a partir do escopo (org) + filtros globais. */
+export function dashboardAnimalWhere(orgId: string, f: DashboardFilters): Prisma.AnimalWhereInput {
+  const ids = dashboardResearchIds(f)
+  const where: Prisma.AnimalWhereInput = { research: { orgId } }
+  // Conjunto efetivo do indivíduo: a participação aceita conta como pertencer à pesquisa.
+  if (ids) where.OR = inResearches(ids)
   if (f.from || f.to) {
     where.eventDate = {
       ...(f.from ? { gte: new Date(f.from) } : {}),
@@ -63,12 +84,28 @@ function animalWhere(orgId: string, f: DashboardFilters): Prisma.AnimalWhereInpu
       ...(f.to ? { lte: new Date(`${f.to}T23:59:59.999Z`) } : {}),
     }
   }
-  // Filtro por patógeno: restringe a população aos animais com ≥1 análise do patógeno.
+  // Filtro por patógeno: restringe a população aos animais com ≥1 análise do patógeno —
+  // só nas amostras do escopo, senão o vizinho decidiria quem entra na população.
   // (As métricas de análise recebem o mesmo filtro no nível da análise — ver getDashboardData.)
   if (f.pathogenId) {
-    where.samples = { some: { analyses: { some: { pathogenId: f.pathogenId } } } }
+    where.samples = {
+      some: { ...dashboardSampleWhere(f), analyses: { some: { pathogenId: f.pathogenId } } },
+    }
   }
   return where
+}
+
+/**
+ * Animais com ≥1 análise que casa `analysis`, contando apenas as amostras do escopo.
+ * Usa `AND` em vez de espalhar `aWhere` para não sobrescrever o `samples` do filtro
+ * por patógeno.
+ */
+function animalsWithAnalysis(
+  aWhere: Prisma.AnimalWhereInput,
+  sWhere: Prisma.SampleWhereInput,
+  analysis: Prisma.AnalysisWhereInput,
+): Prisma.AnimalWhereInput {
+  return { AND: [aWhere, { samples: { some: { ...sWhere, analyses: { some: analysis } } } }] }
 }
 
 export async function getDashboardData(
@@ -76,8 +113,11 @@ export async function getDashboardData(
   locale: string,
   filters: DashboardFilters = {},
 ): Promise<DashboardData> {
-  const aWhere = animalWhere(orgId, filters)
-  const analysisScope = { sample: { animal: aWhere } }
+  const aWhere = dashboardAnimalWhere(orgId, filters)
+  const sOwner = dashboardSampleWhere(filters)
+  // Amostras contadas: as do escopo (pesquisa dona) cujo indivíduo passa nos filtros globais.
+  const sWhere: Prisma.SampleWhereInput = { ...sOwner, animal: aWhere }
+  const analysisScope = { sample: sWhere }
   // Restrição por patógeno aplicada no nível da análise (numeradores/denominadores por
   // análise, e o `some` interno das contagens por animal/amostra).
   const pWhere = filters.pathogenId ? { pathogenId: filters.pathogenId } : {}
@@ -98,28 +138,28 @@ export async function getDashboardData(
     coords,
   ] = await Promise.all([
     prisma.animal.count({ where: aWhere }),
-    prisma.sample.count({ where: { animal: aWhere } }),
+    prisma.sample.count({ where: sWhere }),
     // Animais/amostras "testados" = com ≥1 análise com resultado preenchido (A1/A2).
     prisma.animal.count({
-      where: {
-        ...aWhere,
-        samples: { some: { analyses: { some: { result: { not: null }, ...pWhere } } } },
-      },
+      where: animalsWithAnalysis(aWhere, sOwner, {
+        result: { not: null },
+        ...pWhere,
+      }),
     }),
     prisma.sample.count({
-      where: { animal: aWhere, analyses: { some: { result: { not: null }, ...pWhere } } },
+      where: { ...sWhere, analyses: { some: { result: { not: null }, ...pWhere } } },
     }),
     prisma.analysis.count({ where: { result: { not: null }, ...pWhere, ...analysisScope } }),
     prisma.analysis.count({ where: { result: "POSITIVO", ...pWhere, ...analysisScope } }),
     // Animais/amostras com ≥1 análise POSITIVO (numeradores dos modos por animal/amostra, A2).
     prisma.animal.count({
-      where: {
-        ...aWhere,
-        samples: { some: { analyses: { some: { result: "POSITIVO", ...pWhere } } } },
-      },
+      where: animalsWithAnalysis(aWhere, sOwner, {
+        result: "POSITIVO",
+        ...pWhere,
+      }),
     }),
     prisma.sample.count({
-      where: { animal: aWhere, analyses: { some: { result: "POSITIVO", ...pWhere } } },
+      where: { ...sWhere, analyses: { some: { result: "POSITIVO", ...pWhere } } },
     }),
     prisma.animal.groupBy({
       by: ["species"],
