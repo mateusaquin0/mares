@@ -28,7 +28,7 @@ export default async function MapPage() {
         <p className="mt-1 text-sm text-muted-foreground">{t("subtitle")}</p>
       </header>
       <div className="min-h-fit flex-1">
-        <MapExplorer points={points} linkBase="/app/animals" showVisibility />
+        <MapExplorer points={points} linkBase="/app/animals" linkQuery="from=map" showVisibility />
       </div>
     </div>
   )

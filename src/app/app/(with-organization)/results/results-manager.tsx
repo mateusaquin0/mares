@@ -5,6 +5,7 @@ import Link from "next/link"
 import { useLocale, useTranslations } from "next-intl"
 import { Download, Search, X } from "lucide-react"
 
+import { animalHref } from "@/lib/animal-origin"
 import { pathogenName, txt } from "@/lib/catalog-i18n"
 import { formatDateOnly } from "@/lib/date"
 import { SEX_OPTIONS, LIFE_STAGE_OPTIONS } from "@/lib/animal-enums"
@@ -454,7 +455,7 @@ export function ResultsManager() {
                       <TableCell className="align-top">
                         <Truncate>
                           <Link
-                            href={`/app/animals/${a.id}`}
+                            href={animalHref(a.id, "results")}
                             className="font-semibold text-primary hover:underline"
                           >
                             {idOf(a)}

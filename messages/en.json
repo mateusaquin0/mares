@@ -699,6 +699,8 @@
     "clearFilters": "Clear filters",
     "view": "View",
     "back": "Back to animals",
+    "backToResults": "Back to results",
+    "backToMap": "Back to the map",
     "notFound": "Animal not found.",
     "createTitle": "New animal",
     "editTitle": "Edit animal",

@@ -699,6 +699,8 @@
     "clearFilters": "Limpar filtros",
     "view": "Visualizar",
     "back": "Voltar para animais",
+    "backToResults": "Voltar para resultados",
+    "backToMap": "Voltar para o mapa",
     "notFound": "Animal não encontrado.",
     "createTitle": "Novo animal",
     "editTitle": "Editar animal",
