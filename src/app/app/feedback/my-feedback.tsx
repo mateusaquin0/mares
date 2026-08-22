@@ -13,8 +13,8 @@ import {
   FEEDBACK_TITLE_MAX,
   type FeedbackTypeValue,
 } from "@/schemas/feedback.schema"
-import type { FeedbackStatus, FeedbackType, MyFeedbackItem } from "@/types/feedback"
-import { Badge } from "@/components/ui/badge"
+import type { MyFeedbackItem } from "@/types/feedback"
+import { FeedbackStatusBadge, FeedbackTypeBadge } from "@/components/feedback-badges"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -38,14 +38,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-
-type BadgeVariant = React.ComponentProps<typeof Badge>["variant"]
-const statusVariant: Record<FeedbackStatus, BadgeVariant> = {
-  NEW: "inconclusive",
-  IN_REVIEW: "private",
-  RESOLVED: "positive",
-  WONT_FIX: "negative",
-}
 
 export function MyFeedback() {
   const t = useTranslations("myFeedback")
@@ -93,16 +85,6 @@ export function MyFeedback() {
 
   const fmtDate = (iso: string) => new Date(iso).toLocaleString(locale)
 
-  function typeBadge(type: FeedbackType) {
-    const Icon = type === "BUG" ? Bug : Lightbulb
-    return (
-      <Badge variant={type === "BUG" ? "destructive" : "secondary"} className="gap-1">
-        <Icon className="size-3" />
-        {t(type === "BUG" ? "typeBug" : "typeSuggestion")}
-      </Badge>
-    )
-  }
-
   return (
     <div className="mx-auto max-w-6xl space-y-6 p-8">
       <div>
@@ -117,10 +99,10 @@ export function MyFeedback() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-32">{t("colType")}</TableHead>
+                <TableHead className="w-20 text-center">{t("colType")}</TableHead>
                 <TableHead>{t("colTitle")}</TableHead>
                 <TableHead className="w-32">{t("colDate")}</TableHead>
-                <TableHead className="w-28">{t("colStatus")}</TableHead>
+                <TableHead className="w-20 text-center">{t("colStatus")}</TableHead>
                 <TableHead>{t("colResolution")}</TableHead>
                 <TableHead className="w-16 text-right">
                   <ReloadButton
@@ -140,15 +122,17 @@ export function MyFeedback() {
                   className="cursor-pointer"
                   title={t("viewDetails")}
                 >
-                  <TableCell>{typeBadge(f.type)}</TableCell>
+                  <TableCell className="text-center">
+                    <FeedbackTypeBadge type={f.type} ns="myFeedback" iconOnly />
+                  </TableCell>
                   <TableCell className="font-medium">
                     <Truncate className="max-w-[18rem]">{f.title}</Truncate>
                   </TableCell>
                   <TableCell className="whitespace-nowrap text-sm text-muted-foreground">
                     {new Date(f.createdAt).toLocaleDateString(locale)}
                   </TableCell>
-                  <TableCell>
-                    <Badge variant={statusVariant[f.status]}>{t(`status_${f.status}`)}</Badge>
+                  <TableCell className="text-center">
+                    <FeedbackStatusBadge status={f.status} ns="myFeedback" iconOnly />
                   </TableCell>
                   <TableCell
                     className={cn("text-sm", !f.resolutionNote && "text-muted-foreground")}
@@ -195,10 +179,8 @@ export function MyFeedback() {
             <>
               <DialogHeader className="min-w-0">
                 <div className="flex flex-wrap items-center gap-2 pr-8">
-                  {typeBadge(selected.type)}
-                  <Badge variant={statusVariant[selected.status]}>
-                    {t(`status_${selected.status}`)}
-                  </Badge>
+                  <FeedbackTypeBadge type={selected.type} ns="myFeedback" />
+                  <FeedbackStatusBadge status={selected.status} ns="myFeedback" />
                   {canEdit && !editing && (
                     <Button
                       variant="ghost"
