@@ -35,10 +35,13 @@ export function AnimalDetail({
   id,
   isOrgAdmin,
   selfId,
+  backTo,
 }: {
   id: string
   isOrgAdmin: boolean
   selfId: string
+  // Para onde o "voltar" leva, resolvido na página a partir do `?from=` (ver lib/animal-origin).
+  backTo: { href: string; labelKey: string }
 }) {
   const t = useTranslations("animals")
   const tc = useTranslations("common")
@@ -62,8 +65,8 @@ export function AnimalDetail({
   useEffect(() => {
     if (!lostAccess) return
     toast.info(t("accessEnded"))
-    router.replace("/app/animals")
-  }, [lostAccess, router, t])
+    router.replace(backTo.href)
+  }, [lostAccess, router, t, backTo.href])
 
   const sexLabel = (s: string | null) => {
     const o = SEX_OPTIONS.find((x) => x.value === s)
@@ -124,11 +127,11 @@ export function AnimalDetail({
   return (
     <div className="mx-auto flex h-full min-h-[42rem] max-w-5xl flex-col gap-6 p-8">
       <Link
-        href="/app/animals"
+        href={backTo.href}
         className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
       >
         <ArrowLeft className="size-4" />
-        {t("back")}
+        {t(backTo.labelKey)}
       </Link>
 
       <div className="flex items-start gap-4">

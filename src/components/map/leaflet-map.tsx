@@ -31,6 +31,8 @@ type Props = {
   labels: PopupLabels
   // Base de link para o detalhe do animal (mapa privado). Ausente no mapa público.
   linkBase?: string
+  // Query anexada a esse link (ex.: a origem que o "voltar" do detalhe usa).
+  linkQuery?: string
   locale: string
 }
 
@@ -59,7 +61,13 @@ function esc(s: string): string {
   )
 }
 
-function popupHtml(p: MapPoint, labels: PopupLabels, locale: string, linkBase?: string): string {
+function popupHtml(
+  p: MapPoint,
+  labels: PopupLabels,
+  locale: string,
+  linkBase?: string,
+  linkQuery?: string,
+): string {
   const title = esc(p.controlId || p.species || labels.undetermined)
   const species = p.species
     ? `<div style="font-style:italic;color:#475569;font-size:12px;margin-top:1px">${esc(p.species)}</div>`
@@ -96,7 +104,7 @@ function popupHtml(p: MapPoint, labels: PopupLabels, locale: string, linkBase?: 
     : ""
   const link =
     linkBase != null
-      ? `<a href="${linkBase}/${encodeURIComponent(p.id)}" style="display:inline-block;margin-top:8px;color:#006876;font-weight:600;font-size:12px;text-decoration:none">${esc(labels.viewDetails)} →</a>`
+      ? `<a href="${linkBase}/${encodeURIComponent(p.id)}${linkQuery ? `?${linkQuery}` : ""}" style="display:inline-block;margin-top:8px;color:#006876;font-weight:600;font-size:12px;text-decoration:none">${esc(labels.viewDetails)} →</a>`
       : ""
   return `<div style="min-width:190px;font-size:13px;line-height:1.5;color:#0f172a">
     <div style="font-weight:700">${title}${hiddenBadge}</div>
@@ -107,7 +115,7 @@ function popupHtml(p: MapPoint, labels: PopupLabels, locale: string, linkBase?: 
   </div>`
 }
 
-export default function LeafletMap({ points, labels, linkBase, locale }: Props) {
+export default function LeafletMap({ points, labels, linkBase, linkQuery, locale }: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<L.Map | null>(null)
   const clusterRef = useRef<L.MarkerClusterGroup | null>(null)
@@ -143,7 +151,7 @@ export default function LeafletMap({ points, labels, linkBase, locale }: Props) 
     const cluster = L.markerClusterGroup({ maxClusterRadius: 50 })
     for (const p of points) {
       const marker = L.marker([p.lat, p.lon], { icon: p.isPublic ? iconPublic : iconHidden })
-      marker.bindPopup(popupHtml(p, labels, locale, linkBase))
+      marker.bindPopup(popupHtml(p, labels, locale, linkBase, linkQuery))
       cluster.addLayer(marker)
     }
     map.addLayer(cluster)
@@ -151,7 +159,7 @@ export default function LeafletMap({ points, labels, linkBase, locale }: Props) 
     if (points.length > 0) {
       map.fitBounds(cluster.getBounds().pad(0.2), { maxZoom: 12 })
     }
-  }, [points, labels, linkBase, locale, iconPublic, iconHidden, hasSize])
+  }, [points, labels, linkBase, linkQuery, locale, iconPublic, iconHidden, hasSize])
 
   return <div ref={containerRef} className="h-full w-full" />
 }

@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { useTranslations, useLocale } from "next-intl"
 import { toast } from "sonner"
-import { MoreHorizontal, Lightbulb, Bug } from "lucide-react"
+import { MoreHorizontal } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -24,6 +24,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useErrorMessage } from "@/lib/use-error-message"
 import { useFeedbackList, useUpdateFeedback } from "@/hooks/use-feedback"
 import type { FeedbackItem, FeedbackStatus, FeedbackType } from "@/types/feedback"
+import { FeedbackStatusBadge, FeedbackTypeBadge } from "@/components/feedback-badges"
 import {
   Table,
   TableBody,
@@ -51,14 +52,6 @@ import {
 } from "@/components/ui/dropdown-menu"
 
 const STATUSES: FeedbackStatus[] = ["NEW", "IN_REVIEW", "RESOLVED", "WONT_FIX"]
-
-type BadgeVariant = React.ComponentProps<typeof Badge>["variant"]
-const statusVariant: Record<FeedbackStatus, BadgeVariant> = {
-  NEW: "inconclusive",
-  IN_REVIEW: "private",
-  RESOLVED: "positive",
-  WONT_FIX: "negative",
-}
 
 const TYPES: FeedbackType[] = ["SUGGESTION", "BUG"]
 
@@ -154,16 +147,6 @@ export default function AdminFeedbackPage() {
     }
   }
 
-  function typeBadge(type: FeedbackType) {
-    const Icon = type === "BUG" ? Bug : Lightbulb
-    return (
-      <Badge variant={type === "BUG" ? "destructive" : "secondary"} className="gap-1">
-        <Icon className="size-3" />
-        {t(type === "BUG" ? "typeBug" : "typeSuggestion")}
-      </Badge>
-    )
-  }
-
   const fmtDate = (iso: string) => new Date(iso).toLocaleString(locale)
 
   const filterField = (label: string, control: React.ReactNode, widthClass = "w-44") => (
@@ -236,11 +219,11 @@ export default function AdminFeedbackPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-32">{t("colType")}</TableHead>
+                  <TableHead className="w-20 text-center">{t("colType")}</TableHead>
                   <TableHead>{t("colTitle")}</TableHead>
                   <TableHead className="w-56">{t("colAuthor")}</TableHead>
                   <TableHead className="w-36">{t("colDate")}</TableHead>
-                  <TableHead className="w-28">{t("colStatus")}</TableHead>
+                  <TableHead className="w-20 text-center">{t("colStatus")}</TableHead>
                   <TableHead className="w-16 text-right">
                     <ReloadButton
                       onReload={async () => {
@@ -259,7 +242,9 @@ export default function AdminFeedbackPage() {
                     className="cursor-pointer"
                     title={t("viewDetails")}
                   >
-                    <TableCell>{typeBadge(f.type)}</TableCell>
+                    <TableCell className="text-center">
+                      <FeedbackTypeBadge type={f.type} ns="adminFeedback" iconOnly />
+                    </TableCell>
                     <TableCell className="font-medium">
                       <Truncate className="max-w-[22rem]">{f.title}</Truncate>
                     </TableCell>
@@ -269,8 +254,8 @@ export default function AdminFeedbackPage() {
                     <TableCell className="whitespace-nowrap text-sm text-muted-foreground">
                       {new Date(f.createdAt).toLocaleDateString(locale)}
                     </TableCell>
-                    <TableCell>
-                      <Badge variant={statusVariant[f.status]}>{t(`status_${f.status}`)}</Badge>
+                    <TableCell className="text-center">
+                      <FeedbackStatusBadge status={f.status} ns="adminFeedback" iconOnly />
                     </TableCell>
                     {/* stopPropagation: o menu de ações não deve abrir o modal de detalhes. */}
                     <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
@@ -325,10 +310,8 @@ export default function AdminFeedbackPage() {
             <>
               <DialogHeader className="min-w-0">
                 <div className="flex flex-wrap items-center gap-2">
-                  {typeBadge(selected.type)}
-                  <Badge variant={statusVariant[selected.status]}>
-                    {t(`status_${selected.status}`)}
-                  </Badge>
+                  <FeedbackTypeBadge type={selected.type} ns="adminFeedback" />
+                  <FeedbackStatusBadge status={selected.status} ns="adminFeedback" />
                 </div>
               </DialogHeader>
 
