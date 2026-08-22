@@ -2,7 +2,7 @@
 
 import { Suspense, useState } from "react"
 import Link from "next/link"
-import { useRouter, useSearchParams } from "next/navigation"
+import { useSearchParams } from "next/navigation"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useQueryClient } from "@tanstack/react-query"
@@ -18,14 +18,23 @@ import { Input } from "@/components/ui/input"
 import { PasswordInput } from "@/components/ui/password-input"
 import { Label } from "@/components/ui/label"
 
+// `redirectTo` vem da query string: só aceitamos caminho interno. Sem isto,
+// /login?redirectTo=https://evil.com mandaria a pessoa recém-autenticada para fora do
+// domínio (open redirect). "//host" e "/\host" contam como externos para o navegador.
+function safeRedirect(value: string | null): string {
+  const fallback = "/app/dashboard"
+  if (!value || !value.startsWith("/")) return fallback
+  if (value.startsWith("//") || value.startsWith("/\\")) return fallback
+  return value
+}
+
 function LoginForm() {
   const t = useTranslations("login")
   const tc = useTranslations("common")
   const tval = useTranslations("validation")
-  const router = useRouter()
   const queryClient = useQueryClient()
   const searchParams = useSearchParams()
-  const redirectTo = searchParams.get("redirectTo") || "/app/dashboard"
+  const redirectTo = safeRedirect(searchParams.get("redirectTo"))
   const [loading, setLoading] = useState(false)
 
   const {
@@ -53,8 +62,14 @@ function LoginForm() {
     queryClient.clear()
 
     toast.success(t("success"))
-    router.push(redirectTo)
-    router.refresh()
+
+    // Navegação DURA, não router.push: o destino pode redirecionar no servidor (o admin
+    // global sem grupo ativo cai de /app/dashboard em /app/admin/access-requests, ver
+    // access-guards.ts). Numa navegação client-side esse redirect vira MPA navigation no
+    // reducer do Next, e o `Router` interno quebra com "Rendered more hooks than during the
+    // previous render" ao re-renderizar em cima de uma tentativa suspensa. Entrar é uma
+    // troca de sessão: recarregar a página é o comportamento correto de todo modo.
+    window.location.assign(redirectTo)
   }
 
   return (

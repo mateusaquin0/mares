@@ -21,6 +21,14 @@ const CSS_SMALL = "lg:[@media(min-height:600px)]:hidden"
  *
  * Até a primeira medição (SSR e primeira pintura) o corte é feito por CSS, para o HTML do
  * servidor bater com o do cliente e não haver piscada.
+ *
+ * A FORMA da árvore devolvida é sempre a mesma — `<div>` + aviso, nas duas posições, em
+ * todos os estados. Isto não é estilo: quando a medição terminava e o componente passava a
+ * devolver `children` direto, o React casava a `<div>` embrulho com a `<div>` raiz de
+ * `children` (mesmo tipo, sem key) e reaproveitava a fiber; os filhos então deixavam de
+ * bater (`<div>` virava `<Sidebar>`) e ele DESMONTAVA e remontava a aplicação inteira a
+ * cada carregamento — estado perdido, queries refeitas e o Leaflet inicializando duas vezes.
+ * Mantendo as posições fixas, só mudam classe e conteúdo, e a árvore sobrevive à medição.
  */
 export function MinWidthGate({ children }: { children: React.ReactNode }) {
   const t = useTranslations("minWidth")
@@ -47,14 +55,14 @@ export function MinWidthGate({ children }: { children: React.ReactNode }) {
     </div>
   )
 
-  if (measuring) {
-    return (
-      <>
-        <div className={`hidden ${CSS_OK}`}>{children}</div>
-        {warning}
-      </>
-    )
-  }
+  // `contents` faz o embrulho sumir do layout: os filhos se posicionam como se ele não
+  // existisse. Medindo, quem decide é o CSS; medido, é o próprio estado.
+  const wrapper = measuring ? `hidden ${CSS_OK}` : tooSmall ? "hidden" : "contents"
 
-  return tooSmall ? warning : <>{children}</>
+  return (
+    <>
+      <div className={wrapper}>{tooSmall ? null : children}</div>
+      {(measuring || tooSmall) && warning}
+    </>
+  )
 }
