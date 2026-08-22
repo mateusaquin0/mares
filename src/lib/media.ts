@@ -18,15 +18,16 @@ export const MEDIA_ALLOWED = [
 ]
 const SIGNED_TTL = 60 * 60 // 1h
 
-/** Cria o bucket se ainda não existir (idempotente). */
-export async function ensureBucket() {
+/**
+ * Cria o bucket se ainda não existir (idempotente). O bucket é parâmetro porque os anexos
+ * de feedback moram num bucket separado (`feedback-media`): o controle de acesso de lá é
+ * o do ticket, não o da organização — misturá-los deixaria as duas regras no mesmo lugar.
+ */
+export async function ensureBucket(bucket = MEDIA_BUCKET, maxBytes = MEDIA_MAX_BYTES) {
   const admin = createAdminClient()
-  const { data } = await admin.storage.getBucket(MEDIA_BUCKET)
+  const { data } = await admin.storage.getBucket(bucket)
   if (!data) {
-    await admin.storage.createBucket(MEDIA_BUCKET, {
-      public: false,
-      fileSizeLimit: MEDIA_MAX_BYTES,
-    })
+    await admin.storage.createBucket(bucket, { public: false, fileSizeLimit: maxBytes })
   }
 }
 
@@ -94,9 +95,9 @@ export function assertValidContent(buf: Buffer): string {
 }
 
 /** Gera uma URL assinada para o caminho do objeto (ou null em caso de falha). */
-export async function signMediaUrl(path: string): Promise<string | null> {
+export async function signMediaUrl(path: string, bucket = MEDIA_BUCKET): Promise<string | null> {
   const admin = createAdminClient()
-  const { data } = await admin.storage.from(MEDIA_BUCKET).createSignedUrl(path, SIGNED_TTL)
+  const { data } = await admin.storage.from(bucket).createSignedUrl(path, SIGNED_TTL)
   return data?.signedUrl ?? null
 }
 

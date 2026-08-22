@@ -28,6 +28,8 @@ import {
   FEEDBACK_TITLE_MAX,
   type FeedbackTypeValue,
 } from "@/schemas/feedback.schema"
+import { FEEDBACK_ATTACHMENT_MAX_PER_TICKET } from "@/lib/feedback-media"
+import { FeedbackImagePicker, FeedbackImagePreviews } from "@/components/feedback-image-picker"
 
 // Botão + diálogo para enviar sugestão ou relatar bug (usuário autenticado).
 // Fica no rodapé da sidebar; `collapsed` esconde o rótulo.
@@ -41,11 +43,14 @@ export function FeedbackDialog({ collapsed }: { collapsed?: boolean }) {
   const [type, setType] = useState<FeedbackTypeValue>("SUGGESTION")
   const [title, setTitle] = useState("")
   const [message, setMessage] = useState("")
+  // Prints do bug / mockups da sugestão, enviados junto com o relato.
+  const [files, setFiles] = useState<File[]>([])
 
   function reset() {
     setType("SUGGESTION")
     setTitle("")
     setMessage("")
+    setFiles([])
   }
 
   const canSubmit = !!title.trim() && !!message.trim()
@@ -54,13 +59,17 @@ export function FeedbackDialog({ collapsed }: { collapsed?: boolean }) {
     e.preventDefault()
     if (!canSubmit) return
     try {
-      await createM.mutateAsync({
+      const { failedUploads } = await createM.mutateAsync({
         type,
         title: title.trim(),
         message: message.trim(),
         pageUrl: pathname,
+        files,
       })
-      toast.success(t("sent"))
+      // O relato já foi enviado mesmo que alguma imagem não suba: avisa, mas não trata
+      // como falha do envio.
+      if (failedUploads > 0) toast.warning(t("attachError"))
+      else toast.success(t("sent"))
       setOpen(false)
       reset()
     } catch (err) {
@@ -156,6 +165,17 @@ export function FeedbackDialog({ collapsed }: { collapsed?: boolean }) {
               maxLength={FEEDBACK_MESSAGE_MAX}
               rows={5}
               required
+            />
+          </div>
+
+          <div className="space-y-2">
+            <FeedbackImagePreviews files={files} onChange={setFiles} ns="feedback" />
+            <FeedbackImagePicker
+              files={files}
+              onChange={setFiles}
+              remaining={FEEDBACK_ATTACHMENT_MAX_PER_TICKET - files.length}
+              ns="feedback"
+              disabled={createM.isPending}
             />
           </div>
 

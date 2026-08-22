@@ -7,10 +7,7 @@ import { MoreHorizontal } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
 import { TableSkeleton } from "@/components/ui/skeleton"
 import { ReloadButton } from "@/components/ui/reload-button"
 import {
@@ -25,6 +22,8 @@ import { useErrorMessage } from "@/lib/use-error-message"
 import { useFeedbackList, useUpdateFeedback } from "@/hooks/use-feedback"
 import type { FeedbackItem, FeedbackStatus, FeedbackType } from "@/types/feedback"
 import { FeedbackStatusBadge, FeedbackTypeBadge } from "@/components/feedback-badges"
+import { ThreadSummaryCell } from "@/components/feedback-thread"
+import { FeedbackTicketDialog } from "@/components/feedback-ticket-dialog"
 import {
   Table,
   TableBody,
@@ -36,22 +35,18 @@ import {
 } from "@/components/ui/table"
 import { Truncate } from "@/components/ui/truncate"
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
-import { FEEDBACK_RESOLUTION_MAX, FEEDBACK_RESOLUTION_MIN } from "@/schemas/feedback.schema"
-import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 
-const STATUSES: FeedbackStatus[] = ["NEW", "IN_REVIEW", "RESOLVED", "WONT_FIX"]
+// Abas/filtro: todos os status que um ticket pode ter.
+const STATUSES: FeedbackStatus[] = ["NEW", "REOPENED", "IN_REVIEW", "RESOLVED", "WONT_FIX"]
+
+// Status que a triagem GRAVA em um clique. `REOPENED` fica de fora (só o autor o produz) e
+// `WONT_FIX` também: descartar exige justificativa, então abre o ticket na caixa de descarte.
+const QUICK_STATUSES: FeedbackStatus[] = ["NEW", "IN_REVIEW", "RESOLVED"]
 
 const TYPES: FeedbackType[] = ["SUGGESTION", "BUG"]
 
@@ -79,75 +74,37 @@ export default function AdminFeedbackPage() {
 
   const updateM = useUpdateFeedback()
   const [busy, setBusy] = useState<string | null>(null)
-  // Guarda o id (não o objeto): assim o modal reflete o item recarregado após cada triagem.
+  // Guarda o id (não o objeto): assim o diálogo reflete o item recarregado após cada triagem.
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const selected = selectedId ? (all.find((f) => f.id === selectedId) ?? null) : null
+  // Abrir o ticket já na caixa de descarte (vindo do menu de ações da linha).
+  const [discardIntent, setDiscardIntent] = useState(false)
 
-  // Edição da resposta ao autor, dentro do modal de detalhes.
-  const [editingNote, setEditingNote] = useState(false)
-  const [noteDraft, setNoteDraft] = useState("")
-  // Descarte: exige justificativa, então passa por um diálogo próprio (nunca em um clique).
-  const [discardId, setDiscardId] = useState<string | null>(null)
-  const [discardNote, setDiscardNote] = useState("")
-
-  // Enquanto o feedback está descartado, a resposta não pode ficar vazia/curta — o botão
-  // de salvar já reflete a regra que o servidor aplica.
-  const resolutionTooShort =
-    selected?.status === "WONT_FIX" && noteDraft.trim().length < FEEDBACK_RESOLUTION_MIN
-  const discardTooShort = discardNote.trim().length < FEEDBACK_RESOLUTION_MIN
-
-  async function setStatus(id: string, status: FeedbackStatus) {
+  async function run(id: string, data: Parameters<typeof updateM.mutateAsync>[0], ok: string) {
     setBusy(id)
     try {
-      await updateM.mutateAsync({ id, status })
-      toast.success(t("updated"))
+      await updateM.mutateAsync(data)
+      toast.success(ok)
     } catch (err) {
       toast.error(t("opError"), { description: em(err) })
+      throw err
     } finally {
       setBusy(null)
     }
   }
 
-  // Abre o diálogo de descarte já com a resposta atual (se houver) para o admin completar.
+  // Abre o ticket na caixa de descarte: a justificativa é obrigatória, então nunca é um clique.
   function openDiscard(f: FeedbackItem) {
-    setDiscardId(f.id)
-    setDiscardNote(f.resolutionNote ?? "")
+    setSelectedId(f.id)
+    setDiscardIntent(true)
   }
 
-  async function confirmDiscard() {
-    if (!discardId) return
-    setBusy(discardId)
-    try {
-      await updateM.mutateAsync({
-        id: discardId,
-        status: "WONT_FIX",
-        resolutionNote: discardNote.trim(),
-      })
-      toast.success(t("discarded"))
-      setDiscardId(null)
-      setDiscardNote("")
-    } catch (err) {
-      toast.error(t("opError"), { description: em(err) })
-    } finally {
-      setBusy(null)
-    }
-  }
-
-  async function saveResolution() {
-    if (!selected) return
-    setBusy(selected.id)
-    try {
-      await updateM.mutateAsync({ id: selected.id, resolutionNote: noteDraft.trim() || null })
-      toast.success(t("resolutionSaved"))
-      setEditingNote(false)
-    } catch (err) {
-      toast.error(t("opError"), { description: em(err) })
-    } finally {
-      setBusy(null)
-    }
-  }
-
-  const fmtDate = (iso: string) => new Date(iso).toLocaleString(locale)
+  // Em qual aba está cada ticket com mensagem nova do autor: sem isto, um ticket em
+  // "Em análise" com resposta pendente fica invisível para quem está olhando "Novo".
+  const unreadByStatus = all.reduce<Partial<Record<FeedbackStatus, number>>>((acc, f) => {
+    if (f.unread) acc[f.status] = (acc[f.status] ?? 0) + 1
+    return acc
+  }, {})
 
   const filterField = (label: string, control: React.ReactNode, widthClass = "w-44") => (
     <label className={cn("flex flex-col gap-1 text-xs", widthClass)}>
@@ -176,8 +133,16 @@ export default function AdminFeedbackPage() {
             <TabsList>
               <TabsTrigger value="ALL">{t("filterAll")}</TabsTrigger>
               {STATUSES.map((s) => (
-                <TabsTrigger key={s} value={s}>
+                <TabsTrigger key={s} value={s} className="relative">
                   {t(`status_${s}`)}
+                  {(unreadByStatus[s] ?? 0) > 0 && (
+                    <span
+                      role="status"
+                      aria-label={t("unreadReply")}
+                      title={t("unreadReply")}
+                      className="absolute -right-0.5 -top-0.5 size-2 rounded-full bg-orange-500"
+                    />
+                  )}
                 </TabsTrigger>
               ))}
             </TabsList>
@@ -224,6 +189,7 @@ export default function AdminFeedbackPage() {
                   <TableHead className="w-56">{t("colAuthor")}</TableHead>
                   <TableHead className="w-36">{t("colDate")}</TableHead>
                   <TableHead className="w-20 text-center">{t("colStatus")}</TableHead>
+                  <TableHead className="w-24">{t("colThread")}</TableHead>
                   <TableHead className="w-16 text-right">
                     <ReloadButton
                       onReload={async () => {
@@ -234,11 +200,14 @@ export default function AdminFeedbackPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {items.length === 0 && <TableEmpty colSpan={6}>{tc("noResults")}</TableEmpty>}
+                {items.length === 0 && <TableEmpty colSpan={7}>{tc("noResults")}</TableEmpty>}
                 {items.map((f) => (
                   <TableRow
                     key={f.id}
-                    onClick={() => setSelectedId(f.id)}
+                    onClick={() => {
+                      setSelectedId(f.id)
+                      setDiscardIntent(false)
+                    }}
                     className="cursor-pointer"
                     title={t("viewDetails")}
                   >
@@ -257,7 +226,10 @@ export default function AdminFeedbackPage() {
                     <TableCell className="text-center">
                       <FeedbackStatusBadge status={f.status} ns="adminFeedback" iconOnly />
                     </TableCell>
-                    {/* stopPropagation: o menu de ações não deve abrir o modal de detalhes. */}
+                    <TableCell>
+                      <ThreadSummaryCell summary={f} ns="adminFeedback" />
+                    </TableCell>
+                    {/* stopPropagation: o menu de ações não deve abrir o diálogo do ticket. */}
                     <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -273,18 +245,20 @@ export default function AdminFeedbackPage() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          {STATUSES.filter((s) => s !== f.status).map((s) =>
-                            // Descartar abre o diálogo (justificativa obrigatória); os demais
-                            // status seguem em um clique.
-                            s === "WONT_FIX" ? (
-                              <DropdownMenuItem key={s} onSelect={() => openDiscard(f)}>
-                                {t("discard")}
-                              </DropdownMenuItem>
-                            ) : (
-                              <DropdownMenuItem key={s} onSelect={() => setStatus(f.id, s)}>
-                                {t("setStatus", { status: t(`status_${s}`) })}
-                              </DropdownMenuItem>
-                            ),
+                          {QUICK_STATUSES.filter((s) => s !== f.status).map((s) => (
+                            <DropdownMenuItem
+                              key={s}
+                              onSelect={() =>
+                                run(f.id, { id: f.id, status: s }, t("updated")).catch(() => {})
+                              }
+                            >
+                              {t("setStatus", { status: t(`status_${s}`) })}
+                            </DropdownMenuItem>
+                          ))}
+                          {f.status !== "WONT_FIX" && (
+                            <DropdownMenuItem onSelect={() => openDiscard(f)}>
+                              {t("discard")}
+                            </DropdownMenuItem>
                           )}
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -297,223 +271,36 @@ export default function AdminFeedbackPage() {
         </>
       )}
 
-      <Dialog
+      <FeedbackTicketDialog
+        ns="adminFeedback"
         open={!!selected}
         onOpenChange={(o) => {
           if (o) return
           setSelectedId(null)
-          setEditingNote(false)
+          setDiscardIntent(false)
         }}
-      >
-        <DialogContent>
-          {selected && (
-            <>
-              <DialogHeader className="min-w-0">
-                <div className="flex flex-wrap items-center gap-2">
-                  <FeedbackTypeBadge type={selected.type} ns="adminFeedback" />
-                  <FeedbackStatusBadge status={selected.status} ns="adminFeedback" />
-                </div>
-              </DialogHeader>
-
-              <div className="min-w-0 space-y-4">
-                <section>
-                  <h3 className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                    {t("detailTitle")}
-                  </h3>
-                  <DialogTitle className="text-lg font-semibold leading-snug [overflow-wrap:anywhere]">
-                    {selected.title}
-                  </DialogTitle>
-                </section>
-
-                <section>
-                  <h3 className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                    {t("detailAuthor")}
-                  </h3>
-                  <DialogDescription className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-sm [overflow-wrap:anywhere]">
-                    <span className="font-medium text-foreground/80">
-                      {selected.createdByEmail}
-                    </span>
-                    <span aria-hidden>·</span>
-                    <span>{fmtDate(selected.createdAt)}</span>
-                  </DialogDescription>
-                </section>
-
-                <section>
-                  <h3 className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                    {t("detailMessage")}
-                  </h3>
-                  <div className="max-h-72 overflow-y-auto whitespace-pre-wrap rounded-lg border bg-muted/40 p-3 text-sm leading-relaxed [overflow-wrap:anywhere]">
-                    {selected.message}
-                  </div>
-                </section>
-
-                {/* Resposta ao autor: editável em QUALQUER status; obrigatória em WONT_FIX
-                    (o servidor recusa deixá-la vazia enquanto o feedback estiver descartado). */}
-                <section>
-                  <div className="mb-1.5 flex flex-wrap items-center gap-2">
-                    <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                      {t("detailResolution")}
-                    </h3>
-                    <Badge variant="outline">{t("resolutionVisible")}</Badge>
-                    {!editingNote && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="ml-auto h-7"
-                        onClick={() => {
-                          setNoteDraft(selected.resolutionNote ?? "")
-                          setEditingNote(true)
-                        }}
-                      >
-                        {t("edit")}
-                      </Button>
-                    )}
-                  </div>
-
-                  {editingNote ? (
-                    <div className="space-y-2">
-                      <Textarea
-                        value={noteDraft}
-                        onChange={(e) => setNoteDraft(e.target.value)}
-                        placeholder={t("resolutionPlaceholder")}
-                        maxLength={FEEDBACK_RESOLUTION_MAX}
-                        rows={4}
-                      />
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="text-xs text-muted-foreground">
-                          {noteDraft.trim().length}/{FEEDBACK_RESOLUTION_MAX}
-                        </span>
-                        {resolutionTooShort && (
-                          <span className="text-xs text-destructive">
-                            {t("resolutionMin", { min: FEEDBACK_RESOLUTION_MIN })}
-                          </span>
-                        )}
-                        <div className="ml-auto flex gap-2">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setEditingNote(false)}
-                            disabled={busy === selected.id}
-                          >
-                            {t("cancel")}
-                          </Button>
-                          <Button
-                            size="sm"
-                            onClick={saveResolution}
-                            loading={busy === selected.id}
-                            disabled={resolutionTooShort}
-                          >
-                            {t("save")}
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  ) : (
-                    <p
-                      className={cn(
-                        "whitespace-pre-wrap text-sm leading-relaxed [overflow-wrap:anywhere]",
-                        !selected.resolutionNote && "text-muted-foreground",
-                      )}
-                    >
-                      {selected.resolutionNote || t("resolutionEmpty")}
-                    </p>
-                  )}
-
-                  {selected.reviewedAt && (
-                    <p className="mt-1.5 text-xs text-muted-foreground">
-                      {t("reviewedAt", { date: fmtDate(selected.reviewedAt) })}
-                    </p>
-                  )}
-                </section>
-
-                {/* Anotação interna do admin — nunca sai para o autor (ver mineSelect). */}
-                {selected.adminNote && (
-                  <section>
-                    <div className="mb-1.5 flex flex-wrap items-center gap-2">
-                      <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                        {t("detailAdminNote")}
-                      </h3>
-                      <Badge variant="faded">{t("adminNoteVisible")}</Badge>
-                    </div>
-                    <p className="whitespace-pre-wrap text-sm leading-relaxed [overflow-wrap:anywhere]">
-                      {selected.adminNote}
-                    </p>
-                  </section>
-                )}
-
-                {selected.pageUrl && (
-                  <section>
-                    <h3 className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                      {t("detailPage")}
-                    </h3>
-                    <code className="inline-block max-w-full rounded bg-muted px-1.5 py-0.5 font-mono text-xs text-muted-foreground [overflow-wrap:anywhere]">
-                      {selected.pageUrl}
-                    </code>
-                  </section>
-                )}
-              </div>
-            </>
-          )}
-        </DialogContent>
-      </Dialog>
-
-      {/* Descarte: só conclui com justificativa, que o autor lê em /app/feedback. */}
-      <Dialog
-        open={!!discardId}
-        onOpenChange={(o) => {
-          if (o) return
-          setDiscardId(null)
-          setDiscardNote("")
+        openDiscard={discardIntent}
+        ticket={
+          selected && {
+            ...selected,
+            authorName: selected.createdByName,
+            authorEmail: selected.createdByEmail,
+          }
+        }
+        admin={{
+          busy: !!busy,
+          onSetStatus: (status) =>
+            run(selected!.id, { id: selected!.id, status }, t("updated")).then(() => {
+              setDiscardIntent(false)
+            }),
+          onDiscard: (note) =>
+            run(
+              selected!.id,
+              { id: selected!.id, status: "WONT_FIX", resolutionNote: note },
+              t("discarded"),
+            ).then(() => setDiscardIntent(false)),
         }}
-      >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{t("discardTitle")}</DialogTitle>
-            <DialogDescription>{t("discardDesc")}</DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label htmlFor="discard-note">{t("detailResolution")}</Label>
-              <span className="text-xs text-muted-foreground">
-                {discardNote.trim().length}/{FEEDBACK_RESOLUTION_MAX}
-              </span>
-            </div>
-            <Textarea
-              id="discard-note"
-              value={discardNote}
-              onChange={(e) => setDiscardNote(e.target.value)}
-              placeholder={t("resolutionPlaceholder")}
-              maxLength={FEEDBACK_RESOLUTION_MAX}
-              rows={4}
-              autoFocus
-            />
-            {discardTooShort && (
-              <p className="text-xs text-muted-foreground">
-                {t("resolutionMin", { min: FEEDBACK_RESOLUTION_MIN })}
-              </p>
-            )}
-          </div>
-
-          <DialogFooter>
-            <Button
-              variant="ghost"
-              onClick={() => setDiscardId(null)}
-              disabled={busy === discardId}
-            >
-              {t("cancel")}
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={confirmDiscard}
-              loading={busy === discardId}
-              disabled={discardTooShort}
-            >
-              {t("discardConfirm")}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      />
     </div>
   )
 }

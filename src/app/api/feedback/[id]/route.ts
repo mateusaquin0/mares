@@ -17,7 +17,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     const body = await req.json().catch(() => null)
     const data = updateFeedbackSchema.parse(body)
 
-    const updated = await updateFeedback(id, user.id, data)
+    const updated = await updateFeedback(id, user, data)
     return NextResponse.json(updated)
   } catch (err) {
     return apiError(err)

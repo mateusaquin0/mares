@@ -86,6 +86,8 @@ export function Sidebar({
     // compartilhamentos de indivíduo aguardando a resposta dele.
     "/app/research": pending?.researchAccess ?? 0,
     "/app/animals": pending?.animalShares ?? 0,
+    // Conversas dos próprios tickets com resposta nova da administração.
+    "/app/feedback": pending?.feedbackReplies ?? 0,
   }
   const dotTitle = (count: number) => t("pending", { count })
 
@@ -320,12 +322,17 @@ export function Sidebar({
           href="/app/feedback"
           title={t("myFeedback")}
           className={cn(
-            "flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-foreground/70 transition-colors hover:bg-muted hover:text-foreground",
+            "relative flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-foreground/70 transition-colors hover:bg-muted hover:text-foreground",
             collapsed && "justify-center px-0",
           )}
         >
           <MessagesSquare className="size-4 shrink-0" />
           {!collapsed && <span className="truncate">{t("myFeedback")}</span>}
+          <NavDot
+            count={pendingByHref["/app/feedback"] ?? 0}
+            collapsed={collapsed}
+            title={dotTitle(pendingByHref["/app/feedback"] ?? 0)}
+          />
         </Link>
         <UserMenu userName={userName} email={email} roleLabel={roleLabel} collapsed={collapsed} />
       </div>
