@@ -60,6 +60,17 @@ enum FeedbackStatus {
   IN_REVIEW // em análise pelo admin
   RESOLVED // resolvido/atendido
   WONT_FIX // descartado
+  // Encerrado que o AUTOR pediu para revisitar. Só o autor produz este status, e só a
+  // partir de RESOLVED/WONT_FIX; a triagem do admin tira o ticket dele. Ver docs/FEEDBACK.md.
+  REOPENED
+}
+
+// Lado que escreveu uma mensagem da conversa do ticket. São só dois: quem reportou
+// (AUTHOR) e a administração (ADMIN) — o papel é congelado no momento do envio, para o
+// histórico continuar legível mesmo se o usuário perder/ganhar o papel de admin depois.
+enum FeedbackParty {
+  AUTHOR
+  ADMIN
 }
 
 // Tipo do item pedido numa solicitação de glossário (espelha CatalogType, sem hífen).
@@ -141,6 +152,9 @@ model User {
   mediaUploaded          AnimalMedia[]           @relation("AnimalMediaUploader")
   samplesCreated         Sample[]                @relation("SampleCreator")
   feedbacks              Feedback[]              @relation("FeedbackAuthor")
+  // Conversa dentro do ticket de feedback: mensagens escritas e imagens anexadas.
+  feedbackMessages       FeedbackMessage[]       @relation("FeedbackMessageAuthor")
+  feedbackAttachments    FeedbackAttachment[]    @relation("FeedbackAttachmentUploader")
   catalogRequests        CatalogRequest[]        @relation("CatalogRequestAuthor")
   sampleTypes            UserSampleType[]
   createdAt              DateTime                @default(now())
@@ -568,12 +582,12 @@ model AuditLog {
 // O autor acompanha os próprios envios em /app/feedback: vê status e `resolutionNote`, NUNCA
 // `adminNote`. Descartar (WONT_FIX) exige justificativa — ver docs/FEEDBACK.md.
 model Feedback {
-  id             String         @id @default(uuid())
+  id             String               @id @default(uuid())
   type           FeedbackType
   title          String // título curto (resumo)
   message        String
   pageUrl        String? // de onde o usuário enviou (contexto)
-  status         FeedbackStatus @default(NEW)
+  status         FeedbackStatus       @default(NEW)
   adminNote      String? // anotação INTERNA do admin (nunca exposta ao autor)
   // Resposta ao autor, visível para ele. Obrigatória quando o status é WONT_FIX.
   resolutionNote String?
@@ -582,16 +596,69 @@ model Feedback {
   reviewedAt     DateTime?
   // Autor; SetNull para preservar o histórico se o usuário for removido.
   createdById    String?
-  createdBy      User?          @relation("FeedbackAuthor", fields: [createdById], references: [id], onDelete: SetNull)
+  createdBy      User?                @relation("FeedbackAuthor", fields: [createdById], references: [id], onDelete: SetNull)
   createdByEmail String // snapshot do e-mail do autor
   orgId          String? // organização ativa no momento do envio (contexto)
-  createdAt      DateTime       @default(now())
-  updatedAt      DateTime       @updatedAt
+  // Marcadores de leitura da conversa, um por LADO (não por usuário): `adminReadAt` vale
+  // para a administração como um todo, do mesmo jeito que `reviewedById` guarda só o
+  // último a triar. Servem para o indicador de "tem mensagem nova do outro lado".
+  authorReadAt   DateTime?
+  adminReadAt    DateTime?
+  messages       FeedbackMessage[]
+  attachments    FeedbackAttachment[]
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
 
   @@index([status])
   @@index([createdAt])
   // Listagem "meus envios" (autor, mais novo → mais antigo).
   @@index([createdById, createdAt])
+}
+
+// Mensagem da conversa de um ticket de feedback. Existe para alinhar sugestões e descobrir
+// como reproduzir um bug conversando com quem reportou, em vez de um único comentário do
+// admin. Mensagem NÃO é editável nem apagável: o histórico é a trilha da decisão.
+// A conversa só aceita novas mensagens enquanto o ticket está aberto (NEW/IN_REVIEW).
+model FeedbackMessage {
+  id             String               @id @default(uuid())
+  feedbackId     String
+  feedback       Feedback             @relation(fields: [feedbackId], references: [id], onDelete: Cascade)
+  body           String
+  // Lado de quem escreveu, congelado no envio (ver FeedbackParty).
+  party          FeedbackParty
+  // Autor; SetNull para preservar o histórico se o usuário for removido.
+  createdById    String?
+  createdBy      User?                @relation("FeedbackMessageAuthor", fields: [createdById], references: [id], onDelete: SetNull)
+  createdByEmail String // snapshot do e-mail de quem escreveu
+  attachments    FeedbackAttachment[]
+  createdAt      DateTime             @default(now())
+
+  // Leitura da conversa: sempre por ticket, mais antiga → mais nova.
+  @@index([feedbackId, createdAt])
+}
+
+// Imagem anexada a um ticket de feedback (print da tela do bug, mockup de uma sugestão).
+// Bucket PRIVADO, como AnimalMedia: guardamos o caminho do objeto e assinamos a URL na
+// leitura. `messageId` nulo = anexo do relato original; preenchido = anexo de uma mensagem
+// da conversa.
+model FeedbackAttachment {
+  id              String           @id @default(uuid())
+  feedbackId      String
+  feedback        Feedback         @relation(fields: [feedbackId], references: [id], onDelete: Cascade)
+  messageId       String?
+  message         FeedbackMessage? @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  url             String // caminho do objeto no Supabase Storage
+  mimeType        String // "image/jpeg", "image/png", "image/webp", "image/gif"
+  filename        String // nome original, mostrado na UI e usado no download
+  size            Int // bytes (informativo na UI)
+  // Quem enviou (para a regra "quem enviou pode excluir"); SetNull se o usuário for removido.
+  uploadedById    String?
+  uploadedBy      User?            @relation("FeedbackAttachmentUploader", fields: [uploadedById], references: [id], onDelete: SetNull)
+  uploadedByParty FeedbackParty
+  createdAt       DateTime         @default(now())
+
+  @@index([feedbackId])
+  @@index([messageId])
 }
 
 // Solicitação de inclusão de item no glossário global aberta por um pesquisador.

@@ -3,20 +3,19 @@
 import { useState } from "react"
 import { useLocale, useTranslations } from "next-intl"
 import { toast } from "sonner"
-import { Lightbulb, Bug, Pencil } from "lucide-react"
+import { RotateCcw } from "lucide-react"
 
-import { cn } from "@/lib/utils"
-import { useMyFeedback, useUpdateMyFeedback } from "@/hooks/use-feedback"
+import { useMyFeedback, useReopenMyFeedback, useUpdateMyFeedback } from "@/hooks/use-feedback"
 import { useErrorMessage } from "@/lib/use-error-message"
 import {
-  FEEDBACK_MESSAGE_MAX,
-  FEEDBACK_TITLE_MAX,
+  FEEDBACK_MESSAGE_BODY_MAX,
+  FEEDBACK_REOPEN_MIN,
   type FeedbackTypeValue,
 } from "@/schemas/feedback.schema"
-import type { MyFeedbackItem } from "@/types/feedback"
 import { FeedbackStatusBadge, FeedbackTypeBadge } from "@/components/feedback-badges"
+import { ThreadSummaryCell } from "@/components/feedback-thread"
+import { FeedbackTicketDialog } from "@/components/feedback-ticket-dialog"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { TableSkeleton } from "@/components/ui/skeleton"
@@ -35,6 +34,7 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
@@ -46,44 +46,43 @@ export function MyFeedback() {
   const em = useErrorMessage()
   const listQ = useMyFeedback()
   const items = listQ.data ?? []
-  // Guarda o id: assim o modal reflete o item recarregado depois de salvar uma correção.
+  // Guarda o id: assim o diálogo reflete o item recarregado depois de salvar uma correção.
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const selected = selectedId ? (items.find((f) => f.id === selectedId) ?? null) : null
 
-  // Edição do próprio relato — só enquanto o feedback não entrou em triagem (status NEW).
+  // Correção do próprio relato — o diálogo só a oferece enquanto o status é NEW.
   const updateM = useUpdateMyFeedback()
-  const [editing, setEditing] = useState(false)
-  const [draft, setDraft] = useState<{ type: FeedbackTypeValue; title: string; message: string }>({
-    type: "SUGGESTION",
-    title: "",
-    message: "",
-  })
-  const canEdit = selected?.status === "NEW"
-  const canSave = !!draft.title.trim() && !!draft.message.trim()
 
-  function startEdit(f: MyFeedbackItem) {
-    setDraft({ type: f.type, title: f.title, message: f.message })
-    setEditing(true)
-  }
-
-  async function saveEdit() {
-    if (!selected || !canSave) return
+  async function saveEdit(draft: { type: FeedbackTypeValue; title: string; message: string }) {
+    if (!selectedId) return
     try {
-      await updateM.mutateAsync({
-        id: selected.id,
-        type: draft.type,
-        title: draft.title.trim(),
-        message: draft.message.trim(),
-      })
+      await updateM.mutateAsync({ id: selectedId, ...draft })
       toast.success(t("saved"))
-      setEditing(false)
     } catch (err) {
       // Inclui o caso de corrida: o admin triou entre abrir a edição e salvar.
       toast.error(t("saveError"), { description: em(err) })
+      throw err
     }
   }
 
-  const fmtDate = (iso: string) => new Date(iso).toLocaleString(locale)
+  // Reabertura de um ticket encerrado: exige justificativa, então passa por um diálogo
+  // próprio (nunca em um clique), como o descarte do lado da administração.
+  const reopenM = useReopenMyFeedback()
+  const [reopenId, setReopenId] = useState<string | null>(null)
+  const [reopenReason, setReopenReason] = useState("")
+  const reopenTooShort = reopenReason.trim().length < FEEDBACK_REOPEN_MIN
+
+  async function confirmReopen() {
+    if (!reopenId || reopenTooShort) return
+    try {
+      await reopenM.mutateAsync({ id: reopenId, reason: reopenReason.trim() })
+      toast.success(t("reopened"))
+      setReopenId(null)
+      setReopenReason("")
+    } catch (err) {
+      toast.error(t("reopenError"), { description: em(err) })
+    }
+  }
 
   return (
     <div className="mx-auto max-w-6xl space-y-6 p-8">
@@ -103,7 +102,7 @@ export function MyFeedback() {
                 <TableHead>{t("colTitle")}</TableHead>
                 <TableHead className="w-32">{t("colDate")}</TableHead>
                 <TableHead className="w-20 text-center">{t("colStatus")}</TableHead>
-                <TableHead>{t("colResolution")}</TableHead>
+                <TableHead className="w-24">{t("colThread")}</TableHead>
                 <TableHead className="w-16 text-right">
                   <ReloadButton
                     onReload={async () => {
@@ -134,31 +133,10 @@ export function MyFeedback() {
                   <TableCell className="text-center">
                     <FeedbackStatusBadge status={f.status} ns="myFeedback" iconOnly />
                   </TableCell>
-                  <TableCell
-                    className={cn("text-sm", !f.resolutionNote && "text-muted-foreground")}
-                  >
-                    <Truncate className="max-w-[16rem]">
-                      {f.resolutionNote || t("resolutionEmpty")}
-                    </Truncate>
+                  <TableCell>
+                    <ThreadSummaryCell summary={f} ns="myFeedback" />
                   </TableCell>
-                  {/* Atalho de edição direto na linha (stopPropagation: não abre o detalhe). */}
-                  <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
-                    {f.status === "NEW" && (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="size-8"
-                        title={t("edit")}
-                        onClick={() => {
-                          setSelectedId(f.id)
-                          startEdit(f)
-                        }}
-                      >
-                        <Pencil className="size-4" />
-                        <span className="sr-only">{t("edit")}</span>
-                      </Button>
-                    )}
-                  </TableCell>
+                  <TableCell />
                 </TableRow>
               ))}
             </TableBody>
@@ -166,172 +144,83 @@ export function MyFeedback() {
         </div>
       )}
 
-      <Dialog
+      <FeedbackTicketDialog
+        ns="myFeedback"
         open={!!selected}
         onOpenChange={(o) => {
+          if (!o) setSelectedId(null)
+        }}
+        ticket={
+          selected && {
+            ...selected,
+            // O autor é o próprio usuário, e a anotação interna nunca sai do servidor.
+            authorName: null,
+            authorEmail: null,
+            adminNote: null,
+          }
+        }
+        author={{
+          onSaveEdit: saveEdit,
+          saving: updateM.isPending,
+          onReopen: () => {
+            setReopenId(selectedId)
+            setReopenReason("")
+          },
+        }}
+      />
+
+      {/* Reabertura: só conclui com justificativa, que vira a primeira mensagem da conversa. */}
+      <Dialog
+        open={!!reopenId}
+        onOpenChange={(o) => {
           if (o) return
-          setSelectedId(null)
-          setEditing(false)
+          setReopenId(null)
+          setReopenReason("")
         }}
       >
         <DialogContent>
-          {selected && (
-            <>
-              <DialogHeader className="min-w-0">
-                <div className="flex flex-wrap items-center gap-2 pr-8">
-                  <FeedbackTypeBadge type={selected.type} ns="myFeedback" />
-                  <FeedbackStatusBadge status={selected.status} ns="myFeedback" />
-                  {canEdit && !editing && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="ml-auto h-7 gap-1.5"
-                      onClick={() => startEdit(selected)}
-                    >
-                      <Pencil className="size-3.5" />
-                      {t("edit")}
-                    </Button>
-                  )}
-                </div>
-              </DialogHeader>
+          <DialogHeader>
+            <DialogTitle>{t("reopenTitle")}</DialogTitle>
+            <DialogDescription>{t("reopenDesc")}</DialogDescription>
+          </DialogHeader>
 
-              <div className="min-w-0 space-y-4">
-                <section>
-                  <h3 className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                    {t("detailTitle")}
-                  </h3>
-                  {editing ? (
-                    <>
-                      {/* DialogTitle continua no DOM (acessibilidade), mas oculto no modo edição. */}
-                      <DialogTitle className="sr-only">{selected.title}</DialogTitle>
-                      <Input
-                        value={draft.title}
-                        onChange={(e) => setDraft((d) => ({ ...d, title: e.target.value }))}
-                        maxLength={FEEDBACK_TITLE_MAX}
-                        aria-label={t("titleLabel")}
-                      />
-                      <p className="mt-1 text-xs text-muted-foreground">
-                        {draft.title.length}/{FEEDBACK_TITLE_MAX}
-                      </p>
-                    </>
-                  ) : (
-                    <DialogTitle className="text-lg font-semibold leading-snug [overflow-wrap:anywhere]">
-                      {selected.title}
-                    </DialogTitle>
-                  )}
-                  <DialogDescription className="mt-1 text-sm">
-                    {t("sentAt", { date: fmtDate(selected.createdAt) })}
-                  </DialogDescription>
-                </section>
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <Label htmlFor="reopen-reason">{t("messageLabel")}</Label>
+              <span className="text-xs text-muted-foreground">
+                {reopenReason.trim().length}/{FEEDBACK_MESSAGE_BODY_MAX}
+              </span>
+            </div>
+            <Textarea
+              id="reopen-reason"
+              value={reopenReason}
+              onChange={(e) => setReopenReason(e.target.value)}
+              placeholder={t("reopenPlaceholder")}
+              maxLength={FEEDBACK_MESSAGE_BODY_MAX}
+              rows={4}
+              autoFocus
+            />
+            {reopenTooShort && (
+              <p className="text-xs text-muted-foreground">
+                {t("reopenMin", { min: FEEDBACK_REOPEN_MIN })}
+              </p>
+            )}
+          </div>
 
-                {editing && (
-                  <section className="space-y-2">
-                    <Label>{t("typeLabel")}</Label>
-                    <div className="grid grid-cols-2 gap-2">
-                      {(["SUGGESTION", "BUG"] as const).map((value) => {
-                        const Icon = value === "BUG" ? Bug : Lightbulb
-                        return (
-                          <button
-                            key={value}
-                            type="button"
-                            onClick={() => setDraft((d) => ({ ...d, type: value }))}
-                            className={cn(
-                              "flex items-center justify-center gap-2 rounded-lg border px-3 py-2 text-sm transition-colors",
-                              draft.type === value
-                                ? "border-primary bg-accent font-medium text-accent-foreground"
-                                : "border-border text-foreground/70 hover:bg-muted",
-                            )}
-                          >
-                            <Icon className="size-4" />
-                            {t(value === "BUG" ? "typeBug" : "typeSuggestion")}
-                          </button>
-                        )
-                      })}
-                    </div>
-                  </section>
-                )}
-
-                <section>
-                  <h3 className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                    {t("detailMessage")}
-                  </h3>
-                  {editing ? (
-                    <div className="space-y-2">
-                      <Textarea
-                        value={draft.message}
-                        onChange={(e) => setDraft((d) => ({ ...d, message: e.target.value }))}
-                        maxLength={FEEDBACK_MESSAGE_MAX}
-                        rows={5}
-                        aria-label={t("messageLabel")}
-                      />
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="text-xs text-muted-foreground">
-                          {draft.message.length}/{FEEDBACK_MESSAGE_MAX}
-                        </span>
-                        <div className="ml-auto flex gap-2">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setEditing(false)}
-                            disabled={updateM.isPending}
-                          >
-                            {t("cancel")}
-                          </Button>
-                          <Button
-                            size="sm"
-                            onClick={saveEdit}
-                            loading={updateM.isPending}
-                            disabled={!canSave}
-                          >
-                            {t("save")}
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="max-h-72 overflow-y-auto whitespace-pre-wrap rounded-lg border bg-muted/40 p-3 text-sm leading-relaxed [overflow-wrap:anywhere]">
-                      {selected.message}
-                    </div>
-                  )}
-                  {!editing && (
-                    <p className="mt-1.5 text-xs text-muted-foreground">
-                      {canEdit ? t("editHint") : t("editLocked")}
-                    </p>
-                  )}
-                </section>
-
-                <section>
-                  <h3 className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                    {t("detailResolution")}
-                  </h3>
-                  <p
-                    className={cn(
-                      "whitespace-pre-wrap text-sm leading-relaxed [overflow-wrap:anywhere]",
-                      !selected.resolutionNote && "text-muted-foreground",
-                    )}
-                  >
-                    {selected.resolutionNote || t("resolutionEmpty")}
-                  </p>
-                  {selected.resolutionNote && selected.reviewedAt && (
-                    <p className="mt-1.5 text-xs text-muted-foreground">
-                      {t("answeredAt", { date: fmtDate(selected.reviewedAt) })}
-                    </p>
-                  )}
-                </section>
-
-                {selected.pageUrl && (
-                  <section>
-                    <h3 className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                      {t("detailPage")}
-                    </h3>
-                    <code className="inline-block max-w-full rounded bg-muted px-1.5 py-0.5 font-mono text-xs text-muted-foreground [overflow-wrap:anywhere]">
-                      {selected.pageUrl}
-                    </code>
-                  </section>
-                )}
-              </div>
-            </>
-          )}
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setReopenId(null)} disabled={reopenM.isPending}>
+              {t("cancel")}
+            </Button>
+            <Button
+              className="gap-1.5"
+              onClick={confirmReopen}
+              loading={reopenM.isPending}
+              disabled={reopenTooShort}
+            >
+              <RotateCcw className="size-4" />
+              {t("reopenConfirm")}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

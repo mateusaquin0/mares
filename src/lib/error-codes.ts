@@ -99,6 +99,13 @@ export const ERROR_CODES = {
   feedbackResolutionRequired: "feedbackResolutionRequired",
   // O autor só corrige o próprio relato enquanto ele ainda não foi triado (status NEW).
   feedbackNotEditable: "feedbackNotEditable",
+  // A conversa do ticket só aceita mensagens/anexos enquanto ele está aberto (NEW/IN_REVIEW).
+  feedbackThreadClosed: "feedbackThreadClosed",
+  feedbackAttachmentNotFound: "feedbackAttachmentNotFound",
+  // Teto de imagens por ticket (evita usar o feedback como armazenamento de arquivos).
+  feedbackAttachmentLimit: "feedbackAttachmentLimit",
+  // Só um ticket ENCERRADO (RESOLVED/WONT_FIX) pode ser reaberto, e só pelo autor.
+  feedbackNotReopenable: "feedbackNotReopenable",
   // Solicitações de glossário
   catalogRequestNotFound: "catalogRequestNotFound",
   catalogRequestProcessed: "catalogRequestProcessed",

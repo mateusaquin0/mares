@@ -1,8 +1,12 @@
 import { describe, it, expect } from "vitest"
 import {
+  FEEDBACK_MESSAGE_BODY_MAX,
+  FEEDBACK_REOPEN_MIN,
   FEEDBACK_RESOLUTION_MAX,
   FEEDBACK_RESOLUTION_MIN,
+  createFeedbackMessageSchema,
   createFeedbackSchema,
+  reopenFeedbackSchema,
   updateFeedbackSchema,
   updateMyFeedbackSchema,
 } from "@/schemas/feedback.schema"
@@ -140,5 +144,43 @@ describe("updateFeedbackSchema", () => {
     expect(updateFeedbackSchema.safeParse({ status: "NEW", resolutionNote: null }).success).toBe(
       true,
     )
+  })
+})
+
+describe("createFeedbackMessageSchema", () => {
+  it("aceita uma mensagem com texto", () => {
+    expect(
+      createFeedbackMessageSchema.safeParse({ body: "Consegue mandar um print?" }).success,
+    ).toBe(true)
+  })
+
+  it("exige texto: imagem é complemento da mensagem, não substituta", () => {
+    expect(createFeedbackMessageSchema.safeParse({ body: "" }).success).toBe(false)
+    expect(createFeedbackMessageSchema.safeParse({ body: "   " }).success).toBe(false)
+  })
+
+  it("rejeita mensagem acima do limite", () => {
+    const at = "a".repeat(FEEDBACK_MESSAGE_BODY_MAX)
+    expect(createFeedbackMessageSchema.safeParse({ body: at }).success).toBe(true)
+    expect(createFeedbackMessageSchema.safeParse({ body: at + "a" }).success).toBe(false)
+  })
+})
+
+describe("reopenFeedbackSchema", () => {
+  it("exige justificativa com o mínimo de caracteres", () => {
+    expect(
+      reopenFeedbackSchema.safeParse({ reason: "a".repeat(FEEDBACK_REOPEN_MIN) }).success,
+    ).toBe(true)
+    expect(
+      reopenFeedbackSchema.safeParse({ reason: "a".repeat(FEEDBACK_REOPEN_MIN - 1) }).success,
+    ).toBe(false)
+    expect(reopenFeedbackSchema.safeParse({ reason: "   " }).success).toBe(false)
+  })
+})
+
+describe("updateFeedbackSchema (triagem)", () => {
+  it("recusa gravar REOPENED: só o autor pede reabertura", () => {
+    expect(updateFeedbackSchema.safeParse({ status: "REOPENED" }).success).toBe(false)
+    expect(updateFeedbackSchema.safeParse({ status: "IN_REVIEW" }).success).toBe(true)
   })
 })

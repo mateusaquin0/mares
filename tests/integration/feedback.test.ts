@@ -12,7 +12,10 @@ import { ERROR_CODES } from "@/lib/error-codes"
 const tag = randomUUID().slice(0, 8)
 let authorId: string
 let otherId: string
+// O admin precisa existir de verdade: descartar passou a gravar uma mensagem na conversa,
+// e `FeedbackMessage.createdById` tem FK para User.
 const adminId = randomUUID()
+const admin = { id: adminId, email: `admin-${randomUUID().slice(0, 8)}@test.local` }
 
 async function newFeedback(title: string, data: { status?: "NEW" | "WONT_FIX" } = {}) {
   return prisma.feedback.create({
@@ -35,13 +38,14 @@ beforeAll(async () => {
     data: [
       { id: authorId, email: `author-${tag}@test.local` },
       { id: otherId, email: `other-${tag}@test.local` },
+      { id: adminId, email: admin.email },
     ],
   })
 })
 
 afterAll(async () => {
   await prisma.feedback.deleteMany({ where: { createdById: { in: [authorId, otherId] } } })
-  await prisma.user.deleteMany({ where: { id: { in: [authorId, otherId] } } })
+  await prisma.user.deleteMany({ where: { id: { in: [authorId, otherId, adminId] } } })
   await prisma.$disconnect()
 })
 
@@ -49,7 +53,7 @@ describe("Descartar exige justificativa", () => {
   it("recusa WONT_FIX sem justificativa e mantém o status anterior", async () => {
     const f = await newFeedback(`sem justificativa ${tag}`)
 
-    await expect(updateFeedback(f.id, adminId, { status: "WONT_FIX" })).rejects.toMatchObject({
+    await expect(updateFeedback(f.id, admin, { status: "WONT_FIX" })).rejects.toMatchObject({
       code: ERROR_CODES.feedbackResolutionRequired,
     })
 
@@ -61,14 +65,14 @@ describe("Descartar exige justificativa", () => {
     const f = await newFeedback(`justificativa curta ${tag}`)
 
     await expect(
-      updateFeedback(f.id, adminId, { status: "WONT_FIX", resolutionNote: "não" }),
+      updateFeedback(f.id, admin, { status: "WONT_FIX", resolutionNote: "não" }),
     ).rejects.toMatchObject({ code: ERROR_CODES.feedbackResolutionRequired })
   })
 
   it("descarta com justificativa e registra quem/quando triou", async () => {
     const f = await newFeedback(`descarte ok ${tag}`)
 
-    await updateFeedback(f.id, adminId, {
+    await updateFeedback(f.id, admin, {
       status: "WONT_FIX",
       resolutionNote: "  Fora do escopo do TCC.  ",
     })
@@ -80,14 +84,44 @@ describe("Descartar exige justificativa", () => {
     expect(after?.reviewedAt).toBeInstanceOf(Date)
   })
 
+  it("publica a justificativa na conversa, como mensagem da administração", async () => {
+    const f = await newFeedback(`descarte vira mensagem ${tag}`)
+
+    await updateFeedback(f.id, admin, {
+      status: "WONT_FIX",
+      resolutionNote: "Comportamento é intencional nesta versão.",
+    })
+
+    const messages = await prisma.feedbackMessage.findMany({ where: { feedbackId: f.id } })
+    expect(messages).toHaveLength(1)
+    expect(messages[0]!.party).toBe("ADMIN")
+    expect(messages[0]!.body).toBe("Comportamento é intencional nesta versão.")
+    expect(messages[0]!.createdById).toBe(adminId)
+  })
+
+  it("só publica na TRANSIÇÃO: corrigir a justificativa depois não republica", async () => {
+    const f = await newFeedback(`descarte sem repetir ${tag}`)
+    await updateFeedback(f.id, admin, {
+      status: "WONT_FIX",
+      resolutionNote: "Primeira redação da justificativa.",
+    })
+
+    // Mexer na nota (ou reaplicar o mesmo status) não gera outra mensagem: a conversa é
+    // imutável, e a mensagem já publicada continua sendo a que o autor leu.
+    await updateFeedback(f.id, admin, { resolutionNote: "Segunda redação da justificativa." })
+    await updateFeedback(f.id, admin, { status: "WONT_FIX" })
+
+    expect(await prisma.feedbackMessage.count({ where: { feedbackId: f.id } })).toBe(1)
+  })
+
   it("recusa apagar a justificativa enquanto o feedback está descartado", async () => {
     const f = await newFeedback(`limpar nota ${tag}`)
-    await updateFeedback(f.id, adminId, {
+    await updateFeedback(f.id, admin, {
       status: "WONT_FIX",
       resolutionNote: "Comportamento é intencional.",
     })
 
-    await expect(updateFeedback(f.id, adminId, { resolutionNote: null })).rejects.toMatchObject({
+    await expect(updateFeedback(f.id, admin, { resolutionNote: null })).rejects.toMatchObject({
       code: ERROR_CODES.feedbackResolutionRequired,
     })
 
@@ -97,13 +131,13 @@ describe("Descartar exige justificativa", () => {
 
   it("sair de WONT_FIX libera apagar a justificativa", async () => {
     const f = await newFeedback(`reabrir ${tag}`)
-    await updateFeedback(f.id, adminId, {
+    await updateFeedback(f.id, admin, {
       status: "WONT_FIX",
       resolutionNote: "Não faz sentido agora.",
     })
 
-    await updateFeedback(f.id, adminId, { status: "IN_REVIEW" })
-    await updateFeedback(f.id, adminId, { resolutionNote: null })
+    await updateFeedback(f.id, admin, { status: "IN_REVIEW" })
+    await updateFeedback(f.id, admin, { resolutionNote: null })
 
     const after = await prisma.feedback.findUnique({ where: { id: f.id } })
     expect(after?.status).toBe("IN_REVIEW")
@@ -115,7 +149,7 @@ describe("Resposta ao autor em qualquer status", () => {
   it("escreve a resposta sem mudar o status nem a trilha de triagem", async () => {
     const f = await newFeedback(`resposta isolada ${tag}`)
 
-    await updateFeedback(f.id, adminId, { resolutionNote: "Já está no roadmap." })
+    await updateFeedback(f.id, admin, { resolutionNote: "Já está no roadmap." })
 
     const after = await prisma.feedback.findUnique({ where: { id: f.id } })
     expect(after?.status).toBe("NEW")
@@ -142,7 +176,7 @@ describe("Correção pelo autor", () => {
 
   it("bloqueia a edição depois que o feedback entra em triagem", async () => {
     const f = await newFeedback(`em triagem ${tag}`)
-    await updateFeedback(f.id, adminId, { status: "IN_REVIEW" })
+    await updateFeedback(f.id, admin, { status: "IN_REVIEW" })
 
     await expect(updateMyFeedback(f.id, authorId, edit)).rejects.toMatchObject({
       code: ERROR_CODES.feedbackNotEditable,
