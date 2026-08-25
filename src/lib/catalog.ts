@@ -4,17 +4,22 @@
 
 import { Prisma } from "@prisma/client"
 import { prisma } from "@/lib/prisma"
-import type { CatalogType } from "@/schemas/catalog.schema"
-import { pathogenSchema, examTypeSchema, nameI18nSchema } from "@/schemas/catalog.schema"
+import type { CatalogType, NameI18nData } from "@/schemas/catalog.schema"
+import {
+  pathogenSchema,
+  examTypeSchema,
+  nameI18nSchema,
+  catalogBodySchema,
+} from "@/schemas/catalog.schema"
 import { NotFoundError, ValidationError, ConflictError } from "@/lib/errors"
 import { ERROR_CODES } from "@/lib/error-codes"
 import { slugify } from "@/lib/slug"
 
 export type I18n = { pt: string; en: string }
 
-// ── Órgão / Exame (name JSON) ───────────────────────────────────────────────
+// ── Órgão / Exame / Sistema (name JSON) ─────────────────────────────────────
 
-export type NamedType = "organs" | "exam-types"
+export type NamedType = "organs" | "exam-types" | "systems"
 export type NamedRow = {
   id: string
   key: string
@@ -79,7 +84,9 @@ export async function listNamed(type: NamedType): Promise<NamedRow[]> {
   const rows =
     type === "organs"
       ? await prisma.organ.findMany({ orderBy: { key: "asc" }, select: namedSelect })
-      : await prisma.examType.findMany({ orderBy: { key: "asc" }, select: examTypeSelect })
+      : type === "systems"
+        ? await prisma.necropsySystem.findMany({ orderBy: { key: "asc" }, select: namedSelect })
+        : await prisma.examType.findMany({ orderBy: { key: "asc" }, select: examTypeSelect })
   const used = await catalogUsedIds(type)
   return rows.map((r) => toNamedRow(r, used.has(r.id)))
 }
@@ -94,10 +101,15 @@ export async function createNamed(
   const row =
     type === "organs"
       ? await prisma.organ.create({ data: { key, name, createdById }, select: namedSelect })
-      : await prisma.examType.create({
-          data: { key, name, createdById, ...measureData(measure) },
-          select: examTypeSelect,
-        })
+      : type === "systems"
+        ? await prisma.necropsySystem.create({
+            data: { key, name, createdById },
+            select: namedSelect,
+          })
+        : await prisma.examType.create({
+            data: { key, name, createdById, ...measureData(measure) },
+            select: examTypeSelect,
+          })
   return toNamedRow(row, false)
 }
 
@@ -110,11 +122,17 @@ export async function updateNamed(
   const row =
     type === "organs"
       ? await prisma.organ.update({ where: { id }, data: { name }, select: namedSelect })
-      : await prisma.examType.update({
-          where: { id },
-          data: { name, ...measureData(measure) },
-          select: examTypeSelect,
-        })
+      : type === "systems"
+        ? await prisma.necropsySystem.update({
+            where: { id },
+            data: { name },
+            select: namedSelect,
+          })
+        : await prisma.examType.update({
+            where: { id },
+            data: { name, ...measureData(measure) },
+            select: examTypeSelect,
+          })
   return toNamedRow(row, (await catalogUsage(type, id)) > 0)
 }
 
@@ -297,6 +315,7 @@ export async function keyExists(type: CatalogType, key: string): Promise<boolean
   const args = { where: { key }, select: { id: true } }
   if (type === "organs") return !!(await prisma.organ.findUnique(args))
   if (type === "pathogens") return !!(await prisma.pathogen.findUnique(args))
+  if (type === "systems") return !!(await prisma.necropsySystem.findUnique(args))
   return !!(await prisma.examType.findUnique(args))
 }
 
@@ -314,6 +333,7 @@ export async function catalogExists(type: CatalogType, id: string): Promise<bool
   const args = { where: { id }, select: { id: true } }
   if (type === "organs") return !!(await prisma.organ.findUnique(args))
   if (type === "pathogens") return !!(await prisma.pathogen.findUnique(args))
+  if (type === "systems") return !!(await prisma.necropsySystem.findUnique(args))
   return !!(await prisma.examType.findUnique(args))
 }
 
@@ -321,17 +341,22 @@ export async function deleteCatalog(type: CatalogType, id: string): Promise<void
   const args = { where: { id } }
   if (type === "organs") await prisma.organ.delete(args)
   else if (type === "pathogens") await prisma.pathogen.delete(args)
+  else if (type === "systems") await prisma.necropsySystem.delete(args)
   else await prisma.examType.delete(args)
 }
 
 // Quantas vezes o item é referenciado (protocolos + amostras/análises). Bloqueia a exclusão.
 export async function catalogUsage(type: CatalogType, id: string): Promise<number> {
   if (type === "organs") {
-    const [p, s] = await Promise.all([
+    // Os achados do laudo também citam o órgão — macro (localização) e micro. Sem contá-los,
+    // o criador de um órgão conseguiria excluí-lo com um laudo apontando para ele.
+    const [p, s, h, g] = await Promise.all([
       prisma.researchProtocol.count({ where: { organId: id } }),
       prisma.sample.count({ where: { organId: id } }),
+      prisma.histopathologyFinding.count({ where: { organId: id } }),
+      prisma.grossFinding.count({ where: { organId: id } }),
     ])
-    return p + s
+    return p + s + h + g
   }
   if (type === "pathogens") {
     const [p, a] = await Promise.all([
@@ -339,6 +364,10 @@ export async function catalogUsage(type: CatalogType, id: string): Promise<numbe
       prisma.analysis.count({ where: { pathogenId: id } }),
     ])
     return p + a
+  }
+  // Sistema em uso = citado por algum laudo.
+  if (type === "systems") {
+    return prisma.necropsySystemExam.count({ where: { systemId: id } })
   }
   const [p, a] = await Promise.all([
     prisma.researchProtocol.count({ where: { examTypeId: id } }),
@@ -351,11 +380,25 @@ export async function catalogUsage(type: CatalogType, id: string): Promise<numbe
 // Usado para marcar `inUse` na listagem sem uma consulta por linha.
 export async function catalogUsedIds(type: CatalogType): Promise<Set<string>> {
   if (type === "organs") {
-    const [p, s] = await Promise.all([
+    const [p, s, h, g] = await Promise.all([
       prisma.researchProtocol.findMany({ distinct: ["organId"], select: { organId: true } }),
       prisma.sample.findMany({ distinct: ["organId"], select: { organId: true } }),
+      prisma.histopathologyFinding.findMany({
+        distinct: ["organId"],
+        select: { organId: true },
+      }),
+      prisma.grossFinding.findMany({
+        where: { organId: { not: null } },
+        distinct: ["organId"],
+        select: { organId: true },
+      }),
     ])
-    return new Set([...p.map((x) => x.organId), ...s.map((x) => x.organId)])
+    return new Set([
+      ...p.map((x) => x.organId),
+      ...s.map((x) => x.organId),
+      ...h.map((x) => x.organId),
+      ...g.flatMap((x) => (x.organId ? [x.organId] : [])),
+    ])
   }
   if (type === "pathogens") {
     const [p, a] = await Promise.all([
@@ -363,6 +406,13 @@ export async function catalogUsedIds(type: CatalogType): Promise<Set<string>> {
       prisma.analysis.findMany({ distinct: ["pathogenId"], select: { pathogenId: true } }),
     ])
     return new Set([...p.map((x) => x.pathogenId), ...a.map((x) => x.pathogenId)])
+  }
+  if (type === "systems") {
+    const e = await prisma.necropsySystemExam.findMany({
+      distinct: ["systemId"],
+      select: { systemId: true },
+    })
+    return new Set(e.map((x) => x.systemId))
   }
   const [p, a] = await Promise.all([
     prisma.researchProtocol.findMany({ distinct: ["examTypeId"], select: { examTypeId: true } }),
@@ -379,6 +429,7 @@ export async function catalogCreatedBy(
   const args = { where: { id }, select: { createdById: true } }
   if (type === "organs") return prisma.organ.findUnique(args)
   if (type === "pathogens") return prisma.pathogen.findUnique(args)
+  if (type === "systems") return prisma.necropsySystem.findUnique(args)
   return prisma.examType.findUnique(args)
 }
 
@@ -424,13 +475,49 @@ export async function createCatalogItem(
         resolveMeasure(data),
       )
     }
-    const data = nameI18nSchema.parse(body)
+    const data = catalogBodySchema(type).parse(body) as NameI18nData
     return await createNamed(
       type,
       await uniqueKey(type, data.namePt),
       { pt: data.namePt.trim(), en: data.nameEn.trim() },
       createdById,
     )
+  } catch (e) {
+    if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
+      throw new ConflictError("Já existe um item com esse nome", ERROR_CODES.catalogDuplicate)
+    }
+    throw e
+  }
+}
+
+// Contraparte de createCatalogItem para a EDIÇÃO. Usada pela rota PUT (edição direta) e pela
+// aprovação de uma solicitação de edição — as duas validam o corpo pelas mesmas regras.
+export async function updateCatalogItem(
+  type: CatalogType,
+  id: string,
+  body: unknown,
+): Promise<NamedRow | PathogenRow> {
+  try {
+    if (type === "pathogens") {
+      const p = await resolvePathogen(body)
+      return await updatePathogenEntry(id, {
+        groupId: p.groupId,
+        scientificName: p.scientificName,
+        name: p.name,
+        taxon: p.taxon,
+      })
+    }
+    if (type === "exam-types") {
+      const data = examTypeSchema.parse(body)
+      return await updateNamed(
+        type,
+        id,
+        { pt: data.namePt.trim(), en: data.nameEn.trim() },
+        resolveMeasure(data),
+      )
+    }
+    const data = catalogBodySchema(type).parse(body) as NameI18nData
+    return await updateNamed(type, id, { pt: data.namePt.trim(), en: data.nameEn.trim() })
   } catch (e) {
     if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
       throw new ConflictError("Já existe um item com esse nome", ERROR_CODES.catalogDuplicate)

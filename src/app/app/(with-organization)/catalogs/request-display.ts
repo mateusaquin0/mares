@@ -2,11 +2,11 @@
 
 import { txt } from "@/lib/catalog-i18n"
 import { slugify } from "@/lib/slug"
-import type { CatalogType } from "@/schemas/catalog.schema"
+import { CATALOG_BY_REQUEST_TYPE, type CatalogType } from "@/schemas/catalog.schema"
 import type { CatalogRequestItem, CatalogRequestType } from "@/types/catalog-request"
 
 export function catalogTypeOfRequest(t: CatalogRequestType): CatalogType {
-  return t === "ORGAN" ? "organs" : t === "PATHOGEN" ? "pathogens" : "exam-types"
+  return CATALOG_BY_REQUEST_TYPE[t]
 }
 
 // Nome do item proposto na solicitação, no idioma ativo.

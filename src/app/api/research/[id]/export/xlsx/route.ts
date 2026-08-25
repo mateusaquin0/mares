@@ -13,6 +13,7 @@ import { apiError, unauthorized } from "@/lib/api"
 import { NotFoundError } from "@/lib/errors"
 import { ERROR_CODES } from "@/lib/error-codes"
 import { dwcAnimalSelect } from "@/lib/darwin-core"
+import { necropsyExportSelect } from "@/lib/necropsy"
 import { animalResultsSearchWhere } from "@/lib/animal-query"
 import { buildAnimalsXlsx } from "@/lib/animals-xlsx"
 import { slugify } from "@/lib/slug"
@@ -51,6 +52,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
         necropsyDate: true,
         isPublic: true,
         _count: { select: { samples: { where: { researchId: id } } } },
+        ...necropsyExportSelect,
         // Amostras e análises da pesquisa (para as colunas de resultados na planilha).
         samples: {
           where: { researchId: id },

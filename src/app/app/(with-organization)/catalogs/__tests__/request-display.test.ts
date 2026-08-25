@@ -17,6 +17,7 @@ function make(over: Partial<CatalogRequestItem>): CatalogRequestItem {
     reviewedAt: null,
     reviewNote: null,
     duplicateOfId: null,
+    targetId: null,
     createdItemId: null,
     createdAt: "2026-07-11T00:00:00Z",
     updatedAt: "2026-07-11T00:00:00Z",

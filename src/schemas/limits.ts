@@ -11,6 +11,9 @@ export const LIMITS = {
   shortText: 120,
   // Campos muito curtos (condição corporal, estágio de decomposição, rótulo de medida).
   tinyText: 60,
+  // Descritores de uma ou duas palavras (tecido e local do achado macroscópico:
+  // "derme/epiderme", "região ventral").
+  microText: 30,
   // Unidade de medida (ex.: "cópias/mL").
   measureUnit: 30,
   // Observações e descrições longas (notas de amostra/análise, descrição de pesquisa).

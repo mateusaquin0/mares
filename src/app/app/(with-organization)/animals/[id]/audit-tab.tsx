@@ -1,10 +1,11 @@
 "use client"
 
 import { useLocale, useTranslations } from "next-intl"
-import { ArrowRight, Clock, User, Fish, FlaskConical, Microscope } from "lucide-react"
+import { ArrowRight, Clock, User, Fish, FlaskConical, Microscope, Stethoscope } from "lucide-react"
 
 import { pathogenName, txt } from "@/lib/catalog-i18n"
 import { SEX_OPTIONS, LIFE_STAGE_OPTIONS } from "@/lib/animal-enums"
+import { NECROPSY_STATUS_OPTIONS } from "@/lib/necropsy-enums"
 import { useAnimalAudit } from "@/hooks/use-animals"
 import type { AuditEntry } from "@/types/animal"
 import { Badge } from "@/components/ui/badge"
@@ -20,11 +21,29 @@ const SAMPLE_STATUS_KEY: Record<string, string> = {
 }
 const DATE_FIELDS = new Set(["eventDate", "necropsyDate", "collectionDate"])
 
+// No log de um sistema o CAMPO é o NOME do sistema no momento da edição — gravado como
+// texto de propósito, para a timeline continuar legível se o item do catálogo for
+// renomeado ou excluído depois. Por isso não há tradução a aplicar aqui.
+const NECROPSY_STATUS_KEY = Object.fromEntries(NECROPSY_STATUS_OPTIONS.map((o) => [o.value, o.key]))
+// Campos escalares dos achados, com as mesmas chaves de rótulo usadas na aba.
+const NECROPSY_FIELD_KEY: Record<string, string> = {
+  topography: "colTopography",
+  lesion: "colLesion",
+  distribution: "colDistribution",
+  severity: "colSeverity",
+  notes: "colNotes",
+  parasitesPresent: "colParasitesPresent",
+  parasitesCollected: "colParasitesCollected",
+  parasiteCount: "colParasiteCount",
+  finding: "finding",
+}
+
 export function AuditTab({ animalId }: { animalId: string }) {
   const t = useTranslations("audit")
   const ta = useTranslations("analyses")
   const tan = useTranslations("animals")
   const ts = useTranslations("samples")
+  const tn = useTranslations("necropsy")
   const locale = useLocale()
   const auditQ = useAnimalAudit(animalId)
   const items = auditQ.data ?? []
@@ -36,10 +55,20 @@ export function AuditTab({ animalId }: { animalId: string }) {
       Animal: { icon: Fish, label: t("entityAnimal") },
       Sample: { icon: FlaskConical, label: t("entitySample") },
       Analysis: { icon: Microscope, label: t("entityAnalysis") },
+      NecropsySystemExam: { icon: Stethoscope, label: t("entityNecropsySystem") },
+      GrossFinding: { icon: Stethoscope, label: t("entityGrossFinding") },
+      HistopathologyFinding: { icon: Microscope, label: t("entityHistopathology") },
     })[e]
 
   const fieldLabel = (r: AuditEntry) => {
     if (r.field === "created") return t("created")
+    if (r.field === "deleted") return t("deleted")
+    // Sistema: o campo já É o rótulo legível gravado no log.
+    if (r.entity === "NecropsySystemExam") return r.field
+    if (r.entity === "GrossFinding" || r.entity === "HistopathologyFinding") {
+      const key = NECROPSY_FIELD_KEY[r.field]
+      return key && tn.has(key) ? tn(key) : r.field
+    }
     if (r.entity === "Analysis") {
       return (
         (
@@ -74,6 +103,8 @@ export function AuditTab({ animalId }: { animalId: string }) {
     if (r.field === "sex" && SEX_KEY[v]) return tan(SEX_KEY[v])
     if (r.field === "lifeStage" && LIFE_STAGE_KEY[v]) return tan(LIFE_STAGE_KEY[v])
     if (r.field === "status" && SAMPLE_STATUS_KEY[v]) return ts(SAMPLE_STATUS_KEY[v])
+    if (r.entity === "NecropsySystemExam" && NECROPSY_STATUS_KEY[v])
+      return tn(NECROPSY_STATUS_KEY[v])
     if (DATE_FIELDS.has(r.field)) {
       const d = new Date(v)
       if (!Number.isNaN(d.getTime())) return d.toLocaleDateString(locale)

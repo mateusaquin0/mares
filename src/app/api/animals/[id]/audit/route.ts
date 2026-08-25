@@ -1,5 +1,6 @@
 // MARES — Histórico de alterações (AuditLog) de um animal: reúne edições do próprio
-// animal, criação/edição de amostras e alterações de análises numa única timeline.
+// animal, criação/edição de amostras, alterações de análises e o laudo anatomopatológico
+// (sistemas, achados macro e micro) numa única timeline.
 // Regras (docs/PERMISSOES.md §Auditoria): ver = qualquer membro da org (no escopo visível).
 
 import { NextRequest, NextResponse } from "next/server"
@@ -40,6 +41,18 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
     const analysisById = new Map(analyses.map((a) => [a.id, a]))
     const analysisIds = analyses.map((a) => a.id)
 
+    // Laudo anatomopatológico: pende do ANIMAL, então entra inteiro (sem escopo por
+    // pesquisa). Os ids das linhas EXCLUÍDAS já não existem — por isso o log guarda o
+    // rótulo em old/newValue, e a timeline não depende de resolver a entidade.
+    const [systemExams, grossFindings, histoFindings] = await Promise.all([
+      prisma.necropsySystemExam.findMany({ where: { animalId: id }, select: { id: true } }),
+      prisma.grossFinding.findMany({
+        where: { exam: { animalId: id } },
+        select: { id: true },
+      }),
+      prisma.histopathologyFinding.findMany({ where: { animalId: id }, select: { id: true } }),
+    ])
+
     // Logs das três entidades ligadas a este animal, numa só consulta.
     const logs = await prisma.auditLog.findMany({
       where: {
@@ -47,6 +60,9 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
           { entity: "Animal", entityId: id },
           { entity: "Sample", entityId: { in: sampleIds } },
           { entity: "Analysis", entityId: { in: analysisIds } },
+          { entity: "NecropsySystemExam", entityId: { in: systemExams.map((e) => e.id) } },
+          { entity: "GrossFinding", entityId: { in: grossFindings.map((f) => f.id) } },
+          { entity: "HistopathologyFinding", entityId: { in: histoFindings.map((f) => f.id) } },
         ],
       },
       orderBy: { changedAt: "desc" },

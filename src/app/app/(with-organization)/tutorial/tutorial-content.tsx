@@ -19,6 +19,7 @@ const SECTIONS = [
   "research",
   "animal",
   "sharing",
+  "necropsy",
   "samples",
   "analyses",
   "history",

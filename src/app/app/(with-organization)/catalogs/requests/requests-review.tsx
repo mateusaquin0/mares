@@ -177,7 +177,10 @@ export function RequestsReview({ isSystemAdmin }: { isSystemAdmin: boolean }) {
                   title={t("viewDetails")}
                 >
                   <TableCell>
-                    <Badge variant="secondary">{t(`type_${r.type}`)}</Badge>
+                    <div className="flex flex-wrap items-center gap-1">
+                      <Badge variant="secondary">{t(`type_${r.type}`)}</Badge>
+                      {r.targetId && <Badge variant="highlight">{t("kindEdit")}</Badge>}
+                    </div>
                   </TableCell>
                   <TableCell className="font-medium">
                     <Truncate className="max-w-[20rem]">{requestItemName(locale, r)}</Truncate>
@@ -205,6 +208,7 @@ export function RequestsReview({ isSystemAdmin }: { isSystemAdmin: boolean }) {
               <DialogHeader>
                 <div className="flex flex-wrap items-center gap-2">
                   <Badge variant="secondary">{t(`type_${selected.type}`)}</Badge>
+                  {selected.targetId && <Badge variant="highlight">{t("kindEdit")}</Badge>}
                   <Badge variant={statusVariant[selected.status]}>
                     {t(`status_${selected.status}`)}
                   </Badge>

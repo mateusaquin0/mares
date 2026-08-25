@@ -61,6 +61,7 @@ export function MyRequests() {
                 <TableRow key={r.id}>
                   <TableCell>
                     <Badge variant="secondary">{t(`type_${r.type}`)}</Badge>
+                    {r.targetId && <Badge variant="highlight">{t("kindEdit")}</Badge>}
                   </TableCell>
                   <TableCell className="font-medium">
                     <Truncate className="max-w-[16rem]">{requestItemName(locale, r)}</Truncate>

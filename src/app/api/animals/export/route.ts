@@ -13,6 +13,7 @@ import { inResearches } from "@/lib/animal-participation"
 import { apiError, unauthorized } from "@/lib/api"
 import { buildDarwinCoreXml, dwcAnimalSelect } from "@/lib/darwin-core"
 import { buildAnimalsXlsx } from "@/lib/animals-xlsx"
+import { necropsyExportSelect } from "@/lib/necropsy"
 
 const exportSchema = z.object({
   ids: z.array(z.string().min(1)).min(1),
@@ -28,6 +29,7 @@ const exportSelect = {
   necropsyDate: true,
   isPublic: true,
   _count: { select: { samples: true } },
+  ...necropsyExportSelect,
   // Amostras + análises (para os resultados na planilha Excel).
   samples: {
     select: {

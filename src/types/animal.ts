@@ -164,7 +164,13 @@ export type AnimalMedia = {
 // `entity` distingue a origem: edição do animal, criação/edição de amostra ou análise.
 export type AuditEntry = {
   id: string
-  entity: "Animal" | "Sample" | "Analysis"
+  entity:
+    | "Animal"
+    | "Sample"
+    | "Analysis"
+    | "NecropsySystemExam"
+    | "GrossFinding"
+    | "HistopathologyFinding"
   changedAt: string
   field: string
   oldValue: string | null

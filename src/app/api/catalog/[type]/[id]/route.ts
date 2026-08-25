@@ -3,15 +3,11 @@
 // em uso (protocolos / amostras / análises). A remoção é sempre bloqueada (409) se em uso.
 
 import { NextRequest, NextResponse } from "next/server"
-import { Prisma } from "@prisma/client"
 import { getAuthUser } from "@/lib/auth"
 import { apiError, unauthorized } from "@/lib/api"
-import { isCatalogType, nameI18nSchema, examTypeSchema } from "@/schemas/catalog.schema"
+import { isCatalogType } from "@/schemas/catalog.schema"
 import {
-  updateNamed,
-  updatePathogenEntry,
-  resolvePathogen,
-  resolveMeasure,
+  updateCatalogItem,
   deleteCatalog,
   catalogUsage,
   catalogCreatedBy,
@@ -57,42 +53,9 @@ export async function PUT(
     await assertCanModify(user, type, id)
 
     const body = await req.json().catch(() => null)
-
-    try {
-      if (type === "pathogens") {
-        const p = await resolvePathogen(body)
-        const updated = await updatePathogenEntry(id, {
-          groupId: p.groupId,
-          scientificName: p.scientificName,
-          name: p.name,
-          taxon: p.taxon,
-        })
-        return NextResponse.json(updated)
-      }
-
-      if (type === "exam-types") {
-        const data = examTypeSchema.parse(body)
-        const updated = await updateNamed(
-          type,
-          id,
-          { pt: data.namePt.trim(), en: data.nameEn.trim() },
-          resolveMeasure(data),
-        )
-        return NextResponse.json(updated)
-      }
-
-      const data = nameI18nSchema.parse(body)
-      const updated = await updateNamed(type, id, {
-        pt: data.namePt.trim(),
-        en: data.nameEn.trim(),
-      })
-      return NextResponse.json(updated)
-    } catch (e) {
-      if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
-        throw new ConflictError("Já existe um item com esse nome", ERROR_CODES.catalogDuplicate)
-      }
-      throw e
-    }
+    // Mesmo caminho da aprovação de uma solicitação de edição (ver catalog-requests.ts).
+    const updated = await updateCatalogItem(type, id, body)
+    return NextResponse.json(updated)
   } catch (err) {
     return apiError(err)
   }

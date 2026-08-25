@@ -20,6 +20,7 @@ import { Skeleton, TableSkeleton } from "@/components/ui/skeleton"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { AnimalFormDialog } from "../animal-form"
 import { ResearchShare } from "./research-share"
+import { NecropsyTab, NecropsySummary } from "./necropsy-tab"
 import { SamplesTab } from "./samples-tab"
 import { AnalysesTab } from "./analyses-tab"
 import { MediaTab } from "./media-tab"
@@ -171,6 +172,7 @@ export function AnimalDetail({
       <Tabs value={tab} onValueChange={setTab} className="flex min-h-0 flex-1 flex-col">
         <TabsList className="flex-wrap self-start">
           <TabsTrigger value="info">{t("detailInfo")}</TabsTrigger>
+          <TabsTrigger value="necropsy">{t("necropsyTab")}</TabsTrigger>
           <TabsTrigger value="samples">
             {t("samplesTab")} ({animal._count.samples})
           </TabsTrigger>
@@ -221,7 +223,21 @@ export function AnimalDetail({
                       <p className="mt-1 whitespace-pre-wrap text-sm">{animal.macroscopicNotes}</p>
                     </div>
                   )}
+                  <div className="border-t pt-4">
+                    <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                      {t("necropsyTab")}
+                    </p>
+                    <NecropsySummary animalId={id} onOpen={() => setTab("necropsy")} />
+                  </div>
                 </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {tab === "necropsy" && (
+            <Card className="flex min-h-0 flex-1 flex-col">
+              <CardContent className="flex min-h-0 flex-1 flex-col overflow-hidden pt-6">
+                <NecropsyTab animalId={id} />
               </CardContent>
             </Card>
           )}
