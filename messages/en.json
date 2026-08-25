@@ -478,7 +478,12 @@
     "number": "Enter a valid number",
     "latRange": "Latitude must be between -90 and 90",
     "lonRange": "Longitude must be between -180 and 180",
-    "invalidDate": "Invalid date"
+    "invalidDate": "Invalid date",
+    "notExaminedReasonRequired": "Give the reason it was not examined",
+    "notExaminedReasonNotAllowed": "The reason only applies to “not examined”",
+    "integer": "Enter a whole number",
+    "min": "Value below the minimum",
+    "parasiteCountRequiresCollected": "Count only applies when the parasites were collected"
   },
   "errors": {
     "notFound": "Not found",
@@ -568,7 +573,12 @@
     "animalShareNotFound": "Share not found",
     "animalShareCannotDecide": "Only the other research can answer this share",
     "animalControlDuplicateInResearch": "An animal with this control ID already exists in research \"{research}\".",
-    "animalSimbaDuplicateInResearch": "An animal with this SIMBA identifier already exists in research \"{research}\"."
+    "animalSimbaDuplicateInResearch": "An animal with this SIMBA identifier already exists in research \"{research}\".",
+    "necropsyFindingNotFound": "Gross finding not found",
+    "histopathologyFindingNotFound": "Histopathology finding not found",
+    "necropsyFindingsPresent": "This system has recorded gross findings ({count}). Remove them before changing the state.",
+    "necropsyExamNotFound": "System not found in this report",
+    "systemNotFound": "Anatomical system not found"
   },
   "location": {
     "country": "Country",
@@ -825,7 +835,8 @@
     "idFoundTitle": "Individual already registered in the group",
     "idFoundOpen": "Open record",
     "shareConflictSelectResearch": "Select the research in the form to be able to request the share.",
-    "sharePendingAlready": "This request is already open"
+    "sharePendingAlready": "This request is already open",
+    "necropsyTab": "Necropsy"
   },
   "samples": {
     "new": "New sample",
@@ -941,6 +952,104 @@
     "deleteTitle": "Delete file",
     "deleteDesc": "Delete this file? This action is irreversible."
   },
+  "necropsy": {
+    "macroTitle": "Gross pathology examination",
+    "macroSubtitle": "The anatomical systems this necropsy covered. Each needs a state before the report can be closed.",
+    "macroEmptyHint": "No system assessed yet. Give each one below a state: “Altered”, “No change”, or “Not examined”, which asks for the reason.",
+    "progress": "{assessed} of {total} systems assessed",
+    "microTitle": "Histopathology examination",
+    "microCount": "{count, plural, one {# finding recorded} other {# findings recorded}}",
+    "microEmpty": "No findings recorded.",
+    "microEmptyTitle": "No histopathology findings",
+    "microEmptyHint": "Record one organ → finding pair at a time. The running descriptive diagnosis is built from this list.",
+    "statusAltered": "Altered",
+    "statusNoChange": "No change",
+    "statusNotExamined": "Not examined",
+    "statusUnset": "Not assessed",
+    "statusError": "Could not change the system state",
+    "changeStatus": "Change the state of {system}",
+    "reasonPrefix": "Reason:",
+    "reasonTitle": "Why was this system not examined?",
+    "reasonLabel": "Reason",
+    "reasonPlaceholder": "e.g. Autolysis",
+    "findingCount": "{count, plural, =0 {no findings} one {# finding} other {# findings}}",
+    "noFindingsYet": "System marked as “altered”, but no findings recorded yet.",
+    "distributionFocal": "Focal",
+    "distributionMultifocal": "Multifocal",
+    "distributionMultifocalCoalescing": "Multifocal to coalescing",
+    "distributionLocallyExtensive": "Locally extensive",
+    "distributionSegmental": "Segmental",
+    "distributionDiffuse": "Diffuse",
+    "severityMild": "Mild",
+    "severityModerate": "Moderate",
+    "severityMarked": "Marked",
+    "colNumber": "No.",
+    "colTopography": "Organ / tissue / site",
+    "colLesion": "Lesion / change",
+    "colDistribution": "Distribution",
+    "colSeverity": "Severity",
+    "colNotes": "Notes",
+    "colParasitesPresent": "Parasites present",
+    "colParasitesCollected": "Parasites collected",
+    "colParasiteCount": "Count",
+    "yes": "Yes",
+    "no": "No",
+    "notInformed": "Not informed",
+    "parasites": "Parasites",
+    "blankMeansUnknown": "Blank fields enter the report as “not informed”.",
+    "addFinding": "New gross finding",
+    "addFindingTitle": "New gross finding",
+    "editFindingTitle": "Edit gross finding",
+    "findingSubtitle": "{system} · finding {position}",
+    "findingCreated": "Finding recorded",
+    "findingUpdated": "Finding updated",
+    "findingDeleted": "Finding removed",
+    "findingCreateError": "Could not record the finding",
+    "findingUpdateError": "Could not update the finding",
+    "findingDeleteError": "Could not remove the finding",
+    "deleteFindingTitle": "Remove finding?",
+    "deleteFindingDesc": "The finding “{lesion}” leaves the report. This cannot be undone.",
+    "organ": "Organ",
+    "finding": "Finding",
+    "organPlaceholder": "Select the organ",
+    "findingPlaceholder": "marked edema, granulomatous pneumonia, multifocal and moderate…",
+    "addHisto": "New finding",
+    "addHistoTitle": "New histopathology finding",
+    "editHistoTitle": "Edit histopathology finding",
+    "histoAddedNow": "Added just now",
+    "histoAddedCount": "{count, plural, one {# finding added in this session} other {# findings added in this session}}",
+    "keepOpen": "Keep open",
+    "saveAndAdd": "Save and add another",
+    "histoCreated": "Finding recorded",
+    "histoUpdated": "Finding updated",
+    "histoDeleted": "Finding removed",
+    "histoCreateError": "Could not record the finding",
+    "histoUpdateError": "Could not update the finding",
+    "histoDeleteError": "Could not remove the finding",
+    "deleteHistoTitle": "Remove finding?",
+    "deleteHistoDesc": "The {organ} finding leaves the report. This cannot be undone.",
+    "summary": "Gross: {altered, plural, =0 {no altered system} one {# altered system} other {# altered systems}} · Histopathology: {micro, plural, =0 {no findings} one {# finding} other {# findings}}",
+    "summaryEmpty": "Pathology report not started yet.",
+    "summaryOpen": "Open necropsy",
+    "loadError": "Could not load the report",
+    "addSystem": "Add system",
+    "removeSystem": "Remove from report",
+    "systemPlaceholder": "Choose the anatomical system",
+    "systemRemoved": "System removed from the report",
+    "systemRemoveError": "Could not remove the system from the report",
+    "noSystemsTitle": "No systems in this report",
+    "noSystemsHint": "Add the anatomical systems this necropsy covered. Each becomes an item to work through, with “no change”, “altered”, or “not examined”.",
+    "catalogEmpty": "No systems registered",
+    "catalogEmptyHint": "The anatomical systems catalogue is still empty. Register the systems in the glossary (Systems tab) and they become available to every report.",
+    "allSystemsAdded": "Every catalogued system is already in this report",
+    "topography": "Topography",
+    "organOptional": "Organ (optional)",
+    "tissue": "Tissue",
+    "tissuePlaceholder": "e.g. dermis/epidermis",
+    "site": "Site",
+    "sitePlaceholder": "e.g. ventral region",
+    "scrollHint": "Scroll horizontally for the parasite fields"
+  },
   "tutorial": {
     "title": "How to use MARES",
     "subtitle": "The platform's standard flow, from access to export. Open each topic to see the steps.",
@@ -974,12 +1083,14 @@
         ]
       },
       "glossary": {
-        "title": "3. Glossary (biological materials, pathogens, exams)",
+        "title": "3. Glossary (biological materials, pathogens, exams, systems)",
         "body": "The glossary holds the standardized terms used in protocols and analyses.",
         "points": [
-          "Biological materials, pathogens and exam types are global and shared across groups.",
+          "Biological materials, pathogens, exam types and anatomical systems are global and shared across groups.",
           "Any group admin can add terms; editing/removing is restricted to the application admin.",
-          "Pathogens use scientific names; exams may have a quantitative measure (e.g. Ct)."
+          "Pathogens use the scientific name; exams may have a quantitative measure (e.g. Ct).",
+          "Anatomical systems start empty: register the ones your group's protocol uses, and they become available to necropsy reports.",
+          "Cannot edit an item (you did not register it, or it is already in use)? Use 'Suggest an edit' — a curator applies the change."
         ]
       },
       "research": {
@@ -1015,8 +1126,21 @@
           "Sharing grants access to the individual (identity, stranding), never to the other research's samples and analyses — each keeps its own."
         ]
       },
+      "necropsy": {
+        "title": "7. Necropsy (pathology report)",
+        "body": "The animal's 'Necropsy' tab holds both halves of the report: the gross exam, by anatomical system, and the histopathology exam, by organ. The report belongs to the INDIVIDUAL — on a shared individual, both researches see and edit the same report.",
+        "points": [
+          "Start by adding to the report the systems this necropsy covered. The list comes from the glossary; if a system is missing, register it there first.",
+          "Each system gets a state: 'altered' (which opens the findings table), 'no change', or 'not examined', which requires the reason (e.g. autolysis).",
+          "A system in the report without a state shows as 'not assessed' — different from 'no change', which asserts it was examined and nothing was found.",
+          "Each gross finding has topography (organ, tissue and site), lesion, distribution, severity and the parasite fields.",
+          "For parasites, 'not informed' is not the same as 'no': mark 'no' only when you looked and found none. Count is only editable if the parasites were collected.",
+          "In the histopathology exam, record one organ → finding pair at a time. The dialog stays open for entering several in a row.",
+          "Marking a system as 'no change' or 'not examined' is refused while it still has findings — remove them first; nothing is deleted automatically."
+        ]
+      },
       "samples": {
-        "title": "7. Samples",
+        "title": "8. Samples",
         "body": "Samples are collected per biological material of the individual, in the animal's 'Samples' tab.",
         "points": [
           "Register each sample with biological material, type, status and storage location.",
@@ -1024,7 +1148,7 @@
         ]
       },
       "analyses": {
-        "title": "8. Analyses and results",
+        "title": "9. Analyses and results",
         "body": "Analyses record the lab results per sample.",
         "points": [
           "The grid combines the protocol's material × pathogen × exam; mark each result (positive, negative or inconclusive) and the measure, when applicable.",
@@ -1032,14 +1156,14 @@
         ]
       },
       "history": {
-        "title": "9. Animal history",
+        "title": "10. Animal history",
         "body": "Each individual has a timeline of changes.",
         "points": [
           "The 'History' tab gathers animal edits, sample creation/edits and analysis changes, with author and date."
         ]
       },
       "map": {
-        "title": "10. Map and public data",
+        "title": "11. Map and public data",
         "body": "Strandings appear on a browsable map.",
         "points": [
           "The internal map shows the animals you can see; the public map (no login) shows only the effectively public ones.",
@@ -1047,10 +1171,12 @@
         ]
       },
       "export": {
-        "title": "11. Export",
+        "title": "12. Export",
         "body": "Export the data for external analysis.",
         "points": [
-          "Select animals (or use 'select all' of the current filter) and export to Excel or Darwin Core."
+          "Select animals (or use 'select all' from the current filter) and export as Excel or Darwin Core.",
+          "The spreadsheet has three sheets: Animals (one row per individual), Pathology report (gross and histopathology findings, with an 'Exam' column telling them apart) and Analyses.",
+          "The Animals sheet includes a 'Descriptive diagnosis' column, built from the histopathology findings in SIMBA's running-text format."
         ]
       }
     }
@@ -1079,7 +1205,11 @@
     "entityAnalysis": "Analysis",
     "created": "Sample created",
     "valuePublic": "Public",
-    "valuePrivate": "Private"
+    "valuePrivate": "Private",
+    "entityNecropsySystem": "System (necropsy)",
+    "entityGrossFinding": "Gross finding",
+    "entityHistopathology": "Histopathology finding",
+    "deleted": "removed"
   },
   "results": {
     "title": "Results",
@@ -1195,7 +1325,13 @@
     "usageResearches": "{count} research(es)",
     "usageOrgs": "{count} group(s)",
     "ncbiRequired": "Select the scientific name from the NCBI database (free typing is not allowed).",
-    "taxonInfo": "Taxon: {taxon}"
+    "taxonInfo": "Taxon: {taxon}",
+    "tabSystems": "Systems",
+    "suggestEdit": "Suggest an edit",
+    "suggestEditTitle": "Suggest an edit",
+    "suggestEditDesc": "You cannot change this item directly — either you did not register it, or it is already in use. Propose the change and a curator applies it.",
+    "editRequestSent": "Edit suggestion sent for curation",
+    "editRequestError": "Could not send the suggestion"
   },
   "feedback": {
     "trigger": "Suggestion / Bug",
@@ -1389,6 +1525,7 @@
     "type_ORGAN": "Biological material",
     "type_PATHOGEN": "Pathogen",
     "type_EXAM_TYPE": "Exam type",
+    "type_SYSTEM": "Anatomical system",
     "fromGroup": "Researcher from group {group}",
     "fromUnknown": "Researcher",
     "fieldNamePt": "Name (PT)",
@@ -1408,6 +1545,7 @@
     "rejected": "Request rejected",
     "opError": "Could not complete the operation",
     "rejectedDuplicate": "An equivalent item already exists",
-    "approvedNote": "Added to the glossary"
+    "approvedNote": "Added to the glossary",
+    "kindEdit": "Edit"
   }
 }

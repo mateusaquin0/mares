@@ -111,6 +111,14 @@ export const ERROR_CODES = {
   catalogRequestProcessed: "catalogRequestProcessed",
   catalogRequestSelfReview: "catalogRequestSelfReview",
   catalogRequestDuplicatePending: "catalogRequestDuplicatePending",
+  // Laudo anatomopatológico (macro/micro)
+  necropsyExamNotFound: "necropsyExamNotFound",
+  systemNotFound: "systemNotFound",
+  necropsyFindingNotFound: "necropsyFindingNotFound",
+  histopathologyFindingNotFound: "histopathologyFindingNotFound",
+  // Rebaixar um sistema COM achados para "sem alteração"/"não examinado" apagaria dado em
+  // silêncio: a troca é recusada e o usuário remove os achados primeiro.
+  necropsyFindingsPresent: "necropsyFindingsPresent",
   // Lista pessoal de tipos de amostra (atalho do formulário de amostra)
   sampleTypeNotFound: "sampleTypeNotFound",
   sampleTypeDuplicate: "sampleTypeDuplicate",

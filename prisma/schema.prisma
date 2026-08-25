@@ -78,6 +78,7 @@ enum CatalogRequestType {
   ORGAN
   PATHOGEN
   EXAM_TYPE
+  SYSTEM
 }
 
 enum CatalogRequestStatus {
@@ -108,6 +109,15 @@ enum ResearchAccessRequestStatus {
   PENDING // aguardando quem gere a pesquisa
   APPROVED // aprovado → ResearchMember criado
   REJECTED // recusado
+}
+
+// Pronunciamento da patologista sobre UM sistema anatômico na necrópsia. A ausência de
+// linha é um quarto estado, "não avaliado" — ninguém se pronunciou ainda —, que NÃO se
+// confunde com NO_CHANGE (examinado e normal) nem com NOT_EXAMINED (recusa com motivo).
+enum NecropsySystemStatus {
+  NO_CHANGE // "sem alteração": examinado, nada encontrado
+  NOT_EXAMINED // "não examinado" — exige motivo (ex.: autólise)
+  ALTERED // há achados: a tabela de GrossFinding é preenchida
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -280,13 +290,18 @@ model ResearchProtocol {
 // novos idiomas sem migration. Patógeno é nome científico (latim, universal) → `name` texto
 // simples; só o `group` é traduzível. Ver docs/I18N.md §catálogos.
 model Organ {
-  id          String             @id @default(uuid())
-  key         String             @unique // ex: "encefalo"
-  name        Json // { pt: "Encéfalo", en: "Brain" }
+  id                     String                  @id @default(uuid())
+  key                    String                  @unique // ex: "encefalo"
+  name                   Json // { pt: "Encéfalo", en: "Brain" }
   // Autor do item; o criador edita/exclui enquanto não usado (ver docs/PERMISSOES.md).
-  createdById String?            @map("created_by_id")
-  protocols   ResearchProtocol[]
-  samples     Sample[]
+  createdById            String?                 @map("created_by_id")
+  protocols              ResearchProtocol[]
+  samples                Sample[]
+  // Achados histopatológicos que citam este órgão. Entra na checagem de "em uso" do
+  // glossário: sem isso o criador de um órgão o excluiria com laudo apontando para ele.
+  histopathologyFindings HistopathologyFinding[]
+  // Achados macroscópicos que localizam a lesão neste órgão.
+  grossFindings          GrossFinding[]
 
   @@index([createdById])
 }
@@ -348,7 +363,7 @@ model ExamType {
 // ─────────────────────────────────────────────────────────────
 
 model Animal {
-  id                 String           @id @default(uuid())
+  id                 String                  @id @default(uuid())
   controlId          String? // ID de controle interno, único por organização (ver @@unique abaixo)
   simbaRecordNumber  String? // Identificador SIMBA, único por organização (ver @@unique abaixo)
   species            String? // NULL = espécie indeterminada (carcaça não identificável)
@@ -373,10 +388,10 @@ model Animal {
   state              String?
   eventDate          DateTime?
   macroscopicNotes   String? // "Exame externo" (occurrenceRemarks no SIMBA)
-  source             String           @default("manual")
-  isPublic           Boolean          @default(false)
+  source             String                  @default("manual")
+  isPublic           Boolean                 @default(false)
   researchId         String
-  research           Research         @relation(fields: [researchId], references: [id])
+  research           Research                @relation(fields: [researchId], references: [id])
   // Organização dona, denormalizada de research, para o controlId ser único POR ORG.
   // Definida na criação; a pesquisa (e portanto a org) do animal não muda depois.
   orgId              String
@@ -385,7 +400,11 @@ model Animal {
   // Pesquisas ADICIONAIS que também estudam este indivíduo (mesma org). A pesquisa
   // primária/criadora é `researchId`; o conjunto efetivo = {researchId} ∪ participations.
   participations     AnimalResearch[]
-  createdAt          DateTime         @default(now())
+  // Laudo anatomopatológico. Fica no INDIVÍDUO (não na pesquisa): descreve a carcaça, como
+  // bodyCondition/necropsyDate acima. Ver docs/PLANO_EXAME_ANATOMOPATOLOGICO.md.
+  necropsySystems    NecropsySystemExam[]
+  histopathology     HistopathologyFinding[]
+  createdAt          DateTime                @default(now())
 
   @@unique([orgId, controlId])
   @@unique([orgId, simbaRecordNumber])
@@ -540,6 +559,99 @@ model SequenceRecord {
   @@index([analysisId])
 }
 
+// ─────────────────────────────────────────────────────────────
+// Laudo anatomopatológico (macro) e histopatológico (micro)
+// ─────────────────────────────────────────────────────────────
+
+// Sistema anatômico (catálogo global, como Organ). NASCE VAZIO: não há seed.
+//
+// Não é constante em código porque o MARES cobre mamíferos, répteis, aves e peixes, e cada
+// grupo reporta estruturas que uma lista fixa não comporta — sacos aéreos e siringe em ave,
+// carapaça e glândula de sal em tartaruga, brânquias e bexiga natatória em peixe. Nenhuma
+// lista serve aos quatro. Ver docs/PLANO_EXAME_ANATOMOPATOLOGICO.md.
+model NecropsySystem {
+  id          String               @id @default(uuid())
+  key         String               @unique // ex: "respiratorio"
+  name        Json // { pt: "Sistema respiratório", en: "Respiratory system" }
+  // Autor do item; o criador edita/exclui enquanto não usado (ver docs/PERMISSOES.md).
+  createdById String?              @map("created_by_id")
+  exams       NecropsySystemExam[]
+
+  @@index([createdById])
+}
+
+model NecropsySystemExam {
+  id                String                @id @default(uuid())
+  animalId          String
+  animal            Animal                @relation(fields: [animalId], references: [id], onDelete: Cascade)
+  // Sistema do catálogo. Restrict (e não Cascade): apagar um sistema que algum laudo já usa
+  // apagaria o pronunciamento junto — a checagem de "em uso" do glossário barra antes.
+  systemId          String
+  system            NecropsySystem        @relation(fields: [systemId], references: [id])
+  // NULL = "não avaliado": o sistema entrou no laudo (a necrópsia previa cobri-lo) mas
+  // ninguém se pronunciou ainda. É o quarto estado da tela, e o que dá sentido ao
+  // contador "N de M sistemas avaliados" — cujo denominador é DESTE laudo.
+  status            NecropsySystemStatus?
+  // Só com status NOT_EXAMINED; nos demais o schema Zod força null.
+  notExaminedReason String?
+  // Ordem do sistema DENTRO deste laudo. Os catálogos ordenam por `key` (alfabético), o que
+  // embaralharia a sequência anatômica; aqui a ordem é a que a necrópsia percorreu.
+  position          Int
+  findings          GrossFinding[]
+  createdAt         DateTime              @default(now())
+
+  // Um pronunciamento por sistema em cada indivíduo.
+  @@unique([animalId, systemId])
+  @@index([animalId, position])
+}
+
+// Uma linha da tabela de achados macroscópicos (o formato do SIMBA).
+model GrossFinding {
+  id                 String             @id @default(uuid())
+  examId             String
+  exam               NecropsySystemExam @relation(fields: [examId], references: [id], onDelete: Cascade)
+  // Topografia do achado, DENTRO do sistema (que vem do exame pai, e por isso não se repete
+  // aqui). Órgão é referência ao catálogo — é o que faz macro e micro apontarem para o mesmo
+  // vocabulário. Opcional: nem todo achado tem órgão definido (pode ser do sistema como um
+  // todo) e o catálogo pode ainda não ter o item. Tecido e local seguem texto livre, que é o
+  // que de fato são: "derme/epiderme", "região ventral".
+  organId            String?
+  organ              Organ?             @relation(fields: [organId], references: [id], onDelete: Restrict)
+  tissue             String?
+  site               String?
+  lesion             String
+  // Chaves dos vocabulários fixos (focal/multifocal…, discreto/moderado/acentuado).
+  distribution       String?
+  severity           String?
+  notes              String?
+  // Tri-estado do SIMBA: null = "não informado", que não é o mesmo que false = "não".
+  parasitesPresent   Boolean?
+  parasitesCollected Boolean?
+  parasiteCount      Int?
+  // Ordem da linha na tabela (a coluna "Nº"), atribuída no servidor.
+  position           Int
+  createdAt          DateTime           @default(now())
+
+  @@index([examId, position])
+  @@index([organId])
+}
+
+// Uma linha do exame histopatológico: "Órgão: X. Achado: Y." O órgão é referência ao
+// catálogo (e não texto livre) para que o micro agrupe entre indivíduos.
+model HistopathologyFinding {
+  id        String   @id @default(uuid())
+  animalId  String
+  animal    Animal   @relation(fields: [animalId], references: [id], onDelete: Cascade)
+  organId   String
+  organ     Organ    @relation(fields: [organId], references: [id])
+  finding   String
+  position  Int
+  createdAt DateTime @default(now())
+
+  @@index([animalId, position])
+  @@index([organId])
+}
+
 // Arquivos anexados a um animal (fotos de campo, microscopia, laudos PDF)
 model AnimalMedia {
   id           String   @id @default(uuid())
@@ -680,10 +792,17 @@ model CatalogRequest {
   reviewedAt       DateTime?
   reviewNote       String? // motivo da rejeição (opcional)
   duplicateOfId    String? // item canônico quando rejeitada como duplicata
+  // NULL = solicitação de INCLUSÃO (cria item novo). Preenchido = solicitação de EDIÇÃO do
+  // item apontado: quem não pode editar direto (item já em uso, ou não é o autor) propõe a
+  // mudança e a curadoria aplica. Sem FK — o item pode ser excluído antes da revisão, e a
+  // aprovação trata isso como "não encontrado". Ver docs/GLOSSARIO_SOLICITACOES.md.
+  targetId         String?
   createdItemId    String? // item gerado na aprovação (rastro; sem FK)
   createdAt        DateTime             @default(now())
   updatedAt        DateTime             @updatedAt
 
   @@index([status, createdAt])
   @@index([requestedById])
+  // Fila de edições pendentes de um item (evita duas propostas concorrentes).
+  @@index([targetId, status])
 }

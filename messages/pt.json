@@ -478,7 +478,12 @@
     "number": "Informe um número válido",
     "latRange": "Latitude deve estar entre -90 e 90",
     "lonRange": "Longitude deve estar entre -180 e 180",
-    "invalidDate": "Data inválida"
+    "invalidDate": "Data inválida",
+    "notExaminedReasonRequired": "Informe o motivo de não ter examinado",
+    "notExaminedReasonNotAllowed": "O motivo só se aplica a “não examinado”",
+    "integer": "Informe um número inteiro",
+    "min": "Valor abaixo do mínimo",
+    "parasiteCountRequiresCollected": "Quantidade só se aplica quando os parasitas foram coletados"
   },
   "errors": {
     "notFound": "Não encontrado",
@@ -568,7 +573,12 @@
     "animalShareNotFound": "Compartilhamento não encontrado",
     "animalShareCannotDecide": "Apenas a outra pesquisa pode responder a este compartilhamento",
     "animalControlDuplicateInResearch": "Já existe um animal com este ID de controle na pesquisa \"{research}\".",
-    "animalSimbaDuplicateInResearch": "Já existe um animal com este Identificador SIMBA na pesquisa \"{research}\"."
+    "animalSimbaDuplicateInResearch": "Já existe um animal com este Identificador SIMBA na pesquisa \"{research}\".",
+    "necropsyFindingNotFound": "Achado macroscópico não encontrado",
+    "histopathologyFindingNotFound": "Achado histopatológico não encontrado",
+    "necropsyFindingsPresent": "O sistema tem achados macroscópicos registrados ({count}). Remova-os antes de mudar o estado.",
+    "necropsyExamNotFound": "Sistema não encontrado neste laudo",
+    "systemNotFound": "Sistema anatômico não encontrado"
   },
   "location": {
     "country": "País",
@@ -825,7 +835,8 @@
     "idFoundTitle": "Indivíduo já cadastrado no grupo",
     "idFoundOpen": "Abrir registro",
     "shareConflictSelectResearch": "Selecione a pesquisa no formulário para poder pedir o compartilhamento.",
-    "sharePendingAlready": "Este pedido já está em aberto"
+    "sharePendingAlready": "Este pedido já está em aberto",
+    "necropsyTab": "Necrópsia"
   },
   "samples": {
     "new": "Nova amostra",
@@ -941,6 +952,104 @@
     "deleteTitle": "Excluir arquivo",
     "deleteDesc": "Excluir este arquivo? Esta ação é irreversível."
   },
+  "necropsy": {
+    "macroTitle": "Exame anatomopatológico (macroscópico)",
+    "macroSubtitle": "Os sistemas anatômicos que esta necrópsia cobriu. Cada um precisa de um estado antes de fechar o laudo.",
+    "macroEmptyHint": "Nenhum sistema avaliado ainda. Dê um estado a cada um da lista abaixo: “Com alteração”, “Sem alteração” ou “Não examinado”, que pede o motivo.",
+    "progress": "{assessed} de {total} sistemas avaliados",
+    "microTitle": "Exame histopatológico (microscópico)",
+    "microCount": "{count, plural, one {# achado registrado} other {# achados registrados}}",
+    "microEmpty": "Nenhum achado registrado.",
+    "microEmptyTitle": "Sem achados histopatológicos",
+    "microEmptyHint": "Registre um par órgão → achado por vez. O diagnóstico descritivo corrido é montado a partir desta lista.",
+    "statusAltered": "Com alteração",
+    "statusNoChange": "Sem alteração",
+    "statusNotExamined": "Não examinado",
+    "statusUnset": "Não avaliado",
+    "statusError": "Não foi possível alterar o estado do sistema",
+    "changeStatus": "Alterar o estado de {system}",
+    "reasonPrefix": "Motivo:",
+    "reasonTitle": "Por que o sistema não foi examinado?",
+    "reasonLabel": "Motivo",
+    "reasonPlaceholder": "Ex.: Autólise",
+    "findingCount": "{count, plural, =0 {nenhum achado} one {# achado} other {# achados}}",
+    "noFindingsYet": "Sistema marcado como “com alteração”, mas ainda sem achados registrados.",
+    "distributionFocal": "Focal",
+    "distributionMultifocal": "Multifocal",
+    "distributionMultifocalCoalescing": "Multifocal a coalescente",
+    "distributionLocallyExtensive": "Focalmente extensa",
+    "distributionSegmental": "Segmentar",
+    "distributionDiffuse": "Difusa",
+    "severityMild": "Discreto",
+    "severityModerate": "Moderado",
+    "severityMarked": "Acentuado",
+    "colNumber": "Nº",
+    "colTopography": "Órgão / tecido / local",
+    "colLesion": "Lesão / alteração",
+    "colDistribution": "Distribuição",
+    "colSeverity": "Severidade",
+    "colNotes": "Observações",
+    "colParasitesPresent": "Presença de parasitas",
+    "colParasitesCollected": "Parasitas coletados",
+    "colParasiteCount": "Quantidade",
+    "yes": "Sim",
+    "no": "Não",
+    "notInformed": "Não informado",
+    "parasites": "Parasitas",
+    "blankMeansUnknown": "Campos em branco entram no laudo como “não informado”.",
+    "addFinding": "Novo achado macroscópico",
+    "addFindingTitle": "Novo achado macroscópico",
+    "editFindingTitle": "Editar achado macroscópico",
+    "findingSubtitle": "{system} · achado {position}",
+    "findingCreated": "Achado registrado",
+    "findingUpdated": "Achado atualizado",
+    "findingDeleted": "Achado removido",
+    "findingCreateError": "Não foi possível registrar o achado",
+    "findingUpdateError": "Não foi possível atualizar o achado",
+    "findingDeleteError": "Não foi possível remover o achado",
+    "deleteFindingTitle": "Remover achado?",
+    "deleteFindingDesc": "O achado “{lesion}” sai do laudo. Esta ação não pode ser desfeita.",
+    "organ": "Órgão",
+    "finding": "Achado",
+    "organPlaceholder": "Selecione o órgão",
+    "findingPlaceholder": "edema acentuado, pneumonia granulomatosa, multifocal e moderada…",
+    "addHisto": "Novo achado",
+    "addHistoTitle": "Novo achado histopatológico",
+    "editHistoTitle": "Editar achado histopatológico",
+    "histoAddedNow": "Adicionados agora",
+    "histoAddedCount": "{count, plural, one {# achado adicionado nesta sessão} other {# achados adicionados nesta sessão}}",
+    "keepOpen": "Manter aberto",
+    "saveAndAdd": "Salvar e adicionar outro",
+    "histoCreated": "Achado registrado",
+    "histoUpdated": "Achado atualizado",
+    "histoDeleted": "Achado removido",
+    "histoCreateError": "Não foi possível registrar o achado",
+    "histoUpdateError": "Não foi possível atualizar o achado",
+    "histoDeleteError": "Não foi possível remover o achado",
+    "deleteHistoTitle": "Remover achado?",
+    "deleteHistoDesc": "O achado de {organ} sai do laudo. Esta ação não pode ser desfeita.",
+    "summary": "Macroscopia: {altered, plural, =0 {nenhum sistema com alteração} one {# sistema com alteração} other {# sistemas com alteração}} · Histopatologia: {micro, plural, =0 {nenhum achado} one {# achado} other {# achados}}",
+    "summaryEmpty": "Laudo anatomopatológico ainda não iniciado.",
+    "summaryOpen": "Abrir necrópsia",
+    "loadError": "Não foi possível carregar o laudo",
+    "addSystem": "Adicionar sistema",
+    "removeSystem": "Tirar do laudo",
+    "systemPlaceholder": "Escolha o sistema anatômico",
+    "systemRemoved": "Sistema retirado do laudo",
+    "systemRemoveError": "Não foi possível tirar o sistema do laudo",
+    "noSystemsTitle": "Nenhum sistema neste laudo",
+    "noSystemsHint": "Acrescente os sistemas anatômicos que esta necrópsia cobriu. Cada um vira um item a percorrer, com “sem alteração”, “com alteração” ou “não examinado”.",
+    "catalogEmpty": "Nenhum sistema cadastrado",
+    "catalogEmptyHint": "O catálogo de sistemas anatômicos ainda está vazio. Cadastre os sistemas no glossário (aba Sistemas) e eles ficam disponíveis para todos os laudos.",
+    "allSystemsAdded": "Todos os sistemas do catálogo já estão neste laudo",
+    "topography": "Topografia",
+    "organOptional": "Órgão (opcional)",
+    "tissue": "Tecido",
+    "tissuePlaceholder": "Ex.: derme/epiderme",
+    "site": "Local",
+    "sitePlaceholder": "Ex.: região ventral",
+    "scrollHint": "Role na horizontal para os campos de parasitas"
+  },
   "tutorial": {
     "title": "Como usar o MARES",
     "subtitle": "O fluxo padrão da plataforma, do acesso à exportação. Abra cada tópico para ver os passos.",
@@ -974,12 +1083,14 @@
         ]
       },
       "glossary": {
-        "title": "3. Glossário (materiais biológicos, patógenos, exames)",
+        "title": "3. Glossário (materiais biológicos, patógenos, exames, sistemas)",
         "body": "O glossário reúne os termos padronizados usados nos protocolos e nas análises.",
         "points": [
-          "Materiais biológicos, patógenos e tipos de exame são globais e compartilhados entre os grupos.",
+          "Materiais biológicos, patógenos, tipos de exame e sistemas anatômicos são globais e compartilhados entre os grupos.",
           "Qualquer admin de grupo pode adicionar termos; editar/remover é restrito ao admin da aplicação.",
-          "Patógenos usam nome científico; exames podem ter uma medida quantitativa (ex.: Ct)."
+          "Patógenos usam nome científico; exames podem ter uma medida quantitativa (ex.: Ct).",
+          "Sistemas anatômicos começam vazios: cadastre os que o protocolo do grupo usa, e eles ficam disponíveis para os laudos de necrópsia.",
+          "Não consegue editar um item (não foi você quem cadastrou, ou ele já está em uso)? Use 'Sugerir edição' — a curadoria aplica a mudança."
         ]
       },
       "research": {
@@ -1015,8 +1126,21 @@
           "Compartilhar dá acesso ao indivíduo (identidade, encalhe), nunca às amostras e análises da outra pesquisa — cada uma mantém as suas."
         ]
       },
+      "necropsy": {
+        "title": "7. Necrópsia (laudo anatomopatológico)",
+        "body": "Na aba 'Necrópsia' do animal ficam os dois exames do laudo: o macroscópico, por sistema anatômico, e o histopatológico, por órgão. O laudo é do INDIVÍDUO — num indivíduo compartilhado, as duas pesquisas veem e editam o mesmo laudo.",
+        "points": [
+          "Comece acrescentando ao laudo os sistemas que a necrópsia cobriu. A lista vem do glossário; se faltar um sistema, cadastre-o lá antes.",
+          "Cada sistema recebe um estado: 'com alteração' (e então a tabela de achados), 'sem alteração' ou 'não examinado', que exige o motivo (ex.: autólise).",
+          "Sistema no laudo sem estado aparece como 'não avaliado' — é diferente de 'sem alteração', que afirma que se examinou e nada havia.",
+          "Cada achado macroscópico tem topografia (órgão, tecido e local), lesão, distribuição, severidade e os campos de parasita.",
+          "Nos parasitas, 'não informado' não é o mesmo que 'não': marque 'não' só quando procurou e não encontrou. A quantidade só é preenchível se os parasitas foram coletados.",
+          "No exame histopatológico, registre um par órgão → achado por vez. O diálogo fica aberto para lançamentos em série.",
+          "Marcar um sistema como 'sem alteração' ou 'não examinado' é recusado enquanto houver achados nele — remova-os antes; nada é apagado automaticamente."
+        ]
+      },
       "samples": {
-        "title": "7. Amostras",
+        "title": "8. Amostras",
         "body": "As amostras são coletadas por material biológico do indivíduo, na aba 'Amostras' do animal.",
         "points": [
           "Cadastre cada amostra com material biológico, tipo, status e local de armazenamento.",
@@ -1024,7 +1148,7 @@
         ]
       },
       "analyses": {
-        "title": "8. Análises e resultados",
+        "title": "9. Análises e resultados",
         "body": "As análises registram os resultados laboratoriais por amostra.",
         "points": [
           "A grade combina material × patógeno × exame do protocolo; marque cada resultado (positivo, negativo ou inconclusivo) e a medida, quando houver.",
@@ -1032,14 +1156,14 @@
         ]
       },
       "history": {
-        "title": "9. Histórico do animal",
+        "title": "10. Histórico do animal",
         "body": "Cada indivíduo tem uma linha do tempo de alterações.",
         "points": [
           "A aba 'Histórico' reúne edições do animal, criação/edição de amostras e mudanças de análises, com autor e data."
         ]
       },
       "map": {
-        "title": "10. Mapa e dados públicos",
+        "title": "11. Mapa e dados públicos",
         "body": "Os encalhes aparecem em um mapa navegável.",
         "points": [
           "O mapa interno mostra os animais que você enxerga; o mapa público (sem login) mostra apenas os efetivamente públicos.",
@@ -1047,10 +1171,12 @@
         ]
       },
       "export": {
-        "title": "11. Exportação",
+        "title": "12. Exportação",
         "body": "Exporte os dados para análise externa.",
         "points": [
-          "Selecione animais (ou use 'selecionar todos' do filtro atual) e exporte em Excel ou Darwin Core."
+          "Selecione animais (ou use 'selecionar todos' do filtro atual) e exporte em Excel ou Darwin Core.",
+          "A planilha traz três abas: Animais (uma linha por indivíduo), Laudo (achados macro e micro, com a coluna 'Exame' distinguindo os dois) e Análises.",
+          "A aba Animais inclui a coluna 'Diagnóstico descritivo', montada a partir dos achados histopatológicos no formato corrido do SIMBA."
         ]
       }
     }
@@ -1079,7 +1205,11 @@
     "entityAnalysis": "Análise",
     "created": "Amostra criada",
     "valuePublic": "Público",
-    "valuePrivate": "Privado"
+    "valuePrivate": "Privado",
+    "entityNecropsySystem": "Sistema (necrópsia)",
+    "entityGrossFinding": "Achado macroscópico",
+    "entityHistopathology": "Achado histopatológico",
+    "deleted": "removido"
   },
   "results": {
     "title": "Resultados",
@@ -1195,7 +1325,13 @@
     "usageResearches": "{count} pesquisa(s)",
     "usageOrgs": "{count} grupo(s)",
     "ncbiRequired": "Selecione o nome científico na base NCBI (não é permitido digitar livremente).",
-    "taxonInfo": "Táxon: {taxon}"
+    "taxonInfo": "Táxon: {taxon}",
+    "tabSystems": "Sistemas",
+    "suggestEdit": "Sugerir edição",
+    "suggestEditTitle": "Sugerir edição",
+    "suggestEditDesc": "Você não pode alterar este item direto — ou não foi quem o cadastrou, ou ele já está em uso. Proponha a mudança e a curadoria aplica.",
+    "editRequestSent": "Sugestão de edição enviada para curadoria",
+    "editRequestError": "Não foi possível enviar a sugestão"
   },
   "feedback": {
     "trigger": "Sugestão / Bug",
@@ -1389,6 +1525,7 @@
     "type_ORGAN": "Material biológico",
     "type_PATHOGEN": "Patógeno",
     "type_EXAM_TYPE": "Tipo de exame",
+    "type_SYSTEM": "Sistema anatômico",
     "fromGroup": "Pesquisador do grupo {group}",
     "fromUnknown": "Pesquisador",
     "fieldNamePt": "Nome (PT)",
@@ -1408,6 +1545,7 @@
     "rejected": "Solicitação rejeitada",
     "opError": "Não foi possível concluir a operação",
     "rejectedDuplicate": "Já existe um item equivalente",
-    "approvedNote": "Adicionado ao glossário"
+    "approvedNote": "Adicionado ao glossário",
+    "kindEdit": "Edição"
   }
 }

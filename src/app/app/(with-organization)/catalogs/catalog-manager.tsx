@@ -103,7 +103,10 @@ export function CatalogManager({
   const em = useErrorMessage()
 
   const [type, setType] = useState<CatalogType>(initialType)
-  const [dialog, setDialog] = useState<{ mode: "create" | "edit"; row?: Row } | null>(null)
+  const [dialog, setDialog] = useState<{
+    mode: "create" | "edit" | "suggest"
+    row?: Row
+  } | null>(null)
   const [confirmRow, setConfirmRow] = useState<Row | null>(null)
   // Táxon do patógeno FORA do react-hook-form: com shouldUnregister, campos nunca registrados
   // (estes, que só são preenchidos programaticamente) não restauram no reset() da edição.
@@ -169,7 +172,7 @@ export function CatalogManager({
     })
     setDialog({ mode: "create" })
   }
-  function openEdit(row: Row) {
+  function openEdit(row: Row, mode: "edit" | "suggest" = "edit") {
     setGroupError(false)
     setNcbiError(false)
     if (isPathogen) {
@@ -203,7 +206,7 @@ export function CatalogManager({
         measureUnit: n.measureUnit ?? "",
       })
     }
-    setDialog({ mode: "edit", row })
+    setDialog({ mode, row })
   }
 
   async function onSubmit(data: FormShape) {
@@ -212,6 +215,7 @@ export function CatalogManager({
       return
     }
     const isEdit = dialog?.mode === "edit"
+    const isSuggest = dialog?.mode === "suggest"
     // Regra: criar patógeno de grupo científico exige seleção do NCBI (taxonId vinculado).
     // Só no cadastro (não na edição, para não travar itens legados sem vínculo).
     if (!isEdit && isPathogen && groupUsesSci && !taxonId) {
@@ -243,6 +247,11 @@ export function CatalogManager({
       if (isEdit) {
         await updateM.mutateAsync({ id: dialog!.row!.id, body })
         toast.success(t("updated"))
+      } else if (isSuggest) {
+        // Proposta de EDIÇÃO: o item existe e o usuário não pode alterá-lo direto (não é o
+        // autor, ou já está em uso). A curadoria aplica pelo mesmo caminho da edição direta.
+        await requestM.mutateAsync({ type, payload: body, targetId: dialog!.row!.id })
+        toast.success(t("editRequestSent"))
       } else if (canManage) {
         await createM.mutateAsync(body)
         toast.success(t("created"))
@@ -253,7 +262,13 @@ export function CatalogManager({
       }
       setDialog(null)
     } catch (err) {
-      const key = isEdit ? "updateError" : canManage ? "createError" : "requestError"
+      const key = isEdit
+        ? "updateError"
+        : isSuggest
+          ? "editRequestError"
+          : canManage
+            ? "createError"
+            : "requestError"
       toast.error(t(key), { description: em(err) })
     }
   }
@@ -335,6 +350,7 @@ export function CatalogManager({
           <TabsTrigger value="organs">{t("tabOrgans")}</TabsTrigger>
           <TabsTrigger value="pathogens">{t("tabPathogens")}</TabsTrigger>
           <TabsTrigger value="exam-types">{t("tabExamTypes")}</TabsTrigger>
+          <TabsTrigger value="systems">{t("tabSystems")}</TabsTrigger>
         </TabsList>
       </Tabs>
 
@@ -419,29 +435,38 @@ export function CatalogManager({
                         <TableCell className="text-right">
                           <div className="flex items-center justify-end gap-1">
                             {isSystemAdmin && <UsageIndicator type={type} id={r.id} />}
-                            {canModify(r) && (
-                              <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                  <Button variant="ghost" size="icon" className="size-8">
-                                    <MoreHorizontal className="size-4" />
-                                    <span className="sr-only">{tc("actions")}</span>
-                                  </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end">
-                                  <DropdownMenuItem onSelect={() => openEdit(r)}>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon" className="size-8">
+                                  <MoreHorizontal className="size-4" />
+                                  <span className="sr-only">{tc("actions")}</span>
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                {canModify(r) ? (
+                                  <>
+                                    <DropdownMenuItem onSelect={() => openEdit(r)}>
+                                      <Pencil className="size-4" />
+                                      {tc("edit")}
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                      className="text-destructive focus:text-destructive"
+                                      onSelect={() => setConfirmRow(r)}
+                                    >
+                                      <Trash2 className="size-4" />
+                                      {tc("delete")}
+                                    </DropdownMenuItem>
+                                  </>
+                                ) : (
+                                  /* Sem permissão de editar direto (item em uso, ou de outro
+                                     autor): propõe a mudança para a curadoria aplicar. */
+                                  <DropdownMenuItem onSelect={() => openEdit(r, "suggest")}>
                                     <Pencil className="size-4" />
-                                    {tc("edit")}
+                                    {t("suggestEdit")}
                                   </DropdownMenuItem>
-                                  <DropdownMenuItem
-                                    className="text-destructive focus:text-destructive"
-                                    onSelect={() => setConfirmRow(r)}
-                                  >
-                                    <Trash2 className="size-4" />
-                                    {tc("delete")}
-                                  </DropdownMenuItem>
-                                </DropdownMenuContent>
-                              </DropdownMenu>
-                            )}
+                                )}
+                              </DropdownMenuContent>
+                            </DropdownMenu>
                           </div>
                         </TableCell>
                       </TableRow>
@@ -472,16 +497,20 @@ export function CatalogManager({
             <DialogTitle>
               {dialog?.mode === "edit"
                 ? t("editTitle")
-                : canManage
-                  ? t("addTitle")
-                  : t("requestTitle")}
+                : dialog?.mode === "suggest"
+                  ? t("suggestEditTitle")
+                  : canManage
+                    ? t("addTitle")
+                    : t("requestTitle")}
             </DialogTitle>
             <DialogDescription>
-              {!canManage && dialog?.mode === "create"
-                ? t("requestDesc")
-                : isPathogen
-                  ? t("addDescPathogen")
-                  : t("addDesc")}
+              {dialog?.mode === "suggest"
+                ? t("suggestEditDesc")
+                : !canManage && dialog?.mode === "create"
+                  ? t("requestDesc")
+                  : isPathogen
+                    ? t("addDescPathogen")
+                    : t("addDesc")}
             </DialogDescription>
           </DialogHeader>
           <form
@@ -563,7 +592,7 @@ export function CatalogManager({
                     <Label htmlFor="namePt">{t("namePt")}</Label>
                     <Input
                       id="namePt"
-                      maxLength={LIMITS.name}
+                      maxLength={LIMITS.tinyText}
                       {...form.register("namePt", { required: tval("required") })}
                     />
                     {form.formState.errors.namePt && (
@@ -576,7 +605,7 @@ export function CatalogManager({
                     <Label htmlFor="nameEn">{t("nameEn")}</Label>
                     <Input
                       id="nameEn"
-                      maxLength={LIMITS.name}
+                      maxLength={LIMITS.tinyText}
                       {...form.register("nameEn", { required: tval("required") })}
                     />
                     {form.formState.errors.nameEn && (

@@ -17,8 +17,8 @@ export const catalogRequestKeys = {
 export function useCreateCatalogRequest() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (vars: { type: CatalogType; payload: CatalogItemPayload }) =>
-      catalogRequestService.create(vars.type, vars.payload),
+    mutationFn: (vars: { type: CatalogType; payload: CatalogItemPayload; targetId?: string }) =>
+      catalogRequestService.create(vars.type, vars.payload, vars.targetId),
     onSuccess: () => qc.invalidateQueries({ queryKey: catalogRequestKeys.mine() }),
   })
 }

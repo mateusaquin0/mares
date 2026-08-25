@@ -5,6 +5,7 @@
 import ExcelJS from "exceljs"
 
 import { txt, pathogenName, type I18nText } from "@/lib/catalog-i18n"
+import { buildDescriptiveDiagnosis } from "@/lib/necropsy-report"
 import type { SexValue, LifeStageValue } from "@/lib/animal-enums"
 
 type Result = "POSITIVO" | "NEGATIVO" | "INCONCLUSIVO"
@@ -16,6 +17,35 @@ export type XlsxAnalysis = {
   // `name`/`measureLabel` como unknown para aceitar o Prisma.JsonValue; convertidos via txt.
   pathogen: { scientificName: string | null; name: unknown }
   examType: { name: unknown; measureLabel: unknown }
+}
+
+// Uma linha da tabela de achados macroscópicos, já dentro do sistema a que pertence.
+export type XlsxGrossFinding = {
+  position: number
+  organ: { name: unknown } | null
+  tissue: string | null
+  site: string | null
+  lesion: string
+  distribution: string | null
+  severity: string | null
+  notes: string | null
+  parasitesPresent: boolean | null
+  parasitesCollected: boolean | null
+  parasiteCount: number | null
+}
+
+export type XlsxSystemExam = {
+  status: string | null
+  notExaminedReason: string | null
+  position: number
+  system: { name: unknown }
+  findings: XlsxGrossFinding[]
+}
+
+export type XlsxHistopathology = {
+  position: number
+  finding: string
+  organ: { name: unknown }
 }
 
 export type XlsxSample = {
@@ -51,6 +81,9 @@ export type XlsxAnimal = {
   research: { name: string }
   _count: { samples: number }
   samples: XlsxSample[]
+  // Laudo anatomopatológico: macro por sistema e micro por órgão.
+  necropsySystems: XlsxSystemExam[]
+  histopathology: XlsxHistopathology[]
 }
 
 type Loc = "pt" | "en"
@@ -91,6 +124,39 @@ const LIFE_STAGE: Record<LifeStageValue, { pt: string; en: string }> = {
   ADULT: { pt: "Adulto", en: "Adult" },
   UNDETERMINED: { pt: "Indeterminado", en: "Undetermined" },
 }
+// Vocabulários do laudo. O Excel não passa pelo next-intl, então os rótulos vivem aqui,
+// chaveados pelo mesmo valor canônico gravado no banco (src/lib/necropsy-enums.ts).
+const NECROPSY_STATUS: Record<string, { pt: string; en: string }> = {
+  ALTERED: { pt: "Com alteração", en: "Altered" },
+  NO_CHANGE: { pt: "Sem alteração", en: "No change" },
+  NOT_EXAMINED: { pt: "Não examinado", en: "Not examined" },
+}
+const DISTRIBUTION: Record<string, { pt: string; en: string }> = {
+  focal: { pt: "Focal", en: "Focal" },
+  multifocal: { pt: "Multifocal", en: "Multifocal" },
+  multifocal_coalescing: { pt: "Multifocal a coalescente", en: "Multifocal to coalescing" },
+  locally_extensive: { pt: "Focalmente extensa", en: "Locally extensive" },
+  segmental: { pt: "Segmentar", en: "Segmental" },
+  diffuse: { pt: "Difusa", en: "Diffuse" },
+}
+const SEVERITY: Record<string, { pt: string; en: string }> = {
+  mild: { pt: "Discreto", en: "Mild" },
+  moderate: { pt: "Moderado", en: "Moderate" },
+  marked: { pt: "Acentuado", en: "Marked" },
+}
+// `null` é "não informado", e não "não" — a distinção tem de sobreviver à exportação.
+const NOT_INFORMED: Record<Loc, string> = { pt: "Não informado", en: "Not informed" }
+const YES_NO: Record<Loc, { yes: string; no: string }> = {
+  pt: { yes: "Sim", no: "Não" },
+  en: { yes: "Yes", no: "No" },
+}
+const NOT_ASSESSED: Record<Loc, string> = { pt: "Não avaliado", en: "Not assessed" }
+
+const vocab = (map: Record<string, { pt: string; en: string }>, v: string | null, loc: Loc) =>
+  v ? (map[v]?.[loc] ?? v) : ""
+const tri = (v: boolean | null, loc: Loc) =>
+  v === null ? NOT_INFORMED[loc] : v ? YES_NO[loc].yes : YES_NO[loc].no
+
 // Rótulo de espécie indeterminada (null) na planilha.
 const UNDETERMINED_SPECIES: Record<Loc, string> = { pt: "Indeterminado", en: "Undetermined" }
 
@@ -118,7 +184,41 @@ const COLUMNS: { key: string; pt: string; en: string; width: number }[] = [
   { key: "samples", pt: "Amostras", en: "Samples", width: 10 },
   { key: "positives", pt: "Patógenos positivos", en: "Positive pathogens", width: 32 },
   { key: "notes", pt: "Observações", en: "Observations", width: 40 },
+  {
+    key: "descriptiveDiagnosis",
+    pt: "Diagnóstico descritivo",
+    en: "Descriptive diagnosis",
+    width: 60,
+  },
 ]
+
+// Colunas do laudo (macro e micro na MESMA aba). É a união das duas listas, com `exam`
+// discriminando a origem — no Excel se filtra por essa coluna. As colunas específicas do
+// macro ficam vazias nas linhas de histopatologia, e vice-versa.
+const REPORT_COLUMNS: { key: string; pt: string; en: string; width: number }[] = [
+  { key: "animal", pt: "Animal", en: "Animal", width: 16 },
+  { key: "species", pt: "Espécie", en: "Species", width: 24 },
+  { key: "exam", pt: "Exame", en: "Exam", width: 18 },
+  { key: "system", pt: "Sistema", en: "System", width: 24 },
+  { key: "status", pt: "Estado do sistema", en: "System state", width: 18 },
+  { key: "number", pt: "Nº", en: "No.", width: 6 },
+  { key: "organ", pt: "Órgão", en: "Organ", width: 20 },
+  { key: "tissue", pt: "Tecido", en: "Tissue", width: 18 },
+  { key: "site", pt: "Local", en: "Site", width: 18 },
+  { key: "lesion", pt: "Lesão / alteração", en: "Lesion / change", width: 28 },
+  { key: "distribution", pt: "Distribuição", en: "Distribution", width: 20 },
+  { key: "severity", pt: "Severidade", en: "Severity", width: 14 },
+  { key: "finding", pt: "Achado / observações", en: "Finding / notes", width: 60 },
+  { key: "parasitesPresent", pt: "Presença de parasitas", en: "Parasites present", width: 18 },
+  { key: "parasitesCollected", pt: "Parasitas coletados", en: "Parasites collected", width: 18 },
+  { key: "parasiteCount", pt: "Quantidade", en: "Count", width: 12 },
+]
+
+// Rótulo do discriminador.
+const EXAM_KIND: Record<"gross" | "histo", { pt: string; en: string }> = {
+  gross: { pt: "Macroscópico", en: "Gross" },
+  histo: { pt: "Histopatológico", en: "Histopathology" },
+}
 
 // Colunas da aba de análises (uma linha por análise).
 const ANALYSIS_COLUMNS: { key: string; pt: string; en: string; width: number }[] = [
@@ -167,6 +267,8 @@ function rowFor(a: XlsxAnimal, loc: Loc): Record<string, string | number> {
     samples: a._count.samples,
     positives: positivePathogens(a, loc),
     notes: a.macroscopicNotes ?? "",
+    // Derivado dos achados micro, no formato corrido do SIMBA — mesma função que a tela usa.
+    descriptiveDiagnosis: buildDescriptiveDiagnosis(loc, a.histopathology),
   }
 }
 
@@ -179,6 +281,60 @@ export async function buildAnimalsXlsx(animals: XlsxAnimal[], locale: string): P
   ws.getRow(1).font = { bold: true }
   ws.views = [{ state: "frozen", ySplit: 1 }]
   for (const a of animals) ws.addRow(rowFor(a, loc))
+
+  // Aba do laudo: macro e micro juntos, um bloco por animal — primeiro os achados
+  // macroscópicos (na ordem dos sistemas do laudo), depois os histopatológicos.
+  const wsR = wb.addWorksheet(loc === "en" ? "Pathology report" : "Laudo")
+  wsR.columns = REPORT_COLUMNS.map((c) => ({ header: c[loc], key: c.key, width: c.width }))
+  wsR.getRow(1).font = { bold: true }
+  wsR.views = [{ state: "frozen", ySplit: 1 }]
+  for (const a of animals) {
+    const animalLabel = a.controlId ?? a.simbaRecordNumber ?? ""
+    const species = a.species ?? UNDETERMINED_SPECIES[loc]
+
+    for (const e of a.necropsySystems) {
+      const base = {
+        animal: animalLabel,
+        species,
+        exam: EXAM_KIND.gross[loc],
+        system: txt(loc, asI18n(e.system.name)),
+        status: e.status ? vocab(NECROPSY_STATUS, e.status, loc) : NOT_ASSESSED[loc],
+      }
+      // Sistema sem achados ("sem alteração", "não examinado" ou ainda não avaliado) também
+      // vira linha: a ausência de achado é informação de laudo, não ausência de dado.
+      if (e.findings.length === 0) {
+        wsR.addRow({ ...base, finding: e.notExaminedReason ?? "" })
+        continue
+      }
+      for (const g of e.findings) {
+        wsR.addRow({
+          ...base,
+          number: g.position,
+          organ: g.organ ? txt(loc, asI18n(g.organ.name)) : "",
+          tissue: g.tissue ?? "",
+          site: g.site ?? "",
+          lesion: g.lesion,
+          distribution: vocab(DISTRIBUTION, g.distribution, loc),
+          severity: vocab(SEVERITY, g.severity, loc),
+          finding: g.notes ?? "",
+          parasitesPresent: tri(g.parasitesPresent, loc),
+          parasitesCollected: tri(g.parasitesCollected, loc),
+          parasiteCount: g.parasiteCount ?? NOT_INFORMED[loc],
+        })
+      }
+    }
+
+    for (const h of a.histopathology) {
+      wsR.addRow({
+        animal: animalLabel,
+        species,
+        exam: EXAM_KIND.histo[loc],
+        number: h.position,
+        organ: txt(loc, asI18n(h.organ.name)),
+        finding: h.finding,
+      })
+    }
+  }
 
   // Aba de análises: uma linha por análise (patógeno × exame) de cada amostra.
   const wsA = wb.addWorksheet(loc === "en" ? "Analyses" : "Análises")
