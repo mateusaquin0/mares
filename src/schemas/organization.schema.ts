@@ -20,6 +20,13 @@ export const accessRequestSchema = z.object({
   acceptTerms: z.boolean().refine((v) => v === true, { message: "termsRequired" }),
 })
 
+// Solicitação de um NOVO grupo por quem JÁ tem conta (tela "Meus grupos de pesquisa"). Só o
+// nome é pedido: quem solicita sai da sessão, e os Termos já foram aceitos no cadastro — pedir
+// e-mail e nome aqui abriria a porta para solicitar em nome de outra pessoa.
+export const newOrgRequestSchema = z.object({
+  organizationName: z.string().min(3, "min3").max(LIMITS.name),
+})
+
 // admin adiciona um pesquisador por e-mail. `name` é exigido pelo servidor apenas
 // quando o e-mail ainda não pertence a nenhum usuário.
 export const addMemberSchema = z.object({
@@ -37,4 +44,5 @@ export const setActiveOrgSchema = z.object({
 })
 
 export type AccessRequestData = z.infer<typeof accessRequestSchema>
+export type NewOrgRequestData = z.infer<typeof newOrgRequestSchema>
 export type AddMemberData = z.infer<typeof addMemberSchema>

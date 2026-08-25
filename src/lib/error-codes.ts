@@ -24,6 +24,8 @@ export const ERROR_CODES = {
   requestNotFound: "requestNotFound",
   requestProcessed: "requestProcessed",
   systemAdminNoOrg: "systemAdminNoOrg",
+  // Já existe uma solicitação de grupo aguardando análise para o mesmo e-mail.
+  joinRequestPending: "joinRequestPending",
   alreadyMember: "alreadyMember",
   nameRequired: "nameRequired",
   notInvited: "notInvited",

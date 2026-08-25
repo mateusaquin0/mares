@@ -3,7 +3,7 @@
 import { http } from "@/lib/http"
 import type { z } from "zod"
 import type { addMemberSchema, updateOrganizationSchema } from "@/schemas/organization.schema"
-import type { Member, OrgDetail, OrgMemberRole } from "@/types/organization"
+import type { Member, OrgDetail, OrgMemberRole, OrgRequest } from "@/types/organization"
 
 type AddMemberData = z.infer<typeof addMemberSchema>
 type UpdateOrgData = z.infer<typeof updateOrganizationSchema>
@@ -20,6 +20,11 @@ export const organizationsService = {
     http.del<{ orgDeactivated?: boolean }>(`/api/organizations/${orgId}/members/${userId}`),
   resendInvite: (orgId: string, userId: string) =>
     http.post(`/api/organizations/${orgId}/members/${userId}/resend-invite`),
+
+  // Solicitação de criação de um novo grupo (quem pede sai da sessão, no servidor).
+  requestNewOrg: (organizationName: string) =>
+    http.post<OrgRequest>("/api/organizations/requests", { organizationName }),
+  myOrgRequest: () => http.get<{ pending: OrgRequest | null }>("/api/organizations/requests"),
 
   // Define a organização ativa (cookie) para o usuário.
   setActive: (orgId: string) => http.post("/api/active-org", { orgId }),

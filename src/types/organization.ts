@@ -25,3 +25,11 @@ export type OrgDetail = {
   state: string | null
   country: string | null
 }
+
+// Solicitação de criação de um novo grupo, aguardando o admin da aplicação
+// (/api/organizations/requests).
+export type OrgRequest = {
+  id: string
+  organizationName: string
+  createdAt: string
+}
