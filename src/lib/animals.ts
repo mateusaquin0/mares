@@ -10,6 +10,13 @@ import { ERROR_CODES } from "@/lib/error-codes"
 import type { ResearchScope } from "@/lib/research-access"
 import { pathogenName, type I18nText } from "@/lib/catalog-i18n"
 
+/**
+ * Situação de um indivíduo em relação a UMA pesquisa (a que a pessoa escolheu no
+ * formulário): já vinculado (primária ou participação aceita), convite/pedido aguardando
+ * resposta, ou nenhum vínculo — caso em que ainda cabe oferecer o compartilhamento.
+ */
+export type AnimalResearchLink = "linked" | "pending" | "none"
+
 /** Qual identificador único o P2002 violou (a partir de `meta.target`). */
 function duplicateField(e: Prisma.PrismaClientKnownRequestError): "simba" | "control" | null {
   const target = Array.isArray(e.meta?.target)
@@ -65,6 +72,8 @@ export async function animalDuplicateConflict(
     scope: ResearchScope
     controlId?: string | null
     simbaRecordNumber?: string | null
+    // Pesquisa em que a pessoa está tentando cadastrar (ausente na edição, que não a muda).
+    targetResearchId?: string | null
   },
 ): Promise<ConflictError> {
   const field = duplicateField(e)
@@ -82,7 +91,14 @@ export async function animalDuplicateConflict(
   if (visible) {
     // `animalId` permite à UI oferecer "abrir o registro" — que é a saída natural quando a
     // pessoa já enxerga o duplicado (identidade extra é desnecessária: ela abre e confere).
-    const params = { research, animalId: clash.animalId }
+    // `link` diz se o indivíduo JÁ está na pesquisa de destino: quando não está, o caso não é
+    // de duplicata, e sim de um indivíduo que duas pesquisas estudam — a UI oferece vinculá-lo
+    // em vez de deixar a pessoa sem saída (ver VisibleConflictDialog).
+    const params = {
+      research,
+      animalId: clash.animalId,
+      link: clash.linkOf(ctx.targetResearchId ?? ""),
+    }
     return field === "simba"
       ? new ConflictError(
           `Identificador SIMBA já cadastrado na pesquisa "${research}"`,
@@ -147,18 +163,21 @@ export async function findAnimalByIdentifier(
       municipality: true,
       state: true,
       research: { select: { name: true } },
-      // Só as participações ACEITAS: um convite pendente ainda não dá acesso ao indivíduo.
-      participations: { where: ACCEPTED_PARTICIPATION, select: { researchId: true } },
+      // Aceitas E pendentes: as aceitas definem a visibilidade; as pendentes evitam oferecer
+      // um vínculo que já está aguardando resposta (ver `linkOf`).
+      participations: { select: { researchId: true, status: true } },
     },
   })
   if (!animal) return null
+
+  const accepted = animal.participations.filter((p) => p.status === ACCEPTED_PARTICIPATION.status)
 
   // Visível = admin da org, ou alguma pesquisa do conjunto efetivo (primária ∪ participações
   // aceitas) está no escopo do usuário.
   const visible =
     scope.all ||
     scope.ids.includes(animal.researchId) ||
-    animal.participations.some((p) => scope.ids.includes(p.researchId))
+    accepted.some((p) => scope.ids.includes(p.researchId))
 
   return {
     animalId: animal.id,
@@ -168,6 +187,14 @@ export async function findAnimalByIdentifier(
     species: animal.species ?? "",
     eventDate: animal.eventDate?.toISOString() ?? "",
     location: [animal.municipality, animal.state].filter(Boolean).join(", "),
+    // Situação do indivíduo em relação a UMA pesquisa (a escolhida no formulário).
+    linkOf: (researchId: string): AnimalResearchLink => {
+      if (!researchId) return "none"
+      if (animal.researchId === researchId) return "linked"
+      if (accepted.some((p) => p.researchId === researchId)) return "linked"
+      if (animal.participations.some((p) => p.researchId === researchId)) return "pending"
+      return "none"
+    },
   }
 }
 

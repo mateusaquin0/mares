@@ -8,7 +8,9 @@
 // A resposta responde à MESMA pergunta do conflito do POST e usa o MESMO helper
 // (`findAnimalByIdentifier`), para que as duas portas nunca divirjam:
 //   • livre                → { found: false }
-//   • existe e é visível   → nomeia a pesquisa e devolve o id (a pessoa abre o registro)
+//   • existe e é visível   → nomeia a pesquisa e devolve o id (a pessoa abre o registro) e,
+//     quando o formulário informa a pesquisa de destino, se o indivíduo já está nela: se não
+//     estiver, o caso é de indivíduo estudado por duas pesquisas, e a UI oferece vinculá-lo
 //   • existe fora do escopo → nomeia a pesquisa + identidade mínima, para ela decidir entre
 //     pedir o compartilhamento e corrigir o identificador (ver ShareConflictDialog).
 //
@@ -38,6 +40,8 @@ export async function GET(req: NextRequest) {
 
     const controlId = req.nextUrl.searchParams.get("controlId")?.trim()
     const simbaRecordNumber = req.nextUrl.searchParams.get("simbaRecordNumber")?.trim()
+    // Pesquisa escolhida no formulário — opcional: sem ela não há vínculo a avaliar.
+    const researchId = req.nextUrl.searchParams.get("researchId")?.trim() ?? ""
     if (!controlId && !simbaRecordNumber) {
       throw new ValidationError("Informe um identificador", ERROR_CODES.validation)
     }
@@ -55,6 +59,7 @@ export async function GET(req: NextRequest) {
             visible: true,
             animalId: found.animalId,
             research: found.research,
+            link: found.linkOf(researchId),
           }
         : {
             found: true,

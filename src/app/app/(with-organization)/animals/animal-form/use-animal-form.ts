@@ -11,7 +11,7 @@ import {
 } from "@/schemas/animal.schema"
 import { useAnimal, useCreateAnimal, useUpdateAnimal, useSimbaLookup } from "@/hooks/use-animals"
 import { animalsService } from "@/services/animals"
-import type { AnimalDetail } from "@/types/animal"
+import type { AnimalDetail, AnimalResearchLink } from "@/types/animal"
 import { apiErrorBody } from "@/lib/http"
 import { useErrorMessage } from "@/lib/use-error-message"
 
@@ -154,9 +154,32 @@ export type ShareConflict = {
   location: string
 }
 
-// Identificador pertence a um indivíduo que o usuário ENXERGA: em vez de pedir nada, a
-// saída é abrir o registro existente (em nova aba, preservando o formulário).
-export type VisibleConflict = { animalId: string; research: string }
+// Identificador pertence a um indivíduo que o usuário ENXERGA. Situações bem diferentes se
+// escondem aqui, e `outcome` as separa — cada uma com a sua saída:
+//
+//   • "duplicate" → o indivíduo JÁ está na pesquisa escolhida (ou estamos numa edição, que
+//     não muda pesquisa): é duplicata mesmo, e a saída é abrir o registro existente em nova
+//     aba, preservando o formulário;
+//   • "pending"   → há convite/pedido em aberto para essa pesquisa: só falta a resposta;
+//   • "linkable"  → o indivíduo é de OUTRA pesquisa que a pessoa também acessa. Não é
+//     duplicata: é o mesmo indivíduo físico estudado por duas pesquisas, e a saída é
+//     vinculá-lo à pesquisa escolhida — cadastrá-lo de novo é que seria o erro.
+export type VisibleConflict = {
+  animalId: string
+  research: string
+  outcome: "duplicate" | "pending" | "linkable"
+}
+
+// Traduz o vínculo devolvido pelo servidor na saída oferecida à pessoa. Fora do cadastro não
+// há pesquisa de destino a que vincular: resta abrir o registro.
+function visibleOutcome(
+  link: AnimalResearchLink,
+  mode: "create" | "edit",
+): VisibleConflict["outcome"] {
+  if (mode === "edit") return "duplicate"
+  if (link === "pending") return "pending"
+  return link === "none" ? "linkable" : "duplicate"
+}
 
 // API que o formulário expõe para as seções e o diálogo.
 export type AnimalFormApi = {
@@ -178,9 +201,11 @@ export type AnimalFormApi = {
   shareConflict: ShareConflict | null
   dismissShareConflict: () => void
   requestShare: () => Promise<void>
-  // Identificador de um indivíduo VISÍVEL: diálogo com atalho para abrir o registro.
+  // Identificador de um indivíduo VISÍVEL: diálogo com atalho para abrir o registro e,
+  // quando ele ainda não está na pesquisa escolhida, para vinculá-lo a ela.
   visibleConflict: VisibleConflict | null
   dismissVisibleConflict: () => void
+  linkVisibleConflict: () => Promise<void>
   // Consulta prévia do identificador (evita preencher o formulário para levar 409 no fim).
   checkingId: boolean
   checkIdentifier: (field: "controlId" | "simbaRecordNumber") => Promise<void>
@@ -435,15 +460,23 @@ export function useAnimalForm({
     }
   }
 
-  // Duplicado numa pesquisa que o usuário ENXERGA — a saída é abrir o registro existente.
+  // Duplicado numa pesquisa que o usuário ENXERGA. `link` diz se o indivíduo já está na
+  // pesquisa escolhida (duplicata de verdade) ou se falta vinculá-lo a ela.
   function visibleDuplicate(err: unknown): VisibleConflict | null {
     const body = apiErrorBody(err) as
-      { code?: string; params?: { animalId?: string; research?: string } } | null | undefined
+      | { code?: string; params?: { animalId?: string; research?: string; link?: string } }
+      | null
+      | undefined
     const match =
       body?.code === "animalControlDuplicateInResearch" ||
       body?.code === "animalSimbaDuplicateInResearch"
     if (!match || !body?.params?.animalId) return null
-    return { animalId: body.params.animalId, research: body.params.research ?? "" }
+    const link = body.params.link
+    return {
+      animalId: body.params.animalId,
+      research: body.params.research ?? "",
+      outcome: visibleOutcome(link === "none" || link === "pending" ? link : "linked", mode),
+    }
   }
 
   /**
@@ -451,7 +484,8 @@ export function useAnimalForm({
    * indivíduo do grupo. Todo desfecho tem uma saída acionável:
    *   • livre                     → segue o cadastro;
    *   • é o PRÓPRIO registro      → (edição) confirma que está tudo certo;
-   *   • existe e é visível        → diálogo com atalho para abrir o registro em nova aba;
+   *   • existe e é visível        → diálogo com atalho para abrir o registro em nova aba e,
+   *     se ele ainda não está na pesquisa escolhida, para vinculá-lo a ela;
    *   • existe fora do escopo     → diálogo do conflito, oferecendo pedir o indivíduo
    *     (só no cadastro — no meio de uma edição o caso é identificador digitado errado).
    *
@@ -466,7 +500,12 @@ export function useAnimalForm({
     if (!value) return
     try {
       setCheckingId(true)
-      const found = await animalsService.lookupIdentifier({ [field]: value })
+      const found = await animalsService.lookupIdentifier({
+        [field]: value,
+        // A pesquisa escolhida define se o indivíduo encontrado já está nela ou se ainda cabe
+        // vinculá-lo. Na edição não há a quem vincular: o vínculo se resolve no registro.
+        researchId: mode === "create" ? form.researchId : undefined,
+      })
       if (!found.found) {
         if (!opts.silent) toast.success(t("idAvailable"))
         return
@@ -477,7 +516,11 @@ export function useAnimalForm({
         return
       }
       if (found.visible) {
-        setVisibleConflict({ animalId: found.animalId, research: found.research })
+        setVisibleConflict({
+          animalId: found.animalId,
+          research: found.research,
+          outcome: visibleOutcome(found.link, mode),
+        })
         return
       }
       if (mode === "edit") {
@@ -519,6 +562,29 @@ export function useAnimalForm({
     }
   }
 
+  // Vincula à pesquisa escolhida um indivíduo que a pessoa JÁ enxerga (ele é de outra
+  // pesquisa dela). Como ela enxerga os dois lados, o servidor aceita o vínculo na hora —
+  // não há um segundo lado de quem pedir consentimento. O indivíduo passa a valer para a
+  // pesquisa escolhida, então o formulário fecha: não há nada a cadastrar.
+  async function linkVisibleConflict() {
+    if (!visibleConflict) return
+    try {
+      const { status } = await animalsService.shareWithResearch(
+        visibleConflict.animalId,
+        form.researchId,
+      )
+      setVisibleConflict(null)
+      if (status === "ACCEPTED") {
+        toast.success(t("shareAdded"), { description: t("shareAddedDesc") })
+        onSaved()
+        return
+      }
+      toast.success(t("shareInviteSent"))
+    } catch (err) {
+      toast.error(t("shareError"), { description: em(err) })
+    }
+  }
+
   const isDirty =
     JSON.stringify(form) !== JSON.stringify(initialForm.current) ||
     JSON.stringify(disabled) !== JSON.stringify(initialDisabled.current) ||
@@ -542,6 +608,7 @@ export function useAnimalForm({
     requestShare,
     visibleConflict,
     dismissVisibleConflict: () => setVisibleConflict(null),
+    linkVisibleConflict,
     checkingId,
     checkIdentifier,
   }

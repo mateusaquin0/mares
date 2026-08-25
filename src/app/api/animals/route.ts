@@ -116,6 +116,7 @@ export async function POST(req: NextRequest) {
           scope: await getResearchScope(user, orgId),
           controlId: data.controlId,
           simbaRecordNumber: data.simbaRecordNumber,
+          targetResearchId: data.researchId,
         })
       }
       throw e

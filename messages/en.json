@@ -834,6 +834,11 @@
     "idOwnRecord": "This is this record's own identifier.",
     "idFoundTitle": "Individual already registered in the group",
     "idFoundOpen": "Open record",
+    "shareAddedDesc": "The individual remains a single record: each research keeps its own samples and analyses on it.",
+    "idLinkDesc": "This identifier belongs to an individual in research \"{research}\", which you can access. Is it the same individual? Then link research \"{to}\" to it instead of registering it again.",
+    "idLinkHint": "The individual stays a single record. Each research keeps its own samples and analyses on it. If the data does not match the individual you are registering, the identifier was mistyped — open the record and check.",
+    "idLinkPending": "There is already an open share between this individual and the selected research, awaiting a response.",
+    "idLinkAction": "Link to my research",
     "shareConflictSelectResearch": "Select the research in the form to be able to request the share.",
     "sharePendingAlready": "This request is already open",
     "necropsyTab": "Necropsy"

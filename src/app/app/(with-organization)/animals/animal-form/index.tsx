@@ -118,9 +118,15 @@ export function AnimalFormDialog({
           />
         )}
         {/* Identificador de um indivíduo que o usuário já enxerga: atalho para abrir o
-            registro existente em nova aba. */}
+            registro existente em nova aba e, quando o indivíduo é de outra pesquisa dele,
+            para vinculá-lo à pesquisa escolhida em vez de tentar cadastrá-lo de novo. */}
         {f.visibleConflict && (
-          <VisibleConflictDialog conflict={f.visibleConflict} onClose={f.dismissVisibleConflict} />
+          <VisibleConflictDialog
+            conflict={f.visibleConflict}
+            researchName={researchName}
+            onClose={f.dismissVisibleConflict}
+            onLink={f.linkVisibleConflict}
+          />
         )}
       </DialogContent>
     </Dialog>

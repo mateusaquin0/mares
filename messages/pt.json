@@ -834,6 +834,11 @@
     "idOwnRecord": "É o identificador deste próprio registro.",
     "idFoundTitle": "Indivíduo já cadastrado no grupo",
     "idFoundOpen": "Abrir registro",
+    "shareAddedDesc": "O indivíduo já é um só: cada pesquisa mantém as próprias amostras e análises sobre ele.",
+    "idLinkDesc": "Este identificador pertence a um indivíduo da pesquisa \"{research}\", que você acessa. É o mesmo indivíduo? Então vincule a pesquisa \"{to}\" a ele em vez de cadastrá-lo de novo.",
+    "idLinkHint": "O indivíduo continua sendo um só registro. Cada pesquisa mantém as próprias amostras e análises sobre ele. Se os dados não corresponderem ao indivíduo que você está cadastrando, o identificador foi digitado errado — abra o registro e confira.",
+    "idLinkPending": "Já existe um compartilhamento em aberto entre este indivíduo e a pesquisa escolhida, aguardando resposta.",
+    "idLinkAction": "Vincular à minha pesquisa",
     "shareConflictSelectResearch": "Selecione a pesquisa no formulário para poder pedir o compartilhamento.",
     "sharePendingAlready": "Este pedido já está em aberto",
     "necropsyTab": "Necrópsia"

@@ -65,12 +65,17 @@ export type AnimalFacets = {
   pathogens: { id: string; label: string }[]
 }
 
+// Situação do indivíduo em relação à pesquisa escolhida no formulário: já vinculado,
+// aguardando resposta de um convite/pedido, ou sem vínculo (cabe oferecer o compartilhamento).
+export type AnimalResearchLink = "linked" | "pending" | "none"
+
 // Resultado da consulta prévia de identificador (/api/animals/lookup). Quando o indivíduo
 // existe mas está fora do escopo, vem a identidade mínima para a pessoa decidir entre pedir
-// o compartilhamento e corrigir o identificador digitado.
+// o compartilhamento e corrigir o identificador digitado. Quando é visível, `link` diz se ele
+// já está na pesquisa escolhida — se não estiver, ainda cabe vinculá-lo a ela.
 export type IdentifierLookup =
   | { found: false }
-  | { found: true; visible: true; animalId: string; research: string }
+  | { found: true; visible: true; animalId: string; research: string; link: AnimalResearchLink }
   | {
       found: true
       visible: false
