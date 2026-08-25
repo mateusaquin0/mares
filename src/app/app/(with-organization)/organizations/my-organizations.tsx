@@ -4,13 +4,17 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { toast } from "sonner"
+import { Clock, Plus } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { ConfirmDialog } from "@/components/confirm-dialog"
 import { useErrorMessage } from "@/lib/use-error-message"
 import { useLeaveOrganization } from "@/hooks/use-members"
+import { useMyOrgRequest, useRequestNewOrg } from "@/hooks/use-organization-requests"
 import type { Membership } from "@/types/organization"
+import type { NewOrgRequestData } from "@/schemas/organization.schema"
+import { NewOrgRequestDialog } from "./new-org-request-dialog"
 import {
   Table,
   TableBody,
@@ -36,7 +40,24 @@ export function MyOrganizations({
   const em = useErrorMessage()
   const [list, setList] = useState(memberships)
   const [busy, setBusy] = useState<string | null>(null)
+  const [requesting, setRequesting] = useState(false)
   const leaveM = useLeaveOrganization()
+  const requestQ = useMyOrgRequest()
+  const requestM = useRequestNewOrg()
+
+  // Uma solicitação por vez (o servidor recusa a segunda): com uma em aberto, o botão dá lugar
+  // ao aviso de que ela está na fila do admin da aplicação.
+  const pendingRequest = requestQ.data?.pending ?? null
+
+  async function requestNewOrg(data: NewOrgRequestData) {
+    try {
+      await requestM.mutateAsync(data.organizationName)
+      setRequesting(false)
+      toast.success(t("requestSent"), { description: t("requestSentDesc") })
+    } catch (err) {
+      toast.error(t("requestError"), { description: em(err) })
+    }
+  }
 
   async function leave(m: Membership) {
     setBusy(m.orgId)
@@ -56,9 +77,24 @@ export function MyOrganizations({
 
   return (
     <div className="mx-auto max-w-6xl space-y-6 p-8">
-      <div>
-        <h1 className="text-3xl font-semibold tracking-tight">{t("title")}</h1>
-        <p className="mt-1 text-sm text-muted-foreground">{t("subtitle")}</p>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="text-3xl font-semibold tracking-tight">{t("title")}</h1>
+          <p className="mt-1 text-sm text-muted-foreground">{t("subtitle")}</p>
+        </div>
+        {pendingRequest ? (
+          <Badge variant="outline" className="gap-1 border-dashed py-1.5 text-muted-foreground">
+            <Clock className="size-3.5 shrink-0" />
+            <Truncate className="max-w-[16rem]">
+              {t("requestPending", { org: pendingRequest.organizationName })}
+            </Truncate>
+          </Badge>
+        ) : (
+          <Button onClick={() => setRequesting(true)} disabled={requestQ.isLoading}>
+            <Plus className="size-4" />
+            {t("requestNew")}
+          </Button>
+        )}
       </div>
 
       <div className="max-w-3xl overflow-hidden rounded-xl border bg-card shadow-card">
@@ -112,6 +148,12 @@ export function MyOrganizations({
           </TableBody>
         </Table>
       </div>
+
+      <NewOrgRequestDialog
+        open={requesting}
+        onOpenChange={setRequesting}
+        onSubmit={requestNewOrg}
+      />
     </div>
   )
 }

@@ -98,16 +98,72 @@ describe("animalDuplicateConflict — duplicado fora do escopo do usuário", () 
       orgId: "org1",
       scope: { all: false, ids: ["r-minha"] },
       controlId: "312/25",
+      targetResearchId: "r-minha",
     })
     expect(err.code).toBe(ERROR_CODES.animalControlDuplicateInResearch)
     // `animalId` sem a identidade: visível, a pessoa abre o registro (botão "abrir").
-    expect(err.params).toEqual({ research: "Cetáceos SC 2025", animalId: "a-oculto" })
+    // `link: "linked"` — o indivíduo já está na pesquisa de destino: é duplicata de verdade.
+    expect(err.params).toEqual({
+      research: "Cetáceos SC 2025",
+      animalId: "a-oculto",
+      link: "linked",
+    })
+  })
+
+  // O bug: o indivíduo está numa pesquisa que a pessoa enxerga, mas NÃO na pesquisa em que
+  // ela está cadastrando. Não é duplicata — é o mesmo indivíduo físico estudado por duas
+  // pesquisas dela. `link: "none"` é o que permite à UI oferecer o vínculo em vez de deixá-la
+  // presa num aviso ("já está registrado na pesquisa X") sem saída.
+  it("marca link=none quando o indivíduo visível NÃO está na pesquisa de destino", async () => {
+    findFirst.mockResolvedValueOnce(clash({ researchId: "r-helicobacter" }))
+    const err = await animalDuplicateConflict(p2002(["orgId", "simbaRecordNumber"]), {
+      orgId: "org1",
+      scope: { all: false, ids: ["r-helicobacter", "r-segunda"] },
+      simbaRecordNumber: "199263",
+      targetResearchId: "r-segunda",
+    })
+    expect(err.code).toBe(ERROR_CODES.animalSimbaDuplicateInResearch)
+    expect(err.params).toMatchObject({ link: "none" })
+  })
+
+  // Convite/pedido já aberto para a pesquisa de destino: oferecer o vínculo de novo só geraria
+  // um segundo pedido. A UI diz que falta a resposta.
+  it("marca link=pending quando já há compartilhamento aguardando resposta", async () => {
+    findFirst.mockResolvedValueOnce(
+      clash({
+        researchId: "r-helicobacter",
+        participations: [{ researchId: "r-segunda", status: "PENDING" }],
+      }),
+    )
+    const err = await animalDuplicateConflict(p2002(["orgId", "controlId"]), {
+      orgId: "org1",
+      scope: { all: false, ids: ["r-helicobacter", "r-segunda"] },
+      controlId: "312/25",
+      targetResearchId: "r-segunda",
+    })
+    expect(err.params).toMatchObject({ link: "pending" })
+  })
+
+  // Participação PENDENTE não dá acesso ao indivíduo: quem só tem o convite em aberto continua
+  // fora do escopo (e recebe o caminho de pedir o compartilhamento, não o de abrir o registro).
+  it("participação PENDENTE não torna o indivíduo visível", async () => {
+    findFirst.mockResolvedValueOnce(
+      clash({ participations: [{ researchId: "r-minha", status: "PENDING" }] }),
+    )
+    const err = await animalDuplicateConflict(p2002(["orgId", "controlId"]), {
+      orgId: "org1",
+      scope: { all: false, ids: ["r-minha"] },
+      controlId: "312/25",
+    })
+    expect(err.code).toBe(ERROR_CODES.animalControlDuplicateOutOfScope)
   })
 
   // O conjunto efetivo de pesquisas do animal é {researchId} ∪ participations: basta uma
   // participação no escopo para o registro ser localizável na listagem.
   it("considera visível quando o escopo alcança apenas uma PARTICIPAÇÃO", async () => {
-    findFirst.mockResolvedValueOnce(clash({ participations: [{ researchId: "r-minha" }] }))
+    findFirst.mockResolvedValueOnce(
+      clash({ participations: [{ researchId: "r-minha", status: "ACCEPTED" }] }),
+    )
     const err = await animalDuplicateConflict(p2002(["orgId", "controlId"]), {
       orgId: "org1",
       scope: { all: false, ids: ["r-minha"] },
@@ -122,9 +178,14 @@ describe("animalDuplicateConflict — duplicado fora do escopo do usuário", () 
       orgId: "org1",
       scope: { all: true },
       controlId: "312/25",
+      targetResearchId: "r-oculta",
     })
     expect(err.code).toBe(ERROR_CODES.animalControlDuplicateInResearch)
-    expect(err.params).toEqual({ research: "Cetáceos SC 2025", animalId: "a-oculto" })
+    expect(err.params).toEqual({
+      research: "Cetáceos SC 2025",
+      animalId: "a-oculto",
+      link: "linked",
+    })
   })
 
   it("cai no erro genérico quando o valor em conflito não foi informado (PUT parcial)", async () => {

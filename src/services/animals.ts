@@ -66,10 +66,17 @@ export const animalsService = {
   pendingShares: () => http.get<PendingShare[]>("/api/animal-shares"),
 
   // Confere se um identificador já existe na organização ANTES de preencher o formulário.
-  lookupIdentifier: (by: { controlId?: string; simbaRecordNumber?: string }) => {
+  // `researchId` é a pesquisa escolhida no formulário: com ela a resposta diz se o indivíduo
+  // encontrado já está nessa pesquisa ou se ainda cabe vinculá-lo.
+  lookupIdentifier: (by: {
+    controlId?: string
+    simbaRecordNumber?: string
+    researchId?: string
+  }) => {
     const p = new URLSearchParams()
     if (by.controlId) p.set("controlId", by.controlId)
     if (by.simbaRecordNumber) p.set("simbaRecordNumber", by.simbaRecordNumber)
+    if (by.researchId) p.set("researchId", by.researchId)
     return http.get<IdentifierLookup>(`/api/animals/lookup?${p.toString()}`)
   },
 

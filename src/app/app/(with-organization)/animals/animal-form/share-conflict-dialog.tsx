@@ -118,38 +118,82 @@ export function ShareConflictDialog({
   )
 }
 
-// Identificador de um indivíduo que o usuário JÁ enxerga: nada a pedir — a saída é abrir o
-// registro existente. Nova aba, para o formulário meio preenchido não se perder.
+// Identificador de um indivíduo que o usuário JÁ enxerga. O que ele pode fazer depende de o
+// indivíduo estar ou não na pesquisa escolhida:
+//
+//   • já está (ou é uma edição) → é duplicata: a saída é abrir o registro existente, em nova
+//     aba, para o formulário meio preenchido não se perder;
+//   • ainda não está            → NÃO é duplicata: o mesmo indivíduo físico está sendo
+//     estudado por duas pesquisas dele. Recadastrá-lo é impossível (o identificador é único
+//     por organização) e seria errado (duplicaria a identidade); o certo é vincular a
+//     pesquisa escolhida ao indivíduo que já existe — e é isso que oferecemos aqui.
+//     Sem esta saída, a pessoa ficava presa no aviso, que era o bug relatado.
 export function VisibleConflictDialog({
   conflict,
+  researchName,
   onClose,
+  onLink,
 }: {
   conflict: VisibleConflict
+  // Pesquisa escolhida no formulário — a que passa a estudar o indivíduo, se vinculada.
+  researchName: string
   onClose: () => void
+  onLink: () => Promise<void>
 }) {
   const t = useTranslations("animals")
   const tc = useTranslations("common")
+  const [pending, setPending] = React.useState(false)
+
+  const linkable = conflict.outcome === "linkable" && !!researchName
+
+  async function link() {
+    try {
+      setPending(true)
+      await onLink()
+    } finally {
+      setPending(false)
+    }
+  }
 
   return (
-    <AlertDialog open onOpenChange={(o) => !o && onClose()}>
+    <AlertDialog open onOpenChange={(o) => !o && !pending && onClose()}>
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>{t("idFoundTitle")}</AlertDialogTitle>
           <AlertDialogDescription>
-            {t("idTakenIn", { research: conflict.research })}
+            {linkable
+              ? t("idLinkDesc", { research: conflict.research, to: researchName })
+              : t("idTakenIn", { research: conflict.research })}
           </AlertDialogDescription>
         </AlertDialogHeader>
+
+        {linkable && <p className="text-sm text-muted-foreground">{t("idLinkHint")}</p>}
+        {conflict.outcome === "pending" && (
+          <p className="text-sm text-muted-foreground">{t("idLinkPending")}</p>
+        )}
+
         <AlertDialogFooter>
-          <AlertDialogCancel>{tc("close")}</AlertDialogCancel>
+          <AlertDialogCancel disabled={pending}>{tc("close")}</AlertDialogCancel>
           <a
             href={`/app/animals/${conflict.animalId}`}
             target="_blank"
             rel="noreferrer"
-            className={cn(buttonVariants())}
-            onClick={onClose}
+            className={cn(buttonVariants({ variant: linkable ? "outline" : "default" }))}
+            onClick={() => !pending && onClose()}
           >
             {t("idFoundOpen")}
           </a>
+          {linkable && (
+            <button
+              type="button"
+              disabled={pending}
+              onClick={link}
+              className={cn(buttonVariants(), "disabled:pointer-events-none disabled:opacity-50")}
+            >
+              {pending && <Loader2 className="animate-spin" aria-hidden />}
+              {t("idLinkAction")}
+            </button>
+          )}
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
