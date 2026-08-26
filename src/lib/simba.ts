@@ -156,10 +156,23 @@ function measurementList(v: string | null): string[] {
   return quoted.length > 0 ? quoted : v.split(",").map((s) => s.trim())
 }
 
-/** Valor numérico da medida cujo NOME casa com `matches` (ex.: "Peso total"). */
+/**
+ * Valor numérico da medida cujo NOME casa com `matches` (ex.: "Peso total").
+ *
+ * O pareamento é POSICIONAL, e o SIMBA nem sempre honra isso: o formulário "Odontoceti"
+ * declara 24 rótulos e emite 23 valores — não existe slot para "Comprimento posterior da
+ * nadadeira peitoral", e tudo a partir dele anda uma casa. Lido por índice, o "Peso total"
+ * de um Sotalia adulto de 198 cm virava 13 kg (que é a largura da nadadeira peitoral, em cm)
+ * no lugar dos 85,5 kg reais.
+ *
+ * Com as listas de tamanhos diferentes não há como saber ONDE começa o buraco, então o
+ * pareamento é recusado inteiro: medida em branco, para alguém pesar na necrópsia, é melhor
+ * que número errado gravado como dado científico.
+ */
 function measurementValueFor(xml: string, matches: (label: string) => boolean): number | null {
   const types = measurementList(term(xml, "measurementType"))
   const values = measurementList(term(xml, "measurementValue"))
+  if (types.length !== values.length) return null
   const i = types.findIndex((t) => matches(t.trim().toLowerCase()))
   return i === -1 ? null : toFloat(values[i]?.trim() || null)
 }

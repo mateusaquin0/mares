@@ -86,6 +86,31 @@ describe("parseDarwinCore", () => {
     expect(r.macroscopicNotes).toBe("carcaça fresca & íntegra")
   })
 
+  // Regressão do registro real 321779 (Sotalia guianensis, macho adulto, 198 cm): o
+  // formulário "Odontoceti" do SIMBA declara 24 rótulos e emite 23 valores — falta o slot de
+  // "Comprimento posterior da nadadeira peitoral" e tudo a partir dele anda uma casa. Pareado
+  // por índice, o peso virava 13 (a largura da nadadeira peitoral, em cm) em vez dos 85,5 kg.
+  it("recusa o pareamento quando o SIMBA emite menos valores que rótulos", () => {
+    const desalinhado = parseDarwinCore(
+      `<SimpleDarwinRecord><scientificName>Sotalia guianensis</scientificName>
+       <measurementType>"Comprimento total (extremo da maxila até a reentrância caudal)", "Comprimento anterior da nadadeira peitoral", "Comprimento posterior da nadadeira peitoral", "Peso total", "Largura máxima da nadadeira peitoral"</measurementType>
+       <measurementValue>"198.0000", "30.5000", "85.5000", "13.0000"</measurementValue></SimpleDarwinRecord>`,
+      "321779",
+    )
+    expect(desalinhado.necropsyWeightKg).toBeNull()
+  })
+
+  it("pareia normalmente quando as duas listas têm o mesmo tamanho", () => {
+    // Mesmo registro com o slot que falta preenchido: o peso volta a ser legível.
+    const alinhado = parseDarwinCore(
+      `<SimpleDarwinRecord><scientificName>Sotalia guianensis</scientificName>
+       <measurementType>"Comprimento total (extremo da maxila até a reentrância caudal)", "Comprimento anterior da nadadeira peitoral", "Comprimento posterior da nadadeira peitoral", "Peso total", "Largura máxima da nadadeira peitoral"</measurementType>
+       <measurementValue>"198.0000", "30.5000", "", "85.5000", "13.0000"</measurementValue></SimpleDarwinRecord>`,
+      "321779",
+    )
+    expect(alinhado.necropsyWeightKg).toBe(85.5)
+  })
+
   it("cai para o recordNumber informado quando o XML não traz um", () => {
     const semNumero = parseDarwinCore(
       `<SimpleDarwinRecord><scientificName>Tursiops truncatus</scientificName></SimpleDarwinRecord>`,
