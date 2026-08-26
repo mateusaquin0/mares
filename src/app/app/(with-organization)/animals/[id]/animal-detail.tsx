@@ -119,9 +119,11 @@ export function AnimalDetail({
       label: t("necropsyDate"),
       value: animal.necropsyDate ? formatDateOnly(animal.necropsyDate, locale) : na,
     },
+    { label: t("necropsyWeightKg"), value: animal.necropsyWeightKg ?? na },
     { label: t("strandingBeach"), value: animal.strandingBeach ?? na },
     { label: t("municipality"), value: animal.municipality ?? na },
     { label: t("state"), value: animal.state ?? na },
+    { label: t("executingInstitution"), value: animal.executingInstitution ?? na },
     { label: `${t("strandingLat")} / ${t("strandingLon")}`, value: coords },
   ]
 

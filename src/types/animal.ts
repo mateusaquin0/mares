@@ -137,11 +137,13 @@ export type AnimalDetail = {
   decompositionStage: string | null
   deathCondition: string | null
   necropsyDate: string | null
+  necropsyWeightKg: number | null
   strandingLat: number | null
   strandingLon: number | null
   strandingBeach: string | null
   municipality: string | null
   state: string | null
+  executingInstitution: string | null
   eventDate: string | null
   macroscopicNotes: string | null
   isPublic: boolean
@@ -201,7 +203,9 @@ export type SimbaLookup = {
   strandingBeach: string | null
   municipality: string | null
   state: string | null
+  executingInstitution: string | null
   sex: string
   lifeStage: string
+  necropsyWeightKg: number | null
   macroscopicNotes: string | null
 }

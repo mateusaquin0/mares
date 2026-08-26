@@ -29,8 +29,13 @@ export type SimbaRecord = {
   strandingBeach: string | null
   municipality: string | null
   state: string | null
+  // "Nome da instituição executora" (institutionCode) — em alguns PMPs vem como o nome do
+  // trecho monitorado ("Trecho 09").
+  executingInstitution: string | null
   sex: string // código do form: "F" | "M" | "U" (indeterminado quando ausente)
   lifeStage: string // código do form: FETUS|PUP|JUVENILE|ADULT|UNDETERMINED
+  // Peso da carcaça em kg, do campo "Peso total" da biometria (ver measurementValueFor).
+  necropsyWeightKg: number | null
   // "Exame externo": texto livre de observações (occurrenceRemarks). Os demais campos
   // de necrópsia (condição da carcaça/escore/morte) NÃO são exportados pela API do SIMBA.
   macroscopicNotes: string | null
@@ -138,10 +143,36 @@ function toBrDate(v: string | null): string | null {
   return toEventDate(v)
 }
 
+// ── Biometria ─────────────────────────────────────────────────────────────────
+// A biometria não vem como um campo por medida: `measurementType` traz a LISTA de campos do
+// formulário usado (aves, odontocetos, quelônios…) e `measurementValue` os valores na MESMA
+// ordem, ambos como texto entre aspas separado por vírgula — com buracos onde a medida não
+// foi tomada. Ex.: <"Comprimento total", "Peso total"> / <"88.6000", "6.6000">.
+
+/** Quebra a lista de medidas do SIMBA nos seus itens (entre aspas; vazio = não medido). */
+function measurementList(v: string | null): string[] {
+  if (!v) return []
+  const quoted = [...v.matchAll(/"([^"]*)"/g)].map((m) => m[1] ?? "")
+  return quoted.length > 0 ? quoted : v.split(",").map((s) => s.trim())
+}
+
+/** Valor numérico da medida cujo NOME casa com `matches` (ex.: "Peso total"). */
+function measurementValueFor(xml: string, matches: (label: string) => boolean): number | null {
+  const types = measurementList(term(xml, "measurementType"))
+  const values = measurementList(term(xml, "measurementValue"))
+  const i = types.findIndex((t) => matches(t.trim().toLowerCase()))
+  return i === -1 ? null : toFloat(values[i]?.trim() || null)
+}
+
 /** Faz o parse de um XML Darwin Core (SimpleDarwinRecordSet) em SimbaRecord. */
 export function parseDarwinCore(xml: string, recordNumber: string): SimbaRecord {
   // No SIMBA, recordNumber é o identificador; occurrenceID é uma URN longa.
   const r = firstRecordBlock(xml)
+  // "Peso total" é o rótulo em todos os formulários de biometria (aves, odontocetos,
+  // quelônios) e vem em kg; `measurementUnit` só descreve as medidas de comprimento.
+  // Zero é preenchimento de formulário — nenhuma carcaça pesa 0 kg —, então vale como
+  // medida ausente: melhor deixar em branco para alguém pesar do que gravar peso falso.
+  const weight = measurementValueFor(r, (t) => t.startsWith("peso"))
   return {
     simbaRecordNumber:
       firstTerm(r, ["recordNumber", "catalogNumber", "occurrenceID"]) ?? recordNumber,
@@ -153,8 +184,10 @@ export function parseDarwinCore(xml: string, recordNumber: string): SimbaRecord 
     strandingBeach: firstTerm(r, ["locality", "verbatimLocality"]),
     municipality: firstTerm(r, ["municipality"]),
     state: firstTerm(r, ["stateProvince"]),
+    executingInstitution: firstTerm(r, ["institutionCode", "ownerInstitutionCode"]),
     sex: normalizeSex(firstTerm(r, ["sex"])),
     lifeStage: normalizeLifeStage(firstTerm(r, ["lifeStage"])),
+    necropsyWeightKg: weight && weight > 0 ? weight : null,
     macroscopicNotes: firstTerm(r, ["occurrenceRemarks"]),
   }
 }

@@ -329,6 +329,18 @@ export function StrandingSection({
           onToggle={() => toggleDisabled("strandingLon")}
           onChange={(v) => set({ strandingLon: v })}
         />
+        {/* Instituição executora do PMP (SIMBA: institutionCode). Em vários PMPs é o próprio
+            nome do trecho monitorado, e é assim que se identifica onde o animal foi achado. */}
+        <div className="col-span-2">
+          <TextField
+            id="executingInstitution"
+            label={t("executingInstitution")}
+            value={form.executingInstitution}
+            error={errors.executingInstitution}
+            maxLength={LIMITS.name}
+            onChange={(v) => set({ executingInstitution: v })}
+          />
+        </div>
       </div>
     </Section>
   )
@@ -396,6 +408,16 @@ export function ConditionSection({ form, errors, set }: SectionProps) {
           value={form.necropsyDate}
           error={errors.necropsyDate}
           onChange={(v) => set({ necropsyDate: v })}
+        />
+        <TextField
+          id="necropsyWeightKg"
+          label={t("necropsyWeightKg")}
+          type="number"
+          step="any"
+          min={0}
+          value={form.necropsyWeightKg}
+          error={errors.necropsyWeightKg}
+          onChange={(v) => set({ necropsyWeightKg: v })}
         />
       </div>
     </Section>
