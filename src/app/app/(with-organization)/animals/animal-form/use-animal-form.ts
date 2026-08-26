@@ -30,11 +30,13 @@ export type FormState = {
   decompositionStage: string
   deathCondition: string
   necropsyDate: string
+  necropsyWeightKg: string
   strandingLat: string
   strandingLon: string
   strandingBeach: string
   municipality: string
   state: string
+  executingInstitution: string
   eventDate: string
   macroscopicNotes: string
   isPublic: boolean
@@ -54,11 +56,13 @@ export const emptyForm: FormState = {
   decompositionStage: "",
   deathCondition: "",
   necropsyDate: "",
+  necropsyWeightKg: "",
   strandingLat: "",
   strandingLon: "",
   strandingBeach: "",
   municipality: "",
   state: "",
+  executingInstitution: "",
   eventDate: "",
   macroscopicNotes: "",
   isPublic: true, // visível por padrão; o admin pode ocultar (opt-out)
@@ -88,12 +92,14 @@ const FIELD_DOM_ORDER: { key: string; domId: string }[] = [
   { key: "state", domId: "state" },
   { key: "strandingLat", domId: "lat" },
   { key: "strandingLon", domId: "lon" },
+  { key: "executingInstitution", domId: "executingInstitution" },
   { key: "sex", domId: "sex" },
   { key: "lifeStage", domId: "lifeStage" },
   { key: "bodyCondition", domId: "bodyCondition" },
   { key: "decompositionStage", domId: "decomp" },
   { key: "deathCondition", domId: "deathCondition" },
   { key: "necropsyDate", domId: "necropsyDate" },
+  { key: "necropsyWeightKg", domId: "necropsyWeightKg" },
   { key: "macroscopicNotes", domId: "notes" },
 ]
 
@@ -128,11 +134,13 @@ function mapAnimalToForm(full: AnimalDetail): FormState {
     decompositionStage: full.decompositionStage ?? "",
     deathCondition: full.deathCondition ?? "",
     necropsyDate: toDateInput(full.necropsyDate),
+    necropsyWeightKg: full.necropsyWeightKg?.toString() ?? "",
     strandingLat: full.strandingLat?.toString() ?? "",
     strandingLon: full.strandingLon?.toString() ?? "",
     strandingBeach: full.strandingBeach ?? "",
     municipality: full.municipality ?? "",
     state: full.state ?? "",
+    executingInstitution: full.executingInstitution ?? "",
     eventDate: toDateInput(full.eventDate),
     macroscopicNotes: full.macroscopicNotes ?? "",
     isPublic: full.isPublic ?? false,
@@ -331,8 +339,11 @@ export function useAnimalForm({
         strandingBeach: d.strandingBeach ?? "",
         municipality: d.municipality ?? "",
         state: d.state ?? "",
+        executingInstitution: d.executingInstitution ?? "",
         eventDate: d.eventDate ? d.eventDate.slice(0, 10) : "",
         necropsyDate: d.necropsyDate ? d.necropsyDate.slice(0, 10) : "",
+        // "Peso total" da biometria; nem todo registro tem a medida preenchida.
+        necropsyWeightKg: d.necropsyWeightKg?.toString() ?? form.necropsyWeightKg,
         // "Exame externo": só o SIMBA traz (occurrenceRemarks); preserva o texto
         // atual se o registro não tiver observações.
         macroscopicNotes: d.macroscopicNotes ?? form.macroscopicNotes,
@@ -381,11 +392,13 @@ export function useAnimalForm({
       decompositionStage: str(form.decompositionStage),
       deathCondition: str(form.deathCondition),
       necropsyDate: str(form.necropsyDate),
+      necropsyWeightKg: numOrNull(form.necropsyWeightKg),
       strandingLat: numOrNull(form.strandingLat),
       strandingLon: numOrNull(form.strandingLon),
       strandingBeach: str(form.strandingBeach),
       municipality: str(form.municipality),
       state: str(form.state),
+      executingInstitution: str(form.executingInstitution),
       eventDate: str(form.eventDate),
       macroscopicNotes: str(form.macroscopicNotes),
     }

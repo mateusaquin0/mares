@@ -27,6 +27,8 @@ const exportSelect = {
   decompositionStage: true,
   deathCondition: true,
   necropsyDate: true,
+  necropsyWeightKg: true,
+  executingInstitution: true,
   isPublic: true,
   _count: { select: { samples: true } },
   ...necropsyExportSelect,

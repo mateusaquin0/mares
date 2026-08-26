@@ -14,6 +14,8 @@ const latitude = z.number().min(-90, "latRange").max(90, "latRange").nullable().
 const longitude = z.number().min(-180, "lonRange").max(180, "lonRange").nullable().optional()
 // Texto obrigatório (não vazio após trim).
 const requiredText = (max: number) => z.string().trim().min(1, "required").max(max)
+// Peso da carcaça em kg: opcional e não negativo (sem teto — de um filhote a uma baleia).
+const weightKg = z.number({ error: "number" }).min(0, "min").nullable().optional()
 
 export const animalBaseSchema = z.object({
   // Opcional no servidor: pode ser marcada como "indeterminado" no formulário (null). A
@@ -32,11 +34,15 @@ export const animalBaseSchema = z.object({
   decompositionStage: optionalText(LIMITS.tinyText),
   deathCondition: optionalText(LIMITS.tinyText),
   necropsyDate: optionalDate,
+  necropsyWeightKg: weightKg,
   strandingLat: latitude,
   strandingLon: longitude,
   strandingBeach: optionalText(LIMITS.name),
   municipality: optionalText(LIMITS.shortText),
   state: optionalText(LIMITS.shortText),
+  // Instituição executora do SIMBA (institutionCode) — o trecho do PMP onde o animal foi
+  // encontrado. Texto livre: o nome vem como o PMP o registra.
+  executingInstitution: optionalText(LIMITS.name),
   eventDate: optionalDate,
   macroscopicNotes: optionalText(LIMITS.hugeText),
   isPublic: z.boolean().optional(),

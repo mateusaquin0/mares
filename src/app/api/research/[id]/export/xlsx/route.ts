@@ -50,6 +50,8 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
         decompositionStage: true,
         deathCondition: true,
         necropsyDate: true,
+        necropsyWeightKg: true,
+        executingInstitution: true,
         isPublic: true,
         _count: { select: { samples: { where: { researchId: id } } } },
         ...necropsyExportSelect,

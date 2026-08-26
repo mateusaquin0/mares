@@ -363,48 +363,55 @@ model ExamType {
 // ─────────────────────────────────────────────────────────────
 
 model Animal {
-  id                 String                  @id @default(uuid())
-  controlId          String? // ID de controle interno, único por organização (ver @@unique abaixo)
-  simbaRecordNumber  String? // Identificador SIMBA, único por organização (ver @@unique abaixo)
-  species            String? // NULL = espécie indeterminada (carcaça não identificável)
+  id                   String                  @id @default(uuid())
+  controlId            String? // ID de controle interno, único por organização (ver @@unique abaixo)
+  simbaRecordNumber    String? // Identificador SIMBA, único por organização (ver @@unique abaixo)
+  species              String? // NULL = espécie indeterminada (carcaça não identificável)
   // Campos preenchidos via WoRMS após validação taxonômica
-  wormsAphiaId       Int?
-  taxonFamily        String?
-  taxonOrder         String?
-  sex                String?
-  lifeStage          String?
+  wormsAphiaId         Int?
+  taxonFamily          String?
+  taxonOrder           String?
+  sex                  String?
+  lifeStage            String?
   // Necrópsia — condição da carcaça / escore corporal / condição da morte.
   // Preenchidos manualmente: a API pública do SIMBA não os exporta (só a data de
   // necrópsia em measurementDeterminedDate e as observações em occurrenceRemarks).
-  bodyCondition      String? // "Condição da carcaça" (ex.: código 1-5)
-  decompositionStage String? // "Escore corporal"
-  deathCondition     String? // "Condição da morte" (ex.: Natural)
-  necropsyDate       DateTime?
+  bodyCondition        String? // "Condição da carcaça" (ex.: código 1-5)
+  decompositionStage   String? // "Escore corporal"
+  deathCondition       String? // "Condição da morte" (ex.: Natural)
+  necropsyDate         DateTime?
+  // Peso da carcaça na necrópsia, em QUILOS. Vem do "Peso total" da biometria do SIMBA, que
+  // é medida na mesma ocasião de `necropsyDate` (measurementDeterminedDate).
+  necropsyWeightKg     Float?
   // lat/lon como Float; em produção, considerar PostGIS geography
-  strandingLat       Float?
-  strandingLon       Float?
-  strandingBeach     String?
-  municipality       String?
-  state              String?
-  eventDate          DateTime?
-  macroscopicNotes   String? // "Exame externo" (occurrenceRemarks no SIMBA)
-  source             String                  @default("manual")
-  isPublic           Boolean                 @default(false)
-  researchId         String
-  research           Research                @relation(fields: [researchId], references: [id])
+  strandingLat         Float?
+  strandingLon         Float?
+  strandingBeach       String?
+  municipality         String?
+  state                String?
+  // "Instituição executora" do SIMBA (institutionCode): a instituição responsável pelo
+  // trecho do PMP onde o animal foi encontrado — em alguns PMPs o campo traz o próprio
+  // nome do trecho ("Trecho 09"), que é o que identifica o local no monitoramento.
+  executingInstitution String?
+  eventDate            DateTime?
+  macroscopicNotes     String? // "Exame externo" (occurrenceRemarks no SIMBA)
+  source               String                  @default("manual")
+  isPublic             Boolean                 @default(false)
+  researchId           String
+  research             Research                @relation(fields: [researchId], references: [id])
   // Organização dona, denormalizada de research, para o controlId ser único POR ORG.
   // Definida na criação; a pesquisa (e portanto a org) do animal não muda depois.
-  orgId              String
-  samples            Sample[]
-  media              AnimalMedia[]
+  orgId                String
+  samples              Sample[]
+  media                AnimalMedia[]
   // Pesquisas ADICIONAIS que também estudam este indivíduo (mesma org). A pesquisa
   // primária/criadora é `researchId`; o conjunto efetivo = {researchId} ∪ participations.
-  participations     AnimalResearch[]
+  participations       AnimalResearch[]
   // Laudo anatomopatológico. Fica no INDIVÍDUO (não na pesquisa): descreve a carcaça, como
   // bodyCondition/necropsyDate acima. Ver docs/PLANO_EXAME_ANATOMOPATOLOGICO.md.
-  necropsySystems    NecropsySystemExam[]
-  histopathology     HistopathologyFinding[]
-  createdAt          DateTime                @default(now())
+  necropsySystems      NecropsySystemExam[]
+  histopathology       HistopathologyFinding[]
+  createdAt            DateTime                @default(now())
 
   @@unique([orgId, controlId])
   @@unique([orgId, simbaRecordNumber])

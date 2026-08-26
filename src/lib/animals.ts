@@ -240,11 +240,13 @@ export type AnimalWritable = {
   decompositionStage?: Nullable<string>
   deathCondition?: Nullable<string>
   necropsyDate?: Nullable<string>
+  necropsyWeightKg?: Nullable<number>
   strandingLat?: Nullable<number>
   strandingLon?: Nullable<number>
   strandingBeach?: Nullable<string>
   municipality?: Nullable<string>
   state?: Nullable<string>
+  executingInstitution?: Nullable<string>
   eventDate?: Nullable<string>
   macroscopicNotes?: Nullable<string>
 }
@@ -264,11 +266,13 @@ export function animalData(input: AnimalWritable) {
     bodyCondition: input.bodyCondition,
     decompositionStage: input.decompositionStage,
     deathCondition: input.deathCondition,
+    necropsyWeightKg: input.necropsyWeightKg,
     strandingLat: input.strandingLat,
     strandingLon: input.strandingLon,
     strandingBeach: input.strandingBeach,
     municipality: input.municipality,
     state: input.state,
+    executingInstitution: input.executingInstitution,
     eventDate:
       input.eventDate === undefined
         ? undefined

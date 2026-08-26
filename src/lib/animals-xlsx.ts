@@ -71,8 +71,10 @@ export type XlsxAnimal = {
   deathCondition: string | null
   eventDate: Date | null
   necropsyDate: Date | null
+  necropsyWeightKg: number | null
   municipality: string | null
   state: string | null
+  executingInstitution: string | null
   strandingBeach: string | null
   strandingLat: number | null
   strandingLon: number | null
@@ -174,9 +176,16 @@ const COLUMNS: { key: string; pt: string; en: string; width: number }[] = [
   { key: "deathCondition", pt: "Condição da morte", en: "Death condition", width: 18 },
   { key: "eventDate", pt: "Data do encalhe", en: "Stranding date", width: 16 },
   { key: "necropsyDate", pt: "Data de necrópsia", en: "Necropsy date", width: 16 },
+  { key: "necropsyWeight", pt: "Peso na necrópsia (kg)", en: "Necropsy weight (kg)", width: 20 },
   { key: "municipality", pt: "Município", en: "Municipality", width: 18 },
   { key: "state", pt: "Estado", en: "State", width: 10 },
   { key: "beach", pt: "Praia", en: "Beach", width: 20 },
+  {
+    key: "executingInstitution",
+    pt: "Instituição executora",
+    en: "Executing institution",
+    width: 28,
+  },
   { key: "lat", pt: "Latitude", en: "Latitude", width: 12 },
   { key: "lon", pt: "Longitude", en: "Longitude", width: 12 },
   { key: "research", pt: "Pesquisa", en: "Research", width: 24 },
@@ -257,9 +266,11 @@ function rowFor(a: XlsxAnimal, loc: Loc): Record<string, string | number> {
     deathCondition: a.deathCondition ?? "",
     eventDate: isoDate(a.eventDate),
     necropsyDate: isoDate(a.necropsyDate),
+    necropsyWeight: a.necropsyWeightKg ?? "",
     municipality: a.municipality ?? "",
     state: a.state ?? "",
     beach: a.strandingBeach ?? "",
+    executingInstitution: a.executingInstitution ?? "",
     lat: a.strandingLat ?? "",
     lon: a.strandingLon ?? "",
     research: a.research.name,
