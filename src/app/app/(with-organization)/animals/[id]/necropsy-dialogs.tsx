@@ -3,9 +3,7 @@
 import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from "react"
 import { useLocale, useTranslations } from "next-intl"
 import { toast } from "sonner"
-import { Check, CircleDashed, X } from "lucide-react"
 
-import { cn } from "@/lib/utils"
 import { txt } from "@/lib/catalog-i18n"
 import { LIMITS } from "@/schemas/limits"
 import { useErrorMessage } from "@/lib/use-error-message"
@@ -20,6 +18,7 @@ import {
 } from "@/hooks/use-necropsy"
 import type { GrossFinding, HistopathologyFinding } from "@/types/necropsy"
 import type { GrossFindingPayload } from "@/services/necropsy"
+import { TriState } from "./necropsy-tristate"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Combobox } from "@/components/ui/combobox"
@@ -45,68 +44,6 @@ import {
 
 // Valor do Select que representa "sem valor": o Radix não aceita SelectItem com value="".
 const NONE = "__none__"
-
-// ── Tri-estado de parasitas ──────────────────────────────────────────────────
-// "Não informado" (null) é um valor de verdade do laudo, não a ausência de resposta: dizer
-// "não" afirma que se procurou e nada havia. Um checkbox de dois estados apagaria essa
-// diferença, então os três aparecem lado a lado, com o mesmo peso de escolha.
-function TriState({
-  id,
-  label,
-  value,
-  onChange,
-  disabled,
-}: {
-  id: string
-  label: string
-  value: boolean | null
-  onChange: (v: boolean | null) => void
-  disabled?: boolean
-}) {
-  const t = useTranslations("necropsy")
-  // O rótulo textual não cabia: "Não informado" truncava em "Não inf…". Como ícone, os três
-  // ficam do mesmo tamanho e legíveis. O tracejado repete a linguagem do estado "não
-  // avaliado" do sistema — ausência de resposta, não uma resposta negativa.
-  const options = [
-    { key: "yes", label: t("yes"), v: true as boolean | null, Icon: Check },
-    { key: "no", label: t("no"), v: false as boolean | null, Icon: X },
-    { key: "unknown", label: t("notInformed"), v: null as boolean | null, Icon: CircleDashed },
-  ]
-
-  return (
-    <div className="space-y-1.5">
-      <Label id={`${id}-label`}>{label}</Label>
-      <div role="radiogroup" aria-labelledby={`${id}-label`} className="flex gap-1">
-        {options.map((o) => {
-          const active = value === o.v
-          return (
-            <button
-              key={o.key}
-              type="button"
-              role="radio"
-              aria-checked={active}
-              aria-label={o.label}
-              title={o.label}
-              disabled={disabled}
-              onClick={() => onChange(o.v)}
-              className={cn(
-                "inline-flex size-9 items-center justify-center rounded-md border transition-colors",
-                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                "disabled:cursor-not-allowed disabled:opacity-50",
-                o.v === null && !active && "border-dashed",
-                active
-                  ? "border-accent-foreground bg-accent text-accent-foreground"
-                  : "border-input bg-background text-muted-foreground hover:bg-muted",
-              )}
-            >
-              <o.Icon className="size-4" aria-hidden />
-            </button>
-          )
-        })}
-      </div>
-    </div>
-  )
-}
 
 // ── Diálogo: achado macroscópico ─────────────────────────────────────────────
 

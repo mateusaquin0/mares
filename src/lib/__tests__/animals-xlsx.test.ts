@@ -33,6 +33,11 @@ function animal(over: Partial<XlsxAnimal> = {}): XlsxAnimal {
     strandingLon: null,
     isPublic: true,
     macroscopicNotes: null,
+    anthropicInteraction: null,
+    giContentCollected: null,
+    giSolidWaste: null,
+    giDetailedScreening: null,
+    anthropicInteractions: [],
     research: { name: "Projeto X" },
     _count: { samples: 0 },
     samples: [],
@@ -67,6 +72,41 @@ const linhas = (ws: ExcelJS.Worksheet) => {
   })
   return out
 }
+
+describe("buildAnimalsXlsx — triagem da carcaça", () => {
+  it("escreve as quatro respostas e as interações com grau numa célula só", async () => {
+    const wb = await abrir([
+      animal({
+        anthropicInteraction: true,
+        giContentCollected: true,
+        giSolidWaste: false,
+        giDetailedScreening: null,
+        anthropicInteractions: [
+          { type: "FISHERY", degree: 2 },
+          { type: "VESSEL", degree: 1 },
+        ],
+      }),
+    ])
+    const rows = linhas(wb.getWorksheet("Animais")!)
+    expect(rows[0]).toMatchObject({
+      "Indícios de interação antrópica": "Sim",
+      "Interações antrópicas (grau)": "Pesca (grau 2); Embarcações (grau 1)",
+      "Coleta de conteúdo gastrointestinal": "Sim",
+      "Presença de resíduos sólidos": "Não",
+      // O tri-estado sobrevive à planilha: "não informado" não vira "não".
+      "Triagem detalhada do conteúdo gastrointestinal": "Não informado",
+    })
+  })
+
+  it("deixa a célula de interações vazia quando não há nenhuma", async () => {
+    const wb = await abrir([animal({ anthropicInteraction: false })])
+    const rows = linhas(wb.getWorksheet("Animais")!)
+    expect(rows[0]).toMatchObject({
+      "Indícios de interação antrópica": "Não",
+      "Interações antrópicas (grau)": "",
+    })
+  })
+})
 
 describe("buildAnimalsXlsx — laudo anatomopatológico", () => {
   // Macro e micro compartilham uma aba, discriminados pela coluna "Exame". As colunas

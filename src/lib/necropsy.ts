@@ -8,6 +8,8 @@
 import { prisma } from "@/lib/prisma"
 import { ConflictError, NotFoundError } from "@/lib/errors"
 import { ERROR_CODES } from "@/lib/error-codes"
+import type { AnthropicInteractionValue } from "@/lib/necropsy-enums"
+import type { NecropsyScreening } from "@/types/necropsy"
 
 export const grossFindingSelect = {
   id: true,
@@ -33,6 +35,47 @@ export const systemExamSelect = {
   findings: { select: grossFindingSelect, orderBy: { position: "asc" } },
 } as const
 
+// Triagem da carcaça: as quatro perguntas ficam no Animal, as interações em tabela própria
+// (a triagem aceita mais de uma). Os dois vêm juntos na leitura do laudo.
+export const screeningSelect = {
+  anthropicInteraction: true,
+  giContentCollected: true,
+  giSolidWaste: true,
+  giDetailedScreening: true,
+  anthropicInteractions: { select: { type: true, degree: true }, orderBy: { type: "asc" } },
+} as const
+
+// Linha do banco no formato da tela: a relação se chama `anthropicInteractions` (é o plural
+// do tipo), mas dentro da triagem ela é só "as interações".
+export type ScreeningRow = {
+  anthropicInteraction: boolean | null
+  giContentCollected: boolean | null
+  giSolidWaste: boolean | null
+  giDetailedScreening: boolean | null
+  anthropicInteractions: { type: AnthropicInteractionValue; degree: number }[]
+}
+
+export function toScreening(row: ScreeningRow): NecropsyScreening {
+  const { anthropicInteractions, ...flags } = row
+  return { ...flags, interactions: anthropicInteractions }
+}
+
+/**
+ * Interações no formato do log de auditoria: "FISHERY:2, VESSEL:1".
+ *
+ * Uma linha só, e com os valores CANÔNICOS: o log guarda strings e é lido em pt ou en, então
+ * a tradução tem de acontecer na leitura (audit-tab), não aqui.
+ */
+export function interactionsAuditValue(
+  interactions: readonly { type: string; degree: number }[],
+): string | null {
+  if (interactions.length === 0) return null
+  return [...interactions]
+    .sort((a, b) => a.type.localeCompare(b.type))
+    .map((i) => `${i.type}:${i.degree}`)
+    .join(", ")
+}
+
 export const histopathologySelect = {
   id: true,
   finding: true,
@@ -48,6 +91,7 @@ export const histopathologySelect = {
  * `researchId`. Ver §Decisão estruturante em docs/PLANO_EXAME_ANATOMOPATOLOGICO.md.
  */
 export const necropsyExportSelect = {
+  ...screeningSelect,
   necropsySystems: {
     orderBy: { position: "asc" },
     select: {

@@ -120,6 +120,16 @@ enum NecropsySystemStatus {
   ALTERED // há achados: a tabela de GrossFinding é preenchida
 }
 
+// Tipo de interação antrópica encontrada na carcaça. Lista fechada (e não catálogo) porque
+// são as quatro categorias do PMP, iguais para qualquer espécie — o mesmo critério que
+// mantém distribuição e severidade em código. Ver docs/PLANO_EXAME_ANATOMOPATOLOGICO.md.
+enum AnthropicInteractionType {
+  FISHERY // interação com pesca
+  WASTE // interação com resíduo
+  AGGRESSION // agressão / vandalismo / caça
+  VESSEL // interação com embarcações
+}
+
 // ─────────────────────────────────────────────────────────────
 // Organização e usuários
 // ─────────────────────────────────────────────────────────────
@@ -363,61 +373,71 @@ model ExamType {
 // ─────────────────────────────────────────────────────────────
 
 model Animal {
-  id                   String                  @id @default(uuid())
-  controlId            String? // ID de controle interno, único por organização (ver @@unique abaixo)
-  simbaRecordNumber    String? // Identificador SIMBA, único por organização (ver @@unique abaixo)
-  species              String? // NULL = espécie indeterminada (carcaça não identificável)
+  id                    String                  @id @default(uuid())
+  controlId             String? // ID de controle interno, único por organização (ver @@unique abaixo)
+  simbaRecordNumber     String? // Identificador SIMBA, único por organização (ver @@unique abaixo)
+  species               String? // NULL = espécie indeterminada (carcaça não identificável)
   // Campos preenchidos via WoRMS após validação taxonômica
-  wormsAphiaId         Int?
-  taxonFamily          String?
-  taxonOrder           String?
-  sex                  String?
-  lifeStage            String?
+  wormsAphiaId          Int?
+  taxonFamily           String?
+  taxonOrder            String?
+  sex                   String?
+  lifeStage             String?
   // Necrópsia — condição da carcaça / escore corporal / condição da morte.
   // Preenchidos manualmente: a API pública do SIMBA não os exporta (só a data de
   // necrópsia em measurementDeterminedDate e as observações em occurrenceRemarks).
-  bodyCondition        String? // "Condição da carcaça" (ex.: código 1-5)
-  decompositionStage   String? // "Escore corporal"
-  deathCondition       String? // "Condição da morte" (ex.: Natural)
-  necropsyDate         DateTime?
+  bodyCondition         String? // "Condição da carcaça" (ex.: código 1-5)
+  decompositionStage    String? // "Escore corporal"
+  deathCondition        String? // "Condição da morte" (ex.: Natural)
+  necropsyDate          DateTime?
   // Peso da carcaça na necrópsia, em QUILOS. Vem do "Peso total" da biometria do SIMBA, que
   // é medida na mesma ocasião de `necropsyDate` (measurementDeterminedDate).
-  necropsyWeightKg     Float?
+  necropsyWeightKg      Float?
   // lat/lon como Float; em produção, considerar PostGIS geography
-  strandingLat         Float?
-  strandingLon         Float?
-  strandingBeach       String?
-  municipality         String?
-  state                String?
+  strandingLat          Float?
+  strandingLon          Float?
+  strandingBeach        String?
+  municipality          String?
+  state                 String?
   // "Instituição executora" do SIMBA (institutionCode): a instituição responsável pelo
   // trecho do PMP onde o animal foi encontrado — em alguns PMPs o campo traz o próprio
   // nome do trecho ("Trecho 09"), que é o que identifica o local no monitoramento.
-  executingInstitution String?
-  eventDate            DateTime?
-  macroscopicNotes     String? // "Exame externo" (occurrenceRemarks no SIMBA)
+  executingInstitution  String?
+  eventDate             DateTime?
+  macroscopicNotes      String? // "Exame externo" (occurrenceRemarks no SIMBA)
+  // Triagem da carcaça na necrópsia. Tri-estado como os campos de parasita do GrossFinding:
+  // NULL = "não informado", que NÃO é o mesmo que false = "não" (que afirma que se procurou
+  // e nada havia). Ficam no indivíduo pelo mesmo motivo do laudo — descrevem a carcaça.
+  anthropicInteraction  Boolean? // "Há indícios de interação antrópica?"
+  giContentCollected    Boolean? // "Coleta de conteúdo gastrointestinal"
+  giSolidWaste          Boolean? // "Presença de resíduos sólidos"
+  giDetailedScreening   Boolean? // "Triagem detalhada do conteúdo gastrointestinal"
   // Biometria (PMP > Biometria do SIMBA), como ele entregou: { group, unit, measures[] }.
   // O rótulo é o texto LITERAL do SIMBA e também o exibido na tela — sem catálogo e sem
   // tradução, para o sistema aceitar qualquer espécie sem mapeamento prévio. Medida sem
   // valor entra como null ("Não informado"), o que faz a primeira importação de um grupo
   // ensinar o formulário inteiro ao autocompletar. Ver docs/PLANO_BIOMETRIA.md.
-  measurements         Json?
-  source               String                  @default("manual")
-  isPublic             Boolean                 @default(false)
-  researchId           String
-  research             Research                @relation(fields: [researchId], references: [id])
+  measurements          Json?
+  source                String                  @default("manual")
+  isPublic              Boolean                 @default(false)
+  researchId            String
+  research              Research                @relation(fields: [researchId], references: [id])
   // Organização dona, denormalizada de research, para o controlId ser único POR ORG.
   // Definida na criação; a pesquisa (e portanto a org) do animal não muda depois.
-  orgId                String
-  samples              Sample[]
-  media                AnimalMedia[]
+  orgId                 String
+  samples               Sample[]
+  media                 AnimalMedia[]
   // Pesquisas ADICIONAIS que também estudam este indivíduo (mesma org). A pesquisa
   // primária/criadora é `researchId`; o conjunto efetivo = {researchId} ∪ participations.
-  participations       AnimalResearch[]
+  participations        AnimalResearch[]
   // Laudo anatomopatológico. Fica no INDIVÍDUO (não na pesquisa): descreve a carcaça, como
   // bodyCondition/necropsyDate acima. Ver docs/PLANO_EXAME_ANATOMOPATOLOGICO.md.
-  necropsySystems      NecropsySystemExam[]
-  histopathology       HistopathologyFinding[]
-  createdAt            DateTime                @default(now())
+  necropsySystems       NecropsySystemExam[]
+  histopathology        HistopathologyFinding[]
+  // Quais interações antrópicas a carcaça apresentou, e em que grau. Só existem linhas com
+  // `anthropicInteraction = true`.
+  anthropicInteractions AnthropicInteraction[]
+  createdAt             DateTime                @default(now())
 
   @@unique([orgId, controlId])
   @@unique([orgId, simbaRecordNumber])
@@ -647,6 +667,23 @@ model GrossFinding {
 
   @@index([examId, position])
   @@index([organId])
+}
+
+// Uma interação antrópica encontrada na carcaça, com seu grau (1 a 3).
+//
+// Tabela e não colunas no Animal porque a triagem aceita MAIS DE UMA — uma carcaça pode
+// trazer marca de rede e de embarcação ao mesmo tempo —, e cada uma tem grau próprio. O
+// `@@unique` garante um grau por tipo: registrar "pesca 2" e "pesca 3" no mesmo indivíduo
+// seria contradição, não duas ocorrências.
+model AnthropicInteraction {
+  id        String                   @id @default(uuid())
+  animalId  String
+  animal    Animal                   @relation(fields: [animalId], references: [id], onDelete: Cascade)
+  type      AnthropicInteractionType
+  degree    Int // 1 a 3; o schema Zod fecha o intervalo
+  createdAt DateTime                 @default(now())
+
+  @@unique([animalId, type])
 }
 
 // Uma linha do exame histopatológico: "Órgão: X. Achado: Y." O órgão é referência ao
