@@ -1,7 +1,7 @@
 {
   "metadata": {
     "title": "MARES — Monitoring and Analysis of Marine Species Records",
-    "description": "Platform for recording, querying and analyzing pathological data of stranded marine fauna."
+    "description": "Platform for recording, querying and analyzing pathological data of marine fauna occurrences."
   },
   "common": {
     "tagline": "Monitoring and Analysis of Marine Species Records",
@@ -32,26 +32,26 @@
     "reload": "Refresh"
   },
   "authPanel": {
-    "brandTitle": "Collaborative monitoring of stranded marine fauna",
+    "brandTitle": "Collaborative monitoring of marine fauna occurrences",
     "brandDesc": "Record animals, necropsy samples and lab results. Visualize geographic and epidemiological patterns across research groups.",
     "brandFooter": "Academic platform · access by research group"
   },
   "landing": {
     "signIn": "Sign in",
     "goToApp": "Go to dashboard",
-    "eyebrow": "Stranded marine fauna",
-    "heroTitle": "Marine strandings, mapped and open to society",
-    "heroSubtitle": "MARES gathers records of marine animals stranded along the Brazilian coast — species, location and detected pathogens — in a public, browsable map.",
+    "eyebrow": "Marine fauna occurrences",
+    "heroTitle": "Marine fauna occurrences, mapped and open to society",
+    "heroSubtitle": "MARES gathers records of marine animal occurrences along the Brazilian coast — species, location and detected pathogens — in a public, browsable map.",
     "exploreMap": "Explore the public map",
     "viewMap": "View map",
     "featuresTitle": "What you'll find here",
-    "featureMapTitle": "Public strandings map",
-    "featureMapDesc": "See where marine animals stranded and which pathogens were detected — no login, with filters by species, period and region.",
+    "featureMapTitle": "Public occurrences map",
+    "featureMapDesc": "See where marine animal occurrences were recorded and which pathogens were detected — no login, with filters by species, period and region.",
     "featureRecordTitle": "Scientific records",
     "featureRecordDesc": "Research groups register animals, necropsy samples and lab analyses with traceability and change history.",
     "featureOpenTitle": "Open data",
     "featureOpenDesc": "Darwin Core and Excel export, aligned with global biodiversity standards (SIMBA, WoRMS).",
-    "footerNote": "Academic project · public data on stranded marine fauna",
+    "footerNote": "Academic project · public data on marine fauna occurrences",
     "footerTerms": "Terms of Use"
   },
   "login": {
@@ -228,18 +228,18 @@
     "filterTo": "To",
     "clearFilters": "Clear filters",
     "statPositives": "Positive results",
-    "chartTimelineTitle": "Strandings over time",
-    "chartTimelineEmpty": "No strandings with a date to display.",
-    "timelineCount": "Strandings",
+    "chartTimelineTitle": "Occurrences over time",
+    "chartTimelineEmpty": "No occurrences with a date to display.",
+    "timelineCount": "Occurrences",
     "heatmapTitle": "Heatmap",
-    "heatmapDesc": "Geographic concentration of recorded strandings.",
-    "heatmapEmpty": "No strandings with coordinates to display."
+    "heatmapDesc": "Geographic concentration of recorded occurrences.",
+    "heatmapEmpty": "No occurrences with coordinates to display."
   },
   "map": {
     "title": "Map",
-    "subtitle": "Geographic distribution of strandings in the active research group.",
-    "publicTitle": "Stranding map",
-    "publicSubtitle": "Public records of stranded marine fauna monitored by the research groups.",
+    "subtitle": "Geographic distribution of occurrences in the active research group.",
+    "publicTitle": "Occurrence map",
+    "publicSubtitle": "Public records of marine fauna occurrences monitored by the research groups.",
     "login": "Sign in",
     "filterSpecies": "Species",
     "filterPathogen": "Pathogen",
@@ -259,7 +259,7 @@
     "allVisibility": "All",
     "noOptions": "No options",
     "clear": "Clear filters",
-    "resultsCount": "{count, plural, =0 {No strandings} one {# stranding} other {# strandings}}",
+    "resultsCount": "{count, plural, =0 {No occurrences} one {# occurrence} other {# occurrences}}",
     "exportCsv": "Export CSV",
     "csvControlId": "Control ID",
     "csvSpecies": "Species",
@@ -268,12 +268,12 @@
     "csvMunicipality": "Municipality",
     "csvState": "State",
     "csvBeach": "Beach",
-    "csvDate": "Stranding date",
+    "csvDate": "Occurrence date",
     "csvLat": "Latitude",
     "csvLon": "Longitude",
     "csvResearch": "Research",
     "csvPathogens": "Positive pathogens",
-    "empty": "No strandings with coordinates to display.",
+    "empty": "No occurrences with coordinates to display.",
     "legendPublic": "Public",
     "legendHidden": "Hidden",
     "popupDate": "Date",
@@ -286,7 +286,7 @@
   "terms": {
     "title": "Terms of Use",
     "version": "Version {version}",
-    "intro": "Welcome to MARES. By requesting access or activating your account, you agree to the terms below, which govern the use of this platform for recording and analyzing pathological data of stranded marine fauna.",
+    "intro": "Welcome to MARES. By requesting access or activating your account, you agree to the terms below, which govern the use of this platform for recording and analyzing pathological data of marine fauna occurrences.",
     "acceptLabel": "I have read and accept the <link>Terms of Use</link>",
     "data": {
       "title": "1. Data and purpose",
@@ -683,7 +683,7 @@
   },
   "animals": {
     "title": "Animals",
-    "subtitle": "Strandings recorded in the active research group's research.",
+    "subtitle": "Occurrences recorded in the active research group's research.",
     "new": "New animal",
     "empty": "No animals recorded yet.",
     "noResearch": "Create a research before recording animals.",
@@ -732,9 +732,9 @@
     "notFound": "Animal not found.",
     "createTitle": "New animal",
     "editTitle": "Edit animal",
-    "createDesc": "Record the stranding. Fields marked with * are required.",
+    "createDesc": "Record the occurrence. Fields marked with * are required.",
     "sectionIdentification": "Identification",
-    "sectionStranding": "Stranding",
+    "sectionStranding": "Occurrence",
     "sectionCondition": "Condition",
     "sectionNotes": "Notes",
     "research": "Research",
@@ -770,9 +770,9 @@
     "municipality": "Municipality",
     "state": "State / Province",
     "executingInstitution": "Executing institution",
-    "eventDate": "Stranding date",
+    "eventDate": "Occurrence date",
     "macroscopicNotes": "Observations",
-    "strandingLocationMap": "Stranding location",
+    "strandingLocationMap": "Occurrence location",
     "shareTitle": "Research groups",
     "shareDesc": "Researches in the group studying this individual. The primary one created it; when you involve another research, the link only counts once it accepts.",
     "sharePrimary": "primary",
@@ -793,7 +793,7 @@
     "deleteDesc": "Delete this animal? This action is irreversible.",
     "deleted": "Animal deleted",
     "deleteError": "Could not delete",
-    "detailInfo": "Stranding data",
+    "detailInfo": "Occurrence data",
     "samplesTab": "Samples",
     "analysesTab": "Analyses",
     "mediaTab": "Media",
@@ -1132,7 +1132,7 @@
     "sections": {
       "overview": {
         "title": "Overview and roles",
-        "body": "MARES organizes the recording of stranded marine fauna by research group. Below is the standard usage flow.",
+        "body": "MARES organizes the recording of marine fauna occurrences by research group. Below is the standard usage flow.",
         "points": [
           "Application admin: approves requests and oversees groups and users; does not access scientific data.",
           "Research group admin: manages members, research, protocols and the glossary.",
@@ -1182,11 +1182,11 @@
       },
       "animal": {
         "title": "5. Register the animal (individual)",
-        "body": "The animal represents the physical stranded individual.",
+        "body": "The animal represents the physical individual in the occurrence.",
         "points": [
           "Register under 'Animals', choosing the originating research. You can import SIMBA data by record number.",
           "Before filling in the rest, use the magnifier next to the control ID to check whether the individual already exists in the group — including in researches you cannot access.",
-          "Stranding fields (date, place, coordinates) can be marked as 'no information' when unavailable.",
+          "Occurrence fields (date, place, coordinates) can be marked as 'no information' when unavailable.",
           "The animal's effective public visibility requires both it AND the research to be public.",
           "The control ID and SIMBA number are unique across the whole group: if another research already registered the individual, the record is rejected — see the next topic."
         ]
@@ -1199,7 +1199,7 @@
           "If that research is not yours, an invitation is sent: it must accept before seeing the individual (until then it shows as 'pending').",
           "The other way around: when you register an animal whose control ID or SIMBA number already exists in a research you cannot access, the warning offers to request the individual — the originating research decides.",
           "Requests and invitations awaiting YOUR answer appear at the top of the 'Animals' screen.",
-          "Sharing grants access to the individual (identity, stranding), never to the other research's samples and analyses — each keeps its own."
+          "Sharing grants access to the individual (identity, occurrence), never to the other research's samples and analyses — each keeps its own."
         ]
       },
       "necropsy": {
@@ -1240,7 +1240,7 @@
       },
       "map": {
         "title": "11. Map and public data",
-        "body": "Strandings appear on a browsable map.",
+        "body": "Occurrences appear on a browsable map.",
         "points": [
           "The internal map shows the animals you can see; the public map (no login) shows only the effectively public ones.",
           "Filter the animals list by species, state, pathogen, research, period and more."
