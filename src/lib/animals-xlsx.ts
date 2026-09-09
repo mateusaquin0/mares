@@ -82,6 +82,12 @@ export type XlsxAnimal = {
   strandingLon: number | null
   isPublic: boolean
   macroscopicNotes: string | null
+  // Triagem da carcaça: as quatro perguntas tri-estado e as interações encontradas.
+  anthropicInteraction: boolean | null
+  giContentCollected: boolean | null
+  giSolidWaste: boolean | null
+  giDetailedScreening: boolean | null
+  anthropicInteractions: { type: string; degree: number }[]
   research: { name: string }
   _count: { samples: number }
   samples: XlsxSample[]
@@ -144,11 +150,21 @@ const DISTRIBUTION: Record<string, { pt: string; en: string }> = {
   locally_extensive: { pt: "Focalmente extensa", en: "Locally extensive" },
   segmental: { pt: "Segmentar", en: "Segmental" },
   diffuse: { pt: "Difusa", en: "Diffuse" },
+  generalized: { pt: "Generalizada", en: "Generalized" },
 }
+// `marked` é o valor gravado do grau máximo; o rótulo é "severo" (ver necropsy-enums.ts).
 const SEVERITY: Record<string, { pt: string; en: string }> = {
   mild: { pt: "Discreto", en: "Mild" },
+  mild_moderate: { pt: "Discreto a moderado", en: "Mild to moderate" },
   moderate: { pt: "Moderado", en: "Moderate" },
-  marked: { pt: "Acentuado", en: "Marked" },
+  moderate_severe: { pt: "Moderado a severo", en: "Moderate to severe" },
+  marked: { pt: "Severo", en: "Severe" },
+}
+const INTERACTION: Record<string, { pt: string; en: string }> = {
+  FISHERY: { pt: "Pesca", en: "Fishery" },
+  WASTE: { pt: "Resíduo", en: "Debris" },
+  AGGRESSION: { pt: "Agressão / vandalismo / caça", en: "Aggression / vandalism / hunting" },
+  VESSEL: { pt: "Embarcações", en: "Vessels" },
 }
 // `null` é "não informado", e não "não" — a distinção tem de sobreviver à exportação.
 const NOT_INFORMED: Record<Loc, string> = { pt: "Não informado", en: "Not informed" }
@@ -162,6 +178,18 @@ const vocab = (map: Record<string, { pt: string; en: string }>, v: string | null
   v ? (map[v]?.[loc] ?? v) : ""
 const tri = (v: boolean | null, loc: Loc) =>
   v === null ? NOT_INFORMED[loc] : v ? YES_NO[loc].yes : YES_NO[loc].no
+
+// Interações numa célula só: "Pesca (grau 2); Embarcações (grau 1)". Uma coluna por tipo
+// deixaria quatro colunas quase sempre vazias — a planilha já tem 24.
+const interactionList = (
+  interactions: readonly { type: string; degree: number }[],
+  loc: Loc,
+): string =>
+  interactions
+    .map((i) => `${INTERACTION[i.type]?.[loc] ?? i.type} (${DEGREE[loc]} ${i.degree})`)
+    .join("; ")
+
+const DEGREE: Record<Loc, string> = { pt: "grau", en: "degree" }
 
 // Rótulo de espécie indeterminada (null) na planilha.
 const UNDETERMINED_SPECIES: Record<Loc, string> = { pt: "Indeterminado", en: "Undetermined" }
@@ -196,6 +224,36 @@ const COLUMNS: { key: string; pt: string; en: string; width: number }[] = [
   { key: "visibility", pt: "Visibilidade", en: "Visibility", width: 12 },
   { key: "samples", pt: "Amostras", en: "Samples", width: 10 },
   { key: "positives", pt: "Patógenos positivos", en: "Positive pathogens", width: 32 },
+  {
+    key: "anthropicInteraction",
+    pt: "Indícios de interação antrópica",
+    en: "Evidence of anthropogenic interaction",
+    width: 28,
+  },
+  {
+    key: "anthropicInteractions",
+    pt: "Interações antrópicas (grau)",
+    en: "Anthropogenic interactions (degree)",
+    width: 36,
+  },
+  {
+    key: "giContentCollected",
+    pt: "Coleta de conteúdo gastrointestinal",
+    en: "Gastrointestinal content collected",
+    width: 30,
+  },
+  {
+    key: "giSolidWaste",
+    pt: "Presença de resíduos sólidos",
+    en: "Solid debris present",
+    width: 24,
+  },
+  {
+    key: "giDetailedScreening",
+    pt: "Triagem detalhada do conteúdo gastrointestinal",
+    en: "Detailed screening of gastrointestinal content",
+    width: 36,
+  },
   { key: "notes", pt: "Observações", en: "Observations", width: 40 },
   {
     key: "descriptiveDiagnosis",
@@ -281,6 +339,11 @@ function rowFor(a: XlsxAnimal, loc: Loc): Record<string, string | number> {
     visibility: visible,
     samples: a._count.samples,
     positives: positivePathogens(a, loc),
+    anthropicInteraction: tri(a.anthropicInteraction, loc),
+    anthropicInteractions: interactionList(a.anthropicInteractions, loc),
+    giContentCollected: tri(a.giContentCollected, loc),
+    giSolidWaste: tri(a.giSolidWaste, loc),
+    giDetailedScreening: tri(a.giDetailedScreening, loc),
     notes: a.macroscopicNotes ?? "",
     // Derivado dos achados micro, no formato corrido do SIMBA — mesma função que a tela usa.
     descriptiveDiagnosis: buildDescriptiveDiagnosis(loc, a.histopathology),

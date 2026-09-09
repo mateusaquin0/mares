@@ -173,6 +173,9 @@ export type AuditEntry = {
   id: string
   entity:
     | "Animal"
+    // Biometria grava com o animalId como entityId e o RÓTULO da medida como `field`
+    // (o JSON de medidas não tem id de linha) — ver a rota PUT de /biometry.
+    | "Biometry"
     | "Sample"
     | "Analysis"
     | "NecropsySystemExam"

@@ -1,11 +1,20 @@
 "use client"
 
 import { useLocale, useTranslations } from "next-intl"
-import { ArrowRight, Clock, User, Fish, FlaskConical, Microscope, Stethoscope } from "lucide-react"
+import {
+  ArrowRight,
+  Clock,
+  User,
+  Fish,
+  FlaskConical,
+  Microscope,
+  Ruler,
+  Stethoscope,
+} from "lucide-react"
 
 import { pathogenName, txt } from "@/lib/catalog-i18n"
 import { SEX_OPTIONS, LIFE_STAGE_OPTIONS } from "@/lib/animal-enums"
-import { NECROPSY_STATUS_OPTIONS } from "@/lib/necropsy-enums"
+import { ANTHROPIC_INTERACTION_OPTIONS, NECROPSY_STATUS_OPTIONS } from "@/lib/necropsy-enums"
 import { useAnimalAudit } from "@/hooks/use-animals"
 import type { AuditEntry } from "@/types/animal"
 import { Badge } from "@/components/ui/badge"
@@ -37,6 +46,18 @@ const NECROPSY_FIELD_KEY: Record<string, string> = {
   parasiteCount: "colParasiteCount",
   finding: "finding",
 }
+// A triagem da carcaça grava como campo do ANIMAL (é lá que as colunas vivem), mas os
+// rótulos são do namespace da necrópsia — é a aba de necrópsia que a edita.
+const SCREENING_FIELD_KEY: Record<string, string> = {
+  anthropicInteraction: "anthropicInteraction",
+  anthropicInteractions: "interactionsLabel",
+  giContentCollected: "giContentCollected",
+  giSolidWaste: "giSolidWaste",
+  giDetailedScreening: "giDetailedScreening",
+}
+const INTERACTION_KEY = Object.fromEntries(
+  ANTHROPIC_INTERACTION_OPTIONS.map((o) => [o.value, o.key]),
+)
 
 export function AuditTab({ animalId }: { animalId: string }) {
   const t = useTranslations("audit")
@@ -49,22 +70,28 @@ export function AuditTab({ animalId }: { animalId: string }) {
   const items = auditQ.data ?? []
   const loading = auditQ.isLoading
 
-  // Ícone + rótulo da entidade de origem da entrada.
+  // Ícone + rótulo da entidade de origem da entrada. O `??` é rede de segurança: a rota
+  // devolve `entity` como texto do banco, então uma entidade nova que ganhe auditoria e não
+  // passe por aqui derrubava a timeline inteira em vez de aparecer sem tradução.
   const entityMeta = (e: AuditEntry["entity"]) =>
     ({
       Animal: { icon: Fish, label: t("entityAnimal") },
+      Biometry: { icon: Ruler, label: t("entityBiometry") },
       Sample: { icon: FlaskConical, label: t("entitySample") },
       Analysis: { icon: Microscope, label: t("entityAnalysis") },
       NecropsySystemExam: { icon: Stethoscope, label: t("entityNecropsySystem") },
       GrossFinding: { icon: Stethoscope, label: t("entityGrossFinding") },
       HistopathologyFinding: { icon: Microscope, label: t("entityHistopathology") },
-    })[e]
+    })[e] ?? { icon: Fish, label: e }
 
   const fieldLabel = (r: AuditEntry) => {
     if (r.field === "created") return t("created")
     if (r.field === "deleted") return t("deleted")
     // Sistema: o campo já É o rótulo legível gravado no log.
     if (r.entity === "NecropsySystemExam") return r.field
+    // Biometria: idem — o campo é o rótulo LITERAL da medida do SIMBA, sem catálogo e sem
+    // tradução. A exceção é o peso, que é coluna do animal e tem rótulo próprio.
+    if (r.entity === "Biometry") return tan.has(r.field) ? tan(r.field) : r.field
     if (r.entity === "GrossFinding" || r.entity === "HistopathologyFinding") {
       const key = NECROPSY_FIELD_KEY[r.field]
       return key && tn.has(key) ? tn(key) : r.field
@@ -82,6 +109,8 @@ export function AuditTab({ animalId }: { animalId: string }) {
       )
     }
     if (r.field === "isPublic") return t("fieldVisibility")
+    const screeningKey = r.entity === "Animal" ? SCREENING_FIELD_KEY[r.field] : undefined
+    if (screeningKey) return tn(screeningKey)
     if (r.entity === "Animal") return tan.has(r.field) ? tan(r.field) : r.field
     return ts.has(r.field) ? ts(r.field) : r.field // Sample
   }
@@ -105,6 +134,21 @@ export function AuditTab({ animalId }: { animalId: string }) {
     if (r.field === "status" && SAMPLE_STATUS_KEY[v]) return ts(SAMPLE_STATUS_KEY[v])
     if (r.entity === "NecropsySystemExam" && NECROPSY_STATUS_KEY[v])
       return tn(NECROPSY_STATUS_KEY[v])
+    // A lista de interações é gravada canônica ("FISHERY:2, VESSEL:1") para o log não
+    // congelar o idioma de quem editou; a tradução acontece aqui, na leitura.
+    if (r.field === "anthropicInteractions") {
+      return v
+        .split(", ")
+        .map((item) => {
+          const [type = item, degree = ""] = item.split(":")
+          const key = INTERACTION_KEY[type]
+          const label = key ? tn(key) : type
+          return `${label} (${tn("degreeValue", { degree }).toLowerCase()})`
+        })
+        .join("; ")
+    }
+    if (SCREENING_FIELD_KEY[r.field] && (v === "true" || v === "false"))
+      return v === "true" ? tn("yes") : tn("no")
     if (DATE_FIELDS.has(r.field)) {
       const d = new Date(v)
       if (!Number.isNaN(d.getTime())) return d.toLocaleDateString(locale)
