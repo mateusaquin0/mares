@@ -854,7 +854,8 @@
     "idLinkAction": "Link to my research",
     "shareConflictSelectResearch": "Select the research in the form to be able to request the share.",
     "sharePendingAlready": "This request is already open",
-    "necropsyTab": "Necropsy"
+    "necropsyTab": "Necropsy",
+    "biometryTab": "Biometrics"
   },
   "samples": {
     "new": "New sample",
@@ -1067,6 +1068,38 @@
     "site": "Site",
     "sitePlaceholder": "e.g. ventral region",
     "scrollHint": "Scroll horizontally for the parasite fields"
+  },
+  "biometry": {
+    "tab": "Biometrics",
+    "group": "Form",
+    "groupNone": "Not set",
+    "groupPlaceholder": "e.g. Odontoceti, Quelônio",
+    "measure": "Measurement",
+    "measurePlaceholder": "Measurement name",
+    "value": "Value",
+    "notInformed": "Not informed",
+    "progress": "{filled} of {total} measurements",
+    "addMeasure": "Add measurement",
+    "removeMeasure": "Remove measurement",
+    "emptyTitle": "No biometrics recorded",
+    "emptyHint": "Use \"Edit\" to add the measurements taken during necropsy.",
+    "emptyHintSimba": "Import from SIMBA or use \"Edit\" to add measurements manually.",
+    "saved": "Biometrics saved",
+    "saveError": "Could not save biometrics",
+    "duplicateLabel": "Measurement \"{label}\" is duplicated",
+    "invalidValue": "Invalid value in \"{label}\"",
+    "import": "Import from SIMBA",
+    "importTitle": "Fetch biometrics from the SIMBA record",
+    "importNoRecord": "This individual has no SIMBA record number",
+    "importError": "Could not fetch biometrics from SIMBA",
+    "importEmpty": "The SIMBA record has no biometrics",
+    "importMismatch": "Biometrics not imported",
+    "importMismatchDesc": "SIMBA sent {labels} labels and {values} values. Without knowing which measurement each value belongs to, importing would store swapped numbers.",
+    "importConfirmTitle": "Import biometrics from SIMBA?",
+    "importConfirmChanged": "{count} measurements came from SIMBA, {changed} differing from what is saved. The current ones will be replaced.",
+    "importConfirmSame": "{count} measurements came from SIMBA, identical to the saved ones.",
+    "importConfirmAction": "Import",
+    "summaryEmpty": "No biometrics recorded"
   },
   "tutorial": {
     "title": "How to use MARES",

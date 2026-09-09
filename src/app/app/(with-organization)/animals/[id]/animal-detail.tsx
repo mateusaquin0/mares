@@ -21,6 +21,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { AnimalFormDialog } from "../animal-form"
 import { ResearchShare } from "./research-share"
 import { NecropsyTab, NecropsySummary } from "./necropsy-tab"
+import { BiometryTab, BiometrySummary } from "./biometry-tab"
 import { SamplesTab } from "./samples-tab"
 import { AnalysesTab } from "./analyses-tab"
 import { MediaTab } from "./media-tab"
@@ -175,6 +176,7 @@ export function AnimalDetail({
         <TabsList className="flex-wrap self-start">
           <TabsTrigger value="info">{t("detailInfo")}</TabsTrigger>
           <TabsTrigger value="necropsy">{t("necropsyTab")}</TabsTrigger>
+          <TabsTrigger value="biometry">{t("biometryTab")}</TabsTrigger>
           <TabsTrigger value="samples">
             {t("samplesTab")} ({animal._count.samples})
           </TabsTrigger>
@@ -231,6 +233,12 @@ export function AnimalDetail({
                     </p>
                     <NecropsySummary animalId={id} onOpen={() => setTab("necropsy")} />
                   </div>
+                  <div className="border-t pt-4">
+                    <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                      {t("biometryTab")}
+                    </p>
+                    <BiometrySummary animalId={id} onOpen={() => setTab("biometry")} />
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -240,6 +248,14 @@ export function AnimalDetail({
             <Card className="flex min-h-0 flex-1 flex-col">
               <CardContent className="flex min-h-0 flex-1 flex-col overflow-hidden pt-6">
                 <NecropsyTab animalId={id} />
+              </CardContent>
+            </Card>
+          )}
+
+          {tab === "biometry" && (
+            <Card className="flex min-h-0 flex-1 flex-col">
+              <CardContent className="flex min-h-0 flex-1 flex-col overflow-hidden pt-6">
+                <BiometryTab animalId={id} />
               </CardContent>
             </Card>
           )}

@@ -16,6 +16,7 @@ import { dwcAnimalSelect } from "@/lib/darwin-core"
 import { necropsyExportSelect } from "@/lib/necropsy"
 import { animalResultsSearchWhere } from "@/lib/animal-query"
 import { buildAnimalsXlsx } from "@/lib/animals-xlsx"
+import { toBiometry } from "@/lib/biometry-db"
 import { slugify } from "@/lib/slug"
 
 const XLSX_MIME = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
@@ -51,6 +52,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
         deathCondition: true,
         necropsyDate: true,
         necropsyWeightKg: true,
+        measurements: true,
         executingInstitution: true,
         isPublic: true,
         _count: { select: { samples: { where: { researchId: id } } } },
@@ -77,7 +79,11 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     })
 
     const locale = await getLocale()
-    const buffer = await buildAnimalsXlsx(animals, locale)
+    const buffer = await buildAnimalsXlsx(
+      // A coluna é JSONB livre; toBiometry valida a forma antes de a planilha usá-la.
+      animals.map((a) => ({ ...a, biometry: toBiometry(a.measurements) })),
+      locale,
+    )
     const slug = slugify(research.name, "-") || "pesquisa"
     return new Response(new Uint8Array(buffer), {
       status: 200,

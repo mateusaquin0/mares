@@ -24,6 +24,7 @@ function animal(over: Partial<XlsxAnimal> = {}): XlsxAnimal {
     eventDate: null,
     necropsyDate: null,
     necropsyWeightKg: null,
+    biometry: null,
     municipality: null,
     state: null,
     executingInstitution: null,
@@ -240,5 +241,60 @@ describe("buildAnimalsXlsx — laudo anatomopatológico", () => {
     const row = linhas(wb.getWorksheet("Pathology report")!)[0]!
     expect(row["System state"]).toBe("No change")
     expect(row.Exam).toBe("Gross")
+  })
+})
+
+describe("buildAnimalsXlsx — biometria", () => {
+  const bio = (group: string, measures: { label: string; value: number | null }[]) => ({
+    group,
+    unit: "Cm",
+    measures,
+  })
+
+  it("gera uma coluna por medida, com a unidade no cabeçalho, e o peso vindo da coluna do animal", async () => {
+    const wb = await abrir([
+      animal({
+        controlId: "45/26",
+        necropsyWeightKg: 31,
+        biometry: bio("Odontoceti", [
+          { label: "Comprimento total", value: 130 },
+          // O peso mora em necropsyWeightKg; na lista fica só o rótulo.
+          { label: "Peso total", value: null },
+          { label: "Número de dentes maxila direita", value: 31 },
+          { label: "Largura nadadeira caudal", value: null },
+        ]),
+      }),
+    ])
+    const row = linhas(wb.getWorksheet("Biometria")!)[0]!
+    expect(row["Indivíduo"]).toBe("45/26")
+    expect(row["Formulário"]).toBe("Odontoceti")
+    expect(row["Comprimento total (cm)"]).toBe(130)
+    // Unidade derivada do rótulo, não do measurementUnit do registro.
+    expect(row["Peso total (kg)"]).toBe(31)
+    expect(row["Número de dentes maxila direita (unid)"]).toBe(31)
+    // Vazio = "não informado"; distinguir de zero importa (zero dente é achado).
+    expect(row["Largura nadadeira caudal (cm)"]).toBe("")
+  })
+
+  it("junta rótulos de grafias diferentes numa coluna só", async () => {
+    const wb = await abrir([
+      animal({
+        controlId: "1",
+        biometry: bio("Odontoceti", [{ label: "Comprimento total", value: 130 }]),
+      }),
+      animal({
+        controlId: "2",
+        biometry: bio("Odontoceti", [{ label: "comprimento  TOTAL", value: 94 }]),
+      }),
+    ])
+    const rows = linhas(wb.getWorksheet("Biometria")!)
+    expect(rows).toHaveLength(2)
+    expect(rows[0]!["Comprimento total (cm)"]).toBe(130)
+    expect(rows[1]!["Comprimento total (cm)"]).toBe(94)
+  })
+
+  it("não cria a aba quando nenhum indivíduo tem biometria", async () => {
+    const wb = await abrir([animal({ biometry: null })])
+    expect(wb.getWorksheet("Biometria")).toBeUndefined()
   })
 })
