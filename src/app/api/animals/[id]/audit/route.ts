@@ -58,6 +58,9 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
       where: {
         OR: [
           { entity: "Animal", entityId: id },
+          // Biometria usa o animalId como entityId (o JSON não tem id de linha), e o rótulo
+          // da medida como `field` — ver a rota PUT de /biometry.
+          { entity: "Biometry", entityId: id },
           { entity: "Sample", entityId: { in: sampleIds } },
           { entity: "Analysis", entityId: { in: analysisIds } },
           { entity: "NecropsySystemExam", entityId: { in: systemExams.map((e) => e.id) } },

@@ -6,6 +6,8 @@ import ExcelJS from "exceljs"
 
 import { txt, pathogenName, type I18nText } from "@/lib/catalog-i18n"
 import { buildDescriptiveDiagnosis } from "@/lib/necropsy-report"
+import { normalizeLabel, unitForMeasure, withWeight } from "@/lib/biometry"
+import type { AnimalBiometry } from "@/types/biometry"
 import type { SexValue, LifeStageValue } from "@/lib/animal-enums"
 
 type Result = "POSITIVO" | "NEGATIVO" | "INCONCLUSIVO"
@@ -86,6 +88,8 @@ export type XlsxAnimal = {
   // Laudo anatomopatológico: macro por sistema e micro por órgão.
   necropsySystems: XlsxSystemExam[]
   histopathology: XlsxHistopathology[]
+  // Biometria (PMP > Biometria do SIMBA). Já convertida de Prisma.JsonValue pelo chamador.
+  biometry: AnimalBiometry | null
 }
 
 type Loc = "pt" | "en"
@@ -376,6 +380,69 @@ export async function buildAnimalsXlsx(animals: XlsxAnimal[], locale: string): P
     }
   }
 
+  addBiometrySheet(wb, animals, loc)
+
   const buf = await wb.xlsx.writeBuffer()
   return Buffer.from(buf)
+}
+
+/**
+ * Aba de biometria: uma LINHA por indivíduo e uma COLUNA por medida — o formato que alimenta
+ * análise de crescimento e condição corporal direto no R/Excel, sem pivotar.
+ *
+ * As colunas não saem de uma lista fixa (não existe catálogo de medidas — ver
+ * docs/PLANO_BIOMETRIA.md): são descobertas varrendo os animais do recorte, agrupadas por
+ * FORMULÁRIO, porque medidas de odontoceto e de quelônio não se comparam e misturá-las numa
+ * planilha só produziria uma matriz esparsa ilegível.
+ */
+function addBiometrySheet(wb: ExcelJS.Workbook, animals: XlsxAnimal[], loc: Loc): void {
+  const withBio = animals.filter((a) => a.biometry && a.biometry.measures.length > 0)
+  if (withBio.length === 0) return
+
+  const ws = wb.addWorksheet(loc === "en" ? "Biometrics" : "Biometria")
+  // Ordem das colunas = ordem do formulário do SIMBA (sequência anatômica), tomada do
+  // primeiro animal em que cada rótulo aparece. Alfabético embaralharia.
+  const labels = new Map<string, string>()
+  for (const a of withBio) {
+    for (const m of a.biometry!.measures) {
+      const key = normalizeLabel(m.label)
+      if (key && !labels.has(key)) labels.set(key, m.label)
+    }
+  }
+  const cols = [...labels.entries()]
+
+  ws.columns = [
+    { header: loc === "en" ? "Individual" : "Indivíduo", key: "animal", width: 18 },
+    { header: loc === "en" ? "Species" : "Espécie", key: "species", width: 24 },
+    { header: loc === "en" ? "Form" : "Formulário", key: "group", width: 16 },
+    ...cols.map(([key, label], i) => ({
+      // O cabeçalho leva a unidade, que não vive na medida — é derivada do rótulo na
+      // exibição (ver lib/biometry.ts §unitForMeasure).
+      header: `${label} (${unitForMeasure(label, withBio[0]?.biometry?.unit)})`,
+      key: `m${i}_${key.slice(0, 20)}`,
+      width: 18,
+    })),
+  ]
+  ws.getRow(1).font = { bold: true }
+  ws.views = [{ state: "frozen", ySplit: 1 }]
+
+  for (const a of withBio) {
+    const bio = a.biometry!
+    // O peso vive na coluna do animal, não no JSON — recolocado no slot do rótulo para a
+    // planilha sair na ordem do formulário.
+    const byLabel = new Map(
+      withWeight(bio.measures, a.necropsyWeightKg).map((m) => [normalizeLabel(m.label), m.value]),
+    )
+    const row: Record<string, string | number> = {
+      animal: a.controlId ?? a.simbaRecordNumber ?? "",
+      species: a.species ?? UNDETERMINED_SPECIES[loc],
+      group: bio.group ?? "",
+    }
+    cols.forEach(([key], i) => {
+      const v = byLabel.get(key)
+      // Célula vazia = "Não informado". Distinguir de zero importa: zero dente é achado.
+      row[`m${i}_${key.slice(0, 20)}`] = v == null ? "" : v
+    })
+    ws.addRow(row)
+  }
 }

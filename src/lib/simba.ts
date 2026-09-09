@@ -18,6 +18,21 @@ const DEFAULT_SIMBA_URL = "https://simba.petrobras.com.br/simba/web/api/v1/occur
 // Timeout defensivo para não prender o request caso o SIMBA demore.
 const TIMEOUT_MS = 15_000
 
+/** Uma medida do formulário. `value: null` = campo existe mas não foi medido. */
+export type SimbaMeasure = { label: string; value: number | null }
+
+/** Bloco de biometria de um registro, como o SIMBA entregou. */
+export type SimbaBiometry = {
+  // Formulário usado ("Odontoceti", "Quelônio", "Aves voadoras", "Mysticeti", "Pinípedes"),
+  // literal do `measurementID`. É o SIMBA que diz — não há inferência taxonômica.
+  group: string | null
+  // Unidade BASE do registro (`measurementUnit`, sempre "Cm" nos registros observados). Vale
+  // para as medidas de comprimento; peso e contagem de dentes são derivados do rótulo na
+  // exibição — ver unitForMeasure em lib/biometry.ts.
+  unit: string | null
+  measures: SimbaMeasure[]
+}
+
 export type SimbaRecord = {
   simbaRecordNumber: string
   species: string | null
@@ -39,6 +54,13 @@ export type SimbaRecord = {
   // "Exame externo": texto livre de observações (occurrenceRemarks). Os demais campos
   // de necrópsia (condição da carcaça/escore/morte) NÃO são exportados pela API do SIMBA.
   macroscopicNotes: string | null
+  // Biometria completa (PMP > Biometria). Null quando o registro não tem medidas ou quando o
+  // pareamento não é confiável — ver alignedMeasurements.
+  biometry: SimbaBiometry | null
+  // Quantos rótulos e valores o SIMBA mandou. Existe para a tela explicar POR QUE a biometria
+  // foi recusada ("enviou 24 rótulos e 23 valores") em vez de sumir sem dizer nada — silêncio
+  // aqui foi o modo de falha do bug do peso. Null quando o registro não tem biometria.
+  measurementCounts: { labels: number; values: number } | null
 }
 
 function endpointFor(recordNumber: string): string {
@@ -156,25 +178,95 @@ function measurementList(v: string | null): string[] {
   return quoted.length > 0 ? quoted : v.split(",").map((s) => s.trim())
 }
 
+/** Nome do formulário usado, extraído de `measurementID` ("ID: 225696, Odontoceti"). */
+function measurementGroup(xml: string): string | null {
+  const raw = term(xml, "measurementID")
+  if (!raw) return null
+  const parts = raw.split(",")
+  const last = parts[parts.length - 1]?.trim()
+  return last && parts.length > 1 ? last : null
+}
+
 /**
- * Valor numérico da medida cujo NOME casa com `matches` (ex.: "Peso total").
+ * Defeito conhecido da exportação do SIMBA: formulário → índice (0-based) do rótulo que NÃO
+ * recebe slot em `measurementValue`.
  *
- * O pareamento é POSICIONAL, e o SIMBA nem sempre honra isso: o formulário "Odontoceti"
- * declara 24 rótulos e emite 23 valores — não existe slot para "Comprimento posterior da
- * nadadeira peitoral", e tudo a partir dele anda uma casa. Lido por índice, o "Peso total"
- * de um Sotalia adulto de 198 cm virava 13 kg (que é a largura da nadadeira peitoral, em cm)
- * no lugar dos 85,5 kg reais.
+ * O formulário "Odontoceti" declara 24 rótulos e emite 23 valores, omitindo sempre o de
+ * "Comprimento posterior da nadadeira peitoral" (11º) — e tudo a partir dele anda uma casa.
+ * O campo TEM dado no SIMBA (aparece preenchido na tela do PMP), só não vem na API.
  *
- * Com as listas de tamanhos diferentes não há como saber ONDE começa o buraco, então o
- * pareamento é recusado inteiro: medida em branco, para alguém pesar na necrópsia, é melhor
- * que número errado gravado como dado científico.
+ * Verificado em 495 indivíduos de 12 espécies (Sotalia guianensis, Pontoporia blainvillei,
+ * Tursiops truncatus, Stenella frontalis, Steno bredanensis, Kogia breviceps, Physeter
+ * macrocephalus…), 100% deles, com uma única variação de lista de rótulos. Compensando o
+ * deslocamento, o expoente de escala do "Peso total" contra o comprimento vai de 0,46
+ * (assinatura de medida linear) para 2,86 — massa cresce com o cubo. Ver docs/PLANO_BIOMETRIA.md.
  */
-function measurementValueFor(xml: string, matches: (label: string) => boolean): number | null {
+const SIMBA_MISSING_SLOT: Record<string, number> = { Odontoceti: 10 }
+
+/**
+ * Pareia `measurementType` com `measurementValue` respeitando a POSIÇÃO, compensando o
+ * defeito conhecido acima.
+ *
+ * Devolve `null` quando o pareamento não é confiável — listas de tamanhos diferentes fora do
+ * caso conhecido. Sem saber ONDE está o buraco, cada valor cairia sob o rótulo errado: foi
+ * assim que o "Peso total" de um Sotalia adulto de 198 cm virou 13 kg (a largura da nadadeira
+ * peitoral, em cm) no lugar dos 85,5 kg reais. Medida em branco, para alguém preencher na
+ * necrópsia, é melhor que número errado gravado como dado científico.
+ */
+function alignedMeasurements(xml: string): { label: string; raw: string }[] | null {
   const types = measurementList(term(xml, "measurementType"))
   const values = measurementList(term(xml, "measurementValue"))
-  if (types.length !== values.length) return null
-  const i = types.findIndex((t) => matches(t.trim().toLowerCase()))
-  return i === -1 ? null : toFloat(values[i]?.trim() || null)
+  if (types.length === 0) return null
+
+  if (types.length === values.length) {
+    return types.map((label, i) => ({ label, raw: values[i] ?? "" }))
+  }
+
+  // Único desvio tolerado: falta exatamente um valor E o formulário é um dos conhecidos.
+  const gap = SIMBA_MISSING_SLOT[measurementGroup(xml) ?? ""]
+  if (types.length !== values.length + 1 || gap === undefined || gap >= types.length) return null
+
+  return types.map((label, i) => ({
+    label,
+    // O rótulo do buraco fica sem valor; os seguintes descem uma casa.
+    raw: i === gap ? "" : (values[i < gap ? i : i - 1] ?? ""),
+  }))
+}
+
+/** Quantos rótulos e valores vieram — a tela usa para explicar uma recusa de pareamento. */
+function measurementCounts(xml: string): { labels: number; values: number } | null {
+  const labels = measurementList(term(xml, "measurementType")).length
+  if (labels === 0) return null
+  return { labels, values: measurementList(term(xml, "measurementValue")).length }
+}
+
+/** Valor numérico da medida cujo NOME casa com `matches` (ex.: "Peso total"). */
+function measurementValueFor(xml: string, matches: (label: string) => boolean): number | null {
+  const pairs = alignedMeasurements(xml)
+  if (!pairs) return null
+  const hit = pairs.find((p) => matches(p.label.trim().toLowerCase()))
+  return hit ? toFloat(hit.raw.trim() || null) : null
+}
+
+/**
+ * Biometria completa do registro, na ordem do formulário e com o rótulo LITERAL do SIMBA
+ * (sem tradução — ver docs/PLANO_BIOMETRIA.md §Princípio).
+ *
+ * Todos os campos do formulário entram, inclusive os não medidos (`value: null`, que a tela do
+ * SIMBA desenha como "Não informado"). Guardar os vazios é o que faz a primeira importação de
+ * um grupo ensinar o formulário inteiro ao autocompletar do cadastro manual.
+ *
+ * `null` quando não há biometria ou quando o pareamento não é confiável (ver acima).
+ */
+export function parseMeasurements(xml: string): SimbaBiometry | null {
+  const r = firstRecordBlock(xml)
+  const pairs = alignedMeasurements(r)
+  if (!pairs) return null
+  return {
+    group: measurementGroup(r),
+    unit: term(r, "measurementUnit"),
+    measures: pairs.map(({ label, raw }) => ({ label, value: toFloat(raw.trim() || null) })),
+  }
 }
 
 /** Faz o parse de um XML Darwin Core (SimpleDarwinRecordSet) em SimbaRecord. */
@@ -202,6 +294,8 @@ export function parseDarwinCore(xml: string, recordNumber: string): SimbaRecord 
     lifeStage: normalizeLifeStage(firstTerm(r, ["lifeStage"])),
     necropsyWeightKg: weight && weight > 0 ? weight : null,
     macroscopicNotes: firstTerm(r, ["occurrenceRemarks"]),
+    biometry: parseMeasurements(r),
+    measurementCounts: measurementCounts(r),
   }
 }
 

@@ -854,7 +854,8 @@
     "idLinkAction": "Vincular à minha pesquisa",
     "shareConflictSelectResearch": "Selecione a pesquisa no formulário para poder pedir o compartilhamento.",
     "sharePendingAlready": "Este pedido já está em aberto",
-    "necropsyTab": "Necrópsia"
+    "necropsyTab": "Necrópsia",
+    "biometryTab": "Biometria"
   },
   "samples": {
     "new": "Nova amostra",
@@ -1067,6 +1068,38 @@
     "site": "Local",
     "sitePlaceholder": "Ex.: região ventral",
     "scrollHint": "Role na horizontal para os campos de parasitas"
+  },
+  "biometry": {
+    "tab": "Biometria",
+    "group": "Formulário",
+    "groupNone": "Não definido",
+    "groupPlaceholder": "Ex.: Odontoceti, Quelônio",
+    "measure": "Medida",
+    "measurePlaceholder": "Nome da medida",
+    "value": "Valor",
+    "notInformed": "Não informado",
+    "progress": "{filled} de {total} medidas",
+    "addMeasure": "Adicionar medida",
+    "removeMeasure": "Remover medida",
+    "emptyTitle": "Sem biometria registrada",
+    "emptyHint": "Use \"Editar\" para adicionar as medidas tomadas na necrópsia.",
+    "emptyHintSimba": "Importe do SIMBA ou use \"Editar\" para adicionar as medidas manualmente.",
+    "saved": "Biometria salva",
+    "saveError": "Não foi possível salvar a biometria",
+    "duplicateLabel": "A medida \"{label}\" está repetida",
+    "invalidValue": "Valor inválido em \"{label}\"",
+    "import": "Importar do SIMBA",
+    "importTitle": "Buscar a biometria no registro do SIMBA",
+    "importNoRecord": "O indivíduo não tem número de registro do SIMBA",
+    "importError": "Não foi possível buscar a biometria no SIMBA",
+    "importEmpty": "O registro do SIMBA não tem biometria",
+    "importMismatch": "Biometria não importada",
+    "importMismatchDesc": "O SIMBA enviou {labels} rótulos e {values} valores. Sem saber a que medida cada valor pertence, importar gravaria números trocados.",
+    "importConfirmTitle": "Importar biometria do SIMBA?",
+    "importConfirmChanged": "{count} medidas vieram do SIMBA, {changed} diferentes do que está salvo. As atuais serão substituídas.",
+    "importConfirmSame": "{count} medidas vieram do SIMBA, iguais às que já estão salvas.",
+    "importConfirmAction": "Importar",
+    "summaryEmpty": "Sem biometria registrada"
   },
   "tutorial": {
     "title": "Como usar o MARES",

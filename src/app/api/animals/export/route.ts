@@ -13,6 +13,7 @@ import { inResearches } from "@/lib/animal-participation"
 import { apiError, unauthorized } from "@/lib/api"
 import { buildDarwinCoreXml, dwcAnimalSelect } from "@/lib/darwin-core"
 import { buildAnimalsXlsx } from "@/lib/animals-xlsx"
+import { toBiometry } from "@/lib/biometry-db"
 import { necropsyExportSelect } from "@/lib/necropsy"
 
 const exportSchema = z.object({
@@ -28,6 +29,7 @@ const exportSelect = {
   deathCondition: true,
   necropsyDate: true,
   necropsyWeightKg: true,
+  measurements: true,
   executingInstitution: true,
   isPublic: true,
   _count: { select: { samples: true } },
@@ -97,7 +99,11 @@ export async function POST(req: NextRequest) {
     }
 
     const locale = await getLocale()
-    const buffer = await buildAnimalsXlsx(animals, locale)
+    const buffer = await buildAnimalsXlsx(
+      // A coluna é JSONB livre; toBiometry valida a forma antes de a planilha usá-la.
+      animals.map((a) => ({ ...a, biometry: toBiometry(a.measurements) })),
+      locale,
+    )
     return new Response(new Uint8Array(buffer), {
       headers: {
         "Content-Type": XLSX_MIME,

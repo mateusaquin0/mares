@@ -395,6 +395,12 @@ model Animal {
   executingInstitution String?
   eventDate            DateTime?
   macroscopicNotes     String? // "Exame externo" (occurrenceRemarks no SIMBA)
+  // Biometria (PMP > Biometria do SIMBA), como ele entregou: { group, unit, measures[] }.
+  // O rótulo é o texto LITERAL do SIMBA e também o exibido na tela — sem catálogo e sem
+  // tradução, para o sistema aceitar qualquer espécie sem mapeamento prévio. Medida sem
+  // valor entra como null ("Não informado"), o que faz a primeira importação de um grupo
+  // ensinar o formulário inteiro ao autocompletar. Ver docs/PLANO_BIOMETRIA.md.
+  measurements         Json?
   source               String                  @default("manual")
   isPublic             Boolean                 @default(false)
   researchId           String
