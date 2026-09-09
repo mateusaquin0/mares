@@ -206,7 +206,7 @@ const COLUMNS: { key: string; pt: string; en: string; width: number }[] = [
   { key: "bodyCondition", pt: "Condição da carcaça", en: "Body condition", width: 18 },
   { key: "decomposition", pt: "Escore corporal", en: "Decomposition score", width: 18 },
   { key: "deathCondition", pt: "Condição da morte", en: "Death condition", width: 18 },
-  { key: "eventDate", pt: "Data do encalhe", en: "Stranding date", width: 16 },
+  { key: "eventDate", pt: "Data da ocorrência", en: "Occurrence date", width: 16 },
   { key: "necropsyDate", pt: "Data de necrópsia", en: "Necropsy date", width: 16 },
   { key: "necropsyWeight", pt: "Peso na necrópsia (kg)", en: "Necropsy weight (kg)", width: 20 },
   { key: "municipality", pt: "Município", en: "Municipality", width: 18 },

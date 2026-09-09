@@ -1,7 +1,7 @@
 {
   "metadata": {
     "title": "MARES — Monitoramento e Análise de Registros de Espécies Marinhas",
-    "description": "Plataforma para registro, consulta e análise de dados patológicos de fauna marinha encalhada."
+    "description": "Plataforma para registro, consulta e análise de dados patológicos de ocorrências de fauna marinha."
   },
   "common": {
     "tagline": "Monitoramento e Análise de Registros de Espécies Marinhas",
@@ -32,26 +32,26 @@
     "reload": "Atualizar"
   },
   "authPanel": {
-    "brandTitle": "Monitoramento colaborativo de fauna marinha encalhada",
+    "brandTitle": "Monitoramento colaborativo de ocorrências de fauna marinha",
     "brandDesc": "Registre animais, amostras de necrópsia e resultados laboratoriais. Visualize padrões geográficos e epidemiológicos entre grupos de pesquisa.",
     "brandFooter": "Plataforma acadêmica · acesso por grupo de pesquisa"
   },
   "landing": {
     "signIn": "Entrar",
     "goToApp": "Ir para o painel",
-    "eyebrow": "Fauna marinha encalhada",
-    "heroTitle": "Encalhes de fauna marinha, no mapa e abertos à sociedade",
-    "heroSubtitle": "O MARES reúne registros de animais marinhos encalhados no litoral brasileiro — espécie, localização e patógenos detectados — em um mapa público e navegável.",
+    "eyebrow": "Ocorrências de fauna marinha",
+    "heroTitle": "Ocorrências de fauna marinha, no mapa e abertas à sociedade",
+    "heroSubtitle": "O MARES reúne registros de ocorrências de animais marinhos no litoral brasileiro — espécie, localização e patógenos detectados — em um mapa público e navegável.",
     "exploreMap": "Explorar o mapa público",
     "viewMap": "Ver mapa",
     "featuresTitle": "O que você encontra aqui",
-    "featureMapTitle": "Mapa público de encalhes",
-    "featureMapDesc": "Veja onde animais marinhos encalharam e quais patógenos foram detectados — sem login, com filtros por espécie, período e região.",
+    "featureMapTitle": "Mapa público de ocorrências",
+    "featureMapDesc": "Veja onde ocorrências de animais marinhos foram registradas e quais patógenos foram detectados — sem login, com filtros por espécie, período e região.",
     "featureRecordTitle": "Registro científico",
     "featureRecordDesc": "Grupos de pesquisa cadastram animais, amostras de necrópsia e análises laboratoriais com rastreabilidade e histórico de alterações.",
     "featureOpenTitle": "Dados abertos",
     "featureOpenDesc": "Exportação em Darwin Core e Excel, alinhada aos padrões da biodiversidade global (SIMBA, WoRMS).",
-    "footerNote": "Projeto acadêmico · dados públicos de fauna marinha encalhada",
+    "footerNote": "Projeto acadêmico · dados públicos de ocorrências de fauna marinha",
     "footerTerms": "Termos de Uso"
   },
   "login": {
@@ -228,18 +228,18 @@
     "filterTo": "Até",
     "clearFilters": "Limpar filtros",
     "statPositives": "Resultados positivos",
-    "chartTimelineTitle": "Encalhes ao longo do tempo",
-    "chartTimelineEmpty": "Sem encalhes com data para exibir.",
-    "timelineCount": "Encalhes",
+    "chartTimelineTitle": "Ocorrências ao longo do tempo",
+    "chartTimelineEmpty": "Sem ocorrências com data para exibir.",
+    "timelineCount": "Ocorrências",
     "heatmapTitle": "Mapa de calor",
-    "heatmapDesc": "Concentração geográfica dos encalhes registrados.",
-    "heatmapEmpty": "Nenhum encalhe com coordenadas para exibir."
+    "heatmapDesc": "Concentração geográfica das ocorrências registradas.",
+    "heatmapEmpty": "Nenhuma ocorrência com coordenadas para exibir."
   },
   "map": {
     "title": "Mapa",
-    "subtitle": "Distribuição geográfica dos encalhes do grupo de pesquisa ativo.",
-    "publicTitle": "Mapa de encalhes",
-    "publicSubtitle": "Registros públicos de fauna marinha encalhada monitorados pelos grupos de pesquisa.",
+    "subtitle": "Distribuição geográfica das ocorrências do grupo de pesquisa ativo.",
+    "publicTitle": "Mapa de ocorrências",
+    "publicSubtitle": "Registros públicos de ocorrências de fauna marinha monitorados pelos grupos de pesquisa.",
     "login": "Entrar",
     "filterSpecies": "Espécie",
     "filterPathogen": "Patógeno",
@@ -259,7 +259,7 @@
     "allVisibility": "Todas",
     "noOptions": "Nenhuma opção",
     "clear": "Limpar filtros",
-    "resultsCount": "{count, plural, =0 {Nenhum encalhe} one {# encalhe} other {# encalhes}}",
+    "resultsCount": "{count, plural, =0 {Nenhuma ocorrência} one {# ocorrência} other {# ocorrências}}",
     "exportCsv": "Exportar CSV",
     "csvControlId": "ID de controle",
     "csvSpecies": "Espécie",
@@ -268,12 +268,12 @@
     "csvMunicipality": "Município",
     "csvState": "Estado",
     "csvBeach": "Praia",
-    "csvDate": "Data do encalhe",
+    "csvDate": "Data da ocorrência",
     "csvLat": "Latitude",
     "csvLon": "Longitude",
     "csvResearch": "Pesquisa",
     "csvPathogens": "Patógenos positivos",
-    "empty": "Nenhum encalhe com coordenadas para exibir.",
+    "empty": "Nenhuma ocorrência com coordenadas para exibir.",
     "legendPublic": "Público",
     "legendHidden": "Oculto",
     "popupDate": "Data",
@@ -286,7 +286,7 @@
   "terms": {
     "title": "Termos de Uso",
     "version": "Versão {version}",
-    "intro": "Bem-vindo ao MARES. Ao solicitar acesso ou ativar sua conta, você concorda com os termos abaixo, que regem o uso da plataforma de registro e análise de dados patológicos de fauna marinha encalhada.",
+    "intro": "Bem-vindo ao MARES. Ao solicitar acesso ou ativar sua conta, você concorda com os termos abaixo, que regem o uso da plataforma de registro e análise de dados patológicos de ocorrências de fauna marinha.",
     "acceptLabel": "Li e aceito os <link>Termos de Uso</link>",
     "data": {
       "title": "1. Dados e finalidade",
@@ -683,7 +683,7 @@
   },
   "animals": {
     "title": "Animais",
-    "subtitle": "Encalhes registrados nas pesquisas do grupo de pesquisa ativo.",
+    "subtitle": "Ocorrências registradas nas pesquisas do grupo de pesquisa ativo.",
     "new": "Novo animal",
     "empty": "Nenhum animal registrado ainda.",
     "noResearch": "Crie uma pesquisa antes de registrar animais.",
@@ -732,9 +732,9 @@
     "notFound": "Animal não encontrado.",
     "createTitle": "Novo animal",
     "editTitle": "Editar animal",
-    "createDesc": "Registre o encalhe. Campos marcados com * são obrigatórios.",
+    "createDesc": "Registre a ocorrência. Campos marcados com * são obrigatórios.",
     "sectionIdentification": "Identificação",
-    "sectionStranding": "Encalhe",
+    "sectionStranding": "Ocorrência",
     "sectionCondition": "Condição",
     "sectionNotes": "Observações",
     "research": "Pesquisa",
@@ -770,9 +770,9 @@
     "municipality": "Município",
     "state": "Estado / UF",
     "executingInstitution": "Instituição executora",
-    "eventDate": "Data do encalhe",
+    "eventDate": "Data da ocorrência",
     "macroscopicNotes": "Observações",
-    "strandingLocationMap": "Local do encalhe",
+    "strandingLocationMap": "Local da ocorrência",
     "shareTitle": "Pesquisas",
     "shareDesc": "Pesquisas do grupo que estudam este indivíduo. A primária é a criadora; ao envolver outra pesquisa, o vínculo só vale depois que ela aceitar.",
     "sharePrimary": "primária",
@@ -793,7 +793,7 @@
     "deleteDesc": "Excluir este animal? Esta ação é irreversível.",
     "deleted": "Animal excluído",
     "deleteError": "Não foi possível excluir",
-    "detailInfo": "Dados do encalhe",
+    "detailInfo": "Dados da ocorrência",
     "samplesTab": "Amostras",
     "analysesTab": "Análises",
     "mediaTab": "Mídia",
@@ -1132,7 +1132,7 @@
     "sections": {
       "overview": {
         "title": "Visão geral e papéis",
-        "body": "O MARES organiza o registro de fauna marinha encalhada por grupo de pesquisa. Abaixo, o fluxo padrão de uso.",
+        "body": "O MARES organiza o registro de ocorrências de fauna marinha por grupo de pesquisa. Abaixo, o fluxo padrão de uso.",
         "points": [
           "Admin da aplicação: aprova solicitações e supervisiona grupos e usuários; não acessa dados científicos.",
           "Admin do grupo de pesquisa: gerencia membros, pesquisas, protocolos e o glossário.",
@@ -1182,11 +1182,11 @@
       },
       "animal": {
         "title": "5. Cadastrar o animal (indivíduo)",
-        "body": "O animal representa o indivíduo físico encalhado.",
+        "body": "O animal representa o indivíduo físico da ocorrência.",
         "points": [
           "Cadastre em 'Animais', escolhendo a pesquisa de origem. É possível importar dados do SIMBA pelo número de registro.",
           "Antes de preencher o resto, use a lupa ao lado do ID de controle para conferir se o indivíduo já existe no grupo — inclusive em pesquisas que você não acessa.",
-          "Campos de encalhe (data, local, coordenadas) podem ser marcados como 'sem informação' quando não disponíveis.",
+          "Campos da ocorrência (data, local, coordenadas) podem ser marcados como 'sem informação' quando não disponíveis.",
           "A visibilidade pública efetiva do animal exige que ele E a pesquisa sejam públicos.",
           "O ID de controle e o nº SIMBA são únicos no grupo inteiro: se o indivíduo já foi cadastrado por outra pesquisa, o cadastro é recusado — veja o tópico seguinte."
         ]
@@ -1199,7 +1199,7 @@
           "Se a pesquisa escolhida não for sua, vai um convite: ela precisa aceitar antes de enxergar o indivíduo (até lá, aparece como 'aguardando').",
           "No sentido inverso: ao cadastrar um animal cujo ID de controle ou SIMBA já existe numa pesquisa que você não acessa, o aviso oferece pedir o indivíduo — quem decide é a pesquisa de origem.",
           "Os pedidos e convites que aguardam a SUA resposta ficam no topo da tela 'Animais'.",
-          "Compartilhar dá acesso ao indivíduo (identidade, encalhe), nunca às amostras e análises da outra pesquisa — cada uma mantém as suas."
+          "Compartilhar dá acesso ao indivíduo (identidade, ocorrência), nunca às amostras e análises da outra pesquisa — cada uma mantém as suas."
         ]
       },
       "necropsy": {
@@ -1240,7 +1240,7 @@
       },
       "map": {
         "title": "11. Mapa e dados públicos",
-        "body": "Os encalhes aparecem em um mapa navegável.",
+        "body": "As ocorrências aparecem em um mapa navegável.",
         "points": [
           "O mapa interno mostra os animais que você enxerga; o mapa público (sem login) mostra apenas os efetivamente públicos.",
           "Filtre a listagem de animais por espécie, UF, patógeno, pesquisa, período e mais."
