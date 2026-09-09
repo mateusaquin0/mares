@@ -41,7 +41,13 @@ ALTER TABLE "GrossFinding"
 -- 2. Fora o vínculo órgão↔sistema
 -- ─────────────────────────────────────────────────────────────
 
-ALTER TABLE "OrganSystem" DROP CONSTRAINT "OrganSystem_organId_fkey";
-ALTER TABLE "OrganSystem" DROP CONSTRAINT "OrganSystem_systemId_fkey";
+-- `IF EXISTS` porque nenhuma migration do histórico CRIA esta tabela: ela nasceu numa versão
+-- de 20260823000000_necropsy_system_catalog que foi editada antes do merge, depois de já ter
+-- sido aplicada em produção. Lá a sequência funcionou (criou, depois apagou); num banco LIMPO
+-- o drop encontrava o vazio e abortava com 42P01, quebrando `prisma migrate deploy` — e com
+-- ele os jobs `integration` e `e2e`, além de qualquer ambiente novo.
+-- Em produção isto é no-op: a tabela já não existe.
+ALTER TABLE IF EXISTS "OrganSystem" DROP CONSTRAINT IF EXISTS "OrganSystem_organId_fkey";
+ALTER TABLE IF EXISTS "OrganSystem" DROP CONSTRAINT IF EXISTS "OrganSystem_systemId_fkey";
 
-DROP TABLE "OrganSystem";
+DROP TABLE IF EXISTS "OrganSystem";
