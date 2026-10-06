@@ -9,9 +9,12 @@ import { getLocale } from "next-intl/server"
 import { prisma } from "@/lib/prisma"
 import { getAuthUser, getActiveOrgId, requireOrgRole } from "@/lib/auth"
 import { getResearchScope } from "@/lib/research-access"
+import { inResearches } from "@/lib/animal-participation"
 import { apiError, unauthorized } from "@/lib/api"
 import { buildDarwinCoreXml, dwcAnimalSelect } from "@/lib/darwin-core"
 import { buildAnimalsXlsx } from "@/lib/animals-xlsx"
+import { toBiometry } from "@/lib/biometry-db"
+import { necropsyExportSelect } from "@/lib/necropsy"
 
 const exportSchema = z.object({
   ids: z.array(z.string().min(1)).min(1),
@@ -25,8 +28,12 @@ const exportSelect = {
   decompositionStage: true,
   deathCondition: true,
   necropsyDate: true,
+  necropsyWeightKg: true,
+  measurements: true,
+  executingInstitution: true,
   isPublic: true,
   _count: { select: { samples: true } },
+  ...necropsyExportSelect,
   // Amostras + análises (para os resultados na planilha Excel).
   samples: {
     select: {
@@ -64,10 +71,7 @@ export async function POST(req: NextRequest) {
     const scope = await getResearchScope(user, orgId)
     const animalWhere: Prisma.AnimalWhereInput = { id: { in: ids }, research: { orgId } }
     if (!scope.all) {
-      animalWhere.OR = [
-        { researchId: { in: scope.ids } },
-        { participations: { some: { researchId: { in: scope.ids } } } },
-      ]
+      animalWhere.OR = inResearches(scope.ids)
     }
 
     const animals = await prisma.animal.findMany({
@@ -95,7 +99,11 @@ export async function POST(req: NextRequest) {
     }
 
     const locale = await getLocale()
-    const buffer = await buildAnimalsXlsx(animals, locale)
+    const buffer = await buildAnimalsXlsx(
+      // A coluna é JSONB livre; toBiometry valida a forma antes de a planilha usá-la.
+      animals.map((a) => ({ ...a, biometry: toBiometry(a.measurements) })),
+      locale,
+    )
     return new Response(new Uint8Array(buffer), {
       headers: {
         "Content-Type": XLSX_MIME,

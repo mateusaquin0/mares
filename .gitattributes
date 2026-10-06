@@ -1,0 +1,23 @@
+# Finais de linha: LF no repositório E na cópia de trabalho, em qualquer sistema.
+#
+# Por que existe: com `core.autocrlf=true` (padrão do Git for Windows), o git converte os
+# arquivos para CRLF ao baixar. O repositório continua em LF, mas o disco fica em CRLF —
+# e o Prettier espera LF. Resultado: `npm run format:check` reprovava ~58 arquivos apenas
+# na máquina de quem usa Windows, sem nenhuma diferença real de conteúdo, tornando o
+# comando inútil localmente (no CI, que roda em Linux, sempre passou).
+#
+# `eol=lf` tem precedência sobre core.autocrlf, então isto vale para qualquer clone sem
+# exigir que cada pessoa configure o git dela.
+* text=auto eol=lf
+
+# Binários: nunca converter.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.webp binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.pdf binary

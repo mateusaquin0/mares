@@ -11,6 +11,7 @@ type AddMemberData = z.infer<typeof addMemberSchema>
 export const adminService = {
   listUsers: () => http.get<AdminUser[]>("/api/admin/users"),
   removeUser: (id: string) => http.del(`/api/admin/users/${id}`),
+  resendUserInvite: (id: string) => http.post(`/api/admin/users/${id}/resend-invite`),
 
   listPendingRequests: () => http.get<JoinRequest[]>("/api/admin/access-requests?status=PENDING"),
   actOnRequest: (id: string, action: "approve" | "reject") =>

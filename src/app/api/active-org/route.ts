@@ -33,3 +33,18 @@ export async function POST(req: NextRequest) {
     return apiError(err)
   }
 }
+
+// Apaga o cookie de organização ativa — usado no logout.
+//
+// O cookie é httpOnly com validade de um ano, então o cliente não consegue removê-lo
+// sozinho e ele sobreviveria à troca de conta. Não há risco de vazamento (getActiveOrgId
+// valida o id contra os vínculos de quem está logado), mas quem entrasse depois e também
+// pertencesse àquele grupo cairia nele em vez de no seu próprio padrão.
+//
+// Não exige sessão de propósito: apagar um cookie do próprio navegador não é operação
+// privilegiada, e assim continua funcionando se chamado depois do signOut.
+export async function DELETE() {
+  const cookieStore = await cookies()
+  cookieStore.delete(ACTIVE_ORG_COOKIE)
+  return new NextResponse(null, { status: 204 })
+}

@@ -73,8 +73,7 @@ export function useDragScroll<T extends HTMLElement>(resolve?: (node: T) => HTML
       el.style.userSelect = ""
     }
 
-    // "grab" (mão aberta) sinaliza que a área é arrastável; estilo inline evita depender do
-    // Tailwind gerar essas classes a partir deste arquivo (fora do `content` do tailwind.config).
+    // Estilo inline: o Tailwind não varre este arquivo (fora do `content` do tailwind.config).
     el.style.cursor = "grab"
     el.addEventListener("mousedown", onDown)
     window.addEventListener("mousemove", onMove)

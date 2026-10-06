@@ -3,7 +3,7 @@
 import { useState, useCallback } from "react"
 import { useLocale, useTranslations } from "next-intl"
 import { toast } from "sonner"
-import { Crown } from "lucide-react"
+import { Crown, Send } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -12,7 +12,7 @@ import { TableSkeleton } from "@/components/ui/skeleton"
 import { ConfirmDialog } from "@/components/confirm-dialog"
 import { useErrorMessage } from "@/lib/use-error-message"
 import { useTable } from "@/lib/use-table"
-import { useAdminUsers, useRemoveUser } from "@/hooks/use-admin"
+import { useAdminUsers, useRemoveUser, useResendUserInvite } from "@/hooks/use-admin"
 import type { AdminUser } from "@/types/admin"
 import {
   Table,
@@ -36,7 +36,9 @@ export default function AdminUsersPage() {
   const users = usersQ.data ?? []
   const loading = usersQ.isLoading
   const removeM = useRemoveUser()
+  const resendM = useResendUserInvite()
   const [busy, setBusy] = useState<string | null>(null)
+  const [resending, setResending] = useState<string | null>(null)
 
   const statusLabel = useCallback(
     (s: string) =>
@@ -85,6 +87,18 @@ export default function AdminUsersPage() {
     }
   }
 
+  async function resend(u: AdminUser) {
+    setResending(u.id)
+    try {
+      await resendM.mutateAsync(u.id)
+      toast.success(t("resendSuccess"))
+    } catch (err) {
+      toast.error(t("resendError"), { description: em(err) })
+    } finally {
+      setResending(null)
+    }
+  }
+
   return (
     <div className="mx-auto max-w-6xl space-y-6 p-8">
       <div>
@@ -118,7 +132,7 @@ export default function AdminUsersPage() {
                   <SortableHead sortKey="status" sort={table.sort} onToggle={table.toggleSort}>
                     {t("colStatus")}
                   </SortableHead>
-                  <TableHead className="w-24 text-right">
+                  <TableHead className="w-44 text-right">
                     <ReloadButton />
                   </TableHead>
                 </TableRow>
@@ -153,23 +167,39 @@ export default function AdminUsersPage() {
                       <TableCell>
                         <Badge variant="secondary">{statusLabel(u.status)}</Badge>
                       </TableCell>
-                      <TableCell className="text-right">
-                        <ConfirmDialog
-                          title={t("deleteTitle")}
-                          description={t("deleteDesc", { email: u.email })}
-                          confirmLabel={tc("delete")}
-                          destructive
-                          onConfirm={() => remove(u)}
-                          trigger={
+                      <TableCell>
+                        <div className="flex items-center justify-end gap-2">
+                          {u.status === "INVITED" && (
                             <Button
-                              variant="outline"
+                              variant="ghost"
                               size="sm"
-                              disabled={busy === u.id || u.isSystemAdmin}
+                              className="gap-1"
+                              loading={resending === u.id}
+                              disabled={busy === u.id}
+                              onClick={() => resend(u)}
+                              title={t("resendInvite")}
                             >
-                              {tc("delete")}
+                              {resending !== u.id && <Send className="size-3.5" />}
+                              {t("resend")}
                             </Button>
-                          }
-                        />
+                          )}
+                          <ConfirmDialog
+                            title={t("deleteTitle")}
+                            description={t("deleteDesc", { email: u.email })}
+                            confirmLabel={tc("delete")}
+                            destructive
+                            onConfirm={() => remove(u)}
+                            trigger={
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                disabled={busy === u.id || u.isSystemAdmin}
+                              >
+                                {tc("delete")}
+                              </Button>
+                            }
+                          />
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))

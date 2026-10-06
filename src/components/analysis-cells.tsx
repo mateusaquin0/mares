@@ -14,9 +14,6 @@ import {
 
 const UNTESTED = "UNTESTED"
 
-// Cores dos marcadores de resultado, compartilhadas entre o seletor, a legenda e a grade
-// de resultados. Mantêm a convenção do app: verde = positivo, laranja = inconclusivo,
-// cinza = negativo. "Não testado" é um anel vazio (distingue de negativo preenchido).
 export const RESULT_DOT: Record<string, string> = {
   POSITIVO: "bg-[hsl(123_41%_45%)]",
   NEGATIVO: "bg-muted-foreground/40",
@@ -34,11 +31,13 @@ export function ResultDot({
   if (!result)
     return (
       <span
-        className={`inline-block size-2.5 rounded-full border border-muted-foreground/30 ${className}`}
+        className={`inline-block size-2.5 shrink-0 rounded-full border border-muted-foreground/30 ${className}`}
       />
     )
   return (
-    <span className={`inline-block size-2.5 rounded-full ${RESULT_DOT[result]} ${className}`} />
+    <span
+      className={`inline-block size-2.5 shrink-0 rounded-full ${RESULT_DOT[result]} ${className}`}
+    />
   )
 }
 
@@ -67,19 +66,19 @@ export function ResultSelect({
         <SelectItem value={UNTESTED}>{t("resultUntested")}</SelectItem>
         <SelectItem value="POSITIVO">
           <span className="flex items-center gap-2">
-            <span className="size-2 rounded-full bg-[hsl(123_41%_45%)]" />
+            <span className="size-2 shrink-0 rounded-full bg-[hsl(123_41%_45%)]" />
             {t("resultPositive")}
           </span>
         </SelectItem>
         <SelectItem value="NEGATIVO">
           <span className="flex items-center gap-2">
-            <span className="size-2 rounded-full bg-muted-foreground/40" />
+            <span className="size-2 shrink-0 rounded-full bg-muted-foreground/40" />
             {t("resultNegative")}
           </span>
         </SelectItem>
         <SelectItem value="INCONCLUSIVO">
           <span className="flex items-center gap-2">
-            <span className="size-2 rounded-full bg-[hsl(35_80%_50%)]" />
+            <span className="size-2 shrink-0 rounded-full bg-[hsl(35_80%_50%)]" />
             {t("resultInconclusive")}
           </span>
         </SelectItem>

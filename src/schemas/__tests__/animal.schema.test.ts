@@ -55,6 +55,18 @@ describe("createAnimalSchema", () => {
     expect(createAnimalSchema.safeParse({ ...validAnimal, strandingLat: -91 }).success).toBe(false)
   })
 
+  it("rejeita peso negativo na necrópsia", () => {
+    expect(createAnimalSchema.safeParse({ ...validAnimal, necropsyWeightKg: -1 }).success).toBe(
+      false,
+    )
+    expect(createAnimalSchema.safeParse({ ...validAnimal, necropsyWeightKg: 6.6 }).success).toBe(
+      true,
+    )
+    expect(createAnimalSchema.safeParse({ ...validAnimal, necropsyWeightKg: null }).success).toBe(
+      true,
+    )
+  })
+
   it("rejeita longitude fora do range [-180, 180]", () => {
     expect(createAnimalSchema.safeParse({ ...validAnimal, strandingLon: 200 }).success).toBe(false)
   })

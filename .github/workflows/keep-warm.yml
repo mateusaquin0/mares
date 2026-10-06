@@ -1,0 +1,82 @@
+name: Keep-warm (Supabase)
+
+# Impede que o projeto do Supabase seja pausado por inatividade.
+#
+# Por que existe: no plano Free, a Supabase pausa projetos com pouca atividade de banco
+# ao longo de 7 dias. Isso aconteceu em produção em 03/08/2026 — o projeto ficou fora do ar,
+# os endpoints passaram a responder 521, o Realtime não conseguia abrir conexão
+# (`relation "realtime.subscription" does not exist` era sintoma disso) e só voltou depois
+# de um "Resume project" manual no dashboard. A doc da Supabase diz que algumas requisições
+# ao banco por dia, ao longo da semana anterior, bastam para evitar a pausa.
+#
+# Uma requisição ao PostgREST é executada no Postgres (o RLS é avaliado no banco), então
+# ela conta como atividade mesmo que a resposta venha vazia.
+#
+# Por que não pg_cron: ele roda DENTRO do banco. Num projeto pausado o Postgres está
+# desligado, então o agendamento só voltaria a rodar depois do resume que deveria evitar.
+#
+# PRÉ-REQUISITOS (GitHub → Settings → Secrets and variables → Actions → New secret):
+#   SUPABASE_URL       → https://<project-ref>.supabase.co
+#   SUPABASE_ANON_KEY  → chave publishable/anon (a mesma que já vai no bundle do browser)
+#
+# ATENÇÃO: o GitHub desabilita workflows agendados em repositórios sem commits por 60 dias
+# (manda um e-mail antes). Se o repo ficar parado, confirme que este workflow continua ativo
+# em Actions — senão a proteção some justamente no período em que ela é mais necessária.
+
+on:
+  schedule:
+    # Meia-noite e meio-dia UTC. O cron do GitHub Actions é sempre UTC e não aceita fuso,
+    # então em Brasília isso cai às 21:00 e 09:00. Duas vezes ao dia dá margem para uma
+    # execução falhar sem zerar a atividade do dia.
+    #
+    # Agendamentos no minuto 0 entram na fila junto com os de todo mundo e podem atrasar
+    # de alguns minutos a algumas dezenas de minutos. Para um keep-warm, que só precisa
+    # registrar atividade em algum momento do dia, esse atraso é irrelevante.
+    - cron: "0 0,12 * * *"
+  workflow_dispatch:
+
+# Duas execuções simultâneas não fariam mal, mas também não servem para nada.
+concurrency:
+  group: keep-warm
+  cancel-in-progress: false
+
+jobs:
+  ping:
+    name: Requisição ao banco
+    runs-on: ubuntu-latest
+    steps:
+      - name: Consultar o PostgREST
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: |
+          if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_ANON_KEY" ]; then
+            echo "::error::Secrets SUPABASE_URL e/ou SUPABASE_ANON_KEY não configurados."
+            exit 1
+          fi
+
+          # `--max-time` evita que o job fique pendurado se o projeto estiver meio no ar.
+          # Sem `-f`: queremos o código HTTP mesmo quando é erro, para decidir abaixo.
+          status=$(curl -sS --max-time 30 -o /tmp/resposta.txt -w "%{http_code}" \
+            -H "apikey: $SUPABASE_ANON_KEY" \
+            -H "Authorization: Bearer $SUPABASE_ANON_KEY" \
+            "$SUPABASE_URL/rest/v1/Organization?select=id&limit=1") || status="000"
+
+          echo "HTTP $status"
+          echo "Corpo: $(head -c 500 /tmp/resposta.txt)"
+
+          # O que importa aqui não é o conteúdo da resposta, e sim que a requisição tenha
+          # chegado ao PostgREST e ele tenha falado com o Postgres. Sob RLS, o papel anon
+          # normalmente recebe `200 []` — a query rodou no banco, que é o que conta como
+          # atividade. Um 401/403 viria de uma checagem de permissão feita no próprio
+          # Postgres, então também serve. Já 5xx/521 (origin fora) ou 000 (sem conexão)
+          # significam que o projeto não respondeu — é exatamente o caso que queremos ver.
+          case "$status" in
+            000|5*)
+              echo "::error::Supabase respondeu '$status' — projeto provavelmente pausado ou indisponível."
+              exit 1
+              ;;
+            *)
+              echo "Projeto ativo. Atividade registrada."
+              ;;
+          esac

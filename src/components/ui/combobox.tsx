@@ -44,7 +44,9 @@ export function Combobox({
   const selected = options.find((o) => o.value === value)
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    // `modal`: sem isso o popover não rola dentro de um Dialog — o conteúdo é portalado para
+    // fora do "shard" do react-remove-scroll, que cancela o wheel (o Select já faz o mesmo).
+    <Popover open={open} onOpenChange={setOpen} modal>
       <PopoverTrigger asChild>
         <Button
           type="button"

@@ -46,11 +46,31 @@ describe("isCatalogType / catalogBodySchema", () => {
   it("reconhece apenas tipos válidos de catálogo", () => {
     expect(isCatalogType("organs")).toBe(true)
     expect(isCatalogType("pathogens")).toBe(true)
+    expect(isCatalogType("systems")).toBe(true)
     expect(isCatalogType("banana")).toBe(false)
   })
 
   it("seleciona o schema de patógeno para 'pathogens' e i18n para os demais", () => {
     expect(catalogBodySchema("pathogens")).toBe(pathogenSchema)
     expect(catalogBodySchema("organs")).toBe(nameI18nSchema)
+    expect(catalogBodySchema("exam-types")).toBe(nameI18nSchema)
+    expect(catalogBodySchema("systems")).toBe(nameI18nSchema)
+  })
+})
+
+describe("limite de nome dos catálogos nomeados", () => {
+  // Órgão, exame e sistema são TERMOS ("Encéfalo", "Sistema respiratório"), não frases —
+  // 60 caracteres. O nome científico do patógeno tem escala própria e continua maior.
+  it("aceita 60 caracteres e recusa 61", () => {
+    const ok = { namePt: "a".repeat(60), nameEn: "b".repeat(60) }
+    expect(nameI18nSchema.safeParse(ok).success).toBe(true)
+    expect(nameI18nSchema.safeParse({ ...ok, namePt: "a".repeat(61) }).success).toBe(false)
+    expect(nameI18nSchema.safeParse({ ...ok, nameEn: "b".repeat(61) }).success).toBe(false)
+  })
+
+  it("não encolhe o nome científico do patógeno junto", () => {
+    expect(
+      pathogenSchema.safeParse({ groupId: "g1", scientificName: "a".repeat(100) }).success,
+    ).toBe(true)
   })
 })

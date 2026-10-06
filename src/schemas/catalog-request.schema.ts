@@ -20,9 +20,11 @@ export function catalogRequestPayloadSchema(type: CatalogType) {
 }
 
 // Corpo do POST de solicitação. O payload é revalidado por tipo no servidor.
+// `targetId` ausente = inclusão; preenchido = proposta de EDIÇÃO daquele item.
 export const createCatalogRequestSchema = z.object({
   type: z.enum(CATALOG_TYPES),
   payload: z.record(z.string(), z.unknown()),
+  targetId: z.string().min(1).optional(),
 })
 
 // Corpo da rejeição — motivo opcional.

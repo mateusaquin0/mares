@@ -26,7 +26,6 @@ export function LocaleSwitcher({ className }: { className?: string }) {
 
   return (
     <Select value={active} onValueChange={onChange} disabled={pending}>
-      {/* Gatilho compacto: apenas a bandeira do idioma ativo. O texto aparece nas opções. */}
       <SelectTrigger
         className={cn(
           "h-8 w-auto gap-1 border-transparent px-2 shadow-none [&>svg]:opacity-60",

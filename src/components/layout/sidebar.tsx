@@ -15,6 +15,7 @@ import {
   Library,
   BookOpen,
   ClipboardList,
+  MessagesSquare,
   PanelLeftClose,
   PanelLeft,
 } from "lucide-react"
@@ -41,8 +42,6 @@ type NavItem = {
   disabled?: boolean
 }
 
-// Indicador de pendências (bolinha laranja). Expandido: à direita do label.
-// Recolhido: sobreposta no canto superior direito do ícone (o link é `relative`).
 function NavDot({ count, collapsed, title }: { count: number; collapsed: boolean; title: string }) {
   if (count <= 0) return null
   return (
@@ -83,12 +82,25 @@ export function Sidebar({
     "/app/catalogs": pending?.glossaryRequests ?? 0,
     "/app/admin/access-requests": pending?.accessRequests ?? 0,
     "/app/admin/feedback": pending?.feedback ?? 0,
+    // Pendências do grupo: pedidos de acesso às pesquisas que o usuário gere e
+    // compartilhamentos de indivíduo aguardando a resposta dele.
+    "/app/research": pending?.researchAccess ?? 0,
+    "/app/animals": pending?.animalShares ?? 0,
+    // Conversas dos próprios tickets com resposta nova da administração.
+    "/app/feedback": pending?.feedbackReplies ?? 0,
   }
   const dotTitle = (count: number) => t("pending", { count })
 
+  // Abaixo de 1280px a barra recolhe sozinha (o conteúdo das telas precisa da largura);
+  // acima disso vale a preferência salva.
   const [collapsed, setCollapsed] = useState(false)
   useEffect(() => {
-    setCollapsed(localStorage.getItem("mares:sidebar-collapsed") === "1")
+    const narrow = window.matchMedia("(max-width: 1279px)")
+    const sync = () =>
+      setCollapsed(narrow.matches || localStorage.getItem("mares:sidebar-collapsed") === "1")
+    sync()
+    narrow.addEventListener("change", sync)
+    return () => narrow.removeEventListener("change", sync)
   }, [])
   function toggleCollapsed() {
     setCollapsed((c) => {
@@ -305,6 +317,23 @@ export function Sidebar({
           {!collapsed && <span className="truncate">{t("tutorial")}</span>}
         </Link>
         <FeedbackDialog collapsed={collapsed} />
+        {/* Acompanhar os próprios envios (status + resposta da administração). */}
+        <Link
+          href="/app/feedback"
+          title={t("myFeedback")}
+          className={cn(
+            "relative flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-foreground/70 transition-colors hover:bg-muted hover:text-foreground",
+            collapsed && "justify-center px-0",
+          )}
+        >
+          <MessagesSquare className="size-4 shrink-0" />
+          {!collapsed && <span className="truncate">{t("myFeedback")}</span>}
+          <NavDot
+            count={pendingByHref["/app/feedback"] ?? 0}
+            collapsed={collapsed}
+            title={dotTitle(pendingByHref["/app/feedback"] ?? 0)}
+          />
+        </Link>
         <UserMenu userName={userName} email={email} roleLabel={roleLabel} collapsed={collapsed} />
       </div>
     </aside>

@@ -1,7 +1,6 @@
 import { cn } from "@/lib/utils"
 
-// Logo do MARES. Usa `currentColor` para herdar a cor do contexto (branco na sidebar
-// escura, cor primária nas telas claras). Fonte: src/app/logo.svg.
+// Logo do MARES. Fonte: src/app/logo.svg.
 export function Logo({ className }: { className?: string }) {
   return (
     <svg

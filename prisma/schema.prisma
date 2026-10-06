@@ -60,6 +60,17 @@ enum FeedbackStatus {
   IN_REVIEW // em análise pelo admin
   RESOLVED // resolvido/atendido
   WONT_FIX // descartado
+  // Encerrado que o AUTOR pediu para revisitar. Só o autor produz este status, e só a
+  // partir de RESOLVED/WONT_FIX; a triagem do admin tira o ticket dele. Ver docs/FEEDBACK.md.
+  REOPENED
+}
+
+// Lado que escreveu uma mensagem da conversa do ticket. São só dois: quem reportou
+// (AUTHOR) e a administração (ADMIN) — o papel é congelado no momento do envio, para o
+// histórico continuar legível mesmo se o usuário perder/ganhar o papel de admin depois.
+enum FeedbackParty {
+  AUTHOR
+  ADMIN
 }
 
 // Tipo do item pedido numa solicitação de glossário (espelha CatalogType, sem hífen).
@@ -67,6 +78,7 @@ enum CatalogRequestType {
   ORGAN
   PATHOGEN
   EXAM_TYPE
+  SYSTEM
 }
 
 enum CatalogRequestStatus {
@@ -75,43 +87,112 @@ enum CatalogRequestStatus {
   REJECTED // recusada (duplicata, inválida etc.)
 }
 
+// Estado do compartilhamento de um indivíduo com OUTRA pesquisa (ver AnimalResearch).
+// O convite só vira acesso depois que a pesquisa de destino aceita: quem convida não
+// consegue empurrar dados para dentro do escopo alheio.
+enum AnimalResearchStatus {
+  PENDING // aguardando resposta do outro lado
+  ACCEPTED // participação efetiva: a pesquisa enxerga o indivíduo
+}
+
+// Quem começou o compartilhamento — define QUEM responde ao pedido pendente:
+//   INVITE  → partiu de quem já enxerga o indivíduo; decide a pesquisa CONVIDADA.
+//   REQUEST → partiu de quem quer o indivíduo; decide a pesquisa PRIMÁRIA do indivíduo.
+// Nos dois casos quem decide é o lado que ainda não consentiu.
+enum AnimalResearchOrigin {
+  INVITE
+  REQUEST
+}
+
+// Estado do pedido de um pesquisador para entrar numa pesquisa do próprio grupo.
+enum ResearchAccessRequestStatus {
+  PENDING // aguardando quem gere a pesquisa
+  APPROVED // aprovado → ResearchMember criado
+  REJECTED // recusado
+}
+
+// Pronunciamento da patologista sobre UM sistema anatômico na necrópsia. A ausência de
+// linha é um quarto estado, "não avaliado" — ninguém se pronunciou ainda —, que NÃO se
+// confunde com NO_CHANGE (examinado e normal) nem com NOT_EXAMINED (recusa com motivo).
+enum NecropsySystemStatus {
+  NO_CHANGE // "sem alteração": examinado, nada encontrado
+  NOT_EXAMINED // "não examinado" — exige motivo (ex.: autólise)
+  ALTERED // há achados: a tabela de GrossFinding é preenchida
+}
+
+// Tipo de interação antrópica encontrada na carcaça. Lista fechada (e não catálogo) porque
+// são as quatro categorias do PMP, iguais para qualquer espécie — o mesmo critério que
+// mantém distribuição e severidade em código. Ver docs/PLANO_EXAME_ANATOMOPATOLOGICO.md.
+enum AnthropicInteractionType {
+  FISHERY // interação com pesca
+  WASTE // interação com resíduo
+  AGGRESSION // agressão / vandalismo / caça
+  VESSEL // interação com embarcações
+}
+
 // ─────────────────────────────────────────────────────────────
 // Organização e usuários
 // ─────────────────────────────────────────────────────────────
 
 model Organization {
-  id          String       @id @default(uuid())
-  name        String
+  id            String       @id @default(uuid())
+  name          String
   // Localização (opcional) — usada em relatórios geográficos e no mapa de encalhes.
-  city        String?
-  state       String? // UF / província
-  country     String?
+  city          String?
+  state         String? // UF / província
+  country       String?
   // Desativação: um grupo que fica SEM membros é desativado (deactivatedAt = data), não
   // excluído. Seus dados públicos continuam visíveis no mapa público (que filtra só por
   // isPublic). Readicionar um membro reativa (deactivatedAt = null). Ver docs/CADASTRO_E_ACESSO.md.
   deactivatedAt DateTime?
-  memberships Membership[]
-  researches  Research[]
-  createdAt   DateTime     @default(now())
+  memberships   Membership[]
+  researches    Research[]
+  createdAt     DateTime     @default(now())
 }
 
 model User {
   // id corresponde ao id do usuário no Supabase Auth (auth.users.id)
-  id            String       @id
-  email         String       @unique
-  name          String?
-  isSystemAdmin Boolean      @default(false)
-  status        UserStatus   @default(INVITED)
+  id                     String                  @id
+  email                  String                  @unique
+  name                   String?
+  isSystemAdmin          Boolean                 @default(false)
+  status                 UserStatus              @default(INVITED)
   // Aceite dos Termos de Uso (registrado ao solicitar acesso e ao aceitar convite).
-  termsVersion    String?
-  termsAcceptedAt DateTime?
-  memberships   Membership[]
-  researchesCreated Research[] @relation("ResearchCreator")
+  termsVersion           String?
+  termsAcceptedAt        DateTime?
+  memberships            Membership[]
+  researchesCreated      Research[]              @relation("ResearchCreator")
   // Pesquisas às quais o usuário está vinculado como pesquisador (escopo de visibilidade).
-  researchMemberships ResearchMember[]
-  feedbacks     Feedback[]   @relation("FeedbackAuthor")
-  catalogRequests CatalogRequest[] @relation("CatalogRequestAuthor")
-  createdAt     DateTime     @default(now())
+  researchMemberships    ResearchMember[]
+  // Pedidos de acesso a pesquisas: os que fez e os que revisou.
+  researchAccessRequests ResearchAccessRequest[] @relation("ResearchAccessRequester")
+  researchAccessReviews  ResearchAccessRequest[] @relation("ResearchAccessReviewer")
+  // Convites de compartilhamento de indivíduo que enviou.
+  animalSharesInvited    AnimalResearch[]        @relation("AnimalResearchInviter")
+  mediaUploaded          AnimalMedia[]           @relation("AnimalMediaUploader")
+  samplesCreated         Sample[]                @relation("SampleCreator")
+  feedbacks              Feedback[]              @relation("FeedbackAuthor")
+  // Conversa dentro do ticket de feedback: mensagens escritas e imagens anexadas.
+  feedbackMessages       FeedbackMessage[]       @relation("FeedbackMessageAuthor")
+  feedbackAttachments    FeedbackAttachment[]    @relation("FeedbackAttachmentUploader")
+  catalogRequests        CatalogRequest[]        @relation("CatalogRequestAuthor")
+  sampleTypes            UserSampleType[]
+  createdAt              DateTime                @default(now())
+}
+
+// Tipos de amostra que o usuário guarda para reaproveitar no formulário de amostra.
+// `Sample.sampleType` é texto livre (não é catálogo da organização): esta lista é uma
+// conveniência PESSOAL, sem efeito sobre os dados científicos nem sobre outros usuários.
+model UserSampleType {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  value     String
+  createdAt DateTime @default(now())
+
+  // Unicidade exata; a rota também recusa duplicata que só difira em caixa/acento.
+  @@unique([userId, value])
+  @@index([userId])
 }
 
 // Vínculo N:N entre usuário e organização, com o papel do usuário naquela org.
@@ -147,25 +228,29 @@ model JoinRequest {
 // ─────────────────────────────────────────────────────────────
 
 model Research {
-  id           String             @id @default(uuid())
-  name         String
-  description  String?
-  isPublic     Boolean            @default(false)
-  orgId        String
-  organization Organization       @relation(fields: [orgId], references: [id])
+  id             String                  @id @default(uuid())
+  name           String
+  description    String?
+  isPublic       Boolean                 @default(false)
+  orgId          String
+  organization   Organization            @relation(fields: [orgId], references: [id])
   // Autor (para a regra "pesquisador edita a própria criação"); SetNull se o usuário for removido.
-  createdById  String?
-  createdBy    User?              @relation("ResearchCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  createdById    String?
+  createdBy      User?                   @relation("ResearchCreator", fields: [createdById], references: [id], onDelete: SetNull)
   // Pesquisadores vinculados a esta pesquisa (escopo de visibilidade). O criador e o admin
   // da org têm acesso independentemente do vínculo (ver docs/PERMISSOES.md).
-  members      ResearchMember[]
-  protocols    ResearchProtocol[]
-  animals      Animal[]
+  members        ResearchMember[]
+  // Pedidos de pesquisadores do grupo para entrar nesta pesquisa.
+  accessRequests ResearchAccessRequest[]
+  protocols      ResearchProtocol[]
+  animals        Animal[]
   // Indivíduos compartilhados de outra pesquisa que esta também estuda (ver AnimalResearch).
-  animalLinks  AnimalResearch[]
+  animalLinks    AnimalResearch[]
   // Amostras coletadas por esta pesquisa (o indivíduo pode ter amostras de várias pesquisas).
-  samples      Sample[]
-  createdAt    DateTime           @default(now())
+  samples        Sample[]
+  // Arquivos enviados por esta pesquisa (mesma lógica das amostras).
+  media          AnimalMedia[]
+  createdAt      DateTime                @default(now())
 
   @@index([orgId])
   @@index([createdById])
@@ -215,13 +300,18 @@ model ResearchProtocol {
 // novos idiomas sem migration. Patógeno é nome científico (latim, universal) → `name` texto
 // simples; só o `group` é traduzível. Ver docs/I18N.md §catálogos.
 model Organ {
-  id          String             @id @default(uuid())
-  key         String             @unique // ex: "encefalo"
-  name        Json // { pt: "Encéfalo", en: "Brain" }
+  id                     String                  @id @default(uuid())
+  key                    String                  @unique // ex: "encefalo"
+  name                   Json // { pt: "Encéfalo", en: "Brain" }
   // Autor do item; o criador edita/exclui enquanto não usado (ver docs/PERMISSOES.md).
-  createdById String?            @map("created_by_id")
-  protocols   ResearchProtocol[]
-  samples     Sample[]
+  createdById            String?                 @map("created_by_id")
+  protocols              ResearchProtocol[]
+  samples                Sample[]
+  // Achados histopatológicos que citam este órgão. Entra na checagem de "em uso" do
+  // glossário: sem isso o criador de um órgão o excluiria com laudo apontando para ele.
+  histopathologyFindings HistopathologyFinding[]
+  // Achados macroscópicos que localizam a lesão neste órgão.
+  grossFindings          GrossFinding[]
 
   @@index([createdById])
 }
@@ -263,17 +353,17 @@ model Pathogen {
 }
 
 model ExamType {
-  id          String             @id @default(uuid())
-  key         String             @unique // ex: "npcr"
-  name        Json // { pt: "nPCR", en: "nested PCR (nPCR)" }
+  id           String             @id @default(uuid())
+  key          String             @unique // ex: "npcr"
+  name         Json // { pt: "nPCR", en: "nested PCR (nPCR)" }
   // Medida quantitativa opcional do exame (ex.: Ct no qPCR, Título nas serologias, OD no
   // ELISA). measureLabel ausente = exame só qualitativo (sem valor). measureUnit é uma
   // anotação curta opcional (ex.: "ciclos"). Ver docs/BANCO_DE_DADOS.md.
   measureLabel Json? // { pt, en } — rótulo da coluna de valor na grade de análises
   measureUnit  String? // unidade/anotação curta opcional
-  createdById String?            @map("created_by_id")
-  protocols   ResearchProtocol[]
-  analyses    Analysis[]
+  createdById  String?            @map("created_by_id")
+  protocols    ResearchProtocol[]
+  analyses     Analysis[]
 
   @@index([createdById])
 }
@@ -283,44 +373,71 @@ model ExamType {
 // ─────────────────────────────────────────────────────────────
 
 model Animal {
-  id                 String        @id @default(uuid())
-  controlId          String? // ID de controle interno, único por organização (ver @@unique abaixo)
-  simbaRecordNumber  String? // Identificador SIMBA, único por organização (ver @@unique abaixo)
-  species            String? // NULL = espécie indeterminada (carcaça não identificável)
+  id                    String                  @id @default(uuid())
+  controlId             String? // ID de controle interno, único por organização (ver @@unique abaixo)
+  simbaRecordNumber     String? // Identificador SIMBA, único por organização (ver @@unique abaixo)
+  species               String? // NULL = espécie indeterminada (carcaça não identificável)
   // Campos preenchidos via WoRMS após validação taxonômica
-  wormsAphiaId       Int?
-  taxonFamily        String?
-  taxonOrder         String?
-  sex                String?
-  lifeStage          String?
+  wormsAphiaId          Int?
+  taxonFamily           String?
+  taxonOrder            String?
+  sex                   String?
+  lifeStage             String?
   // Necrópsia — condição da carcaça / escore corporal / condição da morte.
   // Preenchidos manualmente: a API pública do SIMBA não os exporta (só a data de
   // necrópsia em measurementDeterminedDate e as observações em occurrenceRemarks).
-  bodyCondition      String? // "Condição da carcaça" (ex.: código 1-5)
-  decompositionStage String? // "Escore corporal"
-  deathCondition     String? // "Condição da morte" (ex.: Natural)
-  necropsyDate       DateTime?
+  bodyCondition         String? // "Condição da carcaça" (ex.: código 1-5)
+  decompositionStage    String? // "Escore corporal"
+  deathCondition        String? // "Condição da morte" (ex.: Natural)
+  necropsyDate          DateTime?
+  // Peso da carcaça na necrópsia, em QUILOS. Vem do "Peso total" da biometria do SIMBA, que
+  // é medida na mesma ocasião de `necropsyDate` (measurementDeterminedDate).
+  necropsyWeightKg      Float?
   // lat/lon como Float; em produção, considerar PostGIS geography
-  strandingLat       Float?
-  strandingLon       Float?
-  strandingBeach     String?
-  municipality       String?
-  state              String?
-  eventDate          DateTime?
-  macroscopicNotes   String? // "Exame externo" (occurrenceRemarks no SIMBA)
-  source             String        @default("manual")
-  isPublic           Boolean       @default(false)
-  researchId         String
-  research           Research      @relation(fields: [researchId], references: [id])
+  strandingLat          Float?
+  strandingLon          Float?
+  strandingBeach        String?
+  municipality          String?
+  state                 String?
+  // "Instituição executora" do SIMBA (institutionCode): a instituição responsável pelo
+  // trecho do PMP onde o animal foi encontrado — em alguns PMPs o campo traz o próprio
+  // nome do trecho ("Trecho 09"), que é o que identifica o local no monitoramento.
+  executingInstitution  String?
+  eventDate             DateTime?
+  macroscopicNotes      String? // "Exame externo" (occurrenceRemarks no SIMBA)
+  // Triagem da carcaça na necrópsia. Tri-estado como os campos de parasita do GrossFinding:
+  // NULL = "não informado", que NÃO é o mesmo que false = "não" (que afirma que se procurou
+  // e nada havia). Ficam no indivíduo pelo mesmo motivo do laudo — descrevem a carcaça.
+  anthropicInteraction  Boolean? // "Há indícios de interação antrópica?"
+  giContentCollected    Boolean? // "Coleta de conteúdo gastrointestinal"
+  giSolidWaste          Boolean? // "Presença de resíduos sólidos"
+  giDetailedScreening   Boolean? // "Triagem detalhada do conteúdo gastrointestinal"
+  // Biometria (PMP > Biometria do SIMBA), como ele entregou: { group, unit, measures[] }.
+  // O rótulo é o texto LITERAL do SIMBA e também o exibido na tela — sem catálogo e sem
+  // tradução, para o sistema aceitar qualquer espécie sem mapeamento prévio. Medida sem
+  // valor entra como null ("Não informado"), o que faz a primeira importação de um grupo
+  // ensinar o formulário inteiro ao autocompletar. Ver docs/PLANO_BIOMETRIA.md.
+  measurements          Json?
+  source                String                  @default("manual")
+  isPublic              Boolean                 @default(false)
+  researchId            String
+  research              Research                @relation(fields: [researchId], references: [id])
   // Organização dona, denormalizada de research, para o controlId ser único POR ORG.
   // Definida na criação; a pesquisa (e portanto a org) do animal não muda depois.
-  orgId              String
-  samples            Sample[]
-  media              AnimalMedia[]
+  orgId                 String
+  samples               Sample[]
+  media                 AnimalMedia[]
   // Pesquisas ADICIONAIS que também estudam este indivíduo (mesma org). A pesquisa
   // primária/criadora é `researchId`; o conjunto efetivo = {researchId} ∪ participations.
-  participations     AnimalResearch[]
-  createdAt          DateTime      @default(now())
+  participations        AnimalResearch[]
+  // Laudo anatomopatológico. Fica no INDIVÍDUO (não na pesquisa): descreve a carcaça, como
+  // bodyCondition/necropsyDate acima. Ver docs/PLANO_EXAME_ANATOMOPATOLOGICO.md.
+  necropsySystems       NecropsySystemExam[]
+  histopathology        HistopathologyFinding[]
+  // Quais interações antrópicas a carcaça apresentou, e em que grau. Só existem linhas com
+  // `anthropicInteraction = true`.
+  anthropicInteractions AnthropicInteraction[]
+  createdAt             DateTime                @default(now())
 
   @@unique([orgId, controlId])
   @@unique([orgId, simbaRecordNumber])
@@ -335,15 +452,60 @@ model Animal {
 // e análises. A pesquisa primária/criadora é `Animal.researchId`; esta tabela registra as
 // pesquisas ADICIONAIS (do MESMO grupo) que compartilham o indivíduo, sem duplicar a
 // identidade. Conjunto efetivo de pesquisas de um animal = {researchId} ∪ participations.
+//
+// O vínculo exige consentimento dos DOIS lados: nasce PENDING e só passa a valer quando o
+// lado que ainda não consentiu aceita (ver docs/PERMISSOES.md §Compartilhamento de indivíduo).
+// `origin` diz quem começou e, portanto, quem responde. Enquanto pendente, a pesquisa NÃO
+// enxerga o indivíduo — todo caminho de leitura filtra por ACCEPTED.
 model AnimalResearch {
-  animalId   String
-  animal     Animal   @relation(fields: [animalId], references: [id], onDelete: Cascade)
-  researchId String
-  research   Research @relation(fields: [researchId], references: [id], onDelete: Cascade)
-  createdAt  DateTime @default(now())
+  animalId    String
+  animal      Animal               @relation(fields: [animalId], references: [id], onDelete: Cascade)
+  researchId  String
+  research    Research             @relation(fields: [researchId], references: [id], onDelete: Cascade)
+  // Default ACCEPTED para que os vínculos anteriores ao convite continuem valendo e para o
+  // atalho do ORG_ADMIN (que já enxerga as duas pesquisas). O convite grava PENDING explícito.
+  status      AnimalResearchStatus @default(ACCEPTED)
+  origin      AnimalResearchOrigin @default(INVITE)
+  // Quem iniciou (SetNull se o usuário sair) — exibido para quem decide.
+  invitedById String?
+  invitedBy   User?                @relation("AnimalResearchInviter", fields: [invitedById], references: [id], onDelete: SetNull)
+  // Justificativa opcional de quem PEDE o indivíduo (origin = REQUEST).
+  message     String?
+  respondedAt DateTime?
+  createdAt   DateTime             @default(now())
 
   @@id([animalId, researchId])
   @@index([researchId])
+  // Suporta tanto o filtro de visibilidade (só ACCEPTED) quanto a caixa de convites.
+  @@index([researchId, status])
+  // Caixa de pedidos da pesquisa PRIMÁRIA: pendentes de um conjunto de animais.
+  @@index([status, origin])
+}
+
+// Pedido de um pesquisador para ser vinculado a uma pesquisa do próprio grupo.
+//
+// A LISTAGEM de pesquisas é aberta a todo membro da organização (catálogo: nome, descrição,
+// autor), mas os DADOS (animais, amostras, análises) continuam restritos a quem é membro da
+// pesquisa. Este pedido é a ponte entre os dois: quem gere a pesquisa (admin da org ou
+// criador) aprova e o ResearchMember é criado. Ver docs/PERMISSOES.md.
+model ResearchAccessRequest {
+  id           String                      @id @default(uuid())
+  researchId   String
+  research     Research                    @relation(fields: [researchId], references: [id], onDelete: Cascade)
+  userId       String
+  user         User                        @relation("ResearchAccessRequester", fields: [userId], references: [id], onDelete: Cascade)
+  // Justificativa opcional do solicitante.
+  message      String?
+  status       ResearchAccessRequestStatus @default(PENDING)
+  reviewedById String?
+  reviewedBy   User?                       @relation("ResearchAccessReviewer", fields: [reviewedById], references: [id], onDelete: SetNull)
+  reviewedAt   DateTime?
+  createdAt    DateTime                    @default(now())
+
+  // Um pedido por par: repetir um pedido recusado reabre a MESMA linha (volta a PENDING).
+  @@unique([researchId, userId])
+  @@index([researchId, status])
+  @@index([userId])
 }
 
 // Amostra física coletada durante a necrópsia
@@ -357,10 +519,10 @@ model Sample {
   research        Research     @relation(fields: [researchId], references: [id])
   organId         String
   organ           Organ        @relation(fields: [organId], references: [id])
-  // Organização dona, denormalizada de animal→pesquisa, para a unicidade da identificação
-  // ser POR ORGANIZAÇÃO (não global). Definida na criação; o animal nunca muda de org.
+  // Organização dona, denormalizada de animal→pesquisa: resolve o papel de quem mexe na
+  // amostra sem o join até a pesquisa. Definida na criação; o animal nunca muda de org.
   orgId           String
-  identification  String // identificação/código da amostra, obrigatória e única por organização (ex.: "AM-001")
+  identification  String // identificação/código da amostra, obrigatória e única na pesquisa (ex.: "AM-001")
   sampleType      String // "tecido fresco", "DNA extraído", "lâmina", "parafina", "soro"
   collectionDate  DateTime?
   storageLocation String? // ex: "Freezer A, caixa 3, posição B2"
@@ -368,36 +530,44 @@ model Sample {
   status          SampleStatus @default(STORED)
   notes           String?
   analyses        Analysis[]
+  // Autor (para a regra "pesquisador exclui a própria criação"); SetNull se o usuário for
+  // removido. Nulo = amostra ÓRFÃ (anterior à coluna e sem evento de auditoria que permitisse
+  // o backfill, ou autor removido): sem dono, qualquer membro da pesquisa pode excluí-la.
+  createdById     String?
+  createdBy       User?        @relation("SampleCreator", fields: [createdById], references: [id], onDelete: SetNull)
   createdAt       DateTime     @default(now())
 
-  @@unique([orgId, identification])
+  // Identificação única POR PESQUISA, não por organização: o rótulo do tubo vem do indivíduo
+  // (ex.: "150/23 FIG" = ID de controle + órgão), então duas pesquisas que estudam o MESMO
+  // indivíduo compartilhado chegam sempre ao mesmo código para as suas próprias amostras.
+  // Por organização, a segunda pesquisa era barrada por uma amostra que sequer enxerga.
+  @@unique([researchId, identification])
   @@index([animalId])
-  @@index([researchId])
 }
 
 model Analysis {
-  id         String   @id @default(uuid())
-  sampleId   String
-  sample     Sample   @relation(fields: [sampleId], references: [id], onDelete: Cascade)
-  pathogenId String
-  pathogen   Pathogen @relation(fields: [pathogenId], references: [id])
-  examTypeId String
-  examType   ExamType @relation(fields: [examTypeId], references: [id])
-  result     Result? // NULL = ainda não testado
+  id               String           @id @default(uuid())
+  sampleId         String
+  sample           Sample           @relation(fields: [sampleId], references: [id], onDelete: Cascade)
+  pathogenId       String
+  pathogen         Pathogen         @relation(fields: [pathogenId], references: [id])
+  examTypeId       String
+  examType         ExamType         @relation(fields: [examTypeId], references: [id])
+  result           Result? // NULL = ainda não testado
   // Valor quantitativo conforme ExamType.measureLabel (ex.: Ct no qPCR, título nas
   // serologias). NULL quando não aplicável ou não medido.
-  measureValue Float? @map("ctValue")
-  notes      String?
+  measureValue     Float?           @map("ctValue")
+  notes            String?
   // Confirmação de espécie (ver docs/PLANO_CONFIRMACAO_SEQUENCIAMENTO.md):
   // NULL = análise de RASTREIO (aparece na grade, definida pelo protocolo). Preenchido = análise
   // de CONFIRMAÇÃO (sequenciamento) pendurada num rastreio POSITIVO; carrega a espécie resolvida
   // (pathogenId) e não exige entrada de ResearchProtocol. Cascade: apagar o rastreio apaga suas
   // confirmações (importante: deleteProtocolCascade mira o rastreio; os filhos caem por aqui).
-  parentAnalysisId String?    @map("parent_analysis_id")
-  parentAnalysis   Analysis?  @relation("AnalysisConfirmation", fields: [parentAnalysisId], references: [id], onDelete: Cascade)
-  confirmations    Analysis[] @relation("AnalysisConfirmation")
+  parentAnalysisId String?          @map("parent_analysis_id")
+  parentAnalysis   Analysis?        @relation("AnalysisConfirmation", fields: [parentAnalysisId], references: [id], onDelete: Cascade)
+  confirmations    Analysis[]       @relation("AnalysisConfirmation")
   sequences        SequenceRecord[]
-  createdAt  DateTime @default(now())
+  createdAt        DateTime         @default(now())
 
   @@unique([sampleId, pathogenId, examTypeId])
   @@index([sampleId])
@@ -422,17 +592,138 @@ model SequenceRecord {
   @@index([analysisId])
 }
 
-// Arquivos anexados a um animal (fotos de campo, microscopia, laudos PDF)
-model AnimalMedia {
+// ─────────────────────────────────────────────────────────────
+// Laudo anatomopatológico (macro) e histopatológico (micro)
+// ─────────────────────────────────────────────────────────────
+
+// Sistema anatômico (catálogo global, como Organ). NASCE VAZIO: não há seed.
+//
+// Não é constante em código porque o MARES cobre mamíferos, répteis, aves e peixes, e cada
+// grupo reporta estruturas que uma lista fixa não comporta — sacos aéreos e siringe em ave,
+// carapaça e glândula de sal em tartaruga, brânquias e bexiga natatória em peixe. Nenhuma
+// lista serve aos quatro. Ver docs/PLANO_EXAME_ANATOMOPATOLOGICO.md.
+model NecropsySystem {
+  id          String               @id @default(uuid())
+  key         String               @unique // ex: "respiratorio"
+  name        Json // { pt: "Sistema respiratório", en: "Respiratory system" }
+  // Autor do item; o criador edita/exclui enquanto não usado (ver docs/PERMISSOES.md).
+  createdById String?              @map("created_by_id")
+  exams       NecropsySystemExam[]
+
+  @@index([createdById])
+}
+
+model NecropsySystemExam {
+  id                String                @id @default(uuid())
+  animalId          String
+  animal            Animal                @relation(fields: [animalId], references: [id], onDelete: Cascade)
+  // Sistema do catálogo. Restrict (e não Cascade): apagar um sistema que algum laudo já usa
+  // apagaria o pronunciamento junto — a checagem de "em uso" do glossário barra antes.
+  systemId          String
+  system            NecropsySystem        @relation(fields: [systemId], references: [id])
+  // NULL = "não avaliado": o sistema entrou no laudo (a necrópsia previa cobri-lo) mas
+  // ninguém se pronunciou ainda. É o quarto estado da tela, e o que dá sentido ao
+  // contador "N de M sistemas avaliados" — cujo denominador é DESTE laudo.
+  status            NecropsySystemStatus?
+  // Só com status NOT_EXAMINED; nos demais o schema Zod força null.
+  notExaminedReason String?
+  // Ordem do sistema DENTRO deste laudo. Os catálogos ordenam por `key` (alfabético), o que
+  // embaralharia a sequência anatômica; aqui a ordem é a que a necrópsia percorreu.
+  position          Int
+  findings          GrossFinding[]
+  createdAt         DateTime              @default(now())
+
+  // Um pronunciamento por sistema em cada indivíduo.
+  @@unique([animalId, systemId])
+  @@index([animalId, position])
+}
+
+// Uma linha da tabela de achados macroscópicos (o formato do SIMBA).
+model GrossFinding {
+  id                 String             @id @default(uuid())
+  examId             String
+  exam               NecropsySystemExam @relation(fields: [examId], references: [id], onDelete: Cascade)
+  // Topografia do achado, DENTRO do sistema (que vem do exame pai, e por isso não se repete
+  // aqui). Órgão é referência ao catálogo — é o que faz macro e micro apontarem para o mesmo
+  // vocabulário. Opcional: nem todo achado tem órgão definido (pode ser do sistema como um
+  // todo) e o catálogo pode ainda não ter o item. Tecido e local seguem texto livre, que é o
+  // que de fato são: "derme/epiderme", "região ventral".
+  organId            String?
+  organ              Organ?             @relation(fields: [organId], references: [id], onDelete: Restrict)
+  tissue             String?
+  site               String?
+  lesion             String
+  // Chaves dos vocabulários fixos (focal/multifocal…, discreto/moderado/acentuado).
+  distribution       String?
+  severity           String?
+  notes              String?
+  // Tri-estado do SIMBA: null = "não informado", que não é o mesmo que false = "não".
+  parasitesPresent   Boolean?
+  parasitesCollected Boolean?
+  parasiteCount      Int?
+  // Ordem da linha na tabela (a coluna "Nº"), atribuída no servidor.
+  position           Int
+  createdAt          DateTime           @default(now())
+
+  @@index([examId, position])
+  @@index([organId])
+}
+
+// Uma interação antrópica encontrada na carcaça, com seu grau (1 a 3).
+//
+// Tabela e não colunas no Animal porque a triagem aceita MAIS DE UMA — uma carcaça pode
+// trazer marca de rede e de embarcação ao mesmo tempo —, e cada uma tem grau próprio. O
+// `@@unique` garante um grau por tipo: registrar "pesca 2" e "pesca 3" no mesmo indivíduo
+// seria contradição, não duas ocorrências.
+model AnthropicInteraction {
+  id        String                   @id @default(uuid())
+  animalId  String
+  animal    Animal                   @relation(fields: [animalId], references: [id], onDelete: Cascade)
+  type      AnthropicInteractionType
+  degree    Int // 1 a 3; o schema Zod fecha o intervalo
+  createdAt DateTime                 @default(now())
+
+  @@unique([animalId, type])
+}
+
+// Uma linha do exame histopatológico: "Órgão: X. Achado: Y." O órgão é referência ao
+// catálogo (e não texto livre) para que o micro agrupe entre indivíduos.
+model HistopathologyFinding {
   id        String   @id @default(uuid())
   animalId  String
   animal    Animal   @relation(fields: [animalId], references: [id], onDelete: Cascade)
-  url       String // URL no Supabase Storage
-  mimeType  String // "image/jpeg", "application/pdf" etc.
-  label     String? // descrição livre
+  organId   String
+  organ     Organ    @relation(fields: [organId], references: [id])
+  finding   String
+  position  Int
   createdAt DateTime @default(now())
 
+  @@index([animalId, position])
+  @@index([organId])
+}
+
+// Arquivos anexados a um animal (fotos de campo, microscopia, laudos PDF)
+model AnimalMedia {
+  id           String   @id @default(uuid())
+  animalId     String
+  animal       Animal   @relation(fields: [animalId], references: [id], onDelete: Cascade)
+  // Pesquisa dona do arquivo: UMA das pesquisas do indivíduo (primária ou participante),
+  // como em Sample.researchId. Num indivíduo compartilhado, a foto de necrópsia de um
+  // projeto não é dado do outro — a visibilidade acompanha a pesquisa, não o indivíduo.
+  researchId   String
+  research     Research @relation(fields: [researchId], references: [id])
+  url          String // URL no Supabase Storage
+  mimeType     String // "image/jpeg", "application/pdf" etc.
+  label        String? // descrição livre
+  // Autor do upload (para a regra "quem enviou pode excluir"); SetNull se o usuário for
+  // removido. Nulo = arquivo ÓRFÃO (anterior à coluna ou autor removido): sem dono, qualquer
+  // membro da pesquisa dona pode excluí-lo.
+  uploadedById String?
+  uploadedBy   User?    @relation("AnimalMediaUploader", fields: [uploadedById], references: [id], onDelete: SetNull)
+  createdAt    DateTime @default(now())
+
   @@index([animalId])
+  @@index([researchId])
 }
 
 // Rastreabilidade de alterações em dados científicos
@@ -449,25 +740,87 @@ model AuditLog {
   @@index([entity, entityId])
 }
 
-// Sugestões e relatos de bug enviados por usuários autenticados; visíveis ao admin global.
+// Sugestões e relatos de bug enviados por usuários autenticados; triados pelo admin global.
+// O autor acompanha os próprios envios em /app/feedback: vê status e `resolutionNote`, NUNCA
+// `adminNote`. Descartar (WONT_FIX) exige justificativa — ver docs/FEEDBACK.md.
 model Feedback {
-  id             String         @id @default(uuid())
+  id             String               @id @default(uuid())
   type           FeedbackType
   title          String // título curto (resumo)
   message        String
   pageUrl        String? // de onde o usuário enviou (contexto)
-  status         FeedbackStatus @default(NEW)
-  adminNote      String? // anotação do admin ao triar
+  status         FeedbackStatus       @default(NEW)
+  adminNote      String? // anotação INTERNA do admin (nunca exposta ao autor)
+  // Resposta ao autor, visível para ele. Obrigatória quando o status é WONT_FIX.
+  resolutionNote String?
+  // Quem triou por último e quando (trilha de auditoria; sem FK, igual a CatalogRequest).
+  reviewedById   String?
+  reviewedAt     DateTime?
   // Autor; SetNull para preservar o histórico se o usuário for removido.
   createdById    String?
-  createdBy      User?          @relation("FeedbackAuthor", fields: [createdById], references: [id], onDelete: SetNull)
+  createdBy      User?                @relation("FeedbackAuthor", fields: [createdById], references: [id], onDelete: SetNull)
   createdByEmail String // snapshot do e-mail do autor
   orgId          String? // organização ativa no momento do envio (contexto)
-  createdAt      DateTime       @default(now())
-  updatedAt      DateTime       @updatedAt
+  // Marcadores de leitura da conversa, um por LADO (não por usuário): `adminReadAt` vale
+  // para a administração como um todo, do mesmo jeito que `reviewedById` guarda só o
+  // último a triar. Servem para o indicador de "tem mensagem nova do outro lado".
+  authorReadAt   DateTime?
+  adminReadAt    DateTime?
+  messages       FeedbackMessage[]
+  attachments    FeedbackAttachment[]
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
 
   @@index([status])
   @@index([createdAt])
+  // Listagem "meus envios" (autor, mais novo → mais antigo).
+  @@index([createdById, createdAt])
+}
+
+// Mensagem da conversa de um ticket de feedback. Existe para alinhar sugestões e descobrir
+// como reproduzir um bug conversando com quem reportou, em vez de um único comentário do
+// admin. Mensagem NÃO é editável nem apagável: o histórico é a trilha da decisão.
+// A conversa só aceita novas mensagens enquanto o ticket está aberto (NEW/IN_REVIEW).
+model FeedbackMessage {
+  id             String               @id @default(uuid())
+  feedbackId     String
+  feedback       Feedback             @relation(fields: [feedbackId], references: [id], onDelete: Cascade)
+  body           String
+  // Lado de quem escreveu, congelado no envio (ver FeedbackParty).
+  party          FeedbackParty
+  // Autor; SetNull para preservar o histórico se o usuário for removido.
+  createdById    String?
+  createdBy      User?                @relation("FeedbackMessageAuthor", fields: [createdById], references: [id], onDelete: SetNull)
+  createdByEmail String // snapshot do e-mail de quem escreveu
+  attachments    FeedbackAttachment[]
+  createdAt      DateTime             @default(now())
+
+  // Leitura da conversa: sempre por ticket, mais antiga → mais nova.
+  @@index([feedbackId, createdAt])
+}
+
+// Imagem anexada a um ticket de feedback (print da tela do bug, mockup de uma sugestão).
+// Bucket PRIVADO, como AnimalMedia: guardamos o caminho do objeto e assinamos a URL na
+// leitura. `messageId` nulo = anexo do relato original; preenchido = anexo de uma mensagem
+// da conversa.
+model FeedbackAttachment {
+  id              String           @id @default(uuid())
+  feedbackId      String
+  feedback        Feedback         @relation(fields: [feedbackId], references: [id], onDelete: Cascade)
+  messageId       String?
+  message         FeedbackMessage? @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  url             String // caminho do objeto no Supabase Storage
+  mimeType        String // "image/jpeg", "image/png", "image/webp", "image/gif"
+  filename        String // nome original, mostrado na UI e usado no download
+  size            Int // bytes (informativo na UI)
+  // Quem enviou (para a regra "quem enviou pode excluir"); SetNull se o usuário for removido.
+  uploadedById    String?
+  uploadedBy      User?            @relation("FeedbackAttachmentUploader", fields: [uploadedById], references: [id], onDelete: SetNull)
+  uploadedByParty FeedbackParty
+  createdAt       DateTime         @default(now())
+
+  @@index([feedbackId])
+  @@index([messageId])
 }
 
 // Solicitação de inclusão de item no glossário global aberta por um pesquisador.
@@ -489,10 +842,17 @@ model CatalogRequest {
   reviewedAt       DateTime?
   reviewNote       String? // motivo da rejeição (opcional)
   duplicateOfId    String? // item canônico quando rejeitada como duplicata
+  // NULL = solicitação de INCLUSÃO (cria item novo). Preenchido = solicitação de EDIÇÃO do
+  // item apontado: quem não pode editar direto (item já em uso, ou não é o autor) propõe a
+  // mudança e a curadoria aplica. Sem FK — o item pode ser excluído antes da revisão, e a
+  // aprovação trata isso como "não encontrado". Ver docs/GLOSSARIO_SOLICITACOES.md.
+  targetId         String?
   createdItemId    String? // item gerado na aprovação (rastro; sem FK)
   createdAt        DateTime             @default(now())
   updatedAt        DateTime             @updatedAt
 
   @@index([status, createdAt])
   @@index([requestedById])
+  // Fila de edições pendentes de um item (evita duas propostas concorrentes).
+  @@index([targetId, status])
 }

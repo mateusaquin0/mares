@@ -2,7 +2,13 @@
 
 import { http } from "@/lib/http"
 import type { CreateResearchData, UpdateResearchData } from "@/schemas/research.schema"
-import type { ResearchDetail, ResearchListItem, ResearchMembers } from "@/types/research"
+import type {
+  AccessRequestItem,
+  ResearchCatalogItem,
+  ResearchDetail,
+  ResearchListItem,
+  ResearchMembers,
+} from "@/types/research"
 import type { ResearchResults } from "@/types/analysis"
 
 export type ProtocolEntryInput = { organId: string; pathogenId: string; examTypeId: string }
@@ -22,6 +28,16 @@ export const researchService = {
     http.patch(`/api/research/${id}/protocol/${entryId}`, { status }),
   removeProtocol: (id: string, entryId: string) =>
     http.del(`/api/research/${id}/protocol/${entryId}`),
+
+  // Catálogo do grupo: todas as pesquisas da org (metadados), com isMember/requestStatus.
+  catalog: () => http.get<ResearchCatalogItem[]>("/api/research/catalog"),
+
+  // Pedidos de acesso a pesquisas
+  requestAccess: (id: string, message?: string) =>
+    http.post<void>(`/api/research/${id}/access-requests`, { message: message ?? "" }),
+  accessRequests: () => http.get<AccessRequestItem[]>("/api/research-access-requests"),
+  reviewAccessRequest: (requestId: string, action: "approve" | "reject") =>
+    http.patch(`/api/research-access-requests/${requestId}`, { action }),
 
   members: (id: string) => http.get<ResearchMembers>(`/api/research/${id}/members`),
   addMember: (id: string, userId: string) => http.post(`/api/research/${id}/members`, { userId }),

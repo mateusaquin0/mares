@@ -8,10 +8,10 @@ import { NextRequest, NextResponse } from "next/server"
 import { Prisma } from "@prisma/client"
 import { prisma } from "@/lib/prisma"
 import { getAuthUser, requireOrgRole, orgRole } from "@/lib/auth"
-import { assertAnimalVisible } from "@/lib/research-access"
+import { assertAnimalVisible, getResearchScope } from "@/lib/research-access"
 import { apiError, unauthorized } from "@/lib/api"
 import { updateAnimalSchema } from "@/schemas/animal.schema"
-import { animalData, animalDuplicateError, loadAnimalOrg } from "@/lib/animals"
+import { animalData, animalDuplicateConflict, loadAnimalOrg } from "@/lib/animals"
 import { diffFields, writeAudit } from "@/lib/audit"
 import { ConflictError, ForbiddenError } from "@/lib/errors"
 import { ERROR_CODES } from "@/lib/error-codes"
@@ -29,11 +29,13 @@ const ANIMAL_AUDIT_FIELDS = [
   "decompositionStage",
   "deathCondition",
   "necropsyDate",
+  "necropsyWeightKg",
   "strandingLat",
   "strandingLon",
   "strandingBeach",
   "municipality",
   "state",
+  "executingInstitution",
   "eventDate",
   "macroscopicNotes",
   "isPublic",
@@ -46,17 +48,27 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
     const { id } = await params
     const base = await loadAnimalOrg(id)
     requireOrgRole(user, base.orgId, "RESEARCHER")
-    await assertAnimalVisible(user, base.orgId, id)
+    const scope = await assertAnimalVisible(user, base.orgId, id)
+    // As contagens dos rótulos das abas seguem o MESMO escopo das listas (amostras e mídia são
+    // por pesquisa): sem isso, o indivíduo compartilhado mostrava "Mídia (3)" e abria uma lista
+    // com um arquivo só — além de revelar o volume de dados da pesquisa vizinha.
+    const countScope = scope.all ? {} : { where: { researchId: { in: scope.ids } } }
 
     const animal = await prisma.animal.findUnique({
       where: { id },
       include: {
         research: { select: { id: true, name: true } },
+        // Inclui os convites PENDENTES: quem enxerga o indivíduo acompanha o que já
+        // convidou (e pode cancelar). O status distingue participação de convite em aberto.
         participations: {
-          select: { research: { select: { id: true, name: true } } },
+          select: {
+            status: true,
+            research: { select: { id: true, name: true } },
+            invitedBy: { select: { name: true, email: true } },
+          },
           orderBy: { createdAt: "asc" },
         },
-        _count: { select: { samples: true, media: true } },
+        _count: { select: { samples: countScope, media: countScope } },
       },
     })
     return NextResponse.json(animal)
@@ -101,7 +113,12 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
       return NextResponse.json({ id: animal.id, species: animal.species })
     } catch (e) {
       if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
-        throw animalDuplicateError(e)
+        throw await animalDuplicateConflict(e, {
+          orgId: base.orgId,
+          scope: await getResearchScope(user, base.orgId),
+          controlId: data.controlId,
+          simbaRecordNumber: data.simbaRecordNumber,
+        })
       }
       throw e
     }

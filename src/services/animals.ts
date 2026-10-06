@@ -3,6 +3,7 @@
 
 import { http } from "@/lib/http"
 import type { CreateAnimalData, UpdateAnimalData } from "@/schemas/animal.schema"
+import type { UpdateMediaData } from "@/schemas/media.schema"
 import type {
   AnimalDetail,
   AnimalFacets,
@@ -10,6 +11,9 @@ import type {
   AnimalListQuery,
   AnimalMedia,
   AuditEntry,
+  IdentifierLookup,
+  PendingShare,
+  ShareStatus,
   SimbaLookup,
 } from "@/types/animal"
 import type { AnalysisGrid } from "@/types/analysis"
@@ -47,11 +51,34 @@ export const animalsService = {
     http.put<{ id: string; species: string }>(`/api/animals/${id}`, data),
   remove: (id: string) => http.del(`/api/animals/${id}`),
 
-  // Compartilhamento do indivíduo entre pesquisas (participações).
-  addResearch: (animalId: string, researchId: string) =>
-    http.post<void>(`/api/animals/${animalId}/researches`, { researchId }),
+  // Compartilhamento do indivíduo entre pesquisas. A DIREÇÃO (convite × pedido) é decidida
+  // no servidor a partir do escopo de quem chama — o cliente só diz a pesquisa envolvida.
+  shareWithResearch: (animalId: string, researchId: string, message?: string) =>
+    http.post<{ status: ShareStatus }>(`/api/animals/${animalId}/researches`, {
+      researchId,
+      message: message ?? "",
+    }),
+  acceptShare: (animalId: string, researchId: string) =>
+    http.patch(`/api/animals/${animalId}/researches/${researchId}`),
+  // Serve para recusar, cancelar o que se pediu e desvincular uma participação já aceita.
   removeResearch: (animalId: string, researchId: string) =>
     http.del(`/api/animals/${animalId}/researches/${researchId}`),
+  pendingShares: () => http.get<PendingShare[]>("/api/animal-shares"),
+
+  // Confere se um identificador já existe na organização ANTES de preencher o formulário.
+  // `researchId` é a pesquisa escolhida no formulário: com ela a resposta diz se o indivíduo
+  // encontrado já está nessa pesquisa ou se ainda cabe vinculá-lo.
+  lookupIdentifier: (by: {
+    controlId?: string
+    simbaRecordNumber?: string
+    researchId?: string
+  }) => {
+    const p = new URLSearchParams()
+    if (by.controlId) p.set("controlId", by.controlId)
+    if (by.simbaRecordNumber) p.set("simbaRecordNumber", by.simbaRecordNumber)
+    if (by.researchId) p.set("researchId", by.researchId)
+    return http.get<IdentifierLookup>(`/api/animals/lookup?${p.toString()}`)
+  },
 
   // SIMBA — busca por número de registro (pré-preenchimento do formulário).
   lookupSimba: (recordNumber: string) =>
@@ -61,6 +88,8 @@ export const animalsService = {
   listMedia: (animalId: string) => http.get<AnimalMedia[]>(`/api/animals/${animalId}/media`),
   uploadMedia: (animalId: string, form: FormData) =>
     http.postForm<AnimalMedia>(`/api/animals/${animalId}/media`, form),
+  updateMedia: (mediaId: string, data: UpdateMediaData) =>
+    http.patch<{ id: string; label: string | null }>(`/api/media/${mediaId}`, data),
   removeMedia: (mediaId: string) => http.del(`/api/media/${mediaId}`),
 
   // Grade de análises e auditoria

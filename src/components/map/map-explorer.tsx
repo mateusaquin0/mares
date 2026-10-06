@@ -59,6 +59,8 @@ type Props = {
   points: MapPoint[]
   // Base do link de detalhe (mapa privado). Ausente = mapa público (popup sem link).
   linkBase?: string
+  // Query anexada a esse link (ex.: a origem que o "voltar" do detalhe usa).
+  linkQuery?: string
   // Mapa privado: mostra a legenda de visibilidade (público vs. oculto) e o filtro de visibilidade.
   showVisibility?: boolean
 }
@@ -72,7 +74,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   )
 }
 
-export function MapExplorer({ points, linkBase, showVisibility }: Props) {
+export function MapExplorer({ points, linkBase, linkQuery, showVisibility }: Props) {
   const t = useTranslations("map")
   const ta = useTranslations("animals")
   const locale = useLocale()
@@ -240,7 +242,6 @@ export function MapExplorer({ points, linkBase, showVisibility }: Props) {
 
   return (
     <div className="flex h-full flex-col gap-3" data-testid="map-explorer">
-      {/* Barra de filtros */}
       <div className="flex flex-wrap items-end gap-3 rounded-lg border bg-card p-3 shadow-sm">
         <Field label={t("filterSpecies")}>
           <div className="w-48">
@@ -397,10 +398,14 @@ export function MapExplorer({ points, linkBase, showVisibility }: Props) {
         </div>
       </div>
 
-      {/* Mapa — sempre renderizado (mesmo sem pontos, exibe o mapa-base). Quando não há
-          nada a mostrar, um aviso flutuante e não-bloqueante aparece sobre o mapa. */}
       <div className="relative min-h-[420px] flex-1 overflow-hidden rounded-lg border shadow-sm">
-        <LeafletMap points={filtered} labels={labels} linkBase={linkBase} locale={locale} />
+        <LeafletMap
+          points={filtered}
+          labels={labels}
+          linkBase={linkBase}
+          linkQuery={linkQuery}
+          locale={locale}
+        />
         {filtered.length === 0 && (
           <div className="pointer-events-none absolute left-1/2 top-4 z-[1000] -translate-x-1/2 rounded-full border bg-card/95 px-4 py-2 text-sm text-muted-foreground shadow-sm backdrop-blur">
             {t("empty")}

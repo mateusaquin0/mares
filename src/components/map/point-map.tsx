@@ -8,6 +8,8 @@ import { useEffect, useRef } from "react"
 import L from "leaflet"
 import "leaflet/dist/leaflet.css"
 
+import { useHasSize } from "./use-has-size"
+
 type Props = {
   lat: number
   lon: number
@@ -36,9 +38,10 @@ function pinIcon() {
 export default function PointMap({ lat, lon, label, zoom = 11 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<L.Map | null>(null)
+  const hasSize = useHasSize(containerRef)
 
   useEffect(() => {
-    if (!containerRef.current || mapRef.current) return
+    if (!hasSize || !containerRef.current || mapRef.current) return
     const map = L.map(containerRef.current, { center: [lat, lon], zoom, scrollWheelZoom: false })
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
@@ -51,7 +54,7 @@ export default function PointMap({ lat, lon, label, zoom = 11 }: Props) {
       map.remove()
       mapRef.current = null
     }
-  }, [lat, lon, label, zoom])
+  }, [lat, lon, label, zoom, hasSize])
 
   return <div ref={containerRef} className="h-full w-full" />
 }

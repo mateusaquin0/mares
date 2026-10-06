@@ -28,7 +28,10 @@ export function apiError(err: unknown): NextResponse {
     return NextResponse.json({ error: err.message, code: err.code }, { status: 404 })
   }
   if (err instanceof ConflictError) {
-    return NextResponse.json({ error: err.message, code: err.code }, { status: 409 })
+    return NextResponse.json(
+      { error: err.message, code: err.code, ...(err.params ? { params: err.params } : {}) },
+      { status: 409 },
+    )
   }
   if (err instanceof ServiceUnavailableError) {
     return NextResponse.json({ error: err.message, code: err.code }, { status: 503 })

@@ -2,12 +2,12 @@
 // Regras: qualquer usuário logado envia (com rate limit); só o admin global lista.
 
 import { NextRequest, NextResponse } from "next/server"
-import type { FeedbackStatus } from "@prisma/client"
 import { prisma } from "@/lib/prisma"
 import { getAuthUser, getActiveOrgId, requireSystemAdmin } from "@/lib/auth"
 import { apiError, tooManyRequests, unauthorized } from "@/lib/api"
 import { rateLimit } from "@/lib/rate-limit"
-import { createFeedbackSchema } from "@/schemas/feedback.schema"
+import { createFeedbackSchema, feedbackStatusSchema } from "@/schemas/feedback.schema"
+import { listFeedback } from "@/lib/feedback"
 
 export async function POST(req: NextRequest) {
   try {
@@ -46,14 +46,11 @@ export async function GET(req: NextRequest) {
     if (!user) return unauthorized()
     requireSystemAdmin(user)
 
-    const statusParam = req.nextUrl.searchParams.get("status")
-    const valid: FeedbackStatus[] = ["NEW", "IN_REVIEW", "RESOLVED", "WONT_FIX"]
-    const where =
-      statusParam && valid.includes(statusParam as FeedbackStatus)
-        ? { status: statusParam as FeedbackStatus }
-        : {}
+    // Filtro opcional: valor fora do enum é ignorado (lista completa), não é erro.
+    const parsed = feedbackStatusSchema.safeParse(req.nextUrl.searchParams.get("status"))
+    const status = parsed.success ? parsed.data : undefined
 
-    const items = await prisma.feedback.findMany({ where, orderBy: { createdAt: "desc" } })
+    const items = await listFeedback(status)
     return NextResponse.json(items)
   } catch (err) {
     return apiError(err)

@@ -65,6 +65,63 @@ export type AnimalFacets = {
   pathogens: { id: string; label: string }[]
 }
 
+// Situação do indivíduo em relação à pesquisa escolhida no formulário: já vinculado,
+// aguardando resposta de um convite/pedido, ou sem vínculo (cabe oferecer o compartilhamento).
+export type AnimalResearchLink = "linked" | "pending" | "none"
+
+// Resultado da consulta prévia de identificador (/api/animals/lookup). Quando o indivíduo
+// existe mas está fora do escopo, vem a identidade mínima para a pessoa decidir entre pedir
+// o compartilhamento e corrigir o identificador digitado. Quando é visível, `link` diz se ele
+// já está na pesquisa escolhida — se não estiver, ainda cabe vinculá-lo a ela.
+export type IdentifierLookup =
+  | { found: false }
+  | { found: true; visible: true; animalId: string; research: string; link: AnimalResearchLink }
+  | {
+      found: true
+      visible: false
+      animalId: string
+      research: string
+      species: string
+      eventDate: string
+      location: string
+    }
+
+// Estado do compartilhamento de um indivíduo com outra pesquisa.
+export type ShareStatus = "PENDING" | "ACCEPTED"
+
+// Participação (ou convite) de uma pesquisa num indivíduo.
+export type AnimalParticipation = {
+  status: ShareStatus
+  research: { id: string; name: string }
+  invitedBy: { name: string | null; email: string } | null
+}
+
+// Quem iniciou o compartilhamento — define quem responde (ver docs/PERMISSOES.md):
+//   INVITE  → outra pesquisa ofereceu o indivíduo a uma pesquisa sua; você aceita.
+//   REQUEST → alguém quer um indivíduo de uma pesquisa sua; você aprova.
+export type ShareOrigin = "INVITE" | "REQUEST"
+
+// Compartilhamento pendente aguardando a resposta do usuário (/api/animal-shares).
+export type PendingShare = {
+  origin: ShareOrigin
+  message: string | null
+  createdAt: string
+  animal: {
+    id: string
+    species: string | null
+    controlId: string | null
+    simbaRecordNumber: string | null
+    municipality: string | null
+    state: string | null
+    eventDate: string | null
+  }
+  // `research` = a pesquisa que passa a estudar o indivíduo se houver aceite;
+  // `fromResearch` = a pesquisa primária (de origem) do indivíduo.
+  research: { id: string; name: string }
+  fromResearch: { id: string; name: string }
+  invitedBy: { name: string | null; email: string } | null
+}
+
 // Detalhe completo de um animal (/api/animals/:id).
 export type AnimalDetail = {
   id: string
@@ -80,17 +137,20 @@ export type AnimalDetail = {
   decompositionStage: string | null
   deathCondition: string | null
   necropsyDate: string | null
+  necropsyWeightKg: number | null
   strandingLat: number | null
   strandingLon: number | null
   strandingBeach: string | null
   municipality: string | null
   state: string | null
+  executingInstitution: string | null
   eventDate: string | null
   macroscopicNotes: string | null
   isPublic: boolean
   research: { id: string; name: string }
-  // Pesquisas adicionais (mesma org) que compartilham este indivíduo.
-  participations: { research: { id: string; name: string } }[]
+  // Pesquisas adicionais (mesma org) que compartilham este indivíduo. PENDING = convite
+  // enviado, ainda sem aceite da pesquisa de destino (não dá acesso a nada).
+  participations: AnimalParticipation[]
   _count: { samples: number; media: number }
 }
 
@@ -101,13 +161,26 @@ export type AnimalMedia = {
   mimeType: string
   label: string | null
   createdAt: string
+  // Autor do upload; nulo em arquivos anteriores à coluna (só admin os exclui).
+  uploadedById: string | null
+  // Pesquisa dona do arquivo — define quem o enxerga (indivíduo compartilhado).
+  research: { id: string; name: string }
 }
 
 // Entrada do histórico/auditoria (/api/animals/:id/audit).
 // `entity` distingue a origem: edição do animal, criação/edição de amostra ou análise.
 export type AuditEntry = {
   id: string
-  entity: "Animal" | "Sample" | "Analysis"
+  entity:
+    | "Animal"
+    // Biometria grava com o animalId como entityId e o RÓTULO da medida como `field`
+    // (o JSON de medidas não tem id de linha) — ver a rota PUT de /biometry.
+    | "Biometry"
+    | "Sample"
+    | "Analysis"
+    | "NecropsySystemExam"
+    | "GrossFinding"
+    | "HistopathologyFinding"
   changedAt: string
   field: string
   oldValue: string | null
@@ -133,7 +206,9 @@ export type SimbaLookup = {
   strandingBeach: string | null
   municipality: string | null
   state: string | null
+  executingInstitution: string | null
   sex: string
   lifeStage: string
+  necropsyWeightKg: number | null
   macroscopicNotes: string | null
 }

@@ -2,19 +2,31 @@
 // Cada contagem só é calculada se o usuário tiver a permissão correspondente; caso
 // contrário retorna 0 (o cliente nunca vê pendência que não poderia tratar).
 //   - accessRequests   → admin global (JoinRequest PENDING)
-//   - feedback         → admin global (Feedback NEW)
+//   - feedback         → admin global (Feedback NEW ou REOPENED — os dois esperam triagem)
+//   - feedbackReplies  → qualquer autenticado (respostas não lidas nos PRÓPRIOS tickets)
 //   - glossaryRequests → curador de glossário (CatalogRequest PENDING)
 
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
-import { getAuthUser, canReviewCatalogRequest } from "@/lib/auth"
+import { getAuthUser, getActiveOrgId, orgRole, canReviewCatalogRequest } from "@/lib/auth"
 import { apiError, unauthorized } from "@/lib/api"
 import { countPendingRequests } from "@/lib/catalog-requests"
+import { countMyUnreadReplies } from "@/lib/feedback"
+import { countReviewableAccessRequests } from "@/lib/research-requests"
+import { countPendingShares } from "@/lib/animals"
+import { getResearchScope } from "@/lib/research-access"
 
 export type PendingCounts = {
   accessRequests: number
   feedback: number
+  // Conversas dos próprios tickets com mensagem nova da administração (vale para todos,
+  // inclusive quem não é admin: é o retorno que a pessoa está esperando).
+  feedbackReplies: number
   glossaryRequests: number
+  // Pendências do grupo (pesquisador comum também vê): pedidos de acesso às pesquisas que
+  // ele gere e compartilhamentos de indivíduo aguardando a resposta dele.
+  researchAccess: number
+  animalShares: number
 }
 
 export async function GET() {
@@ -24,14 +36,42 @@ export async function GET() {
 
     const isAdmin = user.isSystemAdmin
     const isReviewer = canReviewCatalogRequest(user)
+    // Contagens do grupo dependem da organização ativa; sem ela, ficam zeradas.
+    const orgId = await getActiveOrgId(user)
+    const isOrgMember = !!orgId && !!orgRole(user, orgId)
 
-    const [accessRequests, feedback, glossaryRequests] = await Promise.all([
+    const [
+      accessRequests,
+      feedback,
+      feedbackReplies,
+      glossaryRequests,
+      researchAccess,
+      animalShares,
+    ] = await Promise.all([
       isAdmin ? prisma.joinRequest.count({ where: { status: "PENDING" } }) : Promise.resolve(0),
-      isAdmin ? prisma.feedback.count({ where: { status: "NEW" } }) : Promise.resolve(0),
+      isAdmin
+        ? prisma.feedback.count({ where: { status: { in: ["NEW", "REOPENED"] } } })
+        : Promise.resolve(0),
+      countMyUnreadReplies(user.id),
       isReviewer ? countPendingRequests() : Promise.resolve(0),
+      isOrgMember
+        ? countReviewableAccessRequests(orgId, user.id, orgRole(user, orgId) === "ORG_ADMIN")
+        : Promise.resolve(0),
+      isOrgMember
+        ? getResearchScope(user, orgId).then((scope) =>
+            countPendingShares(orgId, scope.all ? undefined : scope.ids),
+          )
+        : Promise.resolve(0),
     ])
 
-    const counts: PendingCounts = { accessRequests, feedback, glossaryRequests }
+    const counts: PendingCounts = {
+      accessRequests,
+      feedback,
+      feedbackReplies,
+      glossaryRequests,
+      researchAccess,
+      animalShares,
+    }
     return NextResponse.json(counts)
   } catch (err) {
     return apiError(err)

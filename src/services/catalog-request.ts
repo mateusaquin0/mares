@@ -7,8 +7,9 @@ import type { CatalogRequestItem } from "@/types/catalog-request"
 
 export const catalogRequestService = {
   // Abrir solicitação (pesquisador).
-  create: (type: CatalogType, payload: CatalogItemPayload) =>
-    http.post("/api/catalog-requests", { type, payload }),
+  // `targetId` preenchido = proposta de EDIÇÃO daquele item; ausente = inclusão.
+  create: (type: CatalogType, payload: CatalogItemPayload, targetId?: string) =>
+    http.post("/api/catalog-requests", { type, payload, targetId }),
   // Fila de curadoria (admin de grupo / global).
   listReviewable: (status?: string) =>
     http.get<CatalogRequestItem[]>("/api/catalog-requests", {

@@ -60,8 +60,34 @@ export async function PUT(req: NextRequest) {
       select: { id: true, result: true, measureValue: true, notes: true },
     })
 
+    const isEmpty = next.result === null && next.measureValue === null && next.notes === null
+
     // Nada a gravar: célula vazia e sem registro anterior.
-    if (!existing && next.result === null && next.measureValue === null && next.notes === null) {
+    if (!existing && isEmpty) return NextResponse.json(null)
+
+    // Célula esvaziada: apaga a linha em vez de deixá-la com tudo nulo. Uma análise "vazia"
+    // não é dado — e, mantida, bloqueava para sempre a exclusão da amostra (sampleHasAnalyses).
+    // As confirmações penduradas neste rastreio caem por cascade; o AuditLog registra a saída.
+    if (existing && isEmpty) {
+      const cleared = (
+        [
+          ["result", existing.result],
+          ["measureValue", existing.measureValue],
+          ["notes", existing.notes],
+        ] as const
+      )
+        .filter(([, old]) => old !== null)
+        .map(([field, old]) => ({
+          field,
+          oldValue: str(old),
+          newValue: null,
+          userId: user.id,
+          entity: "Analysis",
+          entityId: existing.id,
+        }))
+
+      await prisma.analysis.delete({ where: { id: existing.id } })
+      if (cleared.length > 0) await prisma.auditLog.createMany({ data: cleared })
       return NextResponse.json(null)
     }
 

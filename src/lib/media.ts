@@ -18,15 +18,16 @@ export const MEDIA_ALLOWED = [
 ]
 const SIGNED_TTL = 60 * 60 // 1h
 
-/** Cria o bucket se ainda não existir (idempotente). */
-export async function ensureBucket() {
+/**
+ * Cria o bucket se ainda não existir (idempotente). O bucket é parâmetro porque os anexos
+ * de feedback moram num bucket separado (`feedback-media`): o controle de acesso de lá é
+ * o do ticket, não o da organização — misturá-los deixaria as duas regras no mesmo lugar.
+ */
+export async function ensureBucket(bucket = MEDIA_BUCKET, maxBytes = MEDIA_MAX_BYTES) {
   const admin = createAdminClient()
-  const { data } = await admin.storage.getBucket(MEDIA_BUCKET)
+  const { data } = await admin.storage.getBucket(bucket)
   if (!data) {
-    await admin.storage.createBucket(MEDIA_BUCKET, {
-      public: false,
-      fileSizeLimit: MEDIA_MAX_BYTES,
-    })
+    await admin.storage.createBucket(bucket, { public: false, fileSizeLimit: maxBytes })
   }
 }
 
@@ -94,22 +95,38 @@ export function assertValidContent(buf: Buffer): string {
 }
 
 /** Gera uma URL assinada para o caminho do objeto (ou null em caso de falha). */
-export async function signMediaUrl(path: string): Promise<string | null> {
+export async function signMediaUrl(path: string, bucket = MEDIA_BUCKET): Promise<string | null> {
   const admin = createAdminClient()
-  const { data } = await admin.storage.from(MEDIA_BUCKET).createSignedUrl(path, SIGNED_TTL)
+  const { data } = await admin.storage.from(bucket).createSignedUrl(path, SIGNED_TTL)
   return data?.signedUrl ?? null
 }
 
-/** Carrega a mídia com o orgId (via animal -> pesquisa) para checagem de papel. */
+/**
+ * Carrega a mídia com a pesquisa DONA e o orgId dela, para as checagens de papel e de escopo.
+ *
+ * A visibilidade do arquivo é a da sua pesquisa (assertResearchVisible), não a do indivíduo:
+ * num indivíduo compartilhado, cada projeto vê os próprios arquivos. O `animalId` sai junto
+ * para quem precisa do contexto do indivíduo (caminho no storage, invalidação de cache).
+ */
 export async function loadMediaOrg(id: string) {
   const media = await prisma.animalMedia.findUnique({
     where: { id },
     select: {
       id: true,
       url: true,
-      animal: { select: { research: { select: { orgId: true } } } },
+      uploadedById: true,
+      animalId: true,
+      researchId: true,
+      research: { select: { orgId: true } },
     },
   })
   if (!media) throw new NotFoundError("Arquivo não encontrado", ERROR_CODES.mediaNotFound)
-  return { id: media.id, path: media.url, orgId: media.animal.research.orgId }
+  return {
+    id: media.id,
+    path: media.url,
+    uploadedById: media.uploadedById,
+    animalId: media.animalId,
+    researchId: media.researchId,
+    orgId: media.research.orgId,
+  }
 }

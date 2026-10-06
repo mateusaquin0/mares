@@ -87,7 +87,7 @@ const SelectContent = React.forwardRef<
         className={cn(
           "p-1",
           position === "popper" &&
-            "h-[var(--radix-select-trigger-height)] w-full min-w-[var(--radix-select-trigger-width)]",
+            "h-[var(--radix-select-trigger-height)] w-[var(--radix-select-trigger-width)] min-w-[8rem]",
         )}
       >
         {children}
@@ -118,6 +118,8 @@ const SelectItem = React.forwardRef<
     ref={ref}
     className={cn(
       "relative flex w-full cursor-pointer select-none items-center rounded-sm py-1.5 pl-2 pr-8 text-sm outline-none focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
+      // Vai por seletor porque o SelectItemText do Radix descarta `className`.
+      "[&>span:last-child]:line-clamp-2 [&>span:last-child]:min-w-0 [&>span:last-child]:break-words",
       className,
     )}
     {...props}

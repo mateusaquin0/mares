@@ -1,5 +1,7 @@
 // MARES — Protocolo de uma pesquisa (matriz órgão × patógeno × exame): listar e adicionar.
-// Ver: qualquer membro. Adicionar: admin da org.
+// Ver e adicionar: quem enxerga a pesquisa — admin da org (todas) ou pesquisador VINCULADO
+// (ResearchMember). O protocolo é parte do desenho da pesquisa, então quem toca nos dados dela
+// também o define; o escopo por pesquisa (assertResearchVisible) é o que limita o alcance.
 
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
@@ -50,7 +52,9 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     const user = await getAuthUser()
     if (!user) return unauthorized()
     const { id } = await params
-    requireOrgRole(user, await researchOrg(id), "ORG_ADMIN")
+    const orgId = await researchOrg(id)
+    requireOrgRole(user, orgId, "RESEARCHER")
+    await assertResearchVisible(user, orgId, id)
 
     const body = await req.json().catch(() => null)
     const { entries } = protocolEntriesSchema.parse(body)

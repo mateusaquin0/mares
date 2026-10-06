@@ -17,6 +17,8 @@ export type Sample = {
   storageTemp: number | null
   status: SampleStatus
   notes: string | null
+  // Autor do cadastro; nulo em amostras anteriores à coluna (só admin as exclui).
+  createdById: string | null
   organ: OrganLite
   // Pesquisa dona da amostra (uma das pesquisas do indivíduo).
   research: { id: string; name: string }

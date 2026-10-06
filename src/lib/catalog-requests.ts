@@ -5,25 +5,27 @@
 
 import { Prisma, type CatalogRequestType, type CatalogRequestStatus } from "@prisma/client"
 import { prisma } from "@/lib/prisma"
-import type { CatalogType } from "@/schemas/catalog.schema"
+import {
+  CATALOG_BY_REQUEST_TYPE,
+  REQUEST_TYPE_BY_CATALOG,
+  type CatalogType,
+} from "@/schemas/catalog.schema"
 import { catalogRequestPayloadSchema } from "@/schemas/catalog-request.schema"
-import { assertPathogenFromNcbi, createCatalogItem, findDuplicate } from "@/lib/catalog"
+import {
+  assertPathogenFromNcbi,
+  catalogExists,
+  createCatalogItem,
+  findDuplicate,
+  updateCatalogItem,
+} from "@/lib/catalog"
 import { NotFoundError, ConflictError, ForbiddenError } from "@/lib/errors"
 import { ERROR_CODES } from "@/lib/error-codes"
 import { slugify } from "@/lib/slug"
 
-const TYPE_TO_ENUM: Record<CatalogType, CatalogRequestType> = {
-  organs: "ORGAN",
-  pathogens: "PATHOGEN",
-  "exam-types": "EXAM_TYPE",
-}
-const ENUM_TO_TYPE: Record<CatalogRequestType, CatalogType> = {
-  ORGAN: "organs",
-  PATHOGEN: "pathogens",
-  EXAM_TYPE: "exam-types",
-}
+const TYPE_TO_ENUM = REQUEST_TYPE_BY_CATALOG as Record<CatalogType, CatalogRequestType>
+
 export function catalogTypeOf(t: CatalogRequestType): CatalogType {
-  return ENUM_TO_TYPE[t]
+  return CATALOG_BY_REQUEST_TYPE[t]
 }
 
 // Campos devolvidos ao cliente (o e-mail é filtrado no route conforme o papel).
@@ -40,6 +42,7 @@ export const requestSelect = {
   reviewedAt: true,
   reviewNote: true,
   duplicateOfId: true,
+  targetId: true,
   createdItemId: true,
   createdAt: true,
   updatedAt: true,
@@ -61,11 +64,18 @@ function payloadNames(type: CatalogType, payload: Record<string, unknown>): stri
 export async function createCatalogRequest(opts: {
   type: CatalogType
   payload: unknown
+  // Preenchido = proposta de EDIÇÃO do item; ausente = inclusão de item novo.
+  targetId?: string
   userId: string
   userEmail: string
   orgId: string | null
   orgName: string | null
 }): Promise<CatalogRequestRow> {
+  // O alvo precisa existir NO TIPO pedido: sem isso, um id de outro catálogo passaria e só
+  // falharia na aprovação, já na frente do curador.
+  if (opts.targetId && !(await catalogExists(opts.type, opts.targetId))) {
+    throw new NotFoundError("Item do glossário não encontrado", ERROR_CODES.catalogNotFound)
+  }
   // Valida o payload conforme o tipo (mesmas regras da criação). ZodError → 422.
   const parsed = catalogRequestPayloadSchema(opts.type).parse(opts.payload) as Record<
     string,
@@ -78,8 +88,23 @@ export async function createCatalogRequest(opts: {
     assertPathogenFromNcbi(sci || null, typeof parsed.taxonId === "number" ? parsed.taxonId : null)
   }
 
+  // Edição: a colisão que importa é já haver uma proposta pendente PARA O MESMO ITEM — de
+  // qualquer autor, porque duas edições concorrentes do mesmo item se sobrescreveriam na
+  // aprovação. (Na inclusão a colisão é por nome, logo abaixo.)
+  if (opts.targetId) {
+    const pendingForTarget = await prisma.catalogRequest.count({
+      where: { targetId: opts.targetId, status: "PENDING" },
+    })
+    if (pendingForTarget > 0) {
+      throw new ConflictError(
+        "Já existe uma edição pendente para este item",
+        ERROR_CODES.catalogRequestDuplicatePending,
+      )
+    }
+  }
+
   // Dedup: bloqueia solicitação pendente idêntica do PRÓPRIO autor (mesmo tipo + mesmo nome).
-  const names = payloadNames(opts.type, parsed)
+  const names = opts.targetId ? [] : payloadNames(opts.type, parsed)
   if (names.length) {
     const pending = await prisma.catalogRequest.findMany({
       where: { requestedById: opts.userId, type: TYPE_TO_ENUM[opts.type], status: "PENDING" },
@@ -99,6 +124,7 @@ export async function createCatalogRequest(opts: {
   return prisma.catalogRequest.create({
     data: {
       type: TYPE_TO_ENUM[opts.type],
+      targetId: opts.targetId ?? null,
       payload: parsed as Prisma.InputJsonValue,
       requestedById: opts.userId,
       requestedByEmail: opts.userEmail,
@@ -159,8 +185,27 @@ export async function approveCatalogRequest(
     throw new NotFoundError("Solicitação não encontrada", ERROR_CODES.catalogRequestNotFound)
   assertReviewable(req, reviewerId)
 
-  const type = ENUM_TO_TYPE[req.type]
+  const type = CATALOG_BY_REQUEST_TYPE[req.type]
   try {
+    // Solicitação de EDIÇÃO: aplica no item apontado pelo mesmo caminho da edição direta.
+    // O item pode ter sido excluído entre o pedido e a revisão — daí a checagem.
+    if (req.targetId) {
+      if (!(await catalogExists(type, req.targetId))) {
+        throw new NotFoundError("Item do glossário não encontrado", ERROR_CODES.catalogNotFound)
+      }
+      const edited = await updateCatalogItem(type, req.targetId, req.payload)
+      await prisma.catalogRequest.updateMany({
+        where: { id, status: "PENDING" },
+        data: {
+          status: "APPROVED",
+          reviewedById: reviewerId,
+          reviewedAt: new Date(),
+          createdItemId: edited.id,
+        },
+      })
+      return { createdItemId: edited.id }
+    }
+
     const item = await createCatalogItem(type, req.payload, req.requestedById ?? reviewerId)
     // Trava por status: se outro revisor processou no intervalo, este update é no-op (count 0).
     await prisma.catalogRequest.updateMany({

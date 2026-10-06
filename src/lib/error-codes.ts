@@ -24,16 +24,26 @@ export const ERROR_CODES = {
   requestNotFound: "requestNotFound",
   requestProcessed: "requestProcessed",
   systemAdminNoOrg: "systemAdminNoOrg",
+  // Já existe uma solicitação de grupo aguardando análise para o mesmo e-mail.
+  joinRequestPending: "joinRequestPending",
   alreadyMember: "alreadyMember",
   nameRequired: "nameRequired",
   notInvited: "notInvited",
   // Fase 2 — pesquisas, protocolos e catálogos
   researchNotFound: "researchNotFound",
   researchHasAnimals: "researchHasAnimals",
+  // Recusas de edição separadas: o motivo muda o que o usuário deve fazer.
+  researchVisibilityAdminOnly: "researchVisibilityAdminOnly",
+  researchEditNotCreator: "researchEditNotCreator",
   researchMemberExists: "researchMemberExists",
   researchMemberNotFound: "researchMemberNotFound",
   researchMemberIsCreator: "researchMemberIsCreator",
   researchMemberNotResearcher: "researchMemberNotResearcher",
+  // Solicitação de acesso a uma pesquisa do grupo (a listagem é aberta; os dados, não).
+  researchAccessRequestNotFound: "researchAccessRequestNotFound",
+  researchAccessRequestPending: "researchAccessRequestPending",
+  researchAccessRequestProcessed: "researchAccessRequestProcessed",
+  researchAccessAlreadyMember: "researchAccessAlreadyMember",
   protocolNotFound: "protocolNotFound",
   protocolDuplicate: "protocolDuplicate",
   protocolInUse: "protocolInUse",
@@ -48,13 +58,27 @@ export const ERROR_CODES = {
   animalDuplicate: "animalDuplicate",
   animalControlDuplicate: "animalControlDuplicate",
   animalSimbaDuplicate: "animalSimbaDuplicate",
+  // Variantes para quando o registro em conflito está numa pesquisa FORA do escopo do
+  // usuário: sem nomear a pesquisa, o erro é inacionável (o usuário não acha o duplicado
+  // na listagem, que é filtrada por pesquisa). Recebem o param `research`.
+  animalControlDuplicateOutOfScope: "animalControlDuplicateOutOfScope",
+  animalSimbaDuplicateOutOfScope: "animalSimbaDuplicateOutOfScope",
+  // Duplicado numa pesquisa que o usuário ENXERGA: nomear a pesquisa é suficiente (ele abre
+  // o registro e confere), sem oferecer pedido de compartilhamento. Recebem o param `research`.
+  animalControlDuplicateInResearch: "animalControlDuplicateInResearch",
+  animalSimbaDuplicateInResearch: "animalSimbaDuplicateInResearch",
   animalHasSamples: "animalHasSamples",
   animalResearchExists: "animalResearchExists",
   animalResearchPrimary: "animalResearchPrimary",
   animalResearchHasData: "animalResearchHasData",
   animalResearchNotLinked: "animalResearchNotLinked",
+  // Compartilhamento de indivíduo com consentimento dos dois lados (convite × pedido).
+  animalSharePending: "animalSharePending",
+  animalShareNotFound: "animalShareNotFound",
+  animalShareCannotDecide: "animalShareCannotDecide",
   sampleNotFound: "sampleNotFound",
   sampleHasAnalyses: "sampleHasAnalyses",
+  sampleDeleteNotCreator: "sampleDeleteNotCreator",
   sampleIdentificationDuplicate: "sampleIdentificationDuplicate",
   organNotFound: "organNotFound",
   analysisInvalidCombo: "analysisInvalidCombo",
@@ -63,6 +87,7 @@ export const ERROR_CODES = {
   confirmationParentNotPositive: "confirmationParentNotPositive",
   confirmationDuplicate: "confirmationDuplicate",
   mediaNotFound: "mediaNotFound",
+  mediaDeleteNotUploader: "mediaDeleteNotUploader",
   mediaInvalidType: "mediaInvalidType",
   mediaTooLarge: "mediaTooLarge",
   mediaUploadFailed: "mediaUploadFailed",
@@ -71,11 +96,35 @@ export const ERROR_CODES = {
   simbaUnavailable: "simbaUnavailable",
   // Feedback (sugestões / bugs)
   feedbackNotFound: "feedbackNotFound",
+  // Descartar (WONT_FIX) exige justificativa visível ao autor — inclusive ao tentar apagar
+  // a justificativa de um feedback que já está descartado.
+  feedbackResolutionRequired: "feedbackResolutionRequired",
+  // O autor só corrige o próprio relato enquanto ele ainda não foi triado (status NEW).
+  feedbackNotEditable: "feedbackNotEditable",
+  // A conversa do ticket só aceita mensagens/anexos enquanto ele está aberto (NEW/IN_REVIEW).
+  feedbackThreadClosed: "feedbackThreadClosed",
+  feedbackAttachmentNotFound: "feedbackAttachmentNotFound",
+  // Teto de imagens por ticket (evita usar o feedback como armazenamento de arquivos).
+  feedbackAttachmentLimit: "feedbackAttachmentLimit",
+  // Só um ticket ENCERRADO (RESOLVED/WONT_FIX) pode ser reaberto, e só pelo autor.
+  feedbackNotReopenable: "feedbackNotReopenable",
   // Solicitações de glossário
   catalogRequestNotFound: "catalogRequestNotFound",
   catalogRequestProcessed: "catalogRequestProcessed",
   catalogRequestSelfReview: "catalogRequestSelfReview",
   catalogRequestDuplicatePending: "catalogRequestDuplicatePending",
+  // Laudo anatomopatológico (macro/micro)
+  necropsyExamNotFound: "necropsyExamNotFound",
+  systemNotFound: "systemNotFound",
+  necropsyFindingNotFound: "necropsyFindingNotFound",
+  histopathologyFindingNotFound: "histopathologyFindingNotFound",
+  // Rebaixar um sistema COM achados para "sem alteração"/"não examinado" apagaria dado em
+  // silêncio: a troca é recusada e o usuário remove os achados primeiro.
+  necropsyFindingsPresent: "necropsyFindingsPresent",
+  // Lista pessoal de tipos de amostra (atalho do formulário de amostra)
+  sampleTypeNotFound: "sampleTypeNotFound",
+  sampleTypeDuplicate: "sampleTypeDuplicate",
+  sampleTypeLimit: "sampleTypeLimit",
 } as const
 
 export type ErrorCode = (typeof ERROR_CODES)[keyof typeof ERROR_CODES]

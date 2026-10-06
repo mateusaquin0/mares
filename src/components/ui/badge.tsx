@@ -22,6 +22,9 @@ const badgeVariants = cva(
         negative: "border-transparent bg-secondary text-muted-foreground",
         inconclusive:
           "border-[hsl(35_80%_78%)] bg-[hsl(35_92%_92%)] text-[hsl(28_80%_34%)] dark:border-[hsl(35_50%_32%)] dark:bg-[hsl(35_45%_18%)] dark:text-[hsl(35_85%_70%)]",
+        // Níveis de ênfase: estado ativo em destaque e estado encerrado.
+        highlight: "border-transparent bg-accent text-accent-foreground",
+        faded: "border-dashed border-border bg-muted text-muted-foreground",
       },
     },
     defaultVariants: {

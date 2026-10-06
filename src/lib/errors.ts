@@ -15,10 +15,18 @@ export class NotFoundError extends Error {
 
 export class ConflictError extends Error {
   code: string
-  constructor(message = "Conflito de dados", code: string = ERROR_CODES.conflict) {
+  // Valores interpolados na mensagem traduzida do cliente (ICU: `{research}`). Trafegam
+  // no corpo do erro para que o servidor não precise conhecer o idioma. Ver docs/I18N.md.
+  params?: Record<string, string>
+  constructor(
+    message = "Conflito de dados",
+    code: string = ERROR_CODES.conflict,
+    params?: Record<string, string>,
+  ) {
     super(message)
     this.name = "ConflictError"
     this.code = code
+    this.params = params
   }
 }
 

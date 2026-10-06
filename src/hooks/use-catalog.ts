@@ -43,11 +43,12 @@ export function useExamTypes(enabled = true) {
 }
 
 // Gestão genérica de catálogos (CatalogManager): lista por tipo e grupos de patógeno.
-export function useCatalogList(type: CatalogType) {
+export function useCatalogList(type: CatalogType, enabled = true) {
   return useQuery({
     queryKey: catalogKeys.list(type),
     queryFn: () => catalogService.list(type),
     staleTime: 60_000,
+    enabled,
   })
 }
 

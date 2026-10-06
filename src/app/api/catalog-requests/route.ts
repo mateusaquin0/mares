@@ -37,6 +37,7 @@ export async function POST(req: NextRequest) {
     const created = await createCatalogRequest({
       type: body.type,
       payload: body.payload,
+      targetId: body.targetId,
       userId: user.id,
       userEmail: user.email,
       orgId,

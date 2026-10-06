@@ -32,6 +32,8 @@ export type CatalogRequestItem = {
   reviewedAt: string | null
   reviewNote: string | null
   duplicateOfId: string | null
+  // NULL = inclusão; preenchido = proposta de edição daquele item do glossário.
+  targetId: string | null
   createdItemId: string | null
   createdAt: string
   updatedAt: string
