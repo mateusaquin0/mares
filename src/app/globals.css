@@ -1,6 +1,36 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+/* Substitui o plugin tailwindcss-animate: o v4 nao carrega plugins JS vindos do
+   @config, e sem isto os utilitarios animate-in/fade-in/zoom-in que os componentes
+   do shadcn usam deixam de ser gerados. */
+@import "tw-animate-css";
+
+/* Tema, globs de conteudo e darkMode seguem no tailwind.config.ts. */
+@config "../../tailwind.config.ts";
+
+/* Animacao do accordion. Fica aqui, e nao no @config: o v4 ignora
+   theme.extend.keyframes/animation do JS config. */
+@theme {
+  --animate-accordion-down: accordion-down 0.2s ease-out;
+  --animate-accordion-up: accordion-up 0.2s ease-out;
+}
+
+@keyframes accordion-down {
+  from {
+    height: 0;
+  }
+  to {
+    height: var(--radix-accordion-content-height);
+  }
+}
+
+@keyframes accordion-up {
+  from {
+    height: var(--radix-accordion-content-height);
+  }
+  to {
+    height: 0;
+  }
+}
 
 @layer base {
   /* MARES Academic Intelligence — tokens do design system (ver design.md). */
