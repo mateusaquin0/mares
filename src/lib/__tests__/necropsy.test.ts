@@ -4,6 +4,7 @@ import { join } from "node:path"
 
 import { buildDescriptiveDiagnosis } from "@/lib/necropsy-report"
 import {
+  ANTHROPIC_INTERACTION_OPTIONS,
   DISTRIBUTION_OPTIONS,
   NECROPSY_STATUS_OPTIONS,
   SEVERITY_OPTIONS,
@@ -12,6 +13,7 @@ import {
   createGrossFindingSchema,
   updateGrossFindingSchema,
   createHistopathologyFindingSchema,
+  setNecropsyScreeningSchema,
   upsertSystemExamSchema,
 } from "@/schemas/necropsy.schema"
 
@@ -175,12 +177,81 @@ describe("createHistopathologyFindingSchema", () => {
   })
 })
 
+describe("setNecropsyScreeningSchema", () => {
+  const vazio = {
+    anthropicInteraction: null,
+    giContentCollected: null,
+    giSolidWaste: null,
+    giDetailedScreening: null,
+    interactions: [],
+  }
+
+  it("trata campo ausente como “não informado” (null), e não como erro", () => {
+    const r = setNecropsyScreeningSchema.safeParse({})
+    expect(r.success).toBe(true)
+    expect(r.data).toEqual(vazio)
+  })
+
+  it("aceita as interações quando há indícios, com grau de 1 a 3", () => {
+    const base = { ...vazio, anthropicInteraction: true }
+    expect(
+      setNecropsyScreeningSchema.safeParse({
+        ...base,
+        interactions: [
+          { type: "FISHERY", degree: 1 },
+          { type: "VESSEL", degree: 3 },
+        ],
+      }).success,
+    ).toBe(true)
+    expect(
+      setNecropsyScreeningSchema.safeParse({
+        ...base,
+        interactions: [{ type: "FISHERY", degree: 4 }],
+      }).success,
+    ).toBe(false)
+    expect(
+      setNecropsyScreeningSchema.safeParse({
+        ...base,
+        interactions: [{ type: "FISHERY", degree: 0 }],
+      }).success,
+    ).toBe(false)
+  })
+
+  it("recusa o mesmo tipo duas vezes — seriam dois graus para a mesma interação", () => {
+    const r = setNecropsyScreeningSchema.safeParse({
+      ...vazio,
+      anthropicInteraction: true,
+      interactions: [
+        { type: "WASTE", degree: 1 },
+        { type: "WASTE", degree: 2 },
+      ],
+    })
+    expect(r.success).toBe(false)
+    expect(r.error?.issues[0]?.message).toBe("duplicateInteraction")
+  })
+
+  it("recusa interações sem indício de interação antrópica (“não” ou sem resposta)", () => {
+    for (const anthropicInteraction of [false, null]) {
+      const r = setNecropsyScreeningSchema.safeParse({
+        ...vazio,
+        anthropicInteraction,
+        interactions: [{ type: "FISHERY", degree: 2 }],
+      })
+      expect(r.success).toBe(false)
+      expect(r.error?.issues[0]?.message).toBe("interactionsRequireAnthropic")
+    }
+  })
+})
+
 // Os vocabulários são listas em código, então uma chave nova só quebra em runtime — e só
 // na tela que o dev não abriu. Este teste exige as duas traduções de cada termo.
 describe("i18n dos vocabulários de necrópsia", () => {
-  const ALL_KEYS = [...DISTRIBUTION_OPTIONS, ...SEVERITY_OPTIONS, ...NECROPSY_STATUS_OPTIONS].map(
-    (o) => o.key,
-  )
+  const ALL_KEYS = [
+    ...DISTRIBUTION_OPTIONS,
+    ...SEVERITY_OPTIONS,
+    ...NECROPSY_STATUS_OPTIONS,
+    ...ANTHROPIC_INTERACTION_OPTIONS,
+  ].map((o) => o.key)
 
   for (const locale of ["pt", "en"] as const) {
     it(`${locale}.necropsy tem todos os rótulos dos vocabulários`, () => {

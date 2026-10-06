@@ -6,8 +6,10 @@ import {
   necropsyService,
   type GrossFindingPayload,
   type HistopathologyPayload,
+  type ScreeningPayload,
   type SystemExamPayload,
 } from "@/services/necropsy"
+import type { NecropsyReport } from "@/types/necropsy"
 export const necropsyKeys = {
   byAnimal: (animalId: string) => ["necropsy", animalId] as const,
 }
@@ -27,6 +29,22 @@ export function useNecropsy(animalId: string, enabled = true) {
 }
 
 // ── Mutações ─────────────────────────────────────────────────────────────────
+
+export function useSetNecropsyScreening(animalId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (data: ScreeningPayload) => necropsyService.setScreening(animalId, data),
+    // A resposta do PUT entra no cache ANTES da invalidação: a seção de triagem volta a
+    // seguir o servidor assim que a gravação termina, e sem isso ela leria o laudo antigo
+    // no intervalo até o refetch chegar — o valor recém-clicado piscava de volta.
+    onSuccess: (screening) => {
+      qc.setQueryData(necropsyKeys.byAnimal(animalId), (old?: NecropsyReport) =>
+        old ? { ...old, screening } : old,
+      )
+      invalidate(qc, animalId)
+    },
+  })
+}
 
 export function useSetNecropsySystem(animalId: string) {
   const qc = useQueryClient()

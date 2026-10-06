@@ -8,7 +8,12 @@ import { getAuthUser, requireOrgRole } from "@/lib/auth"
 import { assertAnimalVisible } from "@/lib/research-access"
 import { apiError, unauthorized } from "@/lib/api"
 import { loadAnimalOrg } from "@/lib/animals"
-import { histopathologySelect, systemExamSelect } from "@/lib/necropsy"
+import {
+  histopathologySelect,
+  screeningSelect,
+  systemExamSelect,
+  toScreening,
+} from "@/lib/necropsy"
 
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -19,7 +24,9 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
     requireOrgRole(user, animal.orgId, "RESEARCHER")
     await assertAnimalVisible(user, animal.orgId, id)
 
-    const [systems, histopathology] = await Promise.all([
+    const [screening, systems, histopathology] = await Promise.all([
+      // A triagem da carcaça mora em colunas do Animal + a tabela de interações.
+      prisma.animal.findUniqueOrThrow({ where: { id }, select: screeningSelect }),
       prisma.necropsySystemExam.findMany({
         where: { animalId: id },
         orderBy: { position: "asc" },
@@ -34,7 +41,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
 
     // A ordem é a do LAUDO (`position`), não a do catálogo: os catálogos ordenam por `key`
     // (alfabético), o que embaralharia a sequência anatômica que a necrópsia percorreu.
-    return NextResponse.json({ systems, histopathology })
+    return NextResponse.json({ screening: toScreening(screening), systems, histopathology })
   } catch (err) {
     return apiError(err)
   }

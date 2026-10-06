@@ -1,7 +1,12 @@
 // MARES — DTOs do laudo anatomopatológico (macro) e histopatológico (micro).
 
 import type { CatalogItem } from "@/types/catalog"
-import type { DistributionValue, NecropsyStatusValue, SeverityValue } from "@/lib/necropsy-enums"
+import type {
+  AnthropicInteractionValue,
+  DistributionValue,
+  NecropsyStatusValue,
+  SeverityValue,
+} from "@/lib/necropsy-enums"
 
 // Uma linha da tabela de achados macroscópicos. Os tri-estados de parasita usam `null`
 // como valor de verdade ("não informado"), distinto de `false` ("não").
@@ -42,8 +47,25 @@ export type HistopathologyFinding = {
   organ: CatalogItem
 }
 
+// Uma interação antrópica encontrada na carcaça, com seu grau (1 a 3).
+export type AnthropicInteraction = {
+  type: AnthropicInteractionValue
+  degree: number
+}
+
+// Triagem da carcaça: as quatro perguntas de sim/não (tri-estado, como os campos de
+// parasita) e as interações encontradas. Vive no indivíduo, junto do laudo.
+export type NecropsyScreening = {
+  anthropicInteraction: boolean | null
+  giContentCollected: boolean | null
+  giSolidWaste: boolean | null
+  giDetailedScreening: boolean | null
+  interactions: AnthropicInteraction[]
+}
+
 // Resposta de /api/animals/:id/necropsy — o laudo inteiro numa chamada.
 export type NecropsyReport = {
+  screening: NecropsyScreening
   systems: NecropsySystemExam[]
   histopathology: HistopathologyFinding[]
 }

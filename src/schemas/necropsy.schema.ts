@@ -2,7 +2,12 @@ import { z } from "zod"
 
 import { optionalText } from "@/schemas/common"
 import { LIMITS } from "@/schemas/limits"
-import { DISTRIBUTION_VALUES, NECROPSY_STATUS_VALUES, SEVERITY_VALUES } from "@/lib/necropsy-enums"
+import {
+  ANTHROPIC_INTERACTION_VALUES,
+  DISTRIBUTION_VALUES,
+  NECROPSY_STATUS_VALUES,
+  SEVERITY_VALUES,
+} from "@/lib/necropsy-enums"
 
 // Mensagens = chaves do namespace `validation`. Os valores de status espelham o enum
 // NecropsySystemStatus do Prisma; distribuição/severidade vêm de necropsy-enums. O SISTEMA
@@ -106,6 +111,58 @@ export const updateGrossFindingSchema = grossFindingFields
   .partial()
   .superRefine(parasiteCountRequiresCollected)
 
+// ── Triagem da carcaça ───────────────────────────────────────────────────────
+
+// Diferente do `triState` acima: aqui a ausência do campo é "não informado" (null), e não
+// "não mexer" — o corpo substitui o bloco inteiro.
+const screeningTriState = z
+  .boolean()
+  .nullish()
+  .transform((v) => v ?? null)
+
+const anthropicInteractionSchema = z.object({
+  type: z.enum(ANTHROPIC_INTERACTION_VALUES),
+  degree: z.number({ error: "number" }).int("integer").min(1, "min").max(3, "max"),
+})
+
+/**
+ * Bloco de triagem inteiro (PUT, não PATCH): as quatro perguntas e a lista de interações
+ * chegam juntas e substituem o que havia.
+ *
+ * Substituição total porque a lista é curta e fechada — a tela edita o bloco como uma coisa
+ * só, e um PATCH que omitisse `interactions` teria de escolher entre apagá-las e mantê-las,
+ * sem que o corpo diga qual das duas se quis. Campo ausente é "não informado" (null), que é
+ * o mesmo tri-estado dos campos de parasita.
+ */
+export const setNecropsyScreeningSchema = z
+  .object({
+    anthropicInteraction: screeningTriState,
+    giContentCollected: screeningTriState,
+    giSolidWaste: screeningTriState,
+    giDetailedScreening: screeningTriState,
+    interactions: z
+      .array(anthropicInteractionSchema)
+      .max(ANTHROPIC_INTERACTION_VALUES.length)
+      .default([]),
+  })
+  .superRefine((data, ctx) => {
+    // Um tipo repetido seria dois graus para a mesma interação — contradição, e o UNIQUE do
+    // banco recusaria com erro de constraint em vez de mensagem de validação.
+    const types = new Set(data.interactions.map((i) => i.type))
+    if (types.size !== data.interactions.length) {
+      ctx.addIssue({ code: "custom", path: ["interactions"], message: "duplicateInteraction" })
+    }
+    // Listar interações depois de responder "não" (ou nada) à pergunta de triagem deixaria o
+    // laudo se contradizendo. A tela esconde a lista nesse caso; o servidor não confia nela.
+    if (data.anthropicInteraction !== true && data.interactions.length > 0) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["interactions"],
+        message: "interactionsRequireAnthropic",
+      })
+    }
+  })
+
 export const createHistopathologyFindingSchema = z.object({
   organId: z.string().min(1, "required"),
   finding: z.string().min(1, "required").max(LIMITS.longText),
@@ -114,6 +171,7 @@ export const createHistopathologyFindingSchema = z.object({
 export const updateHistopathologyFindingSchema = createHistopathologyFindingSchema.partial()
 
 export type UpsertSystemExamData = z.infer<typeof upsertSystemExamSchema>
+export type SetNecropsyScreeningData = z.infer<typeof setNecropsyScreeningSchema>
 export type CreateGrossFindingData = z.infer<typeof createGrossFindingSchema>
 export type UpdateGrossFindingData = z.infer<typeof updateGrossFindingSchema>
 export type CreateHistopathologyFindingData = z.infer<typeof createHistopathologyFindingSchema>

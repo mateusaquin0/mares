@@ -5,6 +5,7 @@ import type {
   GrossFinding,
   HistopathologyFinding,
   NecropsyReport,
+  NecropsyScreening,
   NecropsySystemExam,
 } from "@/types/necropsy"
 import type { DistributionValue, NecropsyStatusValue, SeverityValue } from "@/lib/necropsy-enums"
@@ -29,6 +30,9 @@ export type GrossFindingPayload = {
   parasiteCount: number | null
 }
 
+// A triagem viaja inteira: o PUT substitui o bloco (ver setNecropsyScreeningSchema).
+export type ScreeningPayload = NecropsyScreening
+
 export type HistopathologyPayload = {
   organId: string
   finding: string
@@ -39,6 +43,9 @@ export const necropsyService = {
 
   // Remove o sistema DO LAUDO (não do catálogo). Recusado se houver achados.
   removeSystem: (examId: string) => http.del(`/api/necropsy-systems/exams/${examId}`),
+
+  setScreening: (animalId: string, data: ScreeningPayload) =>
+    http.put<NecropsyScreening>(`/api/animals/${animalId}/necropsy/screening`, data),
 
   setSystem: (animalId: string, data: SystemExamPayload) =>
     http.put<NecropsySystemExam>(`/api/animals/${animalId}/necropsy/systems`, data),
