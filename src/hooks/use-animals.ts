@@ -46,10 +46,17 @@ export function useAnimal(id: string, enabled = true) {
   })
 }
 
+// `requestedAt` carimba QUANDO a grade foi pedida (relógio do cliente, o mesmo que a aba usa
+// para datar as escritas). A aba de análises compara os dois: uma resposta PEDIDA antes de um
+// save chega depois dele, mas o conteúdo dela é mais velho — e sobrescrevia a célula recém
+// gravada, fazendo a alteração "sumir". Sem o carimbo não dá para distinguir uma das outras.
 export function useAnimalGrid(animalId: string) {
   return useQuery({
     queryKey: animalKeys.grid(animalId),
-    queryFn: () => animalsService.getGrid(animalId),
+    queryFn: async () => {
+      const requestedAt = Date.now()
+      return { ...(await animalsService.getGrid(animalId)), requestedAt }
+    },
   })
 }
 

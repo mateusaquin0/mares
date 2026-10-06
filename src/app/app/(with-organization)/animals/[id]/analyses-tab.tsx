@@ -12,6 +12,7 @@ import {
   applyAnalysisPatch,
   EMPTY_ANALYSIS,
   isAnalysisEmpty,
+  mergeAnalysisCells,
   type AnalysisPatch,
 } from "@/lib/analyses"
 import { useAnimalGrid } from "@/hooks/use-animals"
@@ -77,12 +78,15 @@ export function AnalysesTab({ animalId }: { animalId: string }) {
   const upsertM = useUpsertAnalysis(animalId)
   const [cells, setCells] = useState<Record<string, Cell>>({})
 
-  // Escritas em voo, por célula. `seqRef` numera cada save: só a resposta do save MAIS RECENTE
-  // pode tocar na célula, senão uma resposta atrasada reescreve o valor que o usuário já mudou
-  // depois. `inFlightRef` conta os saves pendentes — enquanto houver algum, a grade que chega do
-  // servidor não sobrescreve a célula (ela pode ter sido pedida antes do PUT confirmar).
+  // `seqRef` numera cada save de uma célula: só a resposta do save MAIS RECENTE pode tocar
+  // nela, senão uma resposta atrasada reescreve o valor que o usuário já mudou depois.
   const seqRef = useRef<Map<string, number>>(new Map())
-  const inFlightRef = useRef<Map<string, number>>(new Map())
+  // Guarda de recência por célula: a grade que chega do servidor só sobrescreve a célula se
+  // tiver sido PEDIDA depois deste instante. Enquanto um save está em voo o valor é Infinity
+  // (resposta nenhuma é confiável, pois a gravação ainda não existia quando a grade foi
+  // pedida); ao concluir, passa a ser o instante da conclusão — assim uma resposta pedida
+  // antes da escrita, mas que só chega depois dela, não ressuscita o valor antigo.
+  const guardRef = useRef<Map<string, number>>(new Map())
   // Nonce por célula que força o remonte dos inputs ao cancelar a remoção do lançamento.
   const [resets, setResets] = useState<Record<string, number>>({})
 
@@ -118,13 +122,7 @@ export function AnalysesTab({ animalId }: { animalId: string }) {
         notes: a.notes,
       }
     }
-    setCells((local) => {
-      const merged: Record<string, Cell> = { ...fromServer }
-      for (const [k, pending] of inFlightRef.current) {
-        if (pending > 0 && local[k]) merged[k] = local[k]
-      }
-      return merged
-    })
+    setCells((local) => mergeAnalysisCells(fromServer, local, guardRef.current, grid.requestedAt))
   }, [grid])
 
   const getCell = (k: string): Cell => cells[k] ?? EMPTY_ANALYSIS
@@ -152,7 +150,7 @@ export function AnalysesTab({ animalId }: { animalId: string }) {
     const before = getCell(k)
     const mySeq = (seqRef.current.get(k) ?? 0) + 1
     seqRef.current.set(k, mySeq)
-    inFlightRef.current.set(k, (inFlightRef.current.get(k) ?? 0) + 1)
+    guardRef.current.set(k, Number.POSITIVE_INFINITY)
     const isLatest = () => seqRef.current.get(k) === mySeq
 
     // Otimista: aplica o patch sobre o valor ATUAL da célula (não sobre um retrato de render),
@@ -166,8 +164,14 @@ export function AnalysesTab({ animalId }: { animalId: string }) {
         examTypeId: entry.examTypeId,
         ...patch,
       })
-      // Resposta atrasada: o usuário já mexeu na célula de novo. Quem manda é o save mais novo.
-      if (!isLatest()) return
+      // Resposta atrasada: o usuário já mexeu na célula de novo, e quem manda é o save mais
+      // novo. Ainda assim o id da linha é estável — adota-o se a célula não tiver, porque é
+      // ele que habilita o painel de confirmação de espécie.
+      if (!isLatest()) {
+        const id = res.analysis?.id
+        if (id) setCells((c) => (c[k] && !c[k].id ? { ...c, [k]: { ...c[k], id } } : c))
+        return
+      }
       if (res.status === "cleared") {
         setCells((c) => {
           const rest = { ...c }
@@ -175,19 +179,20 @@ export function AnalysesTab({ animalId }: { animalId: string }) {
           return rest
         })
         toast.success(t("cleared"))
-      } else if (res.status === "saved" && res.analysis) {
+      } else if (res.analysis) {
         // O servidor é a autoridade sobre o que ficou gravado (inclui o id, que habilita
-        // pendurar confirmações neste positivo).
-        const saved = res.analysis
-        setCells((c) => ({ ...c, [k]: saved }))
-        toast.success(t("saved"))
+        // pendurar confirmações neste positivo). Em "unchanged" nada foi gravado: adota a
+        // linha do servidor do mesmo jeito, mas NÃO anuncia salvamento.
+        const row = res.analysis
+        setCells((c) => ({ ...c, [k]: row }))
+        if (res.status === "saved") toast.success(t("saved"))
       }
-      // "unchanged": nada foi gravado — não anuncia salvamento.
     } catch (err) {
       toast.error(t("saveError"), { description: em(err) })
       if (isLatest()) setCells((c) => ({ ...c, [k]: before })) // reverte
     } finally {
-      inFlightRef.current.set(k, Math.max(0, (inFlightRef.current.get(k) ?? 1) - 1))
+      // Baixa a guarda só se nenhum save mais novo desta célula estiver em voo.
+      if (isLatest()) guardRef.current.set(k, Date.now())
     }
   }
 

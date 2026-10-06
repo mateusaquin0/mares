@@ -89,6 +89,31 @@ export function isAnalysisEmpty(v: AnalysisValues): boolean {
   return v.result === null && v.measureValue === null && v.notes === null
 }
 
+/**
+ * Funde a grade que chegou do servidor no mapa de células editável da aba de análises.
+ *
+ * `guards` guarda, por célula, o instante até o qual o estado LOCAL é soberano: Infinity
+ * enquanto há save em voo, e o instante da conclusão depois dele. Uma resposta PEDIDA antes
+ * dessa marca chega depois da escrita, mas o conteúdo dela é mais velho — aceitá-la revertia
+ * na tela a célula recém-gravada, e o commit seguinte naquela linha regravava o valor antigo
+ * no servidor. Para essas células o local manda, inclusive na AUSÊNCIA: lançamento removido
+ * não pode ser ressuscitado por uma resposta velha que ainda o traz.
+ */
+export function mergeAnalysisCells<T>(
+  fromServer: Record<string, T>,
+  local: Record<string, T>,
+  guards: ReadonlyMap<string, number>,
+  requestedAt: number,
+): Record<string, T> {
+  const merged: Record<string, T> = { ...fromServer }
+  for (const [k, guardedUntil] of guards) {
+    if (guardedUntil <= requestedAt) continue
+    if (local[k]) merged[k] = local[k]
+    else delete merged[k]
+  }
+  return merged
+}
+
 /** Campos que mudam de fato: base do AuditLog e do "gravou ou não gravou". */
 export function analysisChanges(
   current: AnalysisValues | null,
