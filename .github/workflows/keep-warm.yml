@@ -44,6 +44,9 @@ jobs:
   ping:
     name: Requisição ao banco
     runs-on: ubuntu-latest
+    # SUPABASE_URL e SUPABASE_ANON_KEY estão no environment Production, não no nível do
+    # repositório. Sem declarar o environment aqui os dois chegam vazios e o job aborta.
+    environment: Production
     steps:
       - name: Consultar o PostgREST
         env:
