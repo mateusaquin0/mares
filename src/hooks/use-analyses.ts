@@ -7,9 +7,16 @@ import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { animalKeys } from "@/hooks/use-animals"
 import { analysesService, type AnalysisUpsert, type ConfirmationPayload } from "@/services/analyses"
 
-export function useUpsertAnalysis() {
+export function useUpsertAnalysis(animalId: string) {
+  const qc = useQueryClient()
   return useMutation({
     mutationFn: (data: AnalysisUpsert) => analysesService.upsert(data),
+    // `refetchType: "none"`: marca a grade como obsoleta sem buscá-la agora. Um GET por célula
+    // salva seria desperdício ao preencher uma coluna inteira; a próxima montagem da aba
+    // recarrega. A grade que chega é FUNDIDA no estado local (não o substitui), então ela não
+    // atropela edição em curso — ver o useEffect de sincronização em analyses-tab.tsx.
+    onSuccess: () =>
+      qc.invalidateQueries({ queryKey: animalKeys.grid(animalId), refetchType: "none" }),
   })
 }
 

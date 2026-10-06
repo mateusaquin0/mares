@@ -1,6 +1,6 @@
 "use client"
 
-import { Fragment, useEffect, useState } from "react"
+import { Fragment, useEffect, useRef, useState } from "react"
 import { useLocale, useTranslations } from "next-intl"
 import { toast } from "sonner"
 import { FlaskConical, Search, X } from "lucide-react"
@@ -8,6 +8,12 @@ import { FlaskConical, Search, X } from "lucide-react"
 import { pathogenName, txt } from "@/lib/catalog-i18n"
 import { isBroadPathogen } from "@/lib/pathogen"
 import { useErrorMessage } from "@/lib/use-error-message"
+import {
+  applyAnalysisPatch,
+  EMPTY_ANALYSIS,
+  isAnalysisEmpty,
+  type AnalysisPatch,
+} from "@/lib/analyses"
 import { useAnimalGrid } from "@/hooks/use-animals"
 import { useUpsertAnalysis } from "@/hooks/use-analyses"
 import type {
@@ -20,6 +26,7 @@ import type {
 import { MeasureInput, NotesInput, ResultSelect } from "@/components/analysis-cells"
 import { SampleStatusBadge } from "@/components/sample-status-badge"
 import { ConfirmationPanel } from "./confirmation-panel"
+import { ConfirmDialog } from "@/components/confirm-dialog"
 import { Truncate } from "@/components/ui/truncate"
 import {
   Accordion,
@@ -67,8 +74,17 @@ export function AnalysesTab({ animalId }: { animalId: string }) {
   const gridQ = useAnimalGrid(animalId)
   const grid = gridQ.data ?? null
   const loading = gridQ.isLoading
-  const upsertM = useUpsertAnalysis()
+  const upsertM = useUpsertAnalysis(animalId)
   const [cells, setCells] = useState<Record<string, Cell>>({})
+
+  // Escritas em voo, por célula. `seqRef` numera cada save: só a resposta do save MAIS RECENTE
+  // pode tocar na célula, senão uma resposta atrasada reescreve o valor que o usuário já mudou
+  // depois. `inFlightRef` conta os saves pendentes — enquanto houver algum, a grade que chega do
+  // servidor não sobrescreve a célula (ela pode ter sido pedida antes do PUT confirmar).
+  const seqRef = useRef<Map<string, number>>(new Map())
+  const inFlightRef = useRef<Map<string, number>>(new Map())
+  // Nonce por célula que força o remonte dos inputs ao cancelar a remoção do lançamento.
+  const [resets, setResets] = useState<Record<string, number>>({})
 
   // ── Filtros da grade ──
   const [query, setQuery] = useState("")
@@ -77,24 +93,41 @@ export function AnalysesTab({ animalId }: { animalId: string }) {
   const [fOrgan, setFOrgan] = useState(ALL)
   const [showInactive, setShowInactive] = useState(false)
 
+  // Remoção de lançamento aguardando confirmação do usuário.
+  const [pendingClear, setPendingClear] = useState<{
+    sample: SampleLite
+    entry: ProtocolEntry
+    patch: AnalysisPatch
+    confirmations: number
+  } | null>(null)
+
   // Sincroniza o mapa de células (editável, com update otimista) com a grade carregada.
   // Só os RASTREIOS (parentAnalysisId null) viram células; as confirmações são aninhadas.
+  // A grade é FUNDIDA, não substituída: uma resposta pedida ANTES de um save confirmar traz o
+  // valor pré-edição, e trocar o mapa inteiro revertia na tela a célula recém-salva — o commit
+  // seguinte naquela linha então regravava o valor antigo no servidor.
   useEffect(() => {
     if (!grid) return
-    const map: Record<string, Cell> = {}
+    const fromServer: Record<string, Cell> = {}
     for (const a of grid.analyses) {
       if (a.parentAnalysisId !== null) continue
-      map[keyOf(a.sampleId, a.pathogenId, a.examTypeId)] = {
+      fromServer[keyOf(a.sampleId, a.pathogenId, a.examTypeId)] = {
         id: a.id,
         result: a.result,
         measureValue: a.measureValue,
         notes: a.notes,
       }
     }
-    setCells(map)
+    setCells((local) => {
+      const merged: Record<string, Cell> = { ...fromServer }
+      for (const [k, pending] of inFlightRef.current) {
+        if (pending > 0 && local[k]) merged[k] = local[k]
+      }
+      return merged
+    })
   }, [grid])
 
-  const getCell = (k: string): Cell => cells[k] ?? { result: null, measureValue: null, notes: null }
+  const getCell = (k: string): Cell => cells[k] ?? EMPTY_ANALYSIS
 
   // Confirmações (análises-filhas) agrupadas por rastreio-pai, reidratadas da grade.
   const childrenByParent = new Map<string, AnalysisRow[]>()
@@ -112,28 +145,77 @@ export function AnalysesTab({ animalId }: { animalId: string }) {
       INCONCLUSIVO: t("resultInconclusive"),
     })[r] ?? r
 
-  async function save(sample: SampleLite, entry: ProtocolEntry, patch: Partial<Cell>) {
+  // Envia APENAS os campos editados. O estado final é decidido pelo servidor sobre a linha
+  // gravada, então um estado de tela desatualizado não reverte o que o usuário não tocou.
+  async function save(sample: SampleLite, entry: ProtocolEntry, patch: AnalysisPatch) {
     const k = keyOf(sample.id, entry.pathogenId, entry.examTypeId)
-    const prev = getCell(k)
-    const next = { ...prev, ...patch }
-    setCells((c) => ({ ...c, [k]: next }))
+    const before = getCell(k)
+    const mySeq = (seqRef.current.get(k) ?? 0) + 1
+    seqRef.current.set(k, mySeq)
+    inFlightRef.current.set(k, (inFlightRef.current.get(k) ?? 0) + 1)
+    const isLatest = () => seqRef.current.get(k) === mySeq
+
+    // Otimista: aplica o patch sobre o valor ATUAL da célula (não sobre um retrato de render),
+    // para que dois saves seguidos na mesma célula não se desfaçam.
+    setCells((c) => ({ ...c, [k]: { ...(c[k] ?? EMPTY_ANALYSIS), ...patch } }))
 
     try {
-      const saved = await upsertM.mutateAsync({
+      const res = await upsertM.mutateAsync({
         sampleId: sample.id,
         pathogenId: entry.pathogenId,
         examTypeId: entry.examTypeId,
-        result: next.result,
-        measureValue: next.measureValue,
-        notes: next.notes,
+        ...patch,
       })
-      // Guarda o id da análise persistida (habilita pendurar confirmações neste positivo).
-      if (saved?.id) setCells((c) => ({ ...c, [k]: { ...next, id: saved.id } }))
-      toast.success(t("saved"))
+      // Resposta atrasada: o usuário já mexeu na célula de novo. Quem manda é o save mais novo.
+      if (!isLatest()) return
+      if (res.status === "cleared") {
+        setCells((c) => {
+          const rest = { ...c }
+          delete rest[k]
+          return rest
+        })
+        toast.success(t("cleared"))
+      } else if (res.status === "saved" && res.analysis) {
+        // O servidor é a autoridade sobre o que ficou gravado (inclui o id, que habilita
+        // pendurar confirmações neste positivo).
+        const saved = res.analysis
+        setCells((c) => ({ ...c, [k]: saved }))
+        toast.success(t("saved"))
+      }
+      // "unchanged": nada foi gravado — não anuncia salvamento.
     } catch (err) {
       toast.error(t("saveError"), { description: em(err) })
-      setCells((c) => ({ ...c, [k]: prev })) // reverte
+      if (isLatest()) setCells((c) => ({ ...c, [k]: before })) // reverte
+    } finally {
+      inFlightRef.current.set(k, Math.max(0, (inFlightRef.current.get(k) ?? 1) - 1))
     }
+  }
+
+  // Ponto de entrada das três células editáveis. Esvaziar os três campos REMOVE o lançamento
+  // (e, por cascade, as confirmações de espécie penduradas), então isso passa por confirmação.
+  function requestSave(sample: SampleLite, entry: ProtocolEntry, patch: AnalysisPatch) {
+    const k = keyOf(sample.id, entry.pathogenId, entry.examTypeId)
+    const cell = getCell(k)
+    if (cell.id && isAnalysisEmpty(applyAnalysisPatch(cell, patch))) {
+      setPendingClear({
+        sample,
+        entry,
+        patch,
+        confirmations: childrenByParent.get(cell.id)?.length ?? 0,
+      })
+      return
+    }
+    void save(sample, entry, patch)
+  }
+
+  // Desiste da remoção: remonta os inputs da célula para descartar o texto apagado.
+  function cancelClear() {
+    if (pendingClear) {
+      const { sample, entry } = pendingClear
+      const k = keyOf(sample.id, entry.pathogenId, entry.examTypeId)
+      setResets((r) => ({ ...r, [k]: (r[k] ?? 0) + 1 }))
+    }
+    setPendingClear(null)
   }
 
   if (loading) return <TableSkeleton rows={4} />
@@ -349,7 +431,9 @@ export function AnalysesTab({ animalId }: { animalId: string }) {
                                       <ResultSelect
                                         value={cell.result}
                                         disabled={inactive}
-                                        onChange={(result) => save(sample, entry, { result })}
+                                        onChange={(result) =>
+                                          requestSave(sample, entry, { result })
+                                        }
                                       />
                                     </TableCell>
                                     <TableCell>
@@ -359,9 +443,10 @@ export function AnalysesTab({ animalId }: { animalId: string }) {
                                           placeholder={txt(locale, entry.examType.measureLabel)}
                                           unit={entry.examType.measureUnit}
                                           disabled={inactive}
+                                          resetKey={resets[k] ?? 0}
                                           onCommit={(n) => {
                                             if (n !== cell.measureValue)
-                                              save(sample, entry, { measureValue: n })
+                                              requestSave(sample, entry, { measureValue: n })
                                           }}
                                         />
                                       ) : (
@@ -373,8 +458,10 @@ export function AnalysesTab({ animalId }: { animalId: string }) {
                                         value={cell.notes}
                                         placeholder={t("notesPlaceholder")}
                                         disabled={inactive}
+                                        resetKey={resets[k] ?? 0}
                                         onCommit={(s) => {
-                                          if (s !== cell.notes) save(sample, entry, { notes: s })
+                                          if (s !== cell.notes)
+                                            requestSave(sample, entry, { notes: s })
                                         }}
                                       />
                                     </TableCell>
@@ -406,6 +493,27 @@ export function AnalysesTab({ animalId }: { animalId: string }) {
           ))}
         </div>
       )}
+
+      <ConfirmDialog
+        open={pendingClear !== null}
+        onOpenChange={(o) => {
+          if (!o) cancelClear()
+        }}
+        title={t("clearTitle")}
+        description={
+          pendingClear && pendingClear.confirmations > 0
+            ? t("clearDescConfirmations", { count: pendingClear.confirmations })
+            : t("clearDesc")
+        }
+        confirmLabel={t("clearConfirm")}
+        destructive
+        onConfirm={async () => {
+          if (!pendingClear) return
+          const { sample, entry, patch } = pendingClear
+          setPendingClear(null)
+          await save(sample, entry, patch)
+        }}
+      />
     </div>
   )
 }

@@ -2,8 +2,13 @@
 // Regras (docs/PERMISSOES.md §Análises): preencher/alterar = qualquer membro da org.
 // A combinação (órgão da amostra × patógeno × exame) precisa existir no protocolo da pesquisa.
 // Alterações de valor são registradas em AuditLog (rastreabilidade científica).
+//
+// O corpo é um PATCH: só os campos que o usuário editou chegam aqui (ausente = não altera,
+// null = limpa). O estado final sai de applyAnalysisPatch sobre a linha que já existe, e não
+// do que o cliente acha que está gravado.
 
 import { NextRequest, NextResponse } from "next/server"
+import { Prisma } from "@prisma/client"
 import { prisma } from "@/lib/prisma"
 import { getAuthUser, requireOrgRole } from "@/lib/auth"
 import { assertResearchVisible } from "@/lib/research-access"
@@ -12,8 +17,38 @@ import { upsertAnalysisSchema } from "@/schemas/analysis.schema"
 import { loadSampleOrg } from "@/lib/samples"
 import { ValidationError } from "@/lib/errors"
 import { ERROR_CODES } from "@/lib/error-codes"
+import {
+  analysisChanges,
+  applyAnalysisPatch,
+  isAnalysisEmpty,
+  type AnalysisPatch,
+  type AnalysisValues,
+} from "@/lib/analyses"
 
-const str = (v: unknown) => (v == null ? null : String(v))
+const cellSelect = {
+  id: true,
+  result: true,
+  measureValue: true,
+  notes: true,
+} satisfies Prisma.AnalysisSelect
+
+type CellKey = { sampleId: string; pathogenId: string; examTypeId: string }
+
+// Cria o rastreio. Se outra requisição criou a MESMA célula no meio do caminho (P2002 no
+// índice único parcial dos rastreios), atualiza a linha que ganhou a corrida em vez de falhar.
+async function createScreening(key: CellKey, next: AnalysisValues) {
+  try {
+    return await prisma.analysis.create({ data: { ...key, ...next }, select: cellSelect })
+  } catch (err) {
+    if (!(err instanceof Prisma.PrismaClientKnownRequestError) || err.code !== "P2002") throw err
+    const won = await prisma.analysis.findFirst({
+      where: { ...key, parentAnalysisId: null },
+      select: { id: true },
+    })
+    if (!won) throw err
+    return prisma.analysis.update({ where: { id: won.id }, data: next, select: cellSelect })
+  }
+}
 
 export async function PUT(req: NextRequest) {
   try {
@@ -21,9 +56,10 @@ export async function PUT(req: NextRequest) {
     if (!user) return unauthorized()
 
     const body = await req.json().catch(() => null)
-    const data = upsertAnalysisSchema.parse(body)
+    const { sampleId, pathogenId, examTypeId, ...rest } = upsertAnalysisSchema.parse(body)
+    const patch: AnalysisPatch = rest
 
-    const sample = await loadSampleOrg(data.sampleId)
+    const sample = await loadSampleOrg(sampleId)
     requireOrgRole(user, sample.orgId, "RESEARCHER")
     // Só preenche análises de amostras de pesquisas que enxerga.
     await assertResearchVisible(user, sample.orgId, sample.researchId)
@@ -34,8 +70,8 @@ export async function PUT(req: NextRequest) {
       where: {
         researchId: sample.researchId,
         organId: sample.organId,
-        pathogenId: data.pathogenId,
-        examTypeId: data.examTypeId,
+        pathogenId,
+        examTypeId,
         status: "ACTIVE",
       },
       select: { id: true },
@@ -44,83 +80,47 @@ export async function PUT(req: NextRequest) {
       throw new ValidationError("Combinação fora do protocolo", ERROR_CODES.analysisInvalidCombo)
     }
 
-    const key = {
-      sampleId: data.sampleId,
-      pathogenId: data.pathogenId,
-      examTypeId: data.examTypeId,
-    }
-    const next = {
-      result: data.result ?? null,
-      measureValue: data.measureValue ?? null,
-      notes: data.notes ?? null,
-    }
+    const key: CellKey = { sampleId, pathogenId, examTypeId }
 
-    const existing = await prisma.analysis.findUnique({
-      where: { sampleId_pathogenId_examTypeId: key },
-      select: { id: true, result: true, measureValue: true, notes: true },
+    // A célula da grade é o RASTREIO (parentAnalysisId null). As confirmações de espécie vivem
+    // na mesma amostra e podem repetir o par (patógeno, exame): sem este filtro o lançamento
+    // caía na linha da confirmação — que a grade nem exibe, de onde a mudança "sumia".
+    const existing = await prisma.analysis.findFirst({
+      where: { ...key, parentAnalysisId: null },
+      select: cellSelect,
     })
 
-    const isEmpty = next.result === null && next.measureValue === null && next.notes === null
+    const next = applyAnalysisPatch(existing, patch)
+    const changes = analysisChanges(existing, next)
 
-    // Nada a gravar: célula vazia e sem registro anterior.
-    if (!existing && isEmpty) return NextResponse.json(null)
+    const audit = (entityId: string) =>
+      prisma.auditLog.createMany({
+        data: changes.map((c) => ({ ...c, userId: user.id, entity: "Analysis", entityId })),
+      })
 
-    // Célula esvaziada: apaga a linha em vez de deixá-la com tudo nulo. Uma análise "vazia"
-    // não é dado — e, mantida, bloqueava para sempre a exclusão da amostra (sampleHasAnalyses).
+    // Célula esvaziada: apaga a linha em vez de deixá-la com tudo nulo (ver isAnalysisEmpty).
     // As confirmações penduradas neste rastreio caem por cascade; o AuditLog registra a saída.
-    if (existing && isEmpty) {
-      const cleared = (
-        [
-          ["result", existing.result],
-          ["measureValue", existing.measureValue],
-          ["notes", existing.notes],
-        ] as const
-      )
-        .filter(([, old]) => old !== null)
-        .map(([field, old]) => ({
-          field,
-          oldValue: str(old),
-          newValue: null,
-          userId: user.id,
-          entity: "Analysis",
-          entityId: existing.id,
-        }))
-
+    // O cliente só chega aqui depois de confirmar com o usuário.
+    if (isAnalysisEmpty(next)) {
+      if (!existing) return NextResponse.json({ status: "unchanged", analysis: null })
       await prisma.analysis.delete({ where: { id: existing.id } })
-      if (cleared.length > 0) await prisma.auditLog.createMany({ data: cleared })
-      return NextResponse.json(null)
+      if (changes.length > 0) await audit(existing.id)
+      return NextResponse.json({ status: "cleared", analysis: null })
     }
 
-    const saved = await prisma.analysis.upsert({
-      where: { sampleId_pathogenId_examTypeId: key },
-      create: { ...key, ...next },
-      update: next,
-      select: { id: true, result: true, measureValue: true, notes: true },
-    })
+    // Nada mudou: não grava nada e avisa o cliente, que então NÃO anuncia "resultado salvo".
+    if (existing && changes.length === 0) {
+      return NextResponse.json({ status: "unchanged", analysis: existing })
+    }
+
+    const saved = existing
+      ? await prisma.analysis.update({ where: { id: existing.id }, data: next, select: cellSelect })
+      : await createScreening(key, next)
 
     // Registra em AuditLog apenas os campos que mudaram.
-    const changed: { field: string; oldValue: string | null; newValue: string | null }[] = (
-      [
-        ["result", existing?.result ?? null, next.result],
-        ["measureValue", existing?.measureValue ?? null, next.measureValue],
-        ["notes", existing?.notes ?? null, next.notes],
-      ] as const
-    )
-      .filter(([, o, n]) => str(o) !== str(n))
-      .map(([field, o, n]) => ({ field, oldValue: str(o), newValue: str(n) }))
+    if (changes.length > 0) await audit(saved.id)
 
-    if (changed.length > 0) {
-      await prisma.auditLog.createMany({
-        data: changed.map((c) => ({
-          ...c,
-          userId: user.id,
-          entity: "Analysis",
-          entityId: saved.id,
-        })),
-      })
-    }
-
-    return NextResponse.json(saved)
+    return NextResponse.json({ status: "saved", analysis: saved })
   } catch (err) {
     return apiError(err)
   }

@@ -7,6 +7,9 @@ import { LIMITS } from "@/schemas/limits"
 export const resultSchema = z.enum(["POSITIVO", "NEGATIVO", "INCONCLUSIVO"])
 
 // Upsert de uma célula da grade de análises (sample × pathogen × examType).
+// Os três campos de valor formam um PATCH: ausente = não altera, null = limpa. Quem edita só
+// o resultado não manda medida nem observação, então um estado de tela desatualizado não tem
+// como reverter o que não foi tocado. Ver applyAnalysisPatch em src/lib/analyses.ts.
 export const upsertAnalysisSchema = z.object({
   sampleId: z.string().min(1, "required"),
   pathogenId: z.string().min(1, "required"),
@@ -15,6 +18,8 @@ export const upsertAnalysisSchema = z.object({
   measureValue: optionalNumber,
   notes: optionalText(LIMITS.longText),
 })
+
+export type AnalysisSaveStatus = "saved" | "unchanged" | "cleared"
 
 export type UpsertAnalysisData = z.infer<typeof upsertAnalysisSchema>
 export type ResultValue = z.infer<typeof resultSchema>
