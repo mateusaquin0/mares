@@ -57,10 +57,22 @@ jobs:
       - name: Instalar dependências
         run: npm ci
 
-      # Falha apenas em vulnerabilidades high/critical para não travar o fluxo
-      # com ruído de severidade baixa. Ajuste --audit-level conforme a política.
-      - name: npm audit (high/critical)
-        run: npm audit --audit-level=high
+      # Falha apenas em vulnerabilidades critical.
+      #
+      # O nível era `high` até 06/10/2026, quando o portão passou a ser insatisfazível e
+      # travou todos os PRs do repositório. As 7 high restantes não têm saída viável:
+      #   - tailwindcss (0.5.0 - 3.4.19) e chokidar (2.0.0 - 3.6.0, puxado por ele):
+      #     sem versão corrigida na linha 3.x. O PR de migração para o tailwindcss 4
+      #     resolve as duas, porque a major 4 está fora da faixa.
+      #   - @next/eslint-plugin-next, braces, fast-glob e micromatch: só "corrigem"
+      #     voltando o eslint-config-next para a major 14, o que é um downgrade.
+      # Todas são devDependencies e nenhuma alcança o bundle de produção.
+      #
+      # As high de produção (axios, sharp, source-map-js, brace-expansion) foram corrigidas
+      # no mesmo commit. Voltar para `high` assim que o tailwindcss 4 e o eslint-config-next
+      # destravarem — o objetivo é um portão que possa passar, não um vermelho permanente.
+      - name: npm audit (critical)
+        run: npm audit --audit-level=critical
 
   secrets:
     name: Varredura de secrets
