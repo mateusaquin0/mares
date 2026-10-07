@@ -95,17 +95,21 @@ export function MeasureInput({
   placeholder,
   unit,
   onCommit,
+  resetKey = 0,
   disabled = false,
 }: {
   value: number | null
   placeholder: string
   unit: string | null
   onCommit: (n: number | null) => void
+  // Força o remonte do input para descartar o que foi digitado (usado quando o usuário
+  // cancela a remoção do lançamento): o valor exibido volta a ser `value`.
+  resetKey?: number
   disabled?: boolean
 }) {
   const input = (
     <Input
-      key={value ?? ""}
+      key={`${value ?? ""}|${resetKey}`}
       defaultValue={value ?? ""}
       type="number"
       step="any"
@@ -115,7 +119,12 @@ export function MeasureInput({
       disabled={disabled}
       onBlur={(e) => {
         const raw = e.target.value.trim()
-        onCommit(raw === "" ? null : Number(raw))
+        if (raw === "") return onCommit(null)
+        const n = Number(raw)
+        // Entrada inválida (o input devolve "" para número malformado, mas vírgula decimal e
+        // colagem escapam): não commita. NaN viraria `null` no JSON e apagaria a medida.
+        if (!Number.isFinite(n)) return
+        onCommit(n)
       }}
     />
   )
@@ -132,16 +141,18 @@ export function NotesInput({
   value,
   placeholder,
   onCommit,
+  resetKey = 0,
   disabled = false,
 }: {
   value: string | null
   placeholder: string
   onCommit: (s: string | null) => void
+  resetKey?: number
   disabled?: boolean
 }) {
   return (
     <Input
-      key={value ?? ""}
+      key={`${value ?? ""}|${resetKey}`}
       defaultValue={value ?? ""}
       placeholder={placeholder}
       className="h-8"

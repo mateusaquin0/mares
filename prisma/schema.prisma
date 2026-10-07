@@ -569,7 +569,13 @@ model Analysis {
   sequences        SequenceRecord[]
   createdAt        DateTime         @default(now())
 
-  @@unique([sampleId, pathogenId, examTypeId])
+  // A unicidade da célula é dada por DOIS índices ÚNICOS PARCIAIS, um por natureza de linha
+  // (ver a migration analysis_screening_unique): rastreio (parent_analysis_id IS NULL) e
+  // confirmação (IS NOT NULL) têm cada um o seu. Um único índice sobre o trio deixava uma
+  // confirmação ocupar o slot do rastreio que a grade exibe, e o lançamento da célula ia
+  // gravar na linha da confirmação — que a grade não mostra, de onde a alteração "sumia".
+  // Índice parcial não é representável aqui (mesma convenção de Pathogen_sci_key), então o
+  // código trata P2002: createScreening (api/analyses) e asDuplicate (lib/confirmations).
   @@index([sampleId])
   @@index([parentAnalysisId])
 }
