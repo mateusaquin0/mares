@@ -9,15 +9,18 @@
 // O vínculo só passa a valer quando o outro lado aceita — quem convida não decide sozinho.
 // Cada pesquisa mantém suas próprias amostras/análises sobre o indivíduo; aqui tratamos
 // apenas o vínculo (quem estuda o indivíduo).
+//
+// Cada pesquisa também pode OCULTAR o indivíduo compartilhado da própria listagem (é a saída
+// quando ele não pode ser excluído) e reexibi-lo depois — o selo da pesquisa traz o botão.
 
 import * as React from "react"
 import { useMemo, useState } from "react"
 import { useTranslations } from "next-intl"
 import { toast } from "sonner"
-import { Clock, X } from "lucide-react"
+import { Clock, Eye, EyeOff, X } from "lucide-react"
 
 import { useResearchCatalog, useResearchList } from "@/hooks/use-research"
-import { useShareAnimal, useRemoveAnimalResearch } from "@/hooks/use-animals"
+import { useRemoveAnimalResearch, useSetAnimalHidden, useShareAnimal } from "@/hooks/use-animals"
 import { useErrorMessage } from "@/lib/use-error-message"
 import type { AnimalDetail } from "@/types/animal"
 import { Badge } from "@/components/ui/badge"
@@ -45,6 +48,7 @@ export function ResearchShare({
   const myResearchQ = useResearchList()
   const shareM = useShareAnimal(animal.id)
   const removeM = useRemoveAnimalResearch(animal.id)
+  const hiddenM = useSetAnimalHidden(animal.id)
   const [toAdd, setToAdd] = useState("")
 
   const accepted = animal.participations.filter((p) => p.status === "ACCEPTED")
@@ -57,6 +61,17 @@ export function ResearchShare({
   const mine = useMemo(() => new Set((myResearchQ.data ?? []).map((r) => r.id)), [myResearchQ.data])
   const ownsAnimal = isOrgAdmin || mine.has(animal.research.id)
   const canUnlink = (researchId: string) => ownsAnimal || mine.has(researchId)
+
+  // Ocultar é decisão de cada pesquisa sobre a própria listagem (o servidor aplica a mesma
+  // regra). Só faz sentido com o indivíduo compartilhado; reexibir é sempre possível.
+  const canToggleHidden = (researchId: string) => isOrgAdmin || mine.has(researchId)
+  const linked = [
+    { research: animal.research, hidden: !!animal.primaryHiddenAt },
+    ...accepted.map((p) => ({ research: p.research, hidden: !!p.hiddenAt })),
+  ]
+  const isHidden = (researchId: string) =>
+    linked.some((l) => l.research.id === researchId && l.hidden)
+  const hiddenInMine = linked.filter((l) => l.hidden && mine.has(l.research.id))
 
   // IDs já envolvidos (primária + participações + pendentes) — fora das opções de adicionar.
   const linkedIds = useMemo(
@@ -87,8 +102,49 @@ export function ResearchShare({
     }
   }
 
+  async function toggleHidden(researchId: string, hidden: boolean) {
+    try {
+      await hiddenM.mutateAsync({ researchId, hidden })
+      toast.success(hidden ? t("hideDone") : t("unhideDone"))
+    } catch (err) {
+      toast.error(t("hideError"), { description: em(err) })
+    }
+  }
+
+  const hiddenToggle = (researchId: string) =>
+    canToggleHidden(researchId) &&
+    (isHidden(researchId) || accepted.length > 0) && (
+      <HiddenButton
+        hidden={isHidden(researchId)}
+        label={isHidden(researchId) ? t("unhideAction") : t("hideAction")}
+        disabled={hiddenM.isPending}
+        onClick={() => toggleHidden(researchId, !isHidden(researchId))}
+      />
+    )
+
   return (
     <div className="space-y-4">
+      {hiddenInMine.length > 0 && (
+        <div className="flex flex-wrap items-center gap-2 rounded-md border border-dashed bg-muted/40 px-3 py-2 text-sm">
+          <EyeOff className="size-4 shrink-0 text-muted-foreground" />
+          <span className="flex-1">
+            {t("hiddenNotice", { research: hiddenInMine.map((l) => l.research.name).join(", ") })}
+          </span>
+          {hiddenInMine.map((l) => (
+            <Button
+              key={l.research.id}
+              size="sm"
+              variant="outline"
+              disabled={hiddenM.isPending}
+              onClick={() => toggleHidden(l.research.id, false)}
+            >
+              {hiddenInMine.length > 1
+                ? t("unhideIn", { research: l.research.name })
+                : t("unhideAction")}
+            </Button>
+          ))}
+        </div>
+      )}
       <div>
         <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
           {t("shareTitle")}
@@ -98,8 +154,12 @@ export function ResearchShare({
 
       <div className="grid gap-4 sm:grid-cols-2">
         <ShareGroup label={t("sharePrimaryLabel")}>
-          <Badge variant="secondary">
+          <Badge
+            variant="secondary"
+            className={hiddenToggle(animal.research.id) ? "gap-1 pr-1" : undefined}
+          >
             <ShareName>{animal.research.name}</ShareName>
+            {hiddenToggle(animal.research.id)}
           </Badge>
         </ShareGroup>
 
@@ -111,9 +171,12 @@ export function ResearchShare({
             <Badge
               key={p.research.id}
               variant="outline"
-              className={canUnlink(p.research.id) ? "gap-1 pr-1" : undefined}
+              className={
+                canUnlink(p.research.id) || hiddenToggle(p.research.id) ? "gap-1 pr-1" : undefined
+              }
             >
               <ShareName>{p.research.name}</ShareName>
+              {hiddenToggle(p.research.id)}
               {canUnlink(p.research.id) && (
                 <RemoveButton
                   label={t("shareRemove")}
@@ -222,6 +285,33 @@ function RemoveButton({
       title={label}
     >
       <X className="size-3" />
+    </button>
+  )
+}
+
+// Ocultar/reexibir o indivíduo na pesquisa do selo. O ícone mostra o estado atual.
+function HiddenButton({
+  hidden,
+  label,
+  disabled,
+  onClick,
+}: {
+  hidden: boolean
+  label: string
+  disabled: boolean
+  onClick: () => void
+}) {
+  const Icon = hidden ? EyeOff : Eye
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      className="rounded-full p-0.5 text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-50"
+      aria-label={label}
+      title={label}
+    >
+      <Icon className="size-3" />
     </button>
   )
 }

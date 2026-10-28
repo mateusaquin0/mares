@@ -41,6 +41,8 @@ export type AnimalListQuery = {
   pathogen: string[]
   visibility: "all" | "public" | "private"
   samples: "all" | "with" | "without"
+  // "only" = os indivíduos que as pesquisas do usuário ocultaram (para reexibir).
+  hidden: "listed" | "only"
   from: string
   to: string
   sort: AnimalSortKey
@@ -94,6 +96,8 @@ export type AnimalParticipation = {
   status: ShareStatus
   research: { id: string; name: string }
   invitedBy: { name: string | null; email: string } | null
+  // A pesquisa ocultou o indivíduo da própria listagem (só em participação aceita).
+  hiddenAt: string | null
 }
 
 // Quem iniciou o compartilhamento — define quem responde (ver docs/PERMISSOES.md):
@@ -148,6 +152,8 @@ export type AnimalDetail = {
   macroscopicNotes: string | null
   isPublic: boolean
   research: { id: string; name: string }
+  // A pesquisa primária ocultou o indivíduo da própria listagem (ver participations.hiddenAt).
+  primaryHiddenAt: string | null
   // Pesquisas adicionais (mesma org) que compartilham este indivíduo. PENDING = convite
   // enviado, ainda sem aceite da pesquisa de destino (não dá acesso a nada).
   participations: AnimalParticipation[]

@@ -51,12 +51,16 @@ describe("dashboardResearchIds", () => {
 // Antes o dashboard usava a pesquisa primária do animal nos dois níveis: quem recebia o
 // indivíduo compartilhado não via as próprias amostras, e quem o cedeu contava as do vizinho.
 describe("dashboardAnimalWhere — conjunto efetivo do indivíduo", () => {
-  it("conta o indivíduo pela primária OU por participação ACEITA", () => {
+  it("conta o indivíduo pela primária OU por participação ACEITA, menos onde foi ocultado", () => {
     expect(dashboardAnimalWhere(ORG, { researchIds: [MINHA] })).toEqual({
       research: { orgId: ORG },
       OR: [
-        { researchId: { in: [MINHA] } },
-        { participations: { some: { researchId: { in: [MINHA] }, status: "ACCEPTED" } } },
+        { researchId: { in: [MINHA] }, primaryHiddenAt: null },
+        {
+          participations: {
+            some: { researchId: { in: [MINHA] }, status: "ACCEPTED", hiddenAt: null },
+          },
+        },
       ],
     })
   })
@@ -64,8 +68,12 @@ describe("dashboardAnimalWhere — conjunto efetivo do indivíduo", () => {
   it("o filtro por pesquisa também alcança os compartilhados com ela", () => {
     const where = dashboardAnimalWhere(ORG, { researchId: MINHA, researchIds: [MINHA, VIZINHA] })
     expect(where.OR).toEqual([
-      { researchId: { in: [MINHA] } },
-      { participations: { some: { researchId: { in: [MINHA] }, status: "ACCEPTED" } } },
+      { researchId: { in: [MINHA] }, primaryHiddenAt: null },
+      {
+        participations: {
+          some: { researchId: { in: [MINHA] }, status: "ACCEPTED", hiddenAt: null },
+        },
+      },
     ])
   })
 

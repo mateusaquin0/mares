@@ -10,7 +10,7 @@
 
 import type { Prisma } from "@prisma/client"
 import { prisma } from "@/lib/prisma"
-import { inResearches } from "@/lib/animal-participation"
+import { listedInResearches } from "@/lib/animal-participation"
 import { txt, type I18nText } from "@/lib/catalog-i18n"
 
 export type DashboardFilters = {
@@ -75,8 +75,9 @@ export function dashboardSampleWhere(f: DashboardFilters): Prisma.SampleWhereInp
 export function dashboardAnimalWhere(orgId: string, f: DashboardFilters): Prisma.AnimalWhereInput {
   const ids = dashboardResearchIds(f)
   const where: Prisma.AnimalWhereInput = { research: { orgId } }
-  // Conjunto efetivo do indivíduo: a participação aceita conta como pertencer à pesquisa.
-  if (ids) where.OR = inResearches(ids)
+  // Conjunto efetivo do indivíduo: a participação aceita conta como pertencer à pesquisa, e
+  // a pesquisa que o ocultou deixa de contá-lo.
+  if (ids) where.OR = listedInResearches(ids)
   if (f.from || f.to) {
     where.eventDate = {
       ...(f.from ? { gte: new Date(f.from) } : {}),

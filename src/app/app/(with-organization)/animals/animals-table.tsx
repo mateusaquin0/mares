@@ -53,7 +53,7 @@ export function AnimalsTable({
   facets,
   fetchFilteredIds,
   loading,
-  isOrgAdmin,
+  canDelete,
   onEdit,
   onDelete,
 }: {
@@ -64,7 +64,7 @@ export function AnimalsTable({
   facets: AnimalFacets | undefined
   fetchFilteredIds: () => Promise<string[]>
   loading: boolean
-  isOrgAdmin: boolean
+  canDelete: (a: AnimalListItem) => boolean
   onEdit: (a: AnimalListItem) => void
   onDelete: (a: AnimalListItem) => void
 }) {
@@ -122,6 +122,7 @@ export function AnimalsTable({
     query.pathogen.length > 0 ||
     query.visibility !== "all" ||
     query.samples !== "all" ||
+    query.hidden !== "listed" ||
     query.from !== "" ||
     query.to !== ""
 
@@ -148,6 +149,7 @@ export function AnimalsTable({
       pathogen: [],
       visibility: "all",
       samples: "all",
+      hidden: "listed",
       from: "",
       to: "",
     })
@@ -175,6 +177,7 @@ export function AnimalsTable({
     query.pathogen,
     query.visibility,
     query.samples,
+    query.hidden,
     query.from,
     query.to,
   ])
@@ -343,6 +346,21 @@ export function AnimalsTable({
           </Select>,
         )}
         {filterField(
+          t("filterHidden"),
+          <Select
+            value={query.hidden}
+            onValueChange={(v) => patchQuery({ hidden: v as AnimalListQuery["hidden"] })}
+          >
+            <SelectTrigger className="h-9 w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="listed">{t("hiddenListed")}</SelectItem>
+              <SelectItem value="only">{t("hiddenOnly")}</SelectItem>
+            </SelectContent>
+          </Select>,
+        )}
+        {filterField(
           t("filterFrom"),
           <Input
             type="date"
@@ -375,28 +393,33 @@ export function AnimalsTable({
           placeholder={tc("search")}
           className="max-w-sm"
         />
-        {selected.size > 0 && (
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground">
-              {t("selectedCount", { count: selected.size })}
-            </span>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" loading={exporting}>
-                  <Download className="size-4" />
-                  {t("export")}
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onSelect={() => exportAs("xlsx")}>
-                  {t("exportExcel")}
-                </DropdownMenuItem>
-                <DropdownMenuItem onSelect={() => exportAs("darwin-core")}>
-                  {t("exportDarwin")}
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
+        {/* Indivíduo oculto não é exportado (o servidor aplica a mesma regra). */}
+        {query.hidden === "only" ? (
+          <span className="text-sm text-muted-foreground">{t("hiddenNotExported")}</span>
+        ) : (
+          selected.size > 0 && (
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">
+                {t("selectedCount", { count: selected.size })}
+              </span>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" loading={exporting}>
+                    <Download className="size-4" />
+                    {t("export")}
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onSelect={() => exportAs("xlsx")}>
+                    {t("exportExcel")}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onSelect={() => exportAs("darwin-core")}>
+                    {t("exportDarwin")}
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          )
         )}
       </div>
 
@@ -409,7 +432,7 @@ export function AnimalsTable({
               <TableHead className="w-10">
                 <Checkbox
                   aria-label={t("selectAll")}
-                  disabled={selectingAll || total === 0}
+                  disabled={selectingAll || total === 0 || query.hidden === "only"}
                   checked={allSelected ? true : someSelected ? "indeterminate" : false}
                   onCheckedChange={(v) => toggleAll(v === true)}
                 />
@@ -495,6 +518,7 @@ export function AnimalsTable({
                     <Checkbox
                       aria-label={t("selectRow")}
                       checked={selected.has(a.id)}
+                      disabled={query.hidden === "only"}
                       onCheckedChange={(v) => toggleRow(a.id, v === true)}
                     />
                   </TableCell>
@@ -553,7 +577,7 @@ export function AnimalsTable({
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem onSelect={() => onEdit(a)}>{tc("edit")}</DropdownMenuItem>
-                        {isOrgAdmin && (
+                        {canDelete(a) && (
                           <DropdownMenuItem
                             className="text-destructive focus:text-destructive"
                             onSelect={() => onDelete(a)}

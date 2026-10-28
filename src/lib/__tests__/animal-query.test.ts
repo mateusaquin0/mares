@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest"
 import type { Prisma } from "@prisma/client"
+import { hiddenInResearches, listedInResearches } from "@/lib/animal-participation"
 import {
   parseAnimalListParams,
   buildAnimalWhere,
@@ -19,6 +20,7 @@ describe("parseAnimalListParams", () => {
       species: [],
       visibility: "all",
       samples: "all",
+      hidden: "listed",
       sort: "date",
       dir: "desc",
       page: 1,
@@ -72,14 +74,39 @@ describe("buildAnimalWhere", () => {
     })
   })
 
-  it("o filtro por pesquisa também ignora convites pendentes", () => {
+  it("o filtro por pesquisa também ignora convites pendentes e quem ocultou", () => {
     const and = andOf(buildAnimalWhere("org1", undefined, parse("research=r9")))
     expect(and).toContainEqual({
       OR: [
-        { researchId: { in: ["r9"] } },
-        { participations: { some: { researchId: { in: ["r9"] }, status: "ACCEPTED" } } },
+        { researchId: { in: ["r9"] }, primaryHiddenAt: null },
+        {
+          participations: {
+            some: { researchId: { in: ["r9"] }, status: "ACCEPTED", hiddenAt: null },
+          },
+        },
       ],
     })
+  })
+
+  it("a listagem do pesquisador desconta o que as pesquisas dele ocultaram", () => {
+    const and = andOf(buildAnimalWhere("org1", ["r1"], parse("")))
+    expect(and[1]).toEqual({ OR: listedInResearches(["r1"]) })
+  })
+
+  it("o admin sem filtro de pesquisa vê também os ocultos", () => {
+    expect(andOf(buildAnimalWhere("org1", undefined, parse("")))).toHaveLength(1)
+  })
+
+  it("ocultos: o que o escopo ocultou e que nenhuma outra pesquisa dele lista", () => {
+    const and = andOf(buildAnimalWhere("org1", ["r1", "r2"], parse("hidden=only")))
+    expect(and).toContainEqual({ OR: hiddenInResearches(["r1", "r2"]) })
+    expect(and).toContainEqual({ NOT: { OR: listedInResearches(["r1", "r2"]) } })
+  })
+
+  it("ocultos com filtro de pesquisa: o que aquela pesquisa ocultou", () => {
+    const and = andOf(buildAnimalWhere("org1", ["r1", "r2"], parse("hidden=only&research=r1")))
+    expect(and).toContainEqual({ OR: hiddenInResearches(["r1"]) })
+    expect(and.some((c) => "NOT" in c)).toBe(false)
   })
 
   it("traduz filtros simples em cláusulas do AND", () => {

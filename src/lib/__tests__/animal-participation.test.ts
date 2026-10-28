@@ -7,7 +7,9 @@ import { describe, it, expect } from "vitest"
 
 import {
   ACCEPTED_PARTICIPATION,
+  hiddenInResearches,
   inResearches,
+  listedInResearches,
   sharedWithResearches,
 } from "@/lib/animal-participation"
 
@@ -23,6 +25,28 @@ describe("cláusulas de participação", () => {
     expect(inResearches(["r1", "r2"])).toEqual([
       { researchId: { in: ["r1", "r2"] } },
       { participations: { some: { researchId: { in: ["r1", "r2"] }, status: "ACCEPTED" } } },
+    ])
+  })
+
+  it("a listagem desconta as pesquisas que ocultaram o indivíduo", () => {
+    expect(listedInResearches(["r1"])).toEqual([
+      { researchId: { in: ["r1"] }, primaryHiddenAt: null },
+      {
+        participations: {
+          some: { researchId: { in: ["r1"] }, status: "ACCEPTED", hiddenAt: null },
+        },
+      },
+    ])
+  })
+
+  it("ocultos: restringe às pesquisas pedidas ou a qualquer uma", () => {
+    expect(hiddenInResearches(["r1"])[0]).toEqual({
+      researchId: { in: ["r1"] },
+      primaryHiddenAt: { not: null },
+    })
+    expect(hiddenInResearches()).toEqual([
+      { primaryHiddenAt: { not: null } },
+      { participations: { some: { status: "ACCEPTED", hiddenAt: { not: null } } } },
     ])
   })
 })

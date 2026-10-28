@@ -28,3 +28,30 @@ export function sharedWithResearches(researchIds: string[]): Prisma.AnimalWhereI
 export function inResearches(researchIds: string[]): Prisma.AnimalWhereInput[] {
   return [{ researchId: { in: researchIds } }, sharedWithResearches(researchIds)]
 }
+
+// ── Ocultação por pesquisa ─────────────────────────────────────────────────────
+//
+// Ocultar tira o indivíduo da LISTAGEM, do MAPA e do DASHBOARD daquela pesquisa, sem apagar
+// nada. O acesso (`inResearches`) continua valendo: é por ele que se abre o detalhe para
+// reexibir, e é ele que barra o recadastro do mesmo identificador.
+
+/**
+ * OR do conjunto efetivo descontadas as pesquisas que ocultaram o indivíduo (sem ids =
+ * listado em ALGUMA pesquisa, o recorte do admin).
+ */
+export function listedInResearches(researchIds?: string[]): Prisma.AnimalWhereInput[] {
+  const inIds = researchIds ? { researchId: { in: researchIds } } : {}
+  return [
+    { ...inIds, primaryHiddenAt: null },
+    { participations: { some: { ...inIds, ...ACCEPTED_PARTICIPATION, hiddenAt: null } } },
+  ]
+}
+
+/** OR "alguma destas pesquisas ocultou o indivíduo" (sem ids = qualquer pesquisa). */
+export function hiddenInResearches(researchIds?: string[]): Prisma.AnimalWhereInput[] {
+  const inIds = researchIds ? { researchId: { in: researchIds } } : {}
+  return [
+    { ...inIds, primaryHiddenAt: { not: null } },
+    { participations: { some: { ...inIds, ...ACCEPTED_PARTICIPATION, hiddenAt: { not: null } } } },
+  ]
+}

@@ -68,6 +68,12 @@ export const ERROR_CODES = {
   animalControlDuplicateInResearch: "animalControlDuplicateInResearch",
   animalSimbaDuplicateInResearch: "animalSimbaDuplicateInResearch",
   animalHasSamples: "animalHasSamples",
+  // Exclusão pelo pesquisador: só quem integra a pesquisa primária, e nunca um indivíduo que
+  // outra pesquisa também estuda (a alternativa é ocultá-lo na própria pesquisa).
+  animalDeleteNotPrimary: "animalDeleteNotPrimary",
+  animalDeleteShared: "animalDeleteShared",
+  // Ocultar não pode deixar o indivíduo fora de todas as listagens.
+  animalHideLastResearch: "animalHideLastResearch",
   animalResearchExists: "animalResearchExists",
   animalResearchPrimary: "animalResearchPrimary",
   animalResearchHasData: "animalResearchHasData",

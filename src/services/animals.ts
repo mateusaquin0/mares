@@ -28,6 +28,7 @@ function animalListQS(q: AnimalListQuery, extra?: Record<string, string>): strin
   }
   if (q.visibility !== "all") p.set("visibility", q.visibility)
   if (q.samples !== "all") p.set("samples", q.samples)
+  if (q.hidden !== "listed") p.set("hidden", q.hidden)
   if (q.from) p.set("from", q.from)
   if (q.to) p.set("to", q.to)
   p.set("sort", q.sort)
@@ -63,6 +64,11 @@ export const animalsService = {
   // Serve para recusar, cancelar o que se pediu e desvincular uma participação já aceita.
   removeResearch: (animalId: string, researchId: string) =>
     http.del(`/api/animals/${animalId}/researches/${researchId}`),
+  // Ocultar o indivíduo numa pesquisa (sai da listagem/mapa/dashboard dela) e reexibir.
+  hideInResearch: (animalId: string, researchId: string) =>
+    http.put(`/api/animals/${animalId}/researches/${researchId}/hidden`),
+  unhideInResearch: (animalId: string, researchId: string) =>
+    http.del(`/api/animals/${animalId}/researches/${researchId}/hidden`),
   pendingShares: () => http.get<PendingShare[]>("/api/animal-shares"),
 
   // Confere se um identificador já existe na organização ANTES de preencher o formulário.

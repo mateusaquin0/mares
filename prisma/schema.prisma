@@ -422,6 +422,10 @@ model Animal {
   isPublic              Boolean                 @default(false)
   researchId            String
   research              Research                @relation(fields: [researchId], references: [id])
+  // A pesquisa PRIMÁRIA ocultou o indivíduo (só permitido quando ele é compartilhado): ele sai
+  // da listagem/mapa/dashboard dela, mas os dados ficam e o acesso direto continua — é o que
+  // permite reexibir. O equivalente das participações é AnimalResearch.hiddenAt.
+  primaryHiddenAt       DateTime?
   // Organização dona, denormalizada de research, para o controlId ser único POR ORG.
   // Definida na criação; a pesquisa (e portanto a org) do animal não muda depois.
   orgId                 String
@@ -472,6 +476,8 @@ model AnimalResearch {
   // Justificativa opcional de quem PEDE o indivíduo (origin = REQUEST).
   message     String?
   respondedAt DateTime?
+  // A pesquisa participante ocultou o indivíduo (ver Animal.primaryHiddenAt).
+  hiddenAt    DateTime?
   createdAt   DateTime             @default(now())
 
   @@id([animalId, researchId])

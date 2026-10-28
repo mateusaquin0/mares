@@ -27,6 +27,7 @@ const DEFAULT_QUERY: AnimalListQuery = {
   pathogen: [],
   visibility: "all",
   samples: "all",
+  hidden: "listed",
   from: "",
   to: "",
   sort: "date",
@@ -59,6 +60,14 @@ export function AnimalsManager({ isOrgAdmin }: { isOrgAdmin: boolean }) {
   const items = page?.items ?? []
   const total = page?.total ?? 0
   const researches = (researchQ.data ?? []).map((r) => ({ id: r.id, name: r.name }))
+  // Espelha a regra do servidor (DELETE /api/animals/[id]) para não oferecer um botão que
+  // responderia 403/409: o pesquisador exclui o que é da pesquisa dele e não é compartilhado.
+  const canDelete = useCallback(
+    (a: AnimalListItem) =>
+      isOrgAdmin ||
+      (a.researches.length === 1 && (researchQ.data ?? []).some((r) => r.id === a.research.id)),
+    [isOrgAdmin, researchQ.data],
+  )
 
   // Skeleton só no primeiro carregamento (sem dados ainda); depois mantemos a tabela e
   // apenas esmaecemos durante o refetch (`isFetching`).
@@ -112,7 +121,7 @@ export function AnimalsManager({ isOrgAdmin }: { isOrgAdmin: boolean }) {
           facets={facetsQ.data}
           fetchFilteredIds={fetchFilteredIds}
           loading={animalsQ.isFetching}
-          isOrgAdmin={isOrgAdmin}
+          canDelete={canDelete}
           onEdit={(a) => setDialog({ mode: "edit", id: a.id })}
           onDelete={setConfirm}
         />
