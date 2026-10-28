@@ -8,7 +8,7 @@
 
 import type { Prisma } from "@prisma/client"
 import { prisma } from "@/lib/prisma"
-import { inResearches } from "@/lib/animal-participation"
+import { listedInResearches } from "@/lib/animal-participation"
 import { pathogenName, type I18nText } from "@/lib/catalog-i18n"
 
 // Ponto serializado enviado ao cliente (JSON-safe: datas como ISO string).
@@ -118,7 +118,8 @@ export async function publicMapPoints(locale: string): Promise<MapPoint[]> {
 /**
  * Pontos da organização (mapa privado). Admin: todos os animais da org com coordenadas.
  * Pesquisador: apenas os animais cujas pesquisas (primária ∪ participações) ele enxerga
- * (`researchIds`). `undefined` = sem restrição por pesquisa (admin).
+ * (`researchIds`), menos os que essas pesquisas ocultaram.
+ * `undefined` = sem restrição por pesquisa (admin).
  */
 export async function orgMapPoints(
   orgId: string,
@@ -127,7 +128,7 @@ export async function orgMapPoints(
 ): Promise<MapPoint[]> {
   const where: Prisma.AnimalWhereInput = { ...HAS_COORDS, research: { orgId } }
   if (researchIds) {
-    where.OR = inResearches(researchIds)
+    where.OR = listedInResearches(researchIds)
   }
   const rows = await prisma.animal.findMany({
     where,

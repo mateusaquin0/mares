@@ -141,6 +141,20 @@ export function useRemoveAnimalResearch(animalId: string) {
   })
 }
 
+export function useSetAnimalHidden(animalId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ researchId, hidden }: { researchId: string; hidden: boolean }) =>
+      hidden
+        ? animalsService.hideInResearch(animalId, researchId)
+        : animalsService.unhideInResearch(animalId, researchId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: animalKeys.detail(animalId) })
+      qc.invalidateQueries({ queryKey: animalKeys.all })
+    },
+  })
+}
+
 // Caixa de entrada: compartilhamentos aguardando a resposta do usuário (os dois sentidos).
 export function usePendingShares() {
   return useQuery({

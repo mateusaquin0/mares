@@ -40,6 +40,8 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     const animals = await prisma.animal.findMany({
       where: {
         researchId: id,
+        // A pesquisa ocultou o indivíduo: ele não entra no export dela.
+        primaryHiddenAt: null,
         ...(research.isPublic ? { isPublic: true } : {}),
         ...(searchWhere ?? {}),
       },

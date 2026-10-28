@@ -3,7 +3,7 @@
 
 import { Prisma } from "@prisma/client"
 
-import { inResearches } from "@/lib/animal-participation"
+import { hiddenInResearches, inResearches, listedInResearches } from "@/lib/animal-participation"
 import type { AnimalSortKey } from "@/types/animal"
 
 export const ANIMAL_PAGE_SIZES = [10, 20, 30] as const
@@ -20,6 +20,8 @@ export type AnimalListFilters = {
   pathogen: string[]
   visibility: "all" | "public" | "private"
   samples: "all" | "with" | "without"
+  // "only" = só os indivíduos que a pesquisa ocultou (para abrir o detalhe e reexibir).
+  hidden: "listed" | "only"
   from: string
   to: string
   sort: AnimalSortKey
@@ -71,6 +73,7 @@ export function parseAnimalListParams(sp: URLSearchParams): AnimalListFilters {
     pathogen: multi(sp, "pathogen"),
     visibility: visibility === "public" || visibility === "private" ? visibility : "all",
     samples: samples === "with" || samples === "without" ? samples : "all",
+    hidden: sp.get("hidden") === "only" ? "only" : "listed",
     from: sp.get("from")?.trim() ?? "",
     to: sp.get("to")?.trim() ?? "",
     sort,
@@ -121,9 +124,17 @@ export function buildAnimalWhere(
   if (f.lifeStage.length) and.push({ lifeStage: { in: f.lifeStage } })
   if (f.state.length) and.push({ state: { in: f.state } })
 
-  // Pesquisa: considera primária OU participação aceita (compartilhamento do indivíduo).
-  if (f.research.length) {
-    and.push({ OR: inResearches(f.research) })
+  // Pesquisa: considera primária OU participação aceita (compartilhamento do indivíduo),
+  // descontando quem ocultou. Em "ocultos" vale o inverso: só o que estas pesquisas ocultaram.
+  // Sem filtro de pesquisa, o recorte é o escopo do usuário; o admin (sem escopo) vê tudo na
+  // listagem normal e, em "ocultos", o que qualquer pesquisa ocultou.
+  const target = f.research.length ? f.research : scopeIds
+  if (f.hidden === "only") {
+    and.push({ OR: hiddenInResearches(target) })
+    // Oculto numa pesquisa mas listado por outra do escopo continua na listagem normal.
+    if (!f.research.length && scopeIds) and.push({ NOT: { OR: listedInResearches(scopeIds) } })
+  } else if (target) {
+    and.push({ OR: listedInResearches(target) })
   }
 
   // Patógeno positivo: existe amostra com análise POSITIVO para o patógeno.

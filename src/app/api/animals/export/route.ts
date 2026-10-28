@@ -9,7 +9,7 @@ import { getLocale } from "next-intl/server"
 import { prisma } from "@/lib/prisma"
 import { getAuthUser, getActiveOrgId, requireOrgRole } from "@/lib/auth"
 import { getResearchScope } from "@/lib/research-access"
-import { inResearches } from "@/lib/animal-participation"
+import { listedInResearches } from "@/lib/animal-participation"
 import { apiError, unauthorized } from "@/lib/api"
 import { buildDarwinCoreXml, dwcAnimalSelect } from "@/lib/darwin-core"
 import { buildAnimalsXlsx } from "@/lib/animals-xlsx"
@@ -69,9 +69,12 @@ export async function POST(req: NextRequest) {
     // Escopo por pesquisa: pesquisador só exporta animais visíveis, e apenas as amostras/
     // análises das SUAS pesquisas (compartilhado → sem vazar dados de outra pesquisa).
     const scope = await getResearchScope(user, orgId)
-    const animalWhere: Prisma.AnimalWhereInput = { id: { in: ids }, research: { orgId } }
-    if (!scope.all) {
-      animalWhere.OR = inResearches(scope.ids)
+    // Indivíduo oculto não é exportado: o recorte é o da listagem, não o do acesso. Para o
+    // admin, fica de fora o que nenhuma pesquisa exibe.
+    const animalWhere: Prisma.AnimalWhereInput = {
+      id: { in: ids },
+      research: { orgId },
+      OR: listedInResearches(scope.all ? undefined : scope.ids),
     }
 
     const animals = await prisma.animal.findMany({

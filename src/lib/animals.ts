@@ -585,3 +585,62 @@ export async function removeAnimalResearch(animalId: string, researchId: string)
     throw e
   }
 }
+
+/**
+ * Oculta (ou reexibe) o indivíduo NUMA pesquisa: ele sai da listagem, do mapa e do dashboard
+ * dela, sem perder dados (ver `listedInResearches`). A marca fica onde o vínculo mora — no
+ * Animal para a pesquisa primária, na participação para as demais.
+ *
+ * Ocultar exige que o indivíduo continue listado em OUTRA pesquisa: é a saída para o
+ * indivíduo compartilhado, que não pode ser excluído. Sem essa trava, duas pesquisas
+ * ocultando ao mesmo tempo o fariam sumir de todas. Reexibir é sempre permitido.
+ */
+export async function setAnimalHidden(animalId: string, researchId: string, hidden: boolean) {
+  await prisma.$transaction(async (tx) => {
+    // Serializa as ocultações concorrentes do mesmo indivíduo (a trava acima é lida e escrita
+    // em passos separados).
+    await tx.$queryRaw`SELECT id FROM "Animal" WHERE id = ${animalId} FOR UPDATE`
+    const animal = await tx.animal.findUnique({
+      where: { id: animalId },
+      select: {
+        researchId: true,
+        primaryHiddenAt: true,
+        participations: {
+          where: ACCEPTED_PARTICIPATION,
+          select: { researchId: true, hiddenAt: true },
+        },
+      },
+    })
+    if (!animal) throw new NotFoundError("Animal não encontrado", ERROR_CODES.animalNotFound)
+
+    const isPrimary = animal.researchId === researchId
+    if (!isPrimary && !animal.participations.some((p) => p.researchId === researchId)) {
+      throw new NotFoundError(
+        "Pesquisa não vinculada a este indivíduo",
+        ERROR_CODES.animalResearchNotLinked,
+      )
+    }
+
+    if (hidden) {
+      const listedElsewhere =
+        (!isPrimary && !animal.primaryHiddenAt) ||
+        animal.participations.some((p) => p.researchId !== researchId && !p.hiddenAt)
+      if (!listedElsewhere) {
+        throw new ConflictError(
+          "O indivíduo precisa continuar visível em ao menos uma pesquisa",
+          ERROR_CODES.animalHideLastResearch,
+        )
+      }
+    }
+
+    const at = hidden ? new Date() : null
+    if (isPrimary) {
+      await tx.animal.update({ where: { id: animalId }, data: { primaryHiddenAt: at } })
+    } else {
+      await tx.animalResearch.update({
+        where: { animalId_researchId: { animalId, researchId } },
+        data: { hiddenAt: at },
+      })
+    }
+  })
+}
