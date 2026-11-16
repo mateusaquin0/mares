@@ -107,10 +107,9 @@ describe("RLS — isolamento entre organizações no nível do banco", () => {
     expect(ids).toContain(animalBPub)
   })
 
-  it("visitante anônimo só enxerga o que é público", async () => {
-    const ids = await visibleAnimalIds(null)
-    expect(ids).toContain(animalBPub)
-    expect(ids).not.toContain(animalA)
-    expect(ids).not.toContain(animalBPriv)
+  it("visitante anônimo não lê nada pela Data API, nem o que é público", async () => {
+    // O dado público chega ao visitante pelo servidor (mapa), que escolhe os campos e filtra
+    // por pesquisa. Ver a migration data_api_anon_closed.
+    await expect(visibleAnimalIds(null)).rejects.toThrow(/permission denied/i)
   })
 })
