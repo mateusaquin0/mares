@@ -213,7 +213,7 @@ export function OrgMembers({ org }: { org: AdminOrg }) {
           {form.formState.errors.email && (
             <p className="text-xs text-destructive">{tval(form.formState.errors.email.message!)}</p>
           )}
-          {lookup?.found && <p className="text-xs text-bio">{t("addLookupFound")}</p>}
+          {lookup?.found && <p className="text-xs text-success">{t("addLookupFound")}</p>}
         </div>
 
         <div className="grid gap-3 sm:grid-cols-2">

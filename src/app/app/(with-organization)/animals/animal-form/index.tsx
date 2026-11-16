@@ -100,7 +100,7 @@ export function AnimalFormDialog({
             <Button
               type="submit"
               loading={f.saving}
-              className="bg-bio text-bio-foreground hover:bg-bio/90"
+              className="bg-success text-success-foreground hover:bg-success/90"
             >
               {mode === "edit" ? tc("save") : t("create")}
             </Button>

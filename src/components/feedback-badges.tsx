@@ -41,7 +41,7 @@ export const FEEDBACK_TYPE_META: Record<FeedbackType, BadgeMeta> = {
 }
 
 export const FEEDBACK_STATUS_META: Record<FeedbackStatus, BadgeMeta> = {
-  NEW: { icon: Inbox, labelKey: "status_NEW", variant: "inconclusive", dot: "bg-amber-500" },
+  NEW: { icon: Inbox, labelKey: "status_NEW", variant: "inconclusive", dot: "bg-warning" },
   IN_REVIEW: { icon: Eye, labelKey: "status_IN_REVIEW", variant: "private", dot: "bg-primary" },
   RESOLVED: {
     icon: CircleCheck,
@@ -61,7 +61,7 @@ export const FEEDBACK_STATUS_META: Record<FeedbackStatus, BadgeMeta> = {
     icon: RotateCcw,
     labelKey: "status_REOPENED",
     variant: "inconclusive",
-    dot: "bg-amber-500",
+    dot: "bg-warning",
   },
 }
 

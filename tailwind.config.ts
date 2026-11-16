@@ -52,6 +52,17 @@ export default {
           DEFAULT: "hsl(var(--bio))",
           foreground: "hsl(var(--bio-foreground))",
         },
+        success: {
+          DEFAULT: "hsl(var(--success))",
+          foreground: "hsl(var(--success-foreground))",
+          soft: "hsl(var(--success-soft))",
+          border: "hsl(var(--success-border))",
+        },
+        warning: {
+          DEFAULT: "hsl(var(--warning))",
+          soft: "hsl(var(--warning-soft))",
+          border: "hsl(var(--warning-border))",
+        },
       },
       borderRadius: {
         xl: "calc(var(--radius) + 8px)" /* 1rem — cards e seções grandes */,

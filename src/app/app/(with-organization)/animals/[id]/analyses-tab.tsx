@@ -393,7 +393,7 @@ export function AnalysesTab({ animalId }: { animalId: string }) {
                       {entries.length === 0 ? (
                         <p className="text-sm text-muted-foreground">{t("noApplicable")}</p>
                       ) : (
-                        <Table>
+                        <Table density="compact">
                           <TableHeader>
                             <TableRow>
                               <TableHead>{t("colPathogen")}</TableHead>

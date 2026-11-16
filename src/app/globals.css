@@ -30,14 +30,23 @@
     --destructive-foreground: 0 0% 100%;
 
     --border: 214 32% 91%; /* border-subtle #E2E8F0 */
-    --input: 214 32% 91%;
+    --input: 222 5% 48%; /* outline #737780 — contorno de controle com 3:1 sobre o fundo */
     --ring: 189 100% 30%; /* soft cyan focus ring */
 
     /* Cores de marca para uso direto (bg-ocean, bg-bio, text-cyan-brand). */
     --ocean: 212 100% 14%; /* ocean-deep #002147 — chrome de navegação */
     --brand-cyan: 189 100% 23%; /* secondary cyan #006876 */
-    --bio: 123 41% 45%; /* biological-green #43A047 — status positivo/saudável */
+    --bio: 123 41% 45%; /* biological-green #43A047 — só ícones e marcas; não passa 4.5:1 com texto */
     --bio-foreground: 0 0% 100%;
+
+    /* Status: texto/sólido, fundo suave e borda (ver DESIGN.md §Status). */
+    --success: 123 46% 34%; /* #2E7D32 — 5.1:1 com branco */
+    --success-foreground: 0 0% 100%;
+    --success-soft: 123 41% 92%;
+    --success-border: 123 38% 81%;
+    --warning: 28 80% 34%;
+    --warning-soft: 35 92% 92%;
+    --warning-border: 35 80% 78%;
 
     --radius: 0.5rem;
   }
@@ -70,13 +79,21 @@
     --destructive-foreground: 0 0% 100%;
 
     --border: 213 25% 21%;
-    --input: 213 25% 21%;
+    --input: 214 15% 46%;
     --ring: 189 80% 45%;
 
     --ocean: 212 55% 16%;
     --brand-cyan: 189 70% 62%;
     --bio: 123 40% 52%;
     --bio-foreground: 0 0% 100%;
+
+    --success: 123 45% 72%;
+    --success-foreground: 123 45% 10%;
+    --success-soft: 123 30% 20%;
+    --success-border: 123 30% 30%;
+    --warning: 35 85% 70%;
+    --warning-soft: 35 45% 18%;
+    --warning-border: 35 50% 32%;
   }
 }
 
@@ -86,6 +103,24 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+  }
+}
+
+/* Quem pede menos movimento no sistema operacional não vê animações nem transições:
+   diálogos e menus aparecem direto, e spinners/skeletons ficam parados. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }
 

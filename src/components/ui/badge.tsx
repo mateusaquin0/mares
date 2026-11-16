@@ -4,7 +4,7 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/utils"
 
 const badgeVariants = cva(
-  "inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
+  "inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors",
   {
     variants: {
       variant: {
@@ -17,11 +17,9 @@ const badgeVariants = cva(
         // Variantes semânticas do design MARES (ver design.md §Chips/Badges).
         public: "border-transparent bg-accent text-accent-foreground",
         private: "border-transparent bg-primary/10 text-primary",
-        positive:
-          "border-[hsl(var(--bio)/0.35)] bg-[hsl(var(--bio)/0.14)] text-[hsl(123_44%_30%)] dark:bg-[hsl(var(--bio)/0.22)] dark:text-[hsl(123_45%_72%)]",
+        positive: "border-success-border bg-success-soft text-success",
         negative: "border-transparent bg-secondary text-muted-foreground",
-        inconclusive:
-          "border-[hsl(35_80%_78%)] bg-[hsl(35_92%_92%)] text-[hsl(28_80%_34%)] dark:border-[hsl(35_50%_32%)] dark:bg-[hsl(35_45%_18%)] dark:text-[hsl(35_85%_70%)]",
+        inconclusive: "border-warning-border bg-warning-soft text-warning",
         // Níveis de ênfase: estado ativo em destaque e estado encerrado.
         highlight: "border-transparent bg-accent text-accent-foreground",
         faded: "border-dashed border-border bg-muted text-muted-foreground",

@@ -4,7 +4,7 @@
 // cartões de métricas, gráficos (espécies, positividade, linha do tempo) e heatmap geográfico.
 // Os dados vêm de /api/dashboard (react-query); trocar um filtro refaz a busca.
 
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import dynamic from "next/dynamic"
 import { useTheme } from "next-themes"
 import { useTranslations, useLocale } from "next-intl"
@@ -17,7 +17,6 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  Cell,
   AreaChart,
   Area,
 } from "recharts"
@@ -39,16 +38,6 @@ import {
 import { Combobox } from "@/components/ui/combobox"
 
 const ALL = "__all__"
-const SPECIES_COLORS = [
-  "#003366",
-  "#006876",
-  "#43A047",
-  "#0f6f8a",
-  "#7a8794",
-  "#B45309",
-  "#8b5cf6",
-  "#0ea5e9",
-]
 const NAVY = "#003366"
 const PRIMARY_DARK = "#a7c8ff"
 
@@ -74,14 +63,36 @@ const HeatMap = dynamic(() => import("@/components/map/heat-map"), {
   loading: () => <div className="h-full w-full animate-pulse bg-accent/40" />,
 })
 
-export function DashboardClient() {
+export type DashboardFilterParams = {
+  research?: string
+  pathogen?: string
+  from?: string
+  to?: string
+}
+
+export function DashboardClient({ initial }: { initial?: DashboardFilterParams }) {
   const t = useTranslations("dashboard")
   const locale = useLocale()
   const { resolvedTheme } = useTheme()
-  const [research, setResearch] = useState(ALL)
-  const [pathogen, setPathogen] = useState(ALL)
-  const [from, setFrom] = useState("")
-  const [to, setTo] = useState("")
+  const [research, setResearch] = useState(initial?.research ?? ALL)
+  const [pathogen, setPathogen] = useState(initial?.pathogen ?? ALL)
+  const [from, setFrom] = useState(initial?.from ?? "")
+  const [to, setTo] = useState(initial?.to ?? "")
+
+  // Os filtros ficam na URL para que uma visão filtrada possa ser compartilhada por link
+  // e sobreviva a um recarregamento. `replaceState` troca o endereço sem nova navegação.
+  useEffect(() => {
+    const params = new URLSearchParams()
+    if (research !== ALL) params.set("research", research)
+    if (pathogen !== ALL) params.set("pathogen", pathogen)
+    if (from) params.set("from", from)
+    if (to) params.set("to", to)
+    const qs = params.toString()
+    const next = qs ? `${window.location.pathname}?${qs}` : window.location.pathname
+    if (next !== window.location.pathname + window.location.search) {
+      window.history.replaceState(null, "", next)
+    }
+  }, [research, pathogen, from, to])
   // Modo de cálculo da taxa de positividade (A2). Estado local, sem persistência.
   const [posMode, setPosMode] = useState<"animal" | "sample">("animal")
 
@@ -142,8 +153,10 @@ export function DashboardClient() {
 
   // Recharts seta `stroke`/`fill` como atributos SVG, onde `var()` não resolve — por isso
   // estas cores são escolhidas em JS conforme o tema resolvido (equivalem aos tokens do DS).
+  // Os três gráficos têm uma série só (contagem ou taxa): a cor é a mesma em todas as
+  // barras, porque cor por posição sugeriria categorias que não existem.
   const isDark = resolvedTheme === "dark"
-  const timelineColor = isDark ? PRIMARY_DARK : NAVY
+  const seriesColor = isDark ? PRIMARY_DARK : NAVY
   const axisTick = isDark ? "#9ba7b5" : "#43474f"
   const gridStroke = isDark ? "#283443" : "#e2e8f0"
 
@@ -230,6 +243,7 @@ export function DashboardClient() {
           </span>
           <Input
             type="date"
+            name="from"
             value={from}
             onChange={(e) => setFrom(e.target.value)}
             className="h-9 w-40"
@@ -241,6 +255,7 @@ export function DashboardClient() {
           </span>
           <Input
             type="date"
+            name="to"
             value={to}
             onChange={(e) => setTo(e.target.value)}
             className="h-9 w-40"
@@ -268,7 +283,9 @@ export function DashboardClient() {
                 </span>
               </CardHeader>
               <CardContent>
-                <p className="text-3xl font-bold tracking-tight text-foreground">{s.value}</p>
+                <p className="text-3xl font-bold tabular-nums tracking-tight text-foreground">
+                  {s.value}
+                </p>
                 {(s.id === "positivity" || s.id === "positives") && (
                   <div
                     role="group"
@@ -330,11 +347,7 @@ export function DashboardClient() {
                     labelStyle={TOOLTIP_STYLE.labelStyle}
                     itemStyle={TOOLTIP_STYLE.itemStyle}
                   />
-                  <Bar dataKey="count" radius={[0, 4, 4, 0]}>
-                    {species.map((s, i) => (
-                      <Cell key={s.name} fill={SPECIES_COLORS[i % SPECIES_COLORS.length]} />
-                    ))}
-                  </Bar>
+                  <Bar dataKey="count" radius={[0, 4, 4, 0]} fill={seriesColor} />
                 </BarChart>
               </ResponsiveContainer>
             )}
@@ -352,8 +365,7 @@ export function DashboardClient() {
               </p>
             ) : (
               <div className="flex flex-col gap-4 py-2">
-                {positivity.map((r, i) => {
-                  const color = SPECIES_COLORS[i % SPECIES_COLORS.length]
+                {positivity.map((r) => {
                   return (
                     <div key={r.label}>
                       <div className="mb-1.5 flex items-center justify-between text-sm">
@@ -370,7 +382,7 @@ export function DashboardClient() {
                       <div className="h-2.5 overflow-hidden rounded bg-secondary">
                         <div
                           className="h-full rounded"
-                          style={{ width: `${r.pct}%`, background: color }}
+                          style={{ width: `${r.pct}%`, background: seriesColor }}
                         />
                       </div>
                     </div>
@@ -396,8 +408,8 @@ export function DashboardClient() {
               <AreaChart data={timeline} margin={{ left: 0, right: 16, top: 8 }}>
                 <defs>
                   <linearGradient id="areaFill" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor={timelineColor} stopOpacity={0.35} />
-                    <stop offset="100%" stopColor={timelineColor} stopOpacity={0.02} />
+                    <stop offset="0%" stopColor={seriesColor} stopOpacity={0.35} />
+                    <stop offset="100%" stopColor={seriesColor} stopOpacity={0.02} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid stroke={gridStroke} vertical={false} />
@@ -411,7 +423,7 @@ export function DashboardClient() {
                 <Tooltip
                   labelFormatter={(m) => fmtMonth(String(m))}
                   formatter={(v) => [numberFmt.format(Number(v)), t("timelineCount")]}
-                  cursor={{ stroke: timelineColor, strokeWidth: 1 }}
+                  cursor={{ stroke: seriesColor, strokeWidth: 1 }}
                   contentStyle={TOOLTIP_STYLE.contentStyle}
                   labelStyle={TOOLTIP_STYLE.labelStyle}
                   itemStyle={TOOLTIP_STYLE.itemStyle}
@@ -419,7 +431,7 @@ export function DashboardClient() {
                 <Area
                   type="monotone"
                   dataKey="count"
-                  stroke={timelineColor}
+                  stroke={seriesColor}
                   strokeWidth={2}
                   fill="url(#areaFill)"
                 />

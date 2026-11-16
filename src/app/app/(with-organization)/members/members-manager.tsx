@@ -562,7 +562,7 @@ export function MembersManager({
                   {tval(addForm.formState.errors.email.message!)}
                 </p>
               )}
-              {lookup?.found && <p className="text-xs text-bio">{t("lookupFound")}</p>}
+              {lookup?.found && <p className="text-xs text-success">{t("lookupFound")}</p>}
             </div>
             <div className="space-y-1">
               <Label htmlFor="name">{t("nameLabel")}</Label>
