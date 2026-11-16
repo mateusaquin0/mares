@@ -544,7 +544,7 @@ model Sample {
   createdAt       DateTime     @default(now())
 
   // Identificação única POR PESQUISA, não por organização: o rótulo do tubo vem do indivíduo
-  // (ex.: "150/23 FIG" = ID de controle + órgão), então duas pesquisas que estudam o MESMO
+  // (ex.: "904/99 FIG" = ID de controle + órgão), então duas pesquisas que estudam o MESMO
   // indivíduo compartilhado chegam sempre ao mesmo código para as suas próprias amostras.
   // Por organização, a segunda pesquisa era barrada por uma amostra que sequer enxerga.
   @@unique([researchId, identification])

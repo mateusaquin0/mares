@@ -5,10 +5,10 @@ import { prisma } from "@/lib/prisma"
 // Unicidade da identificação da amostra contra um Postgres real (migration
 // 20260820000000_sample_identification_unique_per_research).
 //
-// Cenário que estes testes protegem: o rótulo do tubo vem do indivíduo ("150/23 FIG" = ID de
+// Cenário que estes testes protegem: o rótulo do tubo vem do indivíduo ("904/99 FIG" = ID de
 // controle + órgão). Num indivíduo COMPARTILHADO, as duas pesquisas chegam ao mesmo rótulo
 // para as suas próprias amostras — e, enquanto a unicidade era por ORGANIZAÇÃO, a segunda
-// pesquisa era recusada por uma amostra que sequer enxerga (bug reportado: 150/23 FIG).
+// pesquisa era recusada por uma amostra que sequer enxerga (bug reportado: 904/99 FIG).
 
 let orgId: string
 let rPrimaria: string // pesquisa dona do indivíduo
@@ -16,7 +16,7 @@ let rParticipante: string // pesquisa que recebeu o indivíduo compartilhado
 let organId: string
 let animalId: string
 
-const FIG = "150/23 FIG (test)"
+const FIG = "904/99 FIG (test)"
 
 function createSample(researchId: string, identification: string) {
   return prisma.sample.create({
@@ -46,7 +46,10 @@ beforeAll(async () => {
   ).id
   organId = (
     await prisma.organ.create({
-      data: { key: "organ_test_ident", name: { pt: "Fígado", en: "Liver" } },
+      data: {
+        key: "organ_test_ident",
+        name: { pt: "Fígado (teste ident)", en: "Liver (ident test)" },
+      },
       select: { id: true },
     })
   ).id
@@ -82,10 +85,10 @@ describe("Identificação da amostra — única por PESQUISA", () => {
   })
 
   it("recusa o mesmo rótulo repetido dentro da MESMA pesquisa", async () => {
-    await createSample(rPrimaria, "150/23 PUL (test)")
+    await createSample(rPrimaria, "904/99 PUL (test)")
 
     // P2002 é o que a rota converte em sampleDuplicateError (409) — ver src/lib/samples.ts.
-    const err = await createSample(rPrimaria, "150/23 PUL (test)").catch((e: unknown) => e)
+    const err = await createSample(rPrimaria, "904/99 PUL (test)").catch((e: unknown) => e)
     expect(err).toBeInstanceOf(Prisma.PrismaClientKnownRequestError)
     expect((err as Prisma.PrismaClientKnownRequestError).code).toBe("P2002")
   })

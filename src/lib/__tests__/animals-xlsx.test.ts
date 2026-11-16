@@ -11,7 +11,7 @@ const orgao = (pt: string) => ({ name: { pt, en: pt } })
 
 function animal(over: Partial<XlsxAnimal> = {}): XlsxAnimal {
   return {
-    controlId: "45/26",
+    controlId: "901/99",
     simbaRecordNumber: null,
     species: "Sotalia guianensis",
     taxonFamily: null,
@@ -160,7 +160,7 @@ describe("buildAnimalsXlsx — laudo anatomopatológico", () => {
     const rows = linhas(wb.getWorksheet("Laudo")!)
     expect(rows).toHaveLength(2)
     expect(rows[0]).toMatchObject({
-      Animal: "45/26",
+      Animal: "901/99",
       Exame: "Macroscópico",
       Sistema: "Sistema respiratório",
       "Estado do sistema": "Com alteração",
@@ -294,7 +294,7 @@ describe("buildAnimalsXlsx — biometria", () => {
   it("gera uma coluna por medida, com a unidade no cabeçalho, e o peso vindo da coluna do animal", async () => {
     const wb = await abrir([
       animal({
-        controlId: "45/26",
+        controlId: "901/99",
         necropsyWeightKg: 31,
         biometry: bio("Odontoceti", [
           { label: "Comprimento total", value: 130 },
@@ -306,7 +306,7 @@ describe("buildAnimalsXlsx — biometria", () => {
       }),
     ])
     const row = linhas(wb.getWorksheet("Biometria")!)[0]!
-    expect(row["Indivíduo"]).toBe("45/26")
+    expect(row["Indivíduo"]).toBe("901/99")
     expect(row["Formulário"]).toBe("Odontoceti")
     expect(row["Comprimento total (cm)"]).toBe(130)
     // Unidade derivada do rótulo, não do measurementUnit do registro.

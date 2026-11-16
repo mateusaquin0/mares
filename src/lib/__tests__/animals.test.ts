@@ -1,7 +1,7 @@
 // Cenário que estes testes protegem: os identificadores do animal (ID de controle, Nº SIMBA)
 // são únicos por ORGANIZAÇÃO, mas a listagem de animais é filtrada por PESQUISA. Quem tenta
 // cadastrar um ID já usado numa pesquisa que não enxerga recebia "já cadastrado" e não
-// encontrava o registro em lugar nenhum — erro sem saída (bug reportado com o ID 312/25).
+// encontrava o registro em lugar nenhum — erro sem saída (bug reportado com o ID 902/99).
 //
 // A regra: quando o duplicado está FORA do escopo do usuário, a mensagem nomeia a pesquisa
 // que o detém, para que ele saiba a quem pedir acesso. Dentro do escopo, mensagem genérica
@@ -70,7 +70,7 @@ describe("animalDuplicateConflict — duplicado fora do escopo do usuário", () 
     const err = await animalDuplicateConflict(p2002(["orgId", "controlId"]), {
       orgId: "org1",
       scope: { all: false, ids: ["r-minha"] },
-      controlId: "312/25",
+      controlId: "902/99",
     })
     expect(err.code).toBe(ERROR_CODES.animalControlDuplicateOutOfScope)
     // `animalId` + identidade viajam junto para a UI oferecer "pedir o indivíduo para a
@@ -97,7 +97,7 @@ describe("animalDuplicateConflict — duplicado fora do escopo do usuário", () 
     const err = await animalDuplicateConflict(p2002(["orgId", "controlId"]), {
       orgId: "org1",
       scope: { all: false, ids: ["r-minha"] },
-      controlId: "312/25",
+      controlId: "902/99",
       targetResearchId: "r-minha",
     })
     expect(err.code).toBe(ERROR_CODES.animalControlDuplicateInResearch)
@@ -119,7 +119,7 @@ describe("animalDuplicateConflict — duplicado fora do escopo do usuário", () 
     const err = await animalDuplicateConflict(p2002(["orgId", "simbaRecordNumber"]), {
       orgId: "org1",
       scope: { all: false, ids: ["r-helicobacter", "r-segunda"] },
-      simbaRecordNumber: "199263",
+      simbaRecordNumber: "900001",
       targetResearchId: "r-segunda",
     })
     expect(err.code).toBe(ERROR_CODES.animalSimbaDuplicateInResearch)
@@ -138,7 +138,7 @@ describe("animalDuplicateConflict — duplicado fora do escopo do usuário", () 
     const err = await animalDuplicateConflict(p2002(["orgId", "controlId"]), {
       orgId: "org1",
       scope: { all: false, ids: ["r-helicobacter", "r-segunda"] },
-      controlId: "312/25",
+      controlId: "902/99",
       targetResearchId: "r-segunda",
     })
     expect(err.params).toMatchObject({ link: "pending" })
@@ -153,7 +153,7 @@ describe("animalDuplicateConflict — duplicado fora do escopo do usuário", () 
     const err = await animalDuplicateConflict(p2002(["orgId", "controlId"]), {
       orgId: "org1",
       scope: { all: false, ids: ["r-minha"] },
-      controlId: "312/25",
+      controlId: "902/99",
     })
     expect(err.code).toBe(ERROR_CODES.animalControlDuplicateOutOfScope)
   })
@@ -167,7 +167,7 @@ describe("animalDuplicateConflict — duplicado fora do escopo do usuário", () 
     const err = await animalDuplicateConflict(p2002(["orgId", "controlId"]), {
       orgId: "org1",
       scope: { all: false, ids: ["r-minha"] },
-      controlId: "312/25",
+      controlId: "902/99",
     })
     expect(err.code).toBe(ERROR_CODES.animalControlDuplicateInResearch)
   })
@@ -177,7 +177,7 @@ describe("animalDuplicateConflict — duplicado fora do escopo do usuário", () 
     const err = await animalDuplicateConflict(p2002(["orgId", "controlId"]), {
       orgId: "org1",
       scope: { all: true },
-      controlId: "312/25",
+      controlId: "902/99",
       targetResearchId: "r-oculta",
     })
     expect(err.code).toBe(ERROR_CODES.animalControlDuplicateInResearch)
@@ -202,7 +202,7 @@ describe("animalDuplicateConflict — duplicado fora do escopo do usuário", () 
     const err = await animalDuplicateConflict(p2002(["orgId", "controlId"]), {
       orgId: "org1",
       scope: { all: false, ids: ["r-minha"] },
-      controlId: "312/25",
+      controlId: "902/99",
     })
     expect(err.code).toBe(ERROR_CODES.animalControlDuplicate)
   })
