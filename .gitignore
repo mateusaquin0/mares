@@ -50,3 +50,6 @@ next-env.d.ts
 
 # backups de banco (dados/PII — nunca commitar)
 /backups
+
+# saída do script de auditoria (resultados de análises — nunca commitar)
+/scripts/*.csv
