@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import { useTranslations } from "next-intl"
 import { toast } from "sonner"
 import { Plus } from "lucide-react"
@@ -60,6 +60,12 @@ export function AnimalsManager({ isOrgAdmin }: { isOrgAdmin: boolean }) {
   const items = page?.items ?? []
   const total = page?.total ?? 0
   const researches = (researchQ.data ?? []).map((r) => ({ id: r.id, name: r.name }))
+
+  // Excluir o último item de uma página deixaria a tabela vazia com registros nas anteriores.
+  const emptyPastFirstPage = !!page && page.items.length === 0 && page.total > 0 && query.page > 1
+  useEffect(() => {
+    if (emptyPastFirstPage) setQuery((q) => ({ ...q, page: Math.max(1, q.page - 1) }))
+  }, [emptyPastFirstPage])
   // Espelha a regra do servidor (DELETE /api/animals/[id]) para não oferecer um botão que
   // responderia 403/409: o pesquisador exclui o que é da pesquisa dele e não é compartilhado.
   const canDelete = useCallback(

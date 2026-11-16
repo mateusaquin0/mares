@@ -78,9 +78,13 @@ export function useResendInvite(orgId: string) {
 
 // Sair de uma organização (remove a si mesmo). Pode excluir a org (orgDeleted).
 export function useLeaveOrganization() {
+  const qc = useQueryClient()
   return useMutation({
     mutationFn: (vars: { orgId: string; userId: string }) =>
       organizationsService.removeMember(vars.orgId, vars.userId),
+    // As chaves de cache não levam o grupo: sem limpar tudo, os dados do grupo que a pessoa
+    // acabou de deixar continuariam na tela até expirarem.
+    onSuccess: () => qc.invalidateQueries(),
   })
 }
 

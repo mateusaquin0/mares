@@ -56,7 +56,10 @@ export function useCreateResearch() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (data: CreateResearchData) => researchService.create(data),
-    onSuccess: () => qc.invalidateQueries({ queryKey: researchKeys.all }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: researchKeys.all })
+      qc.invalidateQueries({ queryKey: researchKeys.catalog() })
+    },
   })
 }
 
@@ -66,7 +69,7 @@ export function useUpdateResearch(id: string) {
     mutationFn: (data: UpdateResearchData) => researchService.update(id, data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: researchKeys.all })
-      qc.invalidateQueries({ queryKey: researchKeys.detail(id) })
+      qc.invalidateQueries({ queryKey: researchKeys.catalog() })
     },
   })
 }
@@ -75,7 +78,10 @@ export function useDeleteResearch() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (id: string) => researchService.remove(id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: researchKeys.all }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: researchKeys.all })
+      qc.invalidateQueries({ queryKey: researchKeys.catalog() })
+    },
   })
 }
 

@@ -380,6 +380,7 @@ export function HistopathologyDialog({
   const serial = !isEdit && keepOpen
 
   async function submit() {
+    if (saving) return
     const next = { organId: !organId, finding: !finding.trim() }
     setErrors(next)
     if (next.organId || next.finding) return

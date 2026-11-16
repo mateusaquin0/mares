@@ -120,7 +120,11 @@ export function DashboardClient() {
     () => new Intl.DateTimeFormat(locale, { month: "short", year: "2-digit" }),
     [locale],
   )
-  const pctFmt = (n: number) => `${n.toFixed(1).replace(".", ",")}%`
+  const pctNumberFmt = useMemo(
+    () => new Intl.NumberFormat(locale, { minimumFractionDigits: 1, maximumFractionDigits: 1 }),
+    [locale],
+  )
+  const pctFmt = (n: number) => `${pctNumberFmt.format(n)}%`
   const fmtMonth = (m: string) => monthFmt.format(new Date(`${m}-01T12:00:00Z`))
 
   const totals = data?.totals
