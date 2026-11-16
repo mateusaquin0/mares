@@ -23,6 +23,7 @@
     "test:cov": "vitest run --coverage",
     "test:integration": "vitest run --config vitest.integration.config.ts",
     "test:e2e": "playwright test",
+    "test:e2e:server": "tsx tests/e2e/server.ts",
     "prepare": "husky"
   },
   "lint-staged": {
