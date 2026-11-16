@@ -8,7 +8,8 @@ import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { getAuthUser, requireOrgRole } from "@/lib/auth"
 import { assertAnimalVisible } from "@/lib/research-access"
-import { apiError, unauthorized } from "@/lib/api"
+import { apiError, tooManyRequests, unauthorized } from "@/lib/api"
+import { rateLimit } from "@/lib/rate-limit"
 import { loadAnimalOrg } from "@/lib/animals"
 import { fetchSimbaRecord } from "@/lib/simba"
 import { stripWeight } from "@/lib/biometry"
@@ -23,6 +24,10 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
     const animal = await loadAnimalOrg(id)
     requireOrgRole(user, animal.orgId, "RESEARCHER")
     await assertAnimalVisible(user, animal.orgId, id)
+
+    // Mesmo limite (e mesma cota) da importação do indivíduo: as duas rotas consultam o SIMBA.
+    const limit = rateLimit(`simba:${user.id}`, { limit: 30, windowMs: 60 * 1000 })
+    if (!limit.ok) return tooManyRequests(limit.retryAfter)
 
     const row = await prisma.animal.findUniqueOrThrow({
       where: { id },
