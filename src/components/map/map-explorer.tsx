@@ -35,7 +35,11 @@ function distinctSorted(values: (string | null)[], locale: string): string[] {
 // Serializa uma matriz de células em CSV (RFC 4180): aspas quando há vírgula/aspas/quebra.
 function toCsv(rows: string[][]): string {
   const esc = (v: string) => (/[",\r\n]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v)
-  return rows.map((r) => r.map(esc).join(",")).join("\r\n")
+  // Texto livre começando com =, +, - ou @ seria executado como fórmula pela planilha.
+  // Número (coordenada negativa) fica como está.
+  const neutralize = (v: string) =>
+    /^[=+\-@\t\r]/.test(v) && !Number.isFinite(Number(v)) ? `'${v}` : v
+  return rows.map((r) => r.map((v) => esc(neutralize(v))).join(",")).join("\r\n")
 }
 
 // Dispara o download de um texto como arquivo (client-only).

@@ -32,7 +32,10 @@ export async function GET(req: NextRequest) {
       q,
     )}?like=true&marine_only=false&offset=1`
 
-    const res = await fetch(url, { headers: { Accept: "application/json" } })
+    const res = await fetch(url, {
+      headers: { Accept: "application/json" },
+      signal: AbortSignal.timeout(8000),
+    })
     // 204 = sem resultados.
     if (res.status === 204) return NextResponse.json([])
     if (!res.ok) return NextResponse.json([])

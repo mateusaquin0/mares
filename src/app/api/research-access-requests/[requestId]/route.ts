@@ -4,7 +4,7 @@
 
 import { NextRequest, NextResponse } from "next/server"
 import { getAuthUser, requireOrgRole } from "@/lib/auth"
-import { canManageResearch } from "@/lib/research-access"
+import { assertResearchVisible, canManageResearch } from "@/lib/research-access"
 import {
   approveResearchAccess,
   loadAccessRequest,
@@ -25,6 +25,8 @@ export async function PATCH(
     const { requestId } = await params
     const request = await loadAccessRequest(requestId)
     requireOrgRole(user, request.research.orgId, "RESEARCHER")
+    // O criador só decide enquanto for membro da pesquisa (docs/PERMISSOES.md).
+    await assertResearchVisible(user, request.research.orgId, request.researchId)
 
     if (!canManageResearch(user, request.research.orgId, request.research)) {
       throw new ForbiddenError("Sem permissão para revisar o pedido", ERROR_CODES.forbidden)

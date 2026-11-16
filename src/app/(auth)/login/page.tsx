@@ -25,6 +25,8 @@ function safeRedirect(value: string | null): string {
   const fallback = "/app/dashboard"
   if (!value || !value.startsWith("/")) return fallback
   if (value.startsWith("//") || value.startsWith("/\\")) return fallback
+  // O navegador descarta TAB/CR/LF ao resolver a URL: "/\t/host" viraria "//host".
+  if (/[\u0000-\u001f]/.test(value)) return fallback
   return value
 }
 

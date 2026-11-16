@@ -48,7 +48,12 @@ export default function PointMap({ lat, lon, label, zoom = 11 }: Props) {
       maxZoom: 19,
     }).addTo(map)
     const marker = L.marker([lat, lon], { icon: pinIcon() }).addTo(map)
-    if (label) marker.bindPopup(label)
+    if (label) {
+      // O Leaflet interpreta string como HTML; o rótulo é texto livre (praia/município).
+      const text = document.createElement("span")
+      text.textContent = label
+      marker.bindPopup(text)
+    }
     mapRef.current = map
     return () => {
       map.remove()

@@ -60,6 +60,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     const { id } = await params
     const research = await loadResearch(id)
     requireOrgRole(user, research.orgId, "RESEARCHER")
+    // O criador removido da pesquisa perde a gestão: sem isto ele se revincularia sozinho.
+    await assertResearchVisible(user, research.orgId, id)
     if (!canManageResearch(user, research.orgId, research)) {
       throw new ForbiddenError("Sem permissão para gerir membros", ERROR_CODES.forbidden)
     }

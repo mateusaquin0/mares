@@ -30,7 +30,10 @@ export async function GET(req: NextRequest) {
     const esearch = `${EUTILS}/esearch.fcgi?db=taxonomy&retmax=10&retmode=json&term=${encodeURIComponent(
       `${q}*`,
     )}${auth}`
-    const sres = await fetch(esearch, { headers: { Accept: "application/json" } })
+    const sres = await fetch(esearch, {
+      headers: { Accept: "application/json" },
+      signal: AbortSignal.timeout(8000),
+    })
     if (!sres.ok) return NextResponse.json([])
     const sjson = (await sres.json()) as { esearchresult?: { idlist?: string[] } }
     const ids = sjson.esearchresult?.idlist ?? []
@@ -38,7 +41,10 @@ export async function GET(req: NextRequest) {
 
     // 2) efetch: linhagem (família/ordem) dos taxa encontrados.
     const efetch = `${EUTILS}/efetch.fcgi?db=taxonomy&id=${ids.join(",")}&retmode=xml${auth}`
-    const fres = await fetch(efetch, { headers: { Accept: "application/xml" } })
+    const fres = await fetch(efetch, {
+      headers: { Accept: "application/xml" },
+      signal: AbortSignal.timeout(8000),
+    })
     if (!fres.ok) return NextResponse.json([])
     const xml = await fres.text()
 
