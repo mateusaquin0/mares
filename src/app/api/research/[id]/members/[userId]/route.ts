@@ -10,7 +10,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { getAuthUser, requireOrgRole } from "@/lib/auth"
 import { apiError, unauthorized } from "@/lib/api"
-import { canManageResearch } from "@/lib/research-access"
+import { assertResearchVisible, canManageResearch } from "@/lib/research-access"
 import { NotFoundError, ForbiddenError } from "@/lib/errors"
 import { ERROR_CODES } from "@/lib/error-codes"
 
@@ -31,6 +31,8 @@ export async function DELETE(
     requireOrgRole(user, research.orgId, "RESEARCHER")
     // Sair da própria pesquisa não exige permissão de gestão.
     const isSelf = userId === user.id
+    // Gerir os outros exige ainda integrar a pesquisa (o criador removido perde a gestão).
+    if (!isSelf) await assertResearchVisible(user, research.orgId, id)
     if (!isSelf && !canManageResearch(user, research.orgId, research)) {
       throw new ForbiddenError("Sem permissão para gerir membros", ERROR_CODES.forbidden)
     }

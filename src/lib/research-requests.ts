@@ -119,12 +119,14 @@ export async function rejectResearchAccess(id: string, reviewerId: string) {
 
 /**
  * Where dos pedidos que o usuário pode revisar: os das pesquisas que ele gere. Admin da org
- * revisa os de todas; o pesquisador, apenas os das pesquisas que criou.
+ * revisa os de todas; o pesquisador, apenas os das pesquisas que criou e ainda integra.
  */
 function reviewableWhere(orgId: string, userId: string, isOrgAdmin: boolean) {
   return {
     status: "PENDING" as const,
-    research: isOrgAdmin ? { orgId } : { orgId, createdById: userId },
+    research: isOrgAdmin
+      ? { orgId }
+      : { orgId, createdById: userId, members: { some: { userId } } },
   }
 }
 

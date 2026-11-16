@@ -11,8 +11,8 @@ export const createSampleSchema = z.object({
   // Pesquisa dona da amostra (uma das pesquisas do indivíduo). Ver docs/BANCO_DE_DADOS.md.
   researchId: z.string().min(1, "required"),
   organId: z.string().min(1, "required"),
-  identification: z.string().min(1, "required").max(LIMITS.name),
-  sampleType: z.string().min(1, "required").max(LIMITS.name),
+  identification: z.string().trim().min(1, "required").max(LIMITS.name),
+  sampleType: z.string().trim().min(1, "required").max(LIMITS.name),
   collectionDate: optionalDate,
   storageLocation: optionalText(LIMITS.name),
   storageTemp: optionalNumber,

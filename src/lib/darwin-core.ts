@@ -66,6 +66,7 @@ const LIFE_STAGE_MAP: Partial<Record<LifeStageValue, string>> = {
 
 function esc(v: string): string {
   return v
+    .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, "")
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
@@ -97,7 +98,7 @@ function recordXml(a: DwcAnimal): string {
     tag("dwc:eventDate", a.eventDate ? a.eventDate.toISOString().slice(0, 10) : ""),
     tag("dwc:decimalLatitude", lat),
     tag("dwc:decimalLongitude", lon),
-    tag("dwc:geodeticDatum", lat ? "WGS84" : ""),
+    tag("dwc:geodeticDatum", lat && lon ? "WGS84" : ""),
     tag("dwc:country", "Brazil"),
     tag("dwc:countryCode", "BR"),
     tag("dwc:stateProvince", a.state ?? ""),
@@ -119,11 +120,11 @@ function recordXml(a: DwcAnimal): string {
 
 export function buildDarwinCoreXml(animals: DwcAnimal[]): string {
   const xmlns = [
-    'xmlns:dwr="http://rs.tdwg.org/dwc/dwcrecord/"',
+    'xmlns:dwr="http://rs.tdwg.org/dwc/xsd/simpledarwincore/"',
     'xmlns:dcterms="http://purl.org/dc/terms/"',
     'xmlns:dwc="http://rs.tdwg.org/dwc/terms/"',
     'xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"',
-    'xsi:schemaLocation="http://rs.tdwg.org/dwc/xsd/simpledarwincore/ http://rs.tdwg.org/dwc/xsd/simpledarwincore/tdwg_dwc_simple.xsd"',
+    'xsi:schemaLocation="http://rs.tdwg.org/dwc/xsd/simpledarwincore/ http://rs.tdwg.org/dwc/xsd/tdwg_dwc_simple.xsd"',
   ].join("\n  ")
   const body = animals.map((a) => recordXml(a)).join("\n\n")
   return `<?xml version="1.0" encoding="UTF-8"?>

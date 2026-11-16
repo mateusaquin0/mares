@@ -148,12 +148,14 @@ function normalizeLifeStage(v: string | null): LifeStageValue {
 /** Normaliza a data do evento para ISO (yyyy-mm-dd) quando reconhecível. */
 function toEventDate(v: string | null): string | null {
   if (!v) return null
+  // Data brasileira (DD/MM/AAAA): tratada antes do split, que a cortaria no dia.
+  const br = v.trim().match(/^(\d{2})\/(\d{2})\/(\d{4})/)
+  if (br) return `${br[3]}-${br[2]}-${br[1]}`
   // Darwin Core costuma usar ISO 8601; pode vir com intervalo "start/end".
   const iso = v.split("/")[0]!.trim() // split sempre retorna >= 1 elemento
   const m = iso.match(/^(\d{4})-(\d{2})-(\d{2})/)
-  if (m) return `${m[1]}-${m[2]}-${m[3]}`
-  const d = new Date(iso)
-  return Number.isNaN(d.getTime()) ? null : d.toISOString().slice(0, 10)
+  // Sem dia completo (só ano, ou texto livre) não há data: melhor vazio que precisão inventada.
+  return m ? `${m[1]}-${m[2]}-${m[3]}` : null
 }
 
 /** Normaliza uma data brasileira (DD/MM/YYYY, como em measurementDeterminedDate) para ISO. */
@@ -325,7 +327,15 @@ export async function fetchSimbaRecord(recordNumber: string): Promise<SimbaRecor
     throw new ServiceUnavailableError("SIMBA respondeu com erro", ERROR_CODES.simbaUnavailable)
   }
 
-  const xml = await res.text()
+  let xml: string
+  try {
+    xml = await res.text()
+  } catch {
+    throw new ServiceUnavailableError(
+      "Falha ao ler a resposta do SIMBA",
+      ERROR_CODES.simbaUnavailable,
+    )
+  }
   const record = parseDarwinCore(xml, recordNumber)
 
   // Sem espécie o registro é inútil para o cadastro — trata como não encontrado.

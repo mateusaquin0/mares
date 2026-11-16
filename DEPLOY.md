@@ -24,8 +24,11 @@ estiver integrada), adicionar:
 - `PRODUCTION_DIRECT_URL` — connection string _direta_ do Supabase (porta `5432`).
   A `migrate deploy` usa a URL direta (`directUrl` no `schema.prisma`).
 
-**Recomendado:** marcar _Required reviewers_ nesse environment. Assim, toda alteração de
-schema em produção espera uma aprovação humana antes de rodar.
+O environment tem _Required reviewers_ marcado: toda alteração de schema em produção espera
+uma aprovação humana antes de rodar. Depois do merge, abra **Actions → Migrate (produção)**,
+entre na execução que está aguardando e clique em **Review deployments → Approve**. Enquanto
+isso não acontece, o código novo já está no ar sem a migration — mais um motivo para a regra
+de expand/contract abaixo.
 
 ## Regra de ouro: expand/contract
 

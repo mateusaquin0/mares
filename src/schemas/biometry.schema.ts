@@ -1,5 +1,6 @@
 import { z } from "zod"
 
+import { normalizeLabel } from "@/lib/biometry"
 import { LIMITS } from "@/schemas/limits"
 
 // Mensagens = chaves do namespace `validation`. Não há enum nem id de catálogo aqui: o rótulo
@@ -34,7 +35,7 @@ export const saveBiometrySchema = z.object({
     // Dois valores sob o mesmo rótulo tornariam a leitura ambígua e quebrariam a comparação
     // entre indivíduos, que é feita pelo rótulo.
     .refine(
-      (ms) => new Set(ms.map((m) => m.label.trim().toLowerCase())).size === ms.length,
+      (ms) => new Set(ms.map((m) => normalizeLabel(m.label))).size === ms.length,
       "duplicateLabel",
     ),
 })

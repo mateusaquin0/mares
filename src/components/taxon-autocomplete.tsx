@@ -76,6 +76,7 @@ export function TaxonAutocomplete({
     const q = value.trim()
     if (q.length < 3) {
       setResults([])
+      setLoading(false)
       return
     }
     setLoading(true)
@@ -86,7 +87,8 @@ export function TaxonAutocomplete({
       } catch {
         // abortado ou falha de rede — ignora
       } finally {
-        setLoading(false)
+        // A busca abortada não desliga o indicador da que a substituiu.
+        if (!ctrl.signal.aborted) setLoading(false)
       }
     }, 350)
     return () => {

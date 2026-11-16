@@ -15,8 +15,8 @@ name: Migrate (produção)
 #        PRODUCTION_DATABASE_URL  → connection string pooled do Supabase (porta 6543)
 #        PRODUCTION_DIRECT_URL    → connection string DIRETA do Supabase (porta 5432)
 #      A `migrate deploy` usa a URL direta (directUrl no schema.prisma).
-#   3. (Recomendado) Marcar "Required reviewers" no environment para exigir
-#      aprovação humana antes de alterar o schema de produção.
+#   3. "Required reviewers" marcado no environment: cada execução fica aguardando
+#      aprovação em Actions → (execução) → Review deployments antes de alterar o schema.
 
 on:
   push:
@@ -34,12 +34,9 @@ jobs:
   migrate:
     name: prisma migrate deploy
     runs-on: ubuntu-latest
-    # Escopa os secrets de produção e habilita gate de aprovação manual (se configurado).
+    # Escopa os secrets de produção e aplica o gate de aprovação manual do environment.
     # Nome deve casar exatamente com o environment existente no GitHub ("Production").
     environment: Production
-    env:
-      DATABASE_URL: ${{ secrets.PRODUCTION_DATABASE_URL }}
-      DIRECT_URL: ${{ secrets.PRODUCTION_DIRECT_URL }}
     steps:
       - uses: actions/checkout@v7
 
@@ -54,8 +51,16 @@ jobs:
       # Mostra o estado atual (quais migrations faltam) antes de aplicar — fica no log.
       # `migrate status` sai com código 1 justamente QUANDO há migration pendente, que é o
       # caso normal aqui; sem o `|| true` o step (bash -e) derruba o job antes de aplicar.
+      # As credenciais de produção entram só nos steps do Prisma — nunca no `npm ci`, onde
+      # ficariam ao alcance dos scripts de instalação de todas as dependências.
       - name: Status das migrations
         run: npx prisma migrate status || true
+        env:
+          DATABASE_URL: ${{ secrets.PRODUCTION_DATABASE_URL }}
+          DIRECT_URL: ${{ secrets.PRODUCTION_DIRECT_URL }}
 
       - name: Aplicar migrations
         run: npx prisma migrate deploy
+        env:
+          DATABASE_URL: ${{ secrets.PRODUCTION_DATABASE_URL }}
+          DIRECT_URL: ${{ secrets.PRODUCTION_DIRECT_URL }}

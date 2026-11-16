@@ -5,7 +5,7 @@
 // O escopo de permissão das rotas de amostra/análise/confirmação sai daqui. Enquanto ele vinha
 // da pesquisa primária, quem cadastrou a amostra pela pesquisa participante levava 403 ao
 // lançar o resultado — e a célula era casada com o protocolo da pesquisa errada (bug reportado
-// no animal 25/21, amostra de estômago).
+// no animal 903/99, amostra de estômago).
 
 import { describe, it, expect, vi, beforeEach } from "vitest"
 

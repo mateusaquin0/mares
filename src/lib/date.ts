@@ -6,6 +6,11 @@
 // (e ficando 1 dia atrás do SIMBA). Por isso formatamos SEMPRE em UTC, preservando o dia
 // informado. Timestamps reais (createdAt, uploadedAt…) NÃO usam este helper — esses devem
 // aparecer no fuso local.
+/** Dia de calendário válido em ISO (AAAA-MM-DD), como chega dos filtros de período. */
+export function isIsoDay(value: string | null | undefined): value is string {
+  return !!value && /^\d{4}-\d{2}-\d{2}$/.test(value) && !Number.isNaN(Date.parse(value))
+}
+
 export function formatDateOnly(
   value: string | Date | null | undefined,
   locale: string,

@@ -34,7 +34,10 @@ export async function matchWormsSpecies(name: string): Promise<WormsMatch | null
   )}&marine_only=false`
 
   try {
-    const res = await fetch(url, { headers: { Accept: "application/json" } })
+    const res = await fetch(url, {
+      headers: { Accept: "application/json" },
+      signal: AbortSignal.timeout(8000),
+    })
     if (res.status === 204 || !res.ok) return null
 
     // A resposta é um array por nome consultado: AphiaRecord[][].

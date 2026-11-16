@@ -14,6 +14,7 @@ import {
 
 import { pathogenName, txt } from "@/lib/catalog-i18n"
 import { SEX_OPTIONS, LIFE_STAGE_OPTIONS } from "@/lib/animal-enums"
+import { formatDateOnly } from "@/lib/date"
 import { ANTHROPIC_INTERACTION_OPTIONS, NECROPSY_STATUS_OPTIONS } from "@/lib/necropsy-enums"
 import { useAnimalAudit } from "@/hooks/use-animals"
 import type { AuditEntry } from "@/types/animal"
@@ -150,8 +151,8 @@ export function AuditTab({ animalId }: { animalId: string }) {
     if (SCREENING_FIELD_KEY[r.field] && (v === "true" || v === "false"))
       return v === "true" ? tn("yes") : tn("no")
     if (DATE_FIELDS.has(r.field)) {
-      const d = new Date(v)
-      if (!Number.isNaN(d.getTime())) return d.toLocaleDateString(locale)
+      const day = formatDateOnly(v, locale)
+      if (day) return day
     }
     return v
   }

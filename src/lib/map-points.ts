@@ -109,7 +109,15 @@ const HAS_COORDS = { strandingLat: { not: null }, strandingLon: { not: null } } 
 export async function publicMapPoints(locale: string): Promise<MapPoint[]> {
   const rows = await prisma.animal.findMany({
     where: { ...HAS_COORDS, isPublic: true, research: { isPublic: true } },
-    select: mapPointSelect,
+    // Indivíduo compartilhado: só os positivos das amostras de pesquisa PÚBLICA aparecem;
+    // o resultado da participante privada não pode vazar pelo ponto público.
+    select: {
+      ...mapPointSelect,
+      samples: {
+        where: { research: { isPublic: true } },
+        select: mapPointSelect.samples.select,
+      },
+    },
     orderBy: { eventDate: "desc" },
   })
   return rows.map((r) => toMapPoint(locale, r as RawPoint))
@@ -132,7 +140,16 @@ export async function orgMapPoints(
   }
   const rows = await prisma.animal.findMany({
     where,
-    select: mapPointSelect,
+    // Pesquisador: os positivos vêm só das amostras das pesquisas que ele enxerga.
+    select: researchIds
+      ? {
+          ...mapPointSelect,
+          samples: {
+            where: { researchId: { in: researchIds } },
+            select: mapPointSelect.samples.select,
+          },
+        }
+      : mapPointSelect,
     orderBy: { eventDate: "desc" },
   })
   return rows.map((r) => toMapPoint(locale, r as RawPoint))

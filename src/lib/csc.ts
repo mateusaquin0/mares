@@ -20,6 +20,7 @@ async function cscFetch<T>(path: string): Promise<T> {
   const res = await fetch(`${BASE}${path}`, {
     headers: { "X-CSCAPI-KEY": key },
     next: { revalidate: REVALIDATE_SECONDS },
+    signal: AbortSignal.timeout(8000),
   })
   if (!res.ok) {
     throw new Error(`CountryStateCity respondeu ${res.status}`)

@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma"
 import { createClient } from "@/lib/supabase/server"
 import { createAdminClient } from "@/lib/supabase/admin"
 import { deactivateOrgIfEmpty } from "@/lib/org-lifecycle"
+import { deleteUserRecord } from "@/lib/user-deletion"
 import { changePasswordSchema, updateProfileSchema } from "@/schemas/auth.schema"
 
 // Todas as ações operam sobre o PRÓPRIO usuário autenticado (nunca recebem um id do cliente).
@@ -71,8 +72,12 @@ export async function deleteProfileAction(): Promise<{ error?: string }> {
   const { error } = await admin.auth.admin.deleteUser(user.id)
   if (error && !/not found/i.test(error.message)) return { error: error.message }
 
-  // Remove o registro local (cascade nos Membership). deleteMany não lança se já não existir.
-  await prisma.user.deleteMany({ where: { id: user.id } })
+  // Remove o registro local (cascade nos Membership) e anonimiza os rastros textuais.
+  const local = await prisma.user.findUnique({
+    where: { id: user.id },
+    select: { id: true, email: true },
+  })
+  if (local) await deleteUserRecord(local)
 
   // Desativa cada grupo que ficou sem membros.
   for (const orgId of orgIds) await deactivateOrgIfEmpty(orgId)

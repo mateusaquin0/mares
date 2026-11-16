@@ -5,6 +5,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { getAuthUser, requireSystemAdmin } from "@/lib/auth"
 import { createAdminClient } from "@/lib/supabase/admin"
+import { deleteUserRecord } from "@/lib/user-deletion"
 import { apiError, unauthorized } from "@/lib/api"
 import { NotFoundError, ForbiddenError } from "@/lib/errors"
 import { ERROR_CODES } from "@/lib/error-codes"
@@ -30,7 +31,7 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
       throw new Error(error.message)
     }
 
-    await prisma.user.delete({ where: { id } })
+    await deleteUserRecord(target)
 
     return new NextResponse(null, { status: 204 })
   } catch (err) {

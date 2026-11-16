@@ -6,6 +6,7 @@ import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tansta
 
 import { animalsService } from "@/services/animals"
 import { pendingCountsKeys } from "@/hooks/use-pending-counts"
+import { biometryKeys } from "@/hooks/use-biometry"
 import type { CreateAnimalData, UpdateAnimalData } from "@/schemas/animal.schema"
 import type { AnimalListQuery } from "@/types/animal"
 
@@ -95,6 +96,8 @@ export function useUpdateAnimal(id: string) {
       qc.invalidateQueries({ queryKey: animalKeys.all })
       qc.invalidateQueries({ queryKey: animalKeys.facets() })
       qc.invalidateQueries({ queryKey: animalKeys.detail(id) })
+      // O peso da necrópsia também é exibido e regravado pela aba de biometria.
+      qc.invalidateQueries({ queryKey: biometryKeys.byAnimal(id) })
     },
   })
 }

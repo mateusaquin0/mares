@@ -32,8 +32,8 @@ export const CATALOG_BY_REQUEST_TYPE = Object.fromEntries(
 // "Encéfalo", "Sistema respiratório", "Imunohistoquímica (IHQ)". O nome científico do
 // patógeno tem escala própria (pathogenSchema), que pode ser bem mais longo.
 export const nameI18nSchema = z.object({
-  namePt: z.string().min(1, "required").max(LIMITS.tinyText),
-  nameEn: z.string().min(1, "required").max(LIMITS.tinyText),
+  namePt: z.string().trim().min(1, "required").max(LIMITS.tinyText),
+  nameEn: z.string().trim().min(1, "required").max(LIMITS.tinyText),
 })
 
 // Tipo de exame = nome + medida quantitativa opcional (Ct, Título, OD...). measurePt/measureEn
