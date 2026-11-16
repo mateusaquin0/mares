@@ -151,7 +151,7 @@ export default function AdminUsersPage() {
                           {u.isSystemAdmin && (
                             <span title={t("globalAdmin")} className="inline-flex shrink-0">
                               <Crown
-                                className="size-4 text-amber-500"
+                                className="size-4 text-warning"
                                 aria-label={t("globalAdmin")}
                               />
                             </span>

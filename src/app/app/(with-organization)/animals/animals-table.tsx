@@ -522,7 +522,7 @@ export function AnimalsTable({
                       onCheckedChange={(v) => toggleRow(a.id, v === true)}
                     />
                   </TableCell>
-                  <TableCell className="font-medium">
+                  <TableCell className="font-medium tabular-nums">
                     <Truncate className="max-w-full">
                       {controlOf(a) || (
                         <span className="text-muted-foreground">{t("notInformed")}</span>
@@ -566,7 +566,7 @@ export function AnimalsTable({
                       </Badge>
                     )}
                   </TableCell>
-                  <TableCell className="text-right">{a._count.samples}</TableCell>
+                  <TableCell className="text-right tabular-nums">{a._count.samples}</TableCell>
                   <TableCell className="px-2 text-right" onClick={(e) => e.stopPropagation()}>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>

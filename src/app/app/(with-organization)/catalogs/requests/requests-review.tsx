@@ -240,10 +240,8 @@ export function RequestsReview({ isSystemAdmin }: { isSystemAdmin: boolean }) {
                 )}
 
                 {similarExisting.length > 0 && (
-                  <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 p-3 text-xs">
-                    <p className="font-medium text-amber-700 dark:text-amber-400">
-                      {t("similarExisting")}
-                    </p>
+                  <div className="rounded-lg border border-warning-border bg-warning-soft p-3 text-xs">
+                    <p className="font-medium text-warning">{t("similarExisting")}</p>
                     <ul className="mt-1 list-disc space-y-0.5 pl-4 text-muted-foreground">
                       {similarExisting.map((n, i) => (
                         <li key={i}>{n}</li>

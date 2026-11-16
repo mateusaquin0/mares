@@ -1,197 +1,286 @@
 ---
 name: MARES Academic Intelligence
 colors:
-  surface: "#f7f9fb"
-  surface-dim: "#d8dadc"
-  surface-bright: "#f7f9fb"
-  surface-container-lowest: "#ffffff"
-  surface-container-low: "#f2f4f6"
-  surface-container: "#eceef0"
-  surface-container-high: "#e6e8ea"
-  surface-container-highest: "#e0e3e5"
-  on-surface: "#191c1e"
-  on-surface-variant: "#43474f"
-  inverse-surface: "#2d3133"
-  inverse-on-surface: "#eff1f3"
-  outline: "#737780"
-  outline-variant: "#c3c6d1"
-  surface-tint: "#3a5f94"
-  primary: "#001e40"
-  on-primary: "#ffffff"
-  primary-container: "#003366"
-  on-primary-container: "#799dd6"
-  inverse-primary: "#a7c8ff"
-  secondary: "#006876"
-  on-secondary: "#ffffff"
-  secondary-container: "#69e8fe"
-  on-secondary-container: "#006774"
-  tertiary: "#002504"
-  on-tertiary: "#ffffff"
-  tertiary-container: "#003d0b"
-  on-tertiary-container: "#5ead5c"
-  error: "#ba1a1a"
-  on-error: "#ffffff"
-  error-container: "#ffdad6"
-  on-error-container: "#93000a"
-  primary-fixed: "#d5e3ff"
-  primary-fixed-dim: "#a7c8ff"
-  on-primary-fixed: "#001b3c"
-  on-primary-fixed-variant: "#1f477b"
-  secondary-fixed: "#9eefff"
-  secondary-fixed-dim: "#55d7ed"
-  on-secondary-fixed: "#001f24"
-  on-secondary-fixed-variant: "#004e59"
-  tertiary-fixed: "#a3f69c"
-  tertiary-fixed-dim: "#88d982"
-  on-tertiary-fixed: "#002204"
-  on-tertiary-fixed-variant: "#005312"
   background: "#f7f9fb"
-  on-background: "#191c1e"
-  surface-variant: "#e0e3e5"
-  ocean-deep: "#002147"
-  surface-cyan: "#E0F7FA"
-  biological-green: "#43A047"
-  text-main: "#1E293B"
-  border-subtle: "#E2E8F0"
+  foreground: "#1E293B"
+  card: "#ffffff"
+  primary: "#003366"
+  on-primary: "#ffffff"
+  ocean: "#002147"
+  secondary: "#eceef0"
+  muted-foreground: "#43474f"
+  accent: "#E0F7FA"
+  accent-foreground: "#006876"
+  border: "#E2E8F0"
+  input: "#737780"
+  ring: "#007f99"
+  bio: "#43A047"
+  success: "#2E7D32"
+  success-soft: "#e2f3e3"
+  success-border: "#bcdfbe"
+  warning: "#9c5211"
+  warning-soft: "#fdeed8"
+  warning-border: "#f4d09a"
+  destructive: "#ba1a1a"
+  chart-series: "#003366"
+  chart-1: "#1f5fa8"
+  chart-2: "#c2620a"
+  chart-3: "#0e9aa7"
+  chart-4: "#5a9e2f"
+  chart-5: "#9b3d73"
+  map-public: "#003366"
+  map-hidden: "#B45309"
+colors-dark:
+  background: "#0d1621"
+  foreground: "#edf0f3"
+  card: "#15202e"
+  primary: "#a7c8ff"
+  on-primary: "#111d2c"
+  ocean: "#12273f"
+  secondary: "#222d39"
+  muted-foreground: "#9ba7b5"
+  accent: "#193c43"
+  accent-foreground: "#a0e5ee"
+  border: "#283443"
+  input: "#647387"
+  ring: "#17b3cf"
+  bio: "#54b659"
+  success: "#97d89b"
+  success-soft: "#244225"
+  success-border: "#366338"
+  warning: "#f4bd71"
+  warning-soft: "#433119"
+  warning-border: "#7a5829"
+  chart-series: "#a7c8ff"
+  chart-1: "#4f8fdc"
+  chart-2: "#cf7a2a"
+  chart-3: "#1fa3b3"
+  chart-4: "#66a83d"
+  chart-5: "#c0609a"
 typography:
-  display-lg:
+  page-title:
+    fontFamily: Inter
+    fontSize: 30px
+    fontWeight: "700"
+    lineHeight: 36px
+    letterSpacing: -0.02em
+  section-title:
+    fontFamily: Inter
+    fontSize: 18px
+    fontWeight: "600"
+    lineHeight: 28px
+  body:
+    fontFamily: Inter
+    fontSize: 14px
+    fontWeight: "400"
+    lineHeight: 20px
+  caption:
+    fontFamily: Inter
+    fontSize: 12px
+    fontWeight: "400"
+    lineHeight: 16px
+  label:
+    fontFamily: Inter
+    fontSize: 12px
+    fontWeight: "600"
+    lineHeight: 16px
+    letterSpacing: 0.025em
+  stat:
+    fontFamily: Inter
+    fontSize: 30px
+    fontWeight: "700"
+    lineHeight: 36px
+  display:
     fontFamily: Inter
     fontSize: 48px
     fontWeight: "700"
     lineHeight: 56px
     letterSpacing: -0.02em
-  headline-lg:
-    fontFamily: Inter
-    fontSize: 32px
-    fontWeight: "600"
-    lineHeight: 40px
-  headline-md:
-    fontFamily: Inter
-    fontSize: 24px
-    fontWeight: "600"
-    lineHeight: 32px
-  headline-sm:
-    fontFamily: Inter
-    fontSize: 20px
-    fontWeight: "500"
-    lineHeight: 28px
-  body-lg:
-    fontFamily: Inter
-    fontSize: 18px
-    fontWeight: "400"
-    lineHeight: 28px
-  body-md:
-    fontFamily: Inter
-    fontSize: 16px
-    fontWeight: "400"
-    lineHeight: 24px
-  body-sm:
-    fontFamily: Inter
-    fontSize: 14px
-    fontWeight: "400"
-    lineHeight: 20px
-  label-md:
-    fontFamily: Inter
-    fontSize: 12px
-    fontWeight: "600"
-    lineHeight: 16px
-    letterSpacing: 0.05em
 rounded:
   sm: 0.25rem
-  DEFAULT: 0.5rem
-  md: 0.75rem
-  lg: 1rem
-  xl: 1.5rem
+  md: 0.375rem
+  lg: 0.5rem
+  xl: 1rem
   full: 9999px
 spacing:
   base: 4px
-  xs: 8px
-  sm: 16px
-  md: 24px
-  lg: 40px
-  xl: 64px
   container-max: 1280px
   gutter: 24px
 ---
 
+The values above are the ones the app ships. The source of truth is
+`src/app/globals.css` (CSS variables, light and `.dark`) and `tailwind.config.ts`;
+when this file and the code disagree, fix whichever is wrong in the same change.
+
 ## Brand & Style
 
-The visual identity of this design system is rooted in **Academic Professionalism** and **Marine Biology**. It balances the rigorous, data-heavy requirements of scientific research with a serene, ocean-inspired aesthetic. The brand personality is authoritative yet accessible, evoking a sense of discovery, precision, and environmental stewardship.
+MARES is a data-management tool for marine-mammal research: stranding records,
+necropsies, samples, laboratory results and maps. The identity combines **academic
+rigor** with an **ocean** palette. It is a working tool used for long sessions, so
+legibility and information density come before decoration.
 
-The design style follows a **Modern Corporate** approach with a strong lean towards **Minimalism**. It prioritizes information density and legibility, utilizing expansive whitespace to separate complex data sets. High-quality typography and a structured grid system ensure that researchers can navigate necropsy reports, laboratory results, and epidemiological maps with cognitive ease. The integration of the dolphin silhouette logo acts as a mark of fluidity and organic life within the structured environment.
+Most screens are tables, forms and detail pages behind login. The public pages
+(landing, login, terms) may be more expressive; the app itself stays quiet.
 
 ## Colors
 
-The palette is strategically curated to reflect the marine environment while maintaining academic clarity.
+One color acts, one highlights, one means "positive". Everything else is neutral.
 
-- **Primary (Deep Navy):** Represents the depths of the ocean and the authority of scientific institutions. Used for navigation, primary buttons, and core branding.
-- **Secondary (Soft Cyan):** Inspired by shallow coastal waters. Used for highlights, active states, and to provide "air" to the interface.
-- **Tertiary (Emerald Green):** Directly represents biological health and environmental vitality. Reserved for status indicators (Positive results, healthy populations) and biological data accents.
-- **Neutral (Slate/White):** The foundation of the platform. Using near-white grays for backgrounds prevents eye strain during long research sessions compared to pure white.
+- **Primary — Deep Navy `#003366`.** Primary buttons, links, active navigation.
+- **Ocean `#002147`.** Navigation chrome only. Never a button or text color.
+- **Accent — Coastal Cyan `#E0F7FA` / `#006876`.** Highlights, hover and selected
+  states, table headers, informational notes. The focus ring is cyan.
+- **Bio Green `#43A047`.** Icons and chart marks only. White text on it is 3.3:1,
+  so it is never a text color or a filled-button background.
+- **Neutrals.** Page background is a near-white slate (`#f7f9fb`); cards are pure
+  white on top of it.
 
-The default mode is **light**, providing a clean, paper-like feel familiar to academic workflows.
+Raw Tailwind palette classes (`amber-500`, `slate-400`, …) and hex literals do not
+appear in components. If a color is missing, add a token.
+
+### Status
+
+Four states, each with a text color, a soft background and a border. A status is
+never color alone: it carries a label or an icon.
+
+| State | Token | Use |
+|---|---|---|
+| Positive | `success`, `success-soft`, `success-border` | "Positivo" result, record found, filled confirm button (`bg-success text-success-foreground`) |
+| Warning | `warning`, `warning-soft`, `warning-border` | "Inconclusivo", pending review, possible duplicates |
+| Info | `accent`, `accent-foreground` | Public visibility, neutral highlights |
+| Error | `destructive` | Validation errors, destructive actions |
+
+"Negativo" is neutral (`secondary` background, `muted-foreground` text): a negative
+result is not an alarm.
+
+### Dark mode
+
+Dark mode is a first-class theme, not an inversion. The background is deep navy,
+cards sit one step lighter, and the primary becomes a light blue (`#a7c8ff`) with
+dark text on it. Every token has a dark value in `.dark`; components use the
+semantic tokens and need no `dark:` overrides for color.
 
 ## Typography
 
-**Inter** is utilized across all levels of the design system for its exceptional legibility in data-dense environments and its neutral, systematic character.
+**Inter** everywhere.
 
-- **Headlines:** Use a tighter letter-spacing and heavier weights to establish clear section hierarchy.
-- **Body Text:** Optimized for long-form reading of research notes and necropsy findings.
-- **Labels:** Small, uppercase, and slightly tracked-out to differentiate metadata (like "AphiaID" or "Taxon Family") from user-generated content.
-- **Scaling:** For mobile devices, `display-lg` and `headline-lg` should scale down by 20% to maintain visual balance on smaller viewports.
+- **Body is 14px** (`text-sm`). 16px is reserved for long-form prose such as the
+  terms page.
+- **Captions and metadata are 12px** (`text-xs`).
+- **Labels** (table headers, filter labels, stat captions) are 12px, semibold,
+  uppercase, slightly tracked.
+- **Page titles** are 24–30px bold; section and card titles are 18px semibold.
+- **Display (48px)** exists only on public pages.
+
+### Data
+
+- **Numbers in columns** use `tabular-nums` and are right-aligned, so digits line
+  up down the column. Counts, measures, percentages and coordinates qualify.
+- **Identifiers** (control ID, AphiaID, record numbers) stay in Inter with
+  `tabular-nums`, so they line up in a column without changing typeface. `font-mono`
+  is for technical strings only, such as hashes and raw payloads.
+- **Scientific names** are italic, everywhere, including charts and map popups.
+- An empty value is an em dash (`—`), never a blank cell.
 
 ## Layout & Spacing
 
-The layout follows a **Fixed Grid** philosophy on desktop to ensure that scientific tables and data visualizations remain readable and don't stretch excessively on ultrawide monitors.
-
-- **Grid Model:** A 12-column system with a 24px gutter.
-- **Rhythm:** An 8px baseline grid governs all vertical spacing, ensuring a consistent cadence between paragraphs, inputs, and components.
-- **Responsive Behavior:**
-  - **Desktop:** 12 columns, 40px side margins.
-  - **Tablet:** 8 columns, 24px side margins.
-  - **Mobile:** 4 columns, 16px side margins. Cards reflow into a single column, and data tables transition into expandable list items or scrollable horizontal containers.
+- Content is capped at 1280px so tables do not stretch on ultrawide monitors.
+- Spacing follows Tailwind's 4px scale. Cards and sections are separated by 16–24px.
+- **Desktop:** 12 columns, 24px gutter. **Tablet:** 8 columns. **Mobile:** one
+  column; tables scroll horizontally inside their container instead of reflowing.
 
 ## Elevation & Depth
 
-To maintain a clean, academic appearance, depth is conveyed through **Tonal Layers** supplemented by **Ambient Shadows**.
+Two levels, plus the flat page.
 
-- **Surface Tiers:** The main background is the lowest level (Neutral Slate). Data containers and cards sit on top of this in pure white (#FFFFFF), creating a clear "paper-on-desk" metaphor.
-- **Shadows:** Use extremely soft, low-opacity shadows (e.g., `box-shadow: 0 4px 6px -1px rgba(0, 51, 102, 0.05)`). The shadow should have a slight Deep Navy tint to integrate with the brand's primary color palette.
-- **Interaction:** Hovering over interactive cards (like a Research record) should slightly increase the shadow blur and lift the element by 2px, providing tactile feedback without breaking the minimalist aesthetic.
+- **On the page:** a 1px `border` and, for cards, `shadow-card` — a very soft,
+  navy-tinted shadow. Filter bars and inline panels use a border only, or
+  `shadow-sm` at most.
+- **Floating:** popovers, dropdowns, dialogs and toasts use `shadow-md`/`shadow-lg`.
+  Nothing on the page itself uses these.
+- **Clickable cards** move to `shadow-card-hover` on hover. Non-clickable cards do
+  not react to the pointer.
 
 ## Shapes
 
-The shape language is **Rounded (Level 2)**, mirroring the organic curves of marine life and the dolphin logo while remaining professional.
-
-- **Standard Elements:** Buttons, input fields, and small chips use a 0.5rem (8px) radius.
-- **Containers:** Large cards and dashboard sections use a 1rem (16px) radius to soften the layout.
-- **Specialized:** The dolphin logo and specific biological icons may use free-form organic shapes, but they must always be contained within these standardized radii when used in cards or buttons.
+- **Controls** (buttons, inputs, selects, chips): 6–8px (`rounded-md`, `rounded-lg`).
+- **Cards and large sections:** 16px (`rounded-xl`).
+- **Status badges and dots:** pill (`rounded-full`).
 
 ## Components
 
 ### Buttons
 
-- **Primary:** Solid Deep Navy with white text. 0.5rem roundedness.
-- **Secondary:** Outlined in Deep Navy with Cyan-tinted backgrounds on hover.
-- **Success/Bio:** Solid Emerald Green for "Finalize Report" or "Positive Result" actions.
-
-### Cards
-
-- **Research Cards:** White background, subtle 8px border-radius, and a thin `border-subtle` (#E2E8F0) outline.
-- **Header:** Include a small colored tab on the left representing the Research's public/private status (Cyan for Public, Navy for Private).
+- **Primary:** solid navy, white text. One per view.
+- **Outline:** `input` border on the page background; cyan tint on hover.
+- **Confirm (save a record):** `bg-success text-success-foreground`.
+- **Destructive:** solid `destructive`, always behind a confirmation dialog.
 
 ### Inputs & Selects
 
-- Use high-contrast borders (Slate-300).
-- Focus states should use a 2px Cyan ring to provide clear visual feedback for researchers entering extensive data.
-- **WoRMS/NCBI Autocomplete:** Use a dropdown that displays the Scientific Name in bold and the common name in a smaller `label-md` style.
+- The border uses `input` (`#737780`), which holds 3:1 against the background so
+  the field boundary is visible without relying on the placeholder.
+- Focus is a 2px cyan ring with an offset.
+- Errors appear under their own field in `destructive`, 12px.
+- **Taxon autocomplete (WoRMS/NCBI):** scientific name in bold italic, common name
+  below it in caption style.
 
-### Chips & Badges
+### Badges
 
-- **Status Badges:** Use "Pill-shaped" (Level 3) rounding.
-- **Results:** "Positivo" in Emerald Green text/background, "Negativo" in a neutral Slate, and "Inconclusivo" in a soft amber.
+Pill-shaped, 12px semibold. Variants map to meaning, not to color:
+`positive`, `negative`, `inconclusive`, `public`, `private`, `highlight`, `faded`.
+
+### Cards
+
+White (`card`) on the slate background, 16px radius, `border` outline and
+`shadow-card`. Research cards carry a visibility badge: cyan for public, navy for
+private.
 
 ### Data Tables
 
-- Header cells should use the `label-md` typography with a light Cyan background.
-- Row zebra-striping is encouraged for high-density laboratory results using the softest available Cyan tint.
+- Header: cyan tint (`accent` at 40%), label typography.
+- Rows: a bottom border and a `muted` hover. No zebra striping.
+- **Density.** Default rows use 16px cell padding. Laboratory tables (results
+  matrix, analyses of a sample) use `<Table density="compact">`: 8px vertical,
+  12px horizontal, 36px header.
+- Empty tables keep the header and show one centered `TableEmpty` row.
+- Long text truncates with the full value in a tooltip; it never wraps a row to
+  three lines.
+
+### Charts
+
+- **A single measure is a single color.** Bars of one series (animals per species,
+  positivity per exam, records over time) all use `chart-series`. Color per bar
+  would imply categories that do not exist.
+- **Several series** take `chart-1` … `chart-5`, in that order, never cycled. The
+  order is validated for color-vision deficiency in both themes; a sixth series
+  folds into "Other" or becomes a second chart. Two or more series always get a
+  legend.
+- Status colors are reserved for status and are not used as series colors.
+- Axis text uses `muted-foreground`; grid lines use `border`. Tooltips use the
+  `popover` tokens.
+- Recharts writes colors as SVG attributes, where CSS variables do not resolve, so
+  chart colors are picked in JS from the resolved theme using the values above.
+
+### Maps
+
+- Map tiles are light in both themes, so pin and popup colors are fixed values, not
+  theme tokens.
+- Pins: `map-public` (navy) for records visible to everyone, `map-hidden` (amber)
+  for records hidden from the public map.
+- Popups: species in italic, labels in slate, positive pathogens as red pills.
+
+## States
+
+- **Loading:** skeletons shaped like the content for first load; dimmed content
+  (60% opacity) while refetching. No spinners over whole pages.
+- **Empty:** one sentence saying what is missing and, when the user can fix it, the
+  action that does.
+- **Error:** the message next to what failed, with a retry when one makes sense.
+- **Disabled:** 50% opacity, no pointer events.
+
+## Motion
+
+Transitions are 150–200ms and limited to color, shadow and opacity; accordions
+animate height in 200ms. Nothing animates on scroll, and motion is not used to draw
+attention to data.

@@ -434,7 +434,7 @@ export function ResultsManager() {
             <p className="text-sm text-muted-foreground">{t("noMatch")}</p>
           ) : (
             <div className="min-h-0 flex-1 overflow-hidden rounded-lg border [&>div]:h-full">
-              <Table ref={attachDrag}>
+              <Table ref={attachDrag} density="compact">
                 <TableHeader className="sticky top-0 z-10 [&_th]:bg-accent">
                   <TableRow>
                     <TableHead>{t("colId")}</TableHead>
@@ -456,7 +456,7 @@ export function ResultsManager() {
                         <Truncate>
                           <Link
                             href={animalHref(a.id, "results")}
-                            className="font-semibold text-primary hover:underline"
+                            className="font-semibold tabular-nums text-primary hover:underline"
                           >
                             {idOf(a)}
                           </Link>

@@ -5,7 +5,27 @@ import { getAuthUser, getActiveOrgId } from "@/lib/auth"
 import { resolveDashboardAccess } from "@/lib/access-guards"
 import { DashboardClient } from "@/app/app/(with-organization)/dashboard/dashboard-client"
 
-export default async function DashboardPage() {
+const DATE_ONLY = /^\d{4}-\d{2}-\d{2}$/
+
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>
+}) {
+  // Filtros vindos do link. Só texto simples passa; datas fora do formato são ignoradas.
+  const sp = await searchParams
+  const one = (k: string) => (typeof sp[k] === "string" && sp[k] ? sp[k] : undefined)
+  const date = (k: string) => {
+    const v = one(k)
+    return v && DATE_ONLY.test(v) ? v : undefined
+  }
+  const initial = {
+    research: one("research"),
+    pathogen: one("pathogen"),
+    from: date("from"),
+    to: date("to"),
+  }
+
   const user = await getAuthUser()
   if (!user) redirect("/login")
 
@@ -29,7 +49,7 @@ export default async function DashboardPage() {
         <p className="text-sm text-muted-foreground">{t("subtitle")}</p>
       </header>
 
-      <DashboardClient />
+      <DashboardClient initial={initial} />
     </div>
   )
 }
