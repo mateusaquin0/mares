@@ -49,6 +49,8 @@ export default defineConfig({
     environment: "node",
     include: ["tests/integration/**/*.test.ts"],
     env: integrationEnv(),
+    // Recusa deleteMany/updateMany sem filtro (ver tests/integration/setup.ts).
+    setupFiles: ["tests/integration/setup.ts"],
     // Sem paralelismo entre arquivos: compartilham o mesmo banco de teste.
     fileParallelism: false,
     hookTimeout: 30_000,

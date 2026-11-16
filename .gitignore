@@ -53,3 +53,7 @@ next-env.d.ts
 
 # saída do script de auditoria (resultados de análises — nunca commitar)
 /scripts/*.csv
+
+# suíte E2E: cópia do app usada pelo servidor de testes e sessões/fixtures da execução
+/.e2e-app/
+/tests/e2e/.auth/
