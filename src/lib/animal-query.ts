@@ -4,6 +4,7 @@
 import { Prisma } from "@prisma/client"
 
 import { hiddenInResearches, inResearches, listedInResearches } from "@/lib/animal-participation"
+import { isIsoDay } from "@/lib/date"
 import type { AnimalSortKey } from "@/types/animal"
 
 export const ANIMAL_PAGE_SIZES = [10, 20, 30] as const
@@ -155,11 +156,13 @@ export function buildAnimalWhere(
   if (f.samples === "with") and.push({ samples: { some: {} } })
   if (f.samples === "without") and.push({ samples: { none: {} } })
 
-  if (f.from || f.to) {
+  const from = isIsoDay(f.from) ? f.from : null
+  const to = isIsoDay(f.to) ? f.to : null
+  if (from || to) {
     and.push({
       eventDate: {
-        ...(f.from ? { gte: new Date(f.from) } : {}),
-        ...(f.to ? { lte: new Date(`${f.to}T23:59:59.999Z`) } : {}),
+        ...(from ? { gte: new Date(from) } : {}),
+        ...(to ? { lte: new Date(`${to}T23:59:59.999Z`) } : {}),
       },
     })
   }

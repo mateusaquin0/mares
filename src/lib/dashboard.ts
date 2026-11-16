@@ -11,6 +11,7 @@
 import type { Prisma } from "@prisma/client"
 import { prisma } from "@/lib/prisma"
 import { listedInResearches } from "@/lib/animal-participation"
+import { isIsoDay } from "@/lib/date"
 import { txt, type I18nText } from "@/lib/catalog-i18n"
 
 export type DashboardFilters = {
@@ -78,11 +79,13 @@ export function dashboardAnimalWhere(orgId: string, f: DashboardFilters): Prisma
   // Conjunto efetivo do indivíduo: a participação aceita conta como pertencer à pesquisa, e
   // a pesquisa que o ocultou deixa de contá-lo.
   if (ids) where.OR = listedInResearches(ids)
-  if (f.from || f.to) {
+  const from = isIsoDay(f.from) ? f.from : null
+  const to = isIsoDay(f.to) ? f.to : null
+  if (from || to) {
     where.eventDate = {
-      ...(f.from ? { gte: new Date(f.from) } : {}),
+      ...(from ? { gte: new Date(from) } : {}),
       // `to` inclusivo: até o fim do dia informado.
-      ...(f.to ? { lte: new Date(`${f.to}T23:59:59.999Z`) } : {}),
+      ...(to ? { lte: new Date(`${to}T23:59:59.999Z`) } : {}),
     }
   }
   // Filtro por patógeno: restringe a população aos animais com ≥1 análise do patógeno —
@@ -121,7 +124,12 @@ export async function getDashboardData(
   const analysisScope = { sample: sWhere }
   // Restrição por patógeno aplicada no nível da análise (numeradores/denominadores por
   // análise, e o `some` interno das contagens por animal/amostra).
-  const pWhere = filters.pathogenId ? { pathogenId: filters.pathogenId } : {}
+  // Só o RASTREIO entra nas métricas: a confirmação de espécie (análise-filha) detalha um
+  // positivo já contado e, somada, inflaria numerador e denominador.
+  const pWhere = {
+    parentAnalysisId: null,
+    ...(filters.pathogenId ? { pathogenId: filters.pathogenId } : {}),
+  }
 
   const [
     animals,
@@ -166,7 +174,8 @@ export async function getDashboardData(
       by: ["species"],
       where: aWhere,
       _count: { _all: true },
-      orderBy: { _count: { species: "desc" } },
+      // Conta por `id`: COUNT(species) ignora NULL e jogaria "Indeterminado" para o fim.
+      orderBy: { _count: { id: "desc" } },
       take: 8,
     }),
     prisma.analysis.groupBy({
