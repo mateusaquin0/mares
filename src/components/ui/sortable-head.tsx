@@ -32,12 +32,12 @@ export function SortableHead({
         type="button"
         onClick={() => onToggle(sortKey)}
         className={cn(
-          "-mx-1 inline-flex max-w-full cursor-pointer items-center gap-1 rounded px-1 py-0.5 select-none transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+          "-mx-1 inline-flex max-w-full cursor-pointer items-center gap-1 rounded-sm px-1 py-0.5 uppercase select-none transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
           active ? "text-foreground" : "text-muted-foreground",
         )}
       >
         <span className="truncate">{children}</span>
-        <Icon className={cn("size-3.5 shrink-0", !active && "opacity-50")} />
+        <Icon className="size-3.5 shrink-0" aria-hidden />
       </button>
     </TableHead>
   )

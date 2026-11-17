@@ -1,286 +1,168 @@
 ---
-name: MARES Academic Intelligence
+name: MARES 1a — Caderno de campo
 colors:
-  background: "#f7f9fb"
-  foreground: "#1E293B"
-  card: "#ffffff"
-  primary: "#003366"
-  on-primary: "#ffffff"
-  ocean: "#002147"
-  secondary: "#eceef0"
-  muted-foreground: "#43474f"
-  accent: "#E0F7FA"
-  accent-foreground: "#006876"
-  border: "#E2E8F0"
-  input: "#737780"
-  ring: "#007f99"
-  bio: "#43A047"
-  success: "#2E7D32"
-  success-soft: "#e2f3e3"
-  success-border: "#bcdfbe"
-  warning: "#9c5211"
-  warning-soft: "#fdeed8"
-  warning-border: "#f4d09a"
-  destructive: "#ba1a1a"
-  chart-series: "#003366"
-  chart-1: "#1f5fa8"
-  chart-2: "#c2620a"
-  chart-3: "#0e9aa7"
-  chart-4: "#5a9e2f"
-  chart-5: "#9b3d73"
-  map-public: "#003366"
-  map-hidden: "#B45309"
+  background: "#F5F3EC"
+  popover: "#FBFAF6"
+  muted: "#ECE9DF"
+  foreground: "#1A1D1B"
+  muted-foreground: "#565B56"
+  border: "#D8D4C6"
+  input: "#7C8079"
+  primary: "#0F4F49"
+  on-primary: "#FFFFFF"
+  accent: "#E6EDE6"
+  positive: "#1F6B2E"
+  positive-subtle: "#E3EEDD"
+  warning: "#8A4B08"
+  warning-subtle: "#F6E7CC"
+  info: "#1D4E80"
+  info-subtle: "#E0E9F2"
+  destructive: "#A3211B"
+  destructive-subtle: "#F6DEDA"
+  chart-1: "#0F4F49"
 colors-dark:
-  background: "#0d1621"
-  foreground: "#edf0f3"
-  card: "#15202e"
-  primary: "#a7c8ff"
-  on-primary: "#111d2c"
-  ocean: "#12273f"
-  secondary: "#222d39"
-  muted-foreground: "#9ba7b5"
-  accent: "#193c43"
-  accent-foreground: "#a0e5ee"
-  border: "#283443"
-  input: "#647387"
-  ring: "#17b3cf"
-  bio: "#54b659"
-  success: "#97d89b"
-  success-soft: "#244225"
-  success-border: "#366338"
-  warning: "#f4bd71"
-  warning-soft: "#433119"
-  warning-border: "#7a5829"
-  chart-series: "#a7c8ff"
-  chart-1: "#4f8fdc"
-  chart-2: "#cf7a2a"
-  chart-3: "#1fa3b3"
-  chart-4: "#66a83d"
-  chart-5: "#c0609a"
+  background: "#131614"
+  popover: "#1A1E1B"
+  muted: "#232824"
+  foreground: "#ECE9E0"
+  muted-foreground: "#A4A99F"
+  border: "#343A35"
+  input: "#7E857D"
+  primary: "#8ACDC2"
+  on-primary: "#0B1F1C"
+  accent: "#1F2A26"
+  positive: "#9BD3A0"
+  positive-subtle: "#1F3323"
+  warning: "#EDBE78"
+  warning-subtle: "#3A2C17"
+  info: "#9DC3EA"
+  info-subtle: "#1B2C3F"
+  destructive: "#F2A199"
+  destructive-subtle: "#40201D"
+  chart-1: "#8ACDC2"
 typography:
   page-title:
-    fontFamily: Inter
-    fontSize: 30px
-    fontWeight: "700"
-    lineHeight: 36px
-    letterSpacing: -0.02em
+    fontFamily: Newsreader
+    fontSize: 28px
+    fontWeight: "500"
+    lineHeight: 32px
   section-title:
-    fontFamily: Inter
-    fontSize: 18px
+    fontFamily: Newsreader
+    fontSize: 17px
     fontWeight: "600"
-    lineHeight: 28px
+    lineHeight: 22px
+  dialog-title:
+    fontFamily: Newsreader
+    fontSize: 22px
+    fontWeight: "500"
+    lineHeight: 26px
   body:
-    fontFamily: Inter
+    fontFamily: Source Sans 3
     fontSize: 14px
     fontWeight: "400"
     lineHeight: 20px
-  caption:
-    fontFamily: Inter
-    fontSize: 12px
-    fontWeight: "400"
-    lineHeight: 16px
   label:
-    fontFamily: Inter
-    fontSize: 12px
+    fontFamily: Source Sans 3
+    fontSize: 13px
     fontWeight: "600"
     lineHeight: 16px
-    letterSpacing: 0.025em
-  stat:
-    fontFamily: Inter
-    fontSize: 30px
+  table-header:
+    fontFamily: Source Sans 3
+    fontSize: 12px
     fontWeight: "700"
-    lineHeight: 36px
-  display:
-    fontFamily: Inter
-    fontSize: 48px
-    fontWeight: "700"
-    lineHeight: 56px
-    letterSpacing: -0.02em
+    lineHeight: 16px
+    letterSpacing: 0.05em
+    textTransform: uppercase
 rounded:
-  sm: 0.25rem
-  md: 0.375rem
-  lg: 0.5rem
-  xl: 1rem
-  full: 9999px
+  default: 2px
+  control-max: 4px
 spacing:
   base: 4px
   container-max: 1280px
   gutter: 24px
+  control-height: 30px
+  public-touch-target: 44px
 ---
 
-The values above are the ones the app ships. The source of truth is
-`src/app/globals.css` (CSS variables, light and `.dark`) and `tailwind.config.ts`;
-when this file and the code disagree, fix whichever is wrong in the same change.
+Os valores acima são os que o app usa. A fonte da verdade é `src/app/globals.css` (variáveis
+CSS, claro e `.dark`) e `tailwind.config.ts`; quando este arquivo e o código divergirem,
+corrija o que estiver errado na mesma mudança. O desenho de referência é o handoff
+"MARES 1a — Caderno de campo" (Claude Design). O redesenho entra por fatias: tokens, fontes e
+primitivos já estão no código; o que está marcado **(alvo)** ainda depende da fatia da casca
+ou das telas.
 
-## Brand & Style
+## Direção
 
-MARES is a data-management tool for marine-mammal research: stranding records,
-necropsies, samples, laboratory results and maps. The identity combines **academic
-rigor** with an **ocean** palette. It is a working tool used for long sessions, so
-legibility and information density come before decoration.
+Sóbrio e institucional, como um caderno de campo. A estrutura é feita por **linhas e
+tipografia**, não por cartões: borda de 1px `--border` entre itens e seções abertas com
+borda superior de 2px `--foreground`. Sem pílulas, sem degradês, sem cartões flutuantes.
 
-Most screens are tables, forms and detail pages behind login. The public pages
-(landing, login, terms) may be more expressive; the app itself stays quiet.
+## Cor
 
-## Colors
+- **Uma cor de ação**: `primary` (#0F4F49 / escuro #8ACDC2). Botão principal, link, foco,
+  aba ativa, séries de gráfico.
+- **Cor de status só para status**, sempre com ícone ou rótulo: `positive`, `warning`
+  (alerta e inconclusivo), `info` (informativo, ex.: Publicado), `destructive` (erro). As
+  variantes `-subtle` são o fundo do selo. **"Negativo" é neutro.**
+- `accent` é a cor de seleção (linha selecionada, item ativo de menu).
+- Claro e escuro são de primeira classe; todos os pares de texto passam WCAG AA (4,5:1) e
+  contornos de campo passam 3:1.
+- Nomes antigos (`success-*`, `bio`, `warning-soft/border`, `brand-cyan`) ainda existem como
+  apelidos dos tokens novos em `globals.css`; saem quando a última tela migrar.
 
-One color acts, one highlights, one means "positive". Everything else is neutral.
+## Tipografia
 
-- **Primary — Deep Navy `#003366`.** Primary buttons, links, active navigation.
-- **Ocean `#002147`.** Navigation chrome only. Never a button or text color.
-- **Accent — Coastal Cyan `#E0F7FA` / `#006876`.** Highlights, hover and selected
-  states, table headers, informational notes. The focus ring is cyan.
-- **Bio Green `#43A047`.** Icons and chart marks only. White text on it is 3.3:1,
-  so it is never a text color or a filled-button background.
-- **Neutrals.** Page background is a near-white slate (`#f7f9fb`); cards are pure
-  white on top of it.
+- **Source Sans 3** no texto e na interface (14/20). **Newsreader** nos títulos (página 28/32
+  peso 500, seção 17/22 peso 600, diálogo 22/26 peso 500) e nos **nomes científicos, sempre
+  em itálico**.
+- Rótulo de campo: 13px semibold. Cabeçalho de tabela: 12px bold, maiúsculas, `0.05em`.
+- Números alinhados à direita com `tabular-nums`. Campo vazio = travessão (—).
 
-Raw Tailwind palette classes (`amber-500`, `slate-400`, …) and hex literals do not
-appear in components. If a color is missing, add a token.
+## Forma e elevação
 
-### Status
+- Raio de 2px (`--radius`); no máximo 4px em controles. `rounded-full` só para pontos e
+  marcadores de mapa.
+- **Sombra só em menus e diálogos**: `shadow-menu` (0 8px 24px rgba(0,0,0,.18)) e
+  `shadow-dialog` (0 12px 32px rgba(0,0,0,.28)). As demais sombras do Tailwind são nulas.
+- Véu de diálogo chapado (`bg-scrim`).
 
-Four states, each with a text color, a soft background and a border. A status is
-never color alone: it carries a label or an icon.
+## Componentes
 
-| State | Token | Use |
-|---|---|---|
-| Positive | `success`, `success-soft`, `success-border` | "Positivo" result, record found, filled confirm button (`bg-success text-success-foreground`) |
-| Warning | `warning`, `warning-soft`, `warning-border` | "Inconclusivo", pending review, possible duplicates |
-| Info | `accent`, `accent-foreground` | Public visibility, neutral highlights |
-| Error | `destructive` | Validation errors, destructive actions |
+- **Botões**: 30px de altura (28px `sm`, 44px `lg` nas públicas), borda de 1px. Principal
+  preenchido na cor de ação; secundário com contorno `--input`; destrutivo em `destructive`.
+  Confirmações usam o rótulo do código (Excluir, Remover, Sair, Confirmar…).
+- **Campos**: 30px, fundo `popover`, contorno `--input`; aberto/foco na cor de ação. Erro com
+  borda e texto em `destructive`. Obrigatório marcado com `*` conforme o schema.
+- **Selos**: 22px, retangulares, com borda; cor só para status.
+- **Tabelas**: borda superior de 2px e inferior de 1px `--foreground` no cabeçalho; linhas de
+  ~34px separadas por `--border`; seleção em `accent`. **(alvo)** Tabelas largas rolam no
+  próprio contêiner com a coluna de identificação fixa.
+- **Abas**: texto 15px; ativa em semibold com sublinhado de 3px na cor de ação, sobre uma
+  linha de 1px `--foreground`.
+- **Acordeão**: seções com borda superior de 2px e título em Newsreader; abrem uma por vez
+  (Necrópsia, Pesquisa).
+- **Diálogos**: borda de 1px `--foreground`, cabeçalho com título e linha de 1px; detalhes de
+  linha abrem em diálogo (não há painel lateral).
+- **Retorno temporário (toast)**: painel com borda e ícone na cor do status.
+- **Carregamento**: blocos `--muted`, sem animação, na grade do conteúdo final, com
+  `aria-busy`.
+- **Ordenação**: um clique alterna crescente → decrescente → sem ordem; uma coluna por vez.
+- **Contador de caracteres**: monoespaçado, `atual/máx`; acima do limite em `destructive`.
 
-"Negativo" is neutral (`secondary` background, `muted-foreground` text): a negative
-result is not an alarm.
+## Mapas
 
-### Dark mode
+Leaflet com tiles do OpenStreetMap dessaturados (`.map-tiles`: `grayscale(.85)`), claros nos
+dois temas. **(alvo)** Marcadores: publicado preenchido, não publicado vazado; grupos são quadrados com o
+número; o mapa de calor usa a rampa da cor de ação.
 
-Dark mode is a first-class theme, not an inversion. The background is deep navy,
-cards sit one step lighter, and the primary becomes a light blue (`#a7c8ff`) with
-dark text on it. Every token has a dark value in `.dark`; components use the
-semantic tokens and need no `dark:` overrides for color.
+## Larguras
 
-## Typography
+- **Área logada e administração**: só desktop, mínimo 1024×600 (abaixo, aviso). **(alvo)** 1024–1279:
+  casca compacta com "Mais"; 1280+: casca completa. Conteúdo limitado a 1280px
+  (`padding: 0 max(24px, calc(50% - 640px))`); o mapa usa a largura total.
+- **(alvo)** **Públicas** (landing, login, acesso, senhas, termos, mapa público): responsivas a partir de
+  360px, alvos de toque de 44px; abaixo de 760px o painel da marca vira logotipo no topo.
 
-**Inter** everywhere.
+## Movimento
 
-- **Body is 14px** (`text-sm`). 16px is reserved for long-form prose such as the
-  terms page.
-- **Captions and metadata are 12px** (`text-xs`).
-- **Labels** (table headers, filter labels, stat captions) are 12px, semibold,
-  uppercase, slightly tracked.
-- **Page titles** are 24–30px bold; section and card titles are 18px semibold.
-- **Display (48px)** exists only on public pages.
-
-### Data
-
-- **Numbers in columns** use `tabular-nums` and are right-aligned, so digits line
-  up down the column. Counts, measures, percentages and coordinates qualify.
-- **Identifiers** (control ID, AphiaID, record numbers) stay in Inter with
-  `tabular-nums`, so they line up in a column without changing typeface. `font-mono`
-  is for technical strings only, such as hashes and raw payloads.
-- **Scientific names** are italic, everywhere, including charts and map popups.
-- An empty value is an em dash (`—`), never a blank cell.
-
-## Layout & Spacing
-
-- Content is capped at 1280px so tables do not stretch on ultrawide monitors.
-- Spacing follows Tailwind's 4px scale. Cards and sections are separated by 16–24px.
-- **Desktop:** 12 columns, 24px gutter. **Tablet:** 8 columns. **Mobile:** one
-  column; tables scroll horizontally inside their container instead of reflowing.
-
-## Elevation & Depth
-
-Two levels, plus the flat page.
-
-- **On the page:** a 1px `border` and, for cards, `shadow-card` — a very soft,
-  navy-tinted shadow. Filter bars and inline panels use a border only, or
-  `shadow-sm` at most.
-- **Floating:** popovers, dropdowns, dialogs and toasts use `shadow-md`/`shadow-lg`.
-  Nothing on the page itself uses these.
-- **Clickable cards** move to `shadow-card-hover` on hover. Non-clickable cards do
-  not react to the pointer.
-
-## Shapes
-
-- **Controls** (buttons, inputs, selects, chips): 6–8px (`rounded-md`, `rounded-lg`).
-- **Cards and large sections:** 16px (`rounded-xl`).
-- **Status badges and dots:** pill (`rounded-full`).
-
-## Components
-
-### Buttons
-
-- **Primary:** solid navy, white text. One per view.
-- **Outline:** `input` border on the page background; cyan tint on hover.
-- **Confirm (save a record):** `bg-success text-success-foreground`.
-- **Destructive:** solid `destructive`, always behind a confirmation dialog.
-
-### Inputs & Selects
-
-- The border uses `input` (`#737780`), which holds 3:1 against the background so
-  the field boundary is visible without relying on the placeholder.
-- Focus is a 2px cyan ring with an offset.
-- Errors appear under their own field in `destructive`, 12px.
-- **Taxon autocomplete (WoRMS/NCBI):** scientific name in bold italic, common name
-  below it in caption style.
-
-### Badges
-
-Pill-shaped, 12px semibold. Variants map to meaning, not to color:
-`positive`, `negative`, `inconclusive`, `public`, `private`, `highlight`, `faded`.
-
-### Cards
-
-White (`card`) on the slate background, 16px radius, `border` outline and
-`shadow-card`. Research cards carry a visibility badge: cyan for public, navy for
-private.
-
-### Data Tables
-
-- Header: cyan tint (`accent` at 40%), label typography.
-- Rows: a bottom border and a `muted` hover. No zebra striping.
-- **Density.** Default rows use 16px cell padding. Laboratory tables (results
-  matrix, analyses of a sample) use `<Table density="compact">`: 8px vertical,
-  12px horizontal, 36px header.
-- Empty tables keep the header and show one centered `TableEmpty` row.
-- Long text truncates with the full value in a tooltip; it never wraps a row to
-  three lines.
-
-### Charts
-
-- **A single measure is a single color.** Bars of one series (animals per species,
-  positivity per exam, records over time) all use `chart-series`. Color per bar
-  would imply categories that do not exist.
-- **Several series** take `chart-1` … `chart-5`, in that order, never cycled. The
-  order is validated for color-vision deficiency in both themes; a sixth series
-  folds into "Other" or becomes a second chart. Two or more series always get a
-  legend.
-- Status colors are reserved for status and are not used as series colors.
-- Axis text uses `muted-foreground`; grid lines use `border`. Tooltips use the
-  `popover` tokens.
-- Recharts writes colors as SVG attributes, where CSS variables do not resolve, so
-  chart colors are picked in JS from the resolved theme using the values above.
-
-### Maps
-
-- Map tiles are light in both themes, so pin and popup colors are fixed values, not
-  theme tokens.
-- Pins: `map-public` (navy) for records visible to everyone, `map-hidden` (amber)
-  for records hidden from the public map.
-- Popups: species in italic, labels in slate, positive pathogens as red pills.
-
-## States
-
-- **Loading:** skeletons shaped like the content for first load; dimmed content
-  (60% opacity) while refetching. No spinners over whole pages.
-- **Empty:** one sentence saying what is missing and, when the user can fix it, the
-  action that does.
-- **Error:** the message next to what failed, with a retry when one makes sense.
-- **Disabled:** 50% opacity, no pointer events.
-
-## Motion
-
-Transitions are 150–200ms and limited to color, shadow and opacity; accordions
-animate height in 200ms. Nothing animates on scroll, and motion is not used to draw
-attention to data.
+Quem pede menos movimento no sistema não vê animações nem transições (`globals.css`).

@@ -97,11 +97,7 @@ export function AnimalFormDialog({
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               {tc("cancel")}
             </Button>
-            <Button
-              type="submit"
-              loading={f.saving}
-              className="bg-success text-success-foreground hover:bg-success/90"
-            >
+            <Button type="submit" loading={f.saving}>
               {mode === "edit" ? tc("save") : t("create")}
             </Button>
           </DialogFooter>
