@@ -38,8 +38,9 @@ import {
 import { Combobox } from "@/components/ui/combobox"
 
 const ALL = "__all__"
-const NAVY = "#003366"
-const PRIMARY_DARK = "#a7c8ff"
+// Hex dos tokens --chart-1, --muted-foreground e --border (claro / escuro).
+const CHART_LIGHT = "#0F4F49"
+const CHART_DARK = "#8ACDC2"
 
 // Estilo do tooltip do recharts. Como `contentStyle`/`labelStyle`/`itemStyle` viram `style`
 // inline (onde `var()` resolve), usamos os tokens do DS direto — adapta ao tema sozinho,
@@ -47,10 +48,10 @@ const PRIMARY_DARK = "#a7c8ff"
 const TOOLTIP_STYLE = {
   contentStyle: {
     background: "hsl(var(--popover))",
-    border: "1px solid hsl(var(--border))",
-    borderRadius: 8,
+    border: "1px solid hsl(var(--foreground))",
+    borderRadius: 2,
     color: "hsl(var(--popover-foreground))",
-    boxShadow: "0 4px 12px rgb(0 0 0 / 0.15)",
+    boxShadow: "0 8px 24px rgb(0 0 0 / 0.18)",
     fontSize: 12,
   },
   labelStyle: { color: "hsl(var(--popover-foreground))", fontWeight: 600 },
@@ -156,9 +157,9 @@ export function DashboardClient({ initial }: { initial?: DashboardFilterParams }
   // Os três gráficos têm uma série só (contagem ou taxa): a cor é a mesma em todas as
   // barras, porque cor por posição sugeriria categorias que não existem.
   const isDark = resolvedTheme === "dark"
-  const seriesColor = isDark ? PRIMARY_DARK : NAVY
-  const axisTick = isDark ? "#9ba7b5" : "#43474f"
-  const gridStroke = isDark ? "#283443" : "#e2e8f0"
+  const seriesColor = isDark ? CHART_DARK : CHART_LIGHT
+  const axisTick = isDark ? "#A4A99F" : "#565B56"
+  const gridStroke = isDark ? "#343A35" : "#D8D4C6"
 
   const stats = [
     {

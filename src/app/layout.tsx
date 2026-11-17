@@ -1,6 +1,6 @@
 import type { Metadata } from "next"
 import { headers } from "next/headers"
-import { Inter } from "next/font/google"
+import { Newsreader, Source_Sans_3 } from "next/font/google"
 import { NextIntlClientProvider } from "next-intl"
 import { getLocale, getMessages, getTranslations } from "next-intl/server"
 import "./globals.css"
@@ -8,7 +8,15 @@ import "flag-icons/css/flag-icons.min.css"
 import { Providers } from "@/components/providers"
 import { Toaster } from "@/components/ui/sonner"
 
-const inter = Inter({ subsets: ["latin"], variable: "--font-inter" })
+// Source Sans 3 no texto e na interface; Newsreader nos títulos e nos nomes científicos.
+const sans = Source_Sans_3({ subsets: ["latin"], variable: "--font-sans", display: "swap" })
+const serif = Newsreader({
+  subsets: ["latin"],
+  style: ["normal", "italic"],
+  axes: ["opsz"],
+  variable: "--font-serif",
+  display: "swap",
+})
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("metadata")
@@ -27,12 +35,12 @@ export default async function RootLayout({
   const nonce = (await headers()).get("x-nonce") ?? undefined
 
   return (
-    <html lang={locale} className={inter.variable} suppressHydrationWarning>
-      <body className={`${inter.className} antialiased`}>
+    <html lang={locale} className={`${sans.variable} ${serif.variable}`} suppressHydrationWarning>
+      <body className="antialiased">
         <NextIntlClientProvider messages={messages}>
           <Providers nonce={nonce}>
             {children}
-            <Toaster position="top-right" richColors />
+            <Toaster position="top-right" />
           </Providers>
         </NextIntlClientProvider>
       </body>

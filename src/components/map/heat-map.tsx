@@ -27,6 +27,7 @@ export default function HeatMap({ points }: Props) {
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
       maxZoom: 19,
+      className: "map-tiles",
     }).addTo(map)
     mapRef.current = map
     return () => {

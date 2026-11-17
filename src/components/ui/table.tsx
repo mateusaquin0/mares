@@ -23,7 +23,14 @@ const TableHeader = React.forwardRef<
   HTMLTableSectionElement,
   React.HTMLAttributes<HTMLTableSectionElement>
 >(({ className, ...props }, ref) => (
-  <thead ref={ref} className={cn("bg-accent/40 [&_tr]:border-b", className)} {...props} />
+  <thead
+    ref={ref}
+    className={cn(
+      "border-t-2 border-foreground [&_tr]:border-b [&_tr]:border-foreground [&_tr]:hover:bg-transparent",
+      className,
+    )}
+    {...props}
+  />
 ))
 TableHeader.displayName = "TableHeader"
 
@@ -41,7 +48,7 @@ const TableFooter = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <tfoot
     ref={ref}
-    className={cn("border-t bg-muted/50 font-medium [&>tr]:last:border-b-0", className)}
+    className={cn("border-t border-foreground font-semibold [&>tr]:last:border-b-0", className)}
     {...props}
   />
 ))
@@ -52,7 +59,7 @@ const TableRow = React.forwardRef<HTMLTableRowElement, React.HTMLAttributes<HTML
     <tr
       ref={ref}
       className={cn(
-        "border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted",
+        "border-b transition-colors hover:bg-accent/60 data-[state=selected]:bg-accent",
         className,
       )}
       {...props}
@@ -68,7 +75,7 @@ const TableHead = React.forwardRef<
   <th
     ref={ref}
     className={cn(
-      "h-11 px-4 text-left align-middle text-xs font-semibold uppercase tracking-wide text-accent-foreground/80 group-data-[density=compact]/table:h-9 group-data-[density=compact]/table:px-3 [&:has([role=checkbox])]:pr-0",
+      "h-8 px-3 text-left align-middle text-xs font-bold uppercase tracking-[0.05em] text-muted-foreground group-data-[density=compact]/table:px-2 [&:has([role=checkbox])]:pr-0",
       className,
     )}
     {...props}
@@ -83,7 +90,7 @@ const TableCell = React.forwardRef<
   <td
     ref={ref}
     className={cn(
-      "break-words p-4 align-middle group-data-[density=compact]/table:px-3 group-data-[density=compact]/table:py-2 [&:has([role=checkbox])]:pr-0",
+      "break-words px-3 py-[7px] align-middle group-data-[density=compact]/table:px-2 group-data-[density=compact]/table:py-1 [&:has([role=checkbox])]:pr-0",
       className,
     )}
     {...props}
@@ -99,7 +106,7 @@ const TableEmpty = React.forwardRef<
   React.HTMLAttributes<HTMLTableRowElement> & { colSpan: number }
 >(({ className, colSpan, children, ...props }, ref) => (
   <tr ref={ref} className={cn("hover:bg-transparent", className)} {...props}>
-    <td colSpan={colSpan} className="p-8 text-center text-sm text-muted-foreground">
+    <td colSpan={colSpan} className="px-3 py-6 text-left text-sm text-muted-foreground">
       {children}
     </td>
   </tr>
@@ -110,7 +117,11 @@ const TableCaption = React.forwardRef<
   HTMLTableCaptionElement,
   React.HTMLAttributes<HTMLTableCaptionElement>
 >(({ className, ...props }, ref) => (
-  <caption ref={ref} className={cn("mt-4 text-sm text-muted-foreground", className)} {...props} />
+  <caption
+    ref={ref}
+    className={cn("mt-2 text-left text-[13px] text-muted-foreground", className)}
+    {...props}
+  />
 ))
 TableCaption.displayName = "TableCaption"
 

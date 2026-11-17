@@ -41,7 +41,7 @@ export function ReloadButton({
       type="button"
       variant="ghost"
       size="icon"
-      className={cn("size-8", className)}
+      className={cn("size-7", className)}
       onClick={reload}
       loading={busy}
       title={t("reload")}

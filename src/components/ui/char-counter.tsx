@@ -7,7 +7,12 @@ export function CharCounter({ value, max }: { value?: string | null; max: number
   // Passar do limite só acontece com dado antigo, anterior a uma redução do limite: o
   // `maxLength` do input barra a digitação, mas não trunca o valor já carregado no formulário.
   return (
-    <span className={cn("text-xs", length > max ? "text-destructive" : "text-muted-foreground")}>
+    <span
+      className={cn(
+        "font-mono text-xs tabular-nums",
+        length > max ? "font-semibold text-destructive" : "text-muted-foreground",
+      )}
+    >
       {length}/{max}
     </span>
   )

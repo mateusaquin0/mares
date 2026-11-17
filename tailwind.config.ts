@@ -1,4 +1,5 @@
 import type { Config } from "tailwindcss"
+import animate from "tailwindcss-animate"
 
 export default {
   darkMode: "class",
@@ -43,10 +44,28 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
-        ocean: {
-          DEFAULT: "hsl(var(--ocean))",
-          foreground: "#ffffff",
+        positive: {
+          DEFAULT: "hsl(var(--positive))",
+          subtle: "hsl(var(--positive-subtle))",
         },
+        warning: {
+          DEFAULT: "hsl(var(--warning))",
+          subtle: "hsl(var(--warning-subtle))",
+          // Nomes do tema anterior (globals.css aponta para os tokens novos).
+          soft: "hsl(var(--warning-soft))",
+          border: "hsl(var(--warning-border))",
+        },
+        info: {
+          DEFAULT: "hsl(var(--info))",
+          subtle: "hsl(var(--info-subtle))",
+        },
+        "destructive-subtle": "hsl(var(--destructive-subtle))",
+        chart: {
+          1: "hsl(var(--chart-1))",
+          2: "hsl(var(--chart-2))",
+        },
+        scrim: "hsl(var(--scrim))",
+        // Nomes do tema anterior, até a última tela migrar.
         "brand-cyan": "hsl(var(--brand-cyan))",
         bio: {
           DEFAULT: "hsl(var(--bio))",
@@ -58,25 +77,33 @@ export default {
           soft: "hsl(var(--success-soft))",
           border: "hsl(var(--success-border))",
         },
-        warning: {
-          DEFAULT: "hsl(var(--warning))",
-          soft: "hsl(var(--warning-soft))",
-          border: "hsl(var(--warning-border))",
-        },
       },
+      // Raio de 0 a 2px (até 4px em controles): nada de pílulas nem cartões arredondados.
       borderRadius: {
-        xl: "calc(var(--radius) + 8px)" /* 1rem — cards e seções grandes */,
+        "3xl": "var(--radius)",
+        "2xl": "var(--radius)",
+        xl: "var(--radius)",
         lg: "var(--radius)",
-        md: "calc(var(--radius) - 2px)",
-        sm: "calc(var(--radius) - 4px)",
+        md: "var(--radius)",
+        DEFAULT: "var(--radius)",
+        sm: "var(--radius)",
       },
+      // Sombra só em menus e diálogos; o resto da estrutura é feito por linhas.
       boxShadow: {
-        /* Sombra ambiente com leve tom navy (design.md §Elevation). */
-        card: "0 4px 6px -1px rgba(0, 51, 102, 0.05), 0 2px 4px -2px rgba(0, 51, 102, 0.05)",
-        "card-hover": "0 10px 20px -4px rgba(0, 51, 102, 0.10)",
+        sm: "none",
+        DEFAULT: "none",
+        md: "none",
+        lg: "none",
+        xl: "none",
+        "2xl": "none",
+        card: "none",
+        "card-hover": "none",
+        menu: "0 8px 24px rgba(0, 0, 0, 0.18)",
+        dialog: "0 12px 32px rgba(0, 0, 0, 0.28)",
       },
       fontFamily: {
-        sans: ["var(--font-inter)", "Inter", "system-ui", "sans-serif"],
+        sans: ["var(--font-sans)", "system-ui", "sans-serif"],
+        serif: ["var(--font-serif)", "Georgia", "serif"],
       },
       keyframes: {
         "accordion-down": {
@@ -94,5 +121,5 @@ export default {
       },
     },
   },
-  plugins: [require("tailwindcss-animate")],
+  plugins: [animate],
 } satisfies Config

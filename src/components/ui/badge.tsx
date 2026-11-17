@@ -4,25 +4,26 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/utils"
 
 const badgeVariants = cva(
-  "inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors",
+  "inline-flex h-[22px] items-center gap-[5px] whitespace-nowrap rounded-sm border px-[7px] text-[13px] font-semibold [&_svg]:size-3.5 [&_svg]:shrink-0",
   {
     variants: {
       variant: {
-        default: "border-transparent bg-primary text-primary-foreground hover:bg-primary/80",
-        secondary:
-          "border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80",
-        destructive:
-          "border-transparent bg-destructive text-destructive-foreground hover:bg-destructive/80",
-        outline: "text-foreground",
-        // Variantes semânticas do design MARES (ver design.md §Chips/Badges).
-        public: "border-transparent bg-accent text-accent-foreground",
-        private: "border-transparent bg-primary/10 text-primary",
-        positive: "border-success-border bg-success-soft text-success",
-        negative: "border-transparent bg-secondary text-muted-foreground",
-        inconclusive: "border-warning-border bg-warning-soft text-warning",
+        default: "border-primary bg-primary text-primary-foreground",
+        secondary: "border-input bg-transparent text-foreground",
+        destructive: "border-destructive bg-destructive-subtle text-destructive",
+        outline: "border-input text-muted-foreground",
+        // Publicação no mapa público: publicado é informativo; não publicado é neutro.
+        public: "border-info bg-info-subtle text-info",
+        private: "border-input bg-transparent text-muted-foreground",
+        // Resultados: positivo e inconclusivo têm cor; negativo é neutro.
+        positive: "border-positive bg-positive-subtle text-positive",
+        negative: "border-input bg-transparent text-muted-foreground",
+        inconclusive: "border-warning bg-warning-subtle text-warning",
+        warning: "border-warning bg-warning-subtle text-warning",
+        info: "border-info bg-info-subtle text-info",
         // Níveis de ênfase: estado ativo em destaque e estado encerrado.
-        highlight: "border-transparent bg-accent text-accent-foreground",
-        faded: "border-dashed border-border bg-muted text-muted-foreground",
+        highlight: "border-primary bg-accent text-foreground",
+        faded: "border-dashed border-input bg-transparent text-muted-foreground",
       },
     },
     defaultVariants: {

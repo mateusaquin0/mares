@@ -36,10 +36,12 @@ export function useTable<T>(
     setSort(initial)
   }
 
+  // Um clique alterna crescente → decrescente → sem ordem; só uma coluna ordena por vez.
   function toggleSort(key: string) {
-    setSort((prev) =>
-      prev?.key === key ? { key, dir: prev.dir === "asc" ? "desc" : "asc" } : { key, dir: "asc" },
-    )
+    setSort((prev) => {
+      if (prev?.key !== key) return { key, dir: "asc" }
+      return prev.dir === "asc" ? { key, dir: "desc" } : null
+    })
   }
 
   const q = query.trim().toLowerCase()
