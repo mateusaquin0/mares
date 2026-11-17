@@ -5,7 +5,7 @@ import Link from "next/link"
 import { Controller, useForm } from "react-hook-form"
 import { useLocale, useTranslations } from "next-intl"
 import { toast } from "sonner"
-import { BarChart3, MoreHorizontal, Pencil, Plus, Trash2 } from "lucide-react"
+import { BarChart3, Inbox, List, MoreHorizontal, Pencil, Plus, Search, Trash2 } from "lucide-react"
 
 import type { CatalogType } from "@/schemas/catalog.schema"
 import { LIMITS } from "@/schemas/limits"
@@ -321,21 +321,27 @@ export function CatalogManager({
           {isReviewer && (
             <Button asChild variant="outline">
               <Link href="/app/catalogs/requests">
+                <Inbox className="size-4" />
                 {t("reviewQueue")}
                 {pendingCount > 0 && (
-                  <span
+                  <b
                     role="status"
                     aria-label={t("pending", { count: pendingCount })}
                     title={t("pending", { count: pendingCount })}
-                    className="ml-1 size-2 shrink-0 rounded-full bg-orange-500"
-                  />
+                    className="tabular-nums text-warning"
+                  >
+                    {pendingCount}
+                  </b>
                 )}
               </Link>
             </Button>
           )}
           {!canManage && (
-            <Button asChild variant="ghost">
-              <Link href="/app/catalogs/my-requests">{t("myRequests")}</Link>
+            <Button asChild variant="outline">
+              <Link href="/app/catalogs/my-requests">
+                <List className="size-4" />
+                {t("myRequests")}
+              </Link>
             </Button>
           )}
           <Button onClick={openCreate}>
@@ -357,19 +363,27 @@ export function CatalogManager({
       {listQ.isLoading ? (
         <TableSkeleton />
       ) : (listQ.data?.length ?? 0) === 0 ? (
-        <p className="text-sm text-muted-foreground">{t("empty")}</p>
+        <p className="text-muted-foreground">{t("empty")}</p>
       ) : (
-        <div className="flex min-h-0 flex-1 flex-col gap-3">
-          <Input
-            value={table.query}
-            onChange={(e) => table.setQuery(e.target.value)}
-            placeholder={tc("search")}
-            className="max-w-sm"
-          />
-          <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border bg-card shadow-card">
+        <div className="flex min-h-0 flex-1 flex-col">
+          <div className="flex flex-wrap items-center gap-2 pb-2.5">
+            <div className="relative min-w-0 flex-[0_1_320px]">
+              <Search className="pointer-events-none absolute left-2 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                value={table.query}
+                onChange={(e) => table.setQuery(e.target.value)}
+                placeholder={tc("search")}
+                className="pl-8"
+              />
+            </div>
+            <span className="text-muted-foreground">
+              {t("itemCount", { count: table.rows.length })}
+            </span>
+          </div>
+          <div className="flex min-h-0 flex-1 flex-col">
             <div className="min-h-0 flex-1 [&>div]:h-full">
               <Table>
-                <TableHeader className="sticky top-0 z-10 [&_th]:bg-accent">
+                <TableHeader className="sticky top-0 z-10 bg-background">
                   <TableRow>
                     {isPathogen ? (
                       <>

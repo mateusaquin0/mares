@@ -116,7 +116,7 @@ export default function AdminUsersPage() {
             placeholder={tc("search")}
             className="max-w-sm"
           />
-          <div className="overflow-hidden rounded-xl border bg-card shadow-card">
+          <div>
             <Table>
               <TableHeader>
                 <TableRow>

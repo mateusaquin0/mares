@@ -154,7 +154,7 @@ export function RequestsReview({ isSystemAdmin }: { isSystemAdmin: boolean }) {
       {listQ.isLoading ? (
         <TableSkeleton />
       ) : (
-        <div className="overflow-hidden rounded-xl border bg-card shadow-card">
+        <div>
           <Table>
             <TableHeader>
               <TableRow>

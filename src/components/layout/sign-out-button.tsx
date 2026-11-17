@@ -11,13 +11,7 @@ export function SignOutButton() {
   const { signOut, loading } = useSignOut()
 
   return (
-    <Button
-      variant="ghost"
-      size="sm"
-      onClick={signOut}
-      loading={loading}
-      className="w-full justify-start text-muted-foreground hover:bg-muted hover:text-foreground"
-    >
+    <Button variant="outline" onClick={signOut} loading={loading}>
       {!loading && <LogOut className="size-4" />}
       {t("signOut")}
     </Button>

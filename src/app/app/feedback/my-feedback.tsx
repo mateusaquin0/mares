@@ -12,7 +12,7 @@ import {
   FEEDBACK_REOPEN_MIN,
   type FeedbackTypeValue,
 } from "@/schemas/feedback.schema"
-import { FeedbackStatusBadge, FeedbackTypeBadge } from "@/components/feedback-badges"
+import { FEEDBACK_TYPE_META, FeedbackStatusBadge } from "@/components/feedback-badges"
 import { ThreadSummaryCell } from "@/components/feedback-thread"
 import { FeedbackTicketDialog } from "@/components/feedback-ticket-dialog"
 import { Button } from "@/components/ui/button"
@@ -94,16 +94,16 @@ export function MyFeedback() {
       {listQ.isLoading ? (
         <TableSkeleton />
       ) : (
-        <div className="overflow-hidden rounded-xl border bg-card shadow-card">
-          <Table>
+        <div>
+          <Table className="table-fixed">
             <TableHeader>
               <TableRow>
-                <TableHead className="w-20 text-center">{t("colType")}</TableHead>
+                <TableHead className="w-24">{t("colType")}</TableHead>
                 <TableHead>{t("colTitle")}</TableHead>
-                <TableHead className="w-32">{t("colDate")}</TableHead>
-                <TableHead className="w-20 text-center">{t("colStatus")}</TableHead>
-                <TableHead className="w-24">{t("colThread")}</TableHead>
-                <TableHead className="w-16 text-right">
+                <TableHead className="w-[104px]">{t("colDate")}</TableHead>
+                <TableHead className="w-[130px]">{t("colStatus")}</TableHead>
+                <TableHead className="w-[250px]">{t("colThread")}</TableHead>
+                <TableHead className="w-11 text-right">
                   <ReloadButton
                     onReload={async () => {
                       await listQ.refetch()
@@ -121,17 +121,17 @@ export function MyFeedback() {
                   className="cursor-pointer"
                   title={t("viewDetails")}
                 >
-                  <TableCell className="text-center">
-                    <FeedbackTypeBadge type={f.type} ns="myFeedback" iconOnly />
+                  <TableCell className={f.type === "BUG" ? "font-semibold" : undefined}>
+                    {t(FEEDBACK_TYPE_META[f.type].labelKey)}
                   </TableCell>
-                  <TableCell className="font-medium">
-                    <Truncate className="max-w-[18rem]">{f.title}</Truncate>
+                  <TableCell className="font-semibold">
+                    <Truncate className="max-w-full">{f.title}</Truncate>
                   </TableCell>
-                  <TableCell className="whitespace-nowrap text-sm text-muted-foreground">
+                  <TableCell className="whitespace-nowrap">
                     {new Date(f.createdAt).toLocaleDateString(locale)}
                   </TableCell>
-                  <TableCell className="text-center">
-                    <FeedbackStatusBadge status={f.status} ns="myFeedback" iconOnly />
+                  <TableCell>
+                    <FeedbackStatusBadge status={f.status} ns="myFeedback" />
                   </TableCell>
                   <TableCell>
                     <ThreadSummaryCell summary={f} ns="myFeedback" />

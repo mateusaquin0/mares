@@ -19,7 +19,8 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { PasswordInput } from "@/components/ui/password-input"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { TriangleAlert } from "lucide-react"
+import { SectionTitle } from "@/components/ui/section"
 import { ConfirmDialog } from "@/components/confirm-dialog"
 import { SampleTypesCard } from "./sample-types-card"
 
@@ -75,19 +76,17 @@ export function ProfileForm({ name, email }: { name: string; email: string }) {
   }
 
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">{t("nameSection")}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={nameForm.handleSubmit(onSaveName)} className="space-y-4">
-            <div className="space-y-1.5">
+    <div className="grid grid-cols-[repeat(auto-fit,minmax(440px,1fr))] items-start gap-x-10 gap-y-5">
+      <section>
+        <SectionTitle>{t("nameSection")}</SectionTitle>
+        <div className="max-w-[440px] pt-2.5">
+          <form onSubmit={nameForm.handleSubmit(onSaveName)} className="space-y-2.5">
+            <div className="grid gap-0.5">
               <Label htmlFor="email">{t("emailLabel")}</Label>
               <Input id="email" value={email} disabled readOnly />
               <p className="text-xs text-muted-foreground">{t("emailHint")}</p>
             </div>
-            <div className="space-y-1.5">
+            <div className="grid gap-0.5">
               <Label htmlFor="name">{t("nameLabel")}</Label>
               <Input id="name" maxLength={LIMITS.name} {...nameForm.register("name")} />
               {nameForm.formState.errors.name && (
@@ -100,16 +99,14 @@ export function ProfileForm({ name, email }: { name: string; email: string }) {
               {tc("save")}
             </Button>
           </form>
-        </CardContent>
-      </Card>
+        </div>
+      </section>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">{t("passwordSection")}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={pwForm.handleSubmit(onChangePassword)} className="space-y-4">
-            <div className="space-y-1.5">
+      <section>
+        <SectionTitle>{t("passwordSection")}</SectionTitle>
+        <div className="max-w-[440px] pt-2.5">
+          <form onSubmit={pwForm.handleSubmit(onChangePassword)} className="space-y-2.5">
+            <div className="grid gap-0.5">
               <Label htmlFor="password">{t("newPassword")}</Label>
               <PasswordInput
                 id="password"
@@ -122,7 +119,7 @@ export function ProfileForm({ name, email }: { name: string; email: string }) {
                 </p>
               )}
             </div>
-            <div className="space-y-1.5">
+            <div className="grid gap-0.5">
               <Label htmlFor="confirm">{t("confirmPassword")}</Label>
               <PasswordInput
                 id="confirm"
@@ -139,17 +136,18 @@ export function ProfileForm({ name, email }: { name: string; email: string }) {
               {t("changePassword")}
             </Button>
           </form>
-        </CardContent>
-      </Card>
+        </div>
+      </section>
 
       <SampleTypesCard />
 
-      <Card className="border-destructive/40">
-        <CardHeader>
-          <CardTitle className="text-lg text-destructive">{t("dangerZone")}</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <p className="text-sm text-muted-foreground">{t("deleteDesc")}</p>
+      <section>
+        <SectionTitle className="border-destructive text-destructive">
+          <TriangleAlert className="size-4" />
+          {t("dangerZone")}
+        </SectionTitle>
+        <div className="space-y-2.5 pt-2">
+          <p className="text-pretty">{t("deleteDesc")}</p>
           <ConfirmDialog
             title={t("deleteTitle")}
             description={t("deleteConfirmDesc")}
@@ -157,13 +155,17 @@ export function ProfileForm({ name, email }: { name: string; email: string }) {
             destructive
             onConfirm={onDelete}
             trigger={
-              <Button variant="destructive" loading={deleting}>
+              <Button
+                variant="outline"
+                className="border-destructive font-semibold text-destructive hover:bg-destructive-subtle hover:text-destructive"
+                loading={deleting}
+              >
                 {t("deleteButton")}
               </Button>
             }
           />
-        </CardContent>
-      </Card>
+        </div>
+      </section>
     </div>
   )
 }

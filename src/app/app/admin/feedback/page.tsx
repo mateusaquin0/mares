@@ -148,7 +148,7 @@ export default function AdminFeedbackPage() {
             </TabsList>
           </Tabs>
 
-          <div className="flex flex-wrap items-end gap-3 rounded-xl border bg-card p-3 shadow-card">
+          <div className="flex flex-wrap items-end gap-3">
             {filterField(
               t("filterType"),
               <Select
@@ -180,7 +180,7 @@ export default function AdminFeedbackPage() {
             )}
           </div>
 
-          <div className="overflow-hidden rounded-xl border bg-card shadow-card">
+          <div>
             <Table>
               <TableHeader>
                 <TableRow>

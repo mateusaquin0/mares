@@ -1445,7 +1445,8 @@
     "suggestEditTitle": "Sugerir edição",
     "suggestEditDesc": "Você não pode alterar este item direto — ou não foi quem o cadastrou, ou ele já está em uso. Proponha a mudança e a curadoria aplica.",
     "editRequestSent": "Sugestão de edição enviada para curadoria",
-    "editRequestError": "Não foi possível enviar a sugestão"
+    "editRequestError": "Não foi possível enviar a sugestão",
+    "itemCount": "{count, plural, one {# item} other {# itens}}"
   },
   "feedback": {
     "trigger": "Sugestão / Bug",
@@ -1540,7 +1541,8 @@
     "discardConfirm": "Descartar",
     "detailAdminNote": "Nota da administração",
     "adminNoteVisible": "Interna — o autor não vê",
-    "moveTo": "Mover para"
+    "moveTo": "Mover para",
+    "messageCount": "{count, plural, one {# mensagem} other {# mensagens}}"
   },
   "adminFeedback": {
     "title": "Sugestões e bugs",
@@ -1618,7 +1620,8 @@
     "titleLabel": "Título",
     "messageLabel": "Mensagem",
     "editLocked": "Já em triagem — a descrição não pode mais ser editada.",
-    "moveTo": "Mover para"
+    "moveTo": "Mover para",
+    "messageCount": "{count, plural, one {# mensagem} other {# mensagens}}"
   },
   "catalogRequests": {
     "title": "Solicitações de glossário",

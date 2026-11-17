@@ -58,7 +58,7 @@ export default function AccessRequestsPage() {
       {loading ? (
         <TableSkeleton />
       ) : (
-        <div className="overflow-hidden rounded-xl border bg-card shadow-card">
+        <div>
           <Table>
             <TableHeader>
               <TableRow>

@@ -77,7 +77,7 @@ test.describe("Feedback", () => {
 
     // Meus envios: o ticket novo, do tipo certo, com um anexo.
     const row = await openMine(page)
-    await expect(row.getByTitle(mine.typeBug)).toBeVisible()
+    await expect(row.getByRole("cell", { name: mine.typeBug, exact: true })).toBeVisible()
     await expect(row.getByTitle(mine.status_NEW)).toBeVisible()
     await expect(row.getByTitle(mine.sectionAttachments)).toHaveText("1")
     await row.click()
@@ -164,7 +164,7 @@ test.describe("Feedback", () => {
     const reread = author.getByRole("row").filter({ hasText: title() })
     await expect(reread).toBeVisible()
     await expect(reread.getByRole("status", { name: mine.unreadReply })).toHaveCount(0)
-    await expect(reread.getByTitle(mine.threadTitle)).toHaveText("2")
+    await expect(reread.getByTitle(mine.threadTitle)).toHaveText("2 mensagens")
 
     // E a administração passa a ver a mensagem da autora como não lida.
     const adminAgain = await openAdmin(admin)

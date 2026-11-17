@@ -1445,7 +1445,8 @@
     "suggestEditTitle": "Suggest an edit",
     "suggestEditDesc": "You cannot change this item directly — either you did not register it, or it is already in use. Propose the change and a curator applies it.",
     "editRequestSent": "Edit suggestion sent for curation",
-    "editRequestError": "Could not send the suggestion"
+    "editRequestError": "Could not send the suggestion",
+    "itemCount": "{count, plural, one {# item} other {# items}}"
   },
   "feedback": {
     "trigger": "Suggestion / Bug",
@@ -1540,7 +1541,8 @@
     "discardConfirm": "Dismiss",
     "detailAdminNote": "Administration note",
     "adminNoteVisible": "Internal — the author cannot see it",
-    "moveTo": "Move to"
+    "moveTo": "Move to",
+    "messageCount": "{count, plural, one {# message} other {# messages}}"
   },
   "adminFeedback": {
     "title": "Suggestions & bugs",
@@ -1618,7 +1620,8 @@
     "titleLabel": "Title",
     "messageLabel": "Message",
     "editLocked": "Already in triage — the description can no longer be edited.",
-    "moveTo": "Move to"
+    "moveTo": "Move to",
+    "messageCount": "{count, plural, one {# message} other {# messages}}"
   },
   "catalogRequests": {
     "title": "Glossary requests",
