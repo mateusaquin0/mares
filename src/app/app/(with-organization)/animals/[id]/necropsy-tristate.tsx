@@ -2,6 +2,7 @@
 
 import { useTranslations } from "next-intl"
 
+import { cn } from "@/lib/utils"
 import { Label } from "@/components/ui/label"
 import {
   Select,
@@ -40,14 +41,14 @@ export function TriState({
   const t = useTranslations("necropsy")
 
   return (
-    <div className="space-y-1.5">
+    <div className="grid content-end gap-0.5">
       <Label htmlFor={id}>{label}</Label>
       <Select
         value={toValue(value)}
         onValueChange={(v) => onChange(fromValue(v))}
         disabled={disabled}
       >
-        <SelectTrigger id={id}>
+        <SelectTrigger id={id} className={cn(value === null && "text-muted-foreground")}>
           <SelectValue />
         </SelectTrigger>
         <SelectContent>

@@ -1,7 +1,7 @@
 "use client"
 
 import { useTranslations } from "next-intl"
-import { Ban, Check, CircleDashed, TriangleAlert, type LucideIcon } from "lucide-react"
+import { Ban, Check, ChevronDown, CircleDashed, TriangleAlert, type LucideIcon } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { Badge, type BadgeProps } from "@/components/ui/badge"
@@ -15,15 +15,15 @@ export type NecropsyStatusOrUnset = NecropsyStatusValue | null
 const UNSET = "__unset__"
 
 // A ênfase visual segue a informação que cada estado carrega: só ALTERED tem dado por
-// trás (sólido, puxa o olho); NO_CHANGE é uma afirmação (verde, contorno firme);
-// NOT_EXAMINED é neutro; e "não avaliado" é o mais apagado, tracejado e sem preenchimento.
+// trás (cor de alerta); NO_CHANGE é uma afirmação (texto firme, contorno); NOT_EXAMINED é
+// neutro; e "não avaliado" é o mais apagado, tracejado.
 const STATUS_META: Record<
   string,
   { icon: LucideIcon; labelKey: string; variant: BadgeProps["variant"] }
 > = {
-  ALTERED: { icon: TriangleAlert, labelKey: "statusAltered", variant: "default" },
-  NO_CHANGE: { icon: Check, labelKey: "statusNoChange", variant: "positive" },
-  NOT_EXAMINED: { icon: Ban, labelKey: "statusNotExamined", variant: "negative" },
+  ALTERED: { icon: TriangleAlert, labelKey: "statusAltered", variant: "warning" },
+  NO_CHANGE: { icon: Check, labelKey: "statusNoChange", variant: "secondary" },
+  NOT_EXAMINED: { icon: Ban, labelKey: "statusNotExamined", variant: "outline" },
   [UNSET]: { icon: CircleDashed, labelKey: "statusUnset", variant: "faded" },
 }
 
@@ -45,18 +45,28 @@ export function NecropsyStatusIcon({
   return <Icon className={cn("size-3.5 shrink-0", className)} aria-hidden />
 }
 
+// `selector`: o selo é o gatilho do menu de estado — largura fixa (os quatro rótulos
+// alinham na coluna) e a seta.
 export function NecropsyStatusBadge({
   status,
+  selector,
   className,
 }: {
   status: NecropsyStatusOrUnset
+  selector?: boolean
   className?: string
 }) {
   const label = useNecropsyStatusLabel()(status)
   return (
-    <Badge variant={metaFor(status).variant} className={cn("gap-1.5", className)}>
-      <NecropsyStatusIcon status={status} />
-      <span className="whitespace-nowrap">{label}</span>
+    <Badge
+      variant={metaFor(status).variant}
+      className={cn("gap-1.5", selector && "w-[150px] cursor-pointer justify-between", className)}
+    >
+      <span className="flex items-center gap-1.5">
+        <NecropsyStatusIcon status={status} />
+        <span className="whitespace-nowrap">{label}</span>
+      </span>
+      {selector && <ChevronDown className="size-3.5 shrink-0 opacity-70" aria-hidden />}
     </Badge>
   )
 }

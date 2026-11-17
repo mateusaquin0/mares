@@ -875,7 +875,11 @@
     "shareConflictSelectResearch": "Select the research in the form to be able to request the share.",
     "sharePendingAlready": "This request is already open",
     "necropsyTab": "Necropsy",
-    "biometryTab": "Biometrics"
+    "biometryTab": "Biometrics",
+    "archivedTag": "Archived",
+    "sectionIndividual": "Individual",
+    "sectionNotesReports": "Notes and reports",
+    "noCoordinates": "No coordinates recorded: the map appears once latitude and longitude are filled in."
   },
   "samples": {
     "new": "New sample",
@@ -1146,7 +1150,8 @@
     "importConfirmChanged": "{count} measurements came from SIMBA, {changed} differing from what is saved. The current ones will be replaced.",
     "importConfirmSame": "{count} measurements came from SIMBA, identical to the saved ones.",
     "importConfirmAction": "Import",
-    "summaryEmpty": "No biometrics recorded"
+    "summaryEmpty": "No biometrics recorded",
+    "summaryOpen": "Open biometry"
   },
   "tutorial": {
     "title": "How to use MARES",

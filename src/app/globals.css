@@ -7,9 +7,9 @@
      Uma cor de ação (primary); positive/warning/info/destructive só para status, sempre com
      ícone ou rótulo; as variantes -subtle são o fundo dos selos. "Negativo" é neutro. */
   :root {
-    --background: 47 31% 94%; /* #F5F3EC */
+    --background: 43 25% 89%; /* #EAE6DC */
     --foreground: 140 5% 11%; /* #1A1D1B */
-    --card: 47 31% 94%;
+    --card: 43 25% 89%;
     --card-foreground: 140 5% 11%;
     --popover: 48 38% 97%; /* #FBFAF6 — superfície de campos, menus e diálogos */
     --popover-foreground: 140 5% 11%;
@@ -176,4 +176,12 @@ input[type="number"]::-webkit-outer-spin-button {
 }
 ::-webkit-scrollbar-thumb:hover {
   background-color: hsl(var(--muted-foreground) / 0.55);
+}
+
+/* Margem lateral das telas da área logada: conteúdo limitado a 1280px, mínimo de 24px. */
+@layer utilities {
+  .px-page {
+    padding-left: max(24px, calc(50% - 640px));
+    padding-right: max(24px, calc(50% - 640px));
+  }
 }

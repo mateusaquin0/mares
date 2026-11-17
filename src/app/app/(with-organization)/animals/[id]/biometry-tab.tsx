@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react"
 import { useTranslations } from "next-intl"
 import { toast } from "sonner"
-import { Download, Plus, Ruler, Trash2 } from "lucide-react"
+import { Download, Pencil, Plus, Trash2 } from "lucide-react"
 
 import { useErrorMessage } from "@/lib/use-error-message"
 import { useBiometry, useSaveBiometry, useSimbaBiometry } from "@/hooks/use-biometry"
@@ -20,8 +20,9 @@ import type { BiometryMeasure } from "@/types/biometry"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { DataRow } from "@/components/ui/section"
 import { TextSuggest } from "@/components/ui/text-suggest"
-import { TableSkeleton } from "@/components/ui/skeleton"
+import { Skeleton, TableSkeleton } from "@/components/ui/skeleton"
 import { ConfirmDialog } from "@/components/confirm-dialog"
 
 // Linha em edição: o valor é string porque o input é livre enquanto a pessoa digita
@@ -143,79 +144,74 @@ export function BiometryTab({ animalId }: { animalId: string }) {
   }
 
   const header = (
-    <div className="flex flex-wrap items-end justify-between gap-3 border-b pb-4">
-      <div className="min-w-0">
-        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-          {t("group")}
-        </p>
-        {editing ? (
-          <div className="mt-1 w-64">
-            <TextSuggest
-              id="biometry-group"
-              value={group}
-              onChange={setGroup}
-              suggestions={data?.knownGroups ?? []}
-              placeholder={t("groupPlaceholder")}
-              maxLength={LIMITS.tinyText}
-            />
-          </div>
-        ) : (
-          <p className="mt-1 text-sm">{data?.biometry?.group || t("groupNone")}</p>
-        )}
-      </div>
-      <div className="flex flex-wrap items-center gap-2">
-        {total > 0 && !editing && (
-          <span className="text-sm text-muted-foreground">{t("progress", { filled, total })}</span>
-        )}
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={importFromSimba}
-          loading={simbaM.isPending}
-          disabled={!canImport || editing}
-          title={canImport ? t("importTitle") : t("importNoRecord")}
-        >
-          {!simbaM.isPending && <Download className="size-4" />}
-          {t("import")}
-        </Button>
-        {editing ? (
-          <>
-            <Button variant="ghost" size="sm" onClick={() => setEditing(false)}>
-              {tc("cancel")}
-            </Button>
-            <Button size="sm" onClick={() => save()} loading={saveM.isPending}>
-              {tc("save")}
-            </Button>
-          </>
-        ) : (
-          <Button variant="outline" size="sm" onClick={() => setEditing(true)}>
-            {tc("edit")}
+    <div className="flex min-h-10 flex-wrap items-center gap-3">
+      <span className="text-muted-foreground">{t("group")}</span>
+      {editing ? (
+        <div className="w-[220px]">
+          <TextSuggest
+            id="biometry-group"
+            value={group}
+            onChange={setGroup}
+            suggestions={data?.knownGroups ?? []}
+            placeholder={t("groupPlaceholder")}
+            maxLength={LIMITS.tinyText}
+          />
+        </div>
+      ) : (
+        <b className="font-semibold">{data?.biometry?.group || t("groupNone")}</b>
+      )}
+      {total > 0 && !editing && (
+        <>
+          <span aria-hidden className="h-[18px] w-px bg-border" />
+          <span className="text-muted-foreground">{t("progress", { filled, total })}</span>
+        </>
+      )}
+      <span className="flex-1" />
+      <Button
+        variant="outline"
+        onClick={importFromSimba}
+        loading={simbaM.isPending}
+        disabled={!canImport || editing}
+        title={canImport ? t("importTitle") : t("importNoRecord")}
+      >
+        {!simbaM.isPending && <Download className="size-4" />}
+        {t("import")}
+      </Button>
+      {editing ? (
+        <>
+          <Button variant="outline" onClick={() => setEditing(false)}>
+            {tc("cancel")}
           </Button>
-        )}
-      </div>
+          <Button onClick={() => save()} loading={saveM.isPending}>
+            {tc("save")}
+          </Button>
+        </>
+      ) : (
+        <Button variant="outline" onClick={() => setEditing(true)}>
+          <Pencil className="size-4" />
+          {tc("edit")}
+        </Button>
+      )}
     </div>
   )
 
   const empty = total === 0 && !editing
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-4">
+    <div className="flex min-h-0 flex-1 flex-col">
       {header}
 
-      <div className="min-h-0 flex-1 overflow-y-auto">
-        {empty ? (
-          <div className="flex flex-col items-center justify-center gap-2 py-12 text-center">
-            <Ruler className="size-8 text-muted-foreground" />
-            <p className="text-sm font-medium">{t("emptyTitle")}</p>
-            <p className="max-w-md text-sm text-muted-foreground">
-              {canImport ? t("emptyHintSimba") : t("emptyHint")}
-            </p>
-          </div>
-        ) : editing ? (
-          <div className="space-y-2">
+      <div className="min-h-0 flex-1 overflow-y-auto pb-8">
+        {/* Duas colunas de pares rótulo/valor, como a tela do SIMBA — é a forma que a pessoa
+            já lê, e deixa a comparação entre os dois sistemas direta. */}
+        {editing ? (
+          <div className="columns-2 gap-x-10 border-t-2 border-foreground">
             {rows.map((r, i) => (
-              <div key={i} className="flex items-end gap-2">
-                <div className="min-w-0 flex-1">
+              <div
+                key={i}
+                className="grid break-inside-avoid grid-cols-[minmax(0,1fr)_84px_20px_24px] items-center gap-2 border-b border-border py-[3px]"
+              >
+                <div className="min-w-0">
                   <Label htmlFor={`bm-label-${i}`} className="sr-only">
                     {t("measure")}
                   </Label>
@@ -228,68 +224,78 @@ export function BiometryTab({ animalId }: { animalId: string }) {
                     maxLength={LIMITS.name}
                   />
                 </div>
-                <div className="w-40 shrink-0">
+                <div>
                   <Label htmlFor={`bm-value-${i}`} className="sr-only">
                     {t("value")}
                   </Label>
-                  <div className="flex items-center gap-1">
-                    <Input
-                      id={`bm-value-${i}`}
-                      inputMode="decimal"
-                      value={r.value}
-                      placeholder={t("notInformed")}
-                      step={isCountMeasure(r.label) ? 1 : "any"}
-                      onChange={(e) => setRow(i, { value: e.target.value })}
-                    />
-                    <span className="w-10 shrink-0 text-xs text-muted-foreground">
-                      {unitForMeasure(r.label, unit)}
-                    </span>
-                  </div>
+                  <Input
+                    id={`bm-value-${i}`}
+                    inputMode="decimal"
+                    className="h-[26px] px-1.5 text-right tabular-nums"
+                    value={r.value}
+                    placeholder="—"
+                    title={t("notInformed")}
+                    step={isCountMeasure(r.label) ? 1 : "any"}
+                    onChange={(e) => setRow(i, { value: e.target.value })}
+                  />
                 </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
+                <span className="text-xs text-muted-foreground">
+                  {unitForMeasure(r.label, unit)}
+                </span>
+                <button
+                  type="button"
                   aria-label={t("removeMeasure")}
+                  title={t("removeMeasure")}
                   onClick={() => setRows((rs) => rs.filter((_, j) => j !== i))}
+                  className="flex size-6 items-center justify-center rounded-sm text-muted-foreground hover:bg-muted hover:text-destructive"
                 >
                   <Trash2 className="size-4" />
-                </Button>
+                </button>
               </div>
             ))}
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={rows.length >= MAX_MEASURES}
-              onClick={() => setRows((rs) => [...rs, { label: "", value: "" }])}
-            >
-              <Plus className="size-4" />
-              {t("addMeasure")}
-            </Button>
           </div>
         ) : (
-          // Duas colunas de pares rótulo/valor, como a tela do SIMBA — é a forma que a pessoa
-          // já lê, e deixa a comparação entre os dois sistemas direta.
-          <dl className="grid grid-cols-1 gap-x-8 gap-y-3 md:grid-cols-2">
+          <dl className="columns-2 gap-x-10 border-t-2 border-foreground">
             {measures.map((m) => (
               <div
                 key={m.label}
-                className="flex items-baseline justify-between gap-4 border-b pb-2"
+                className="grid break-inside-avoid grid-cols-[minmax(0,1fr)_84px] gap-3 border-b border-border py-[5px]"
               >
-                <dt className="min-w-0 text-sm text-muted-foreground">{m.label}</dt>
-                <dd
-                  className={
-                    m.value == null
-                      ? "shrink-0 text-sm italic text-muted-foreground/70"
-                      : "shrink-0 text-sm font-medium tabular-nums"
-                  }
-                >
-                  {m.value == null
-                    ? t("notInformed")
-                    : `${m.value} ${unitForMeasure(m.label, unit)}`}
-                </dd>
+                <dt className="min-w-0">{m.label}</dt>
+                {m.value == null ? (
+                  <dd className="text-right text-muted-foreground" title={t("notInformed")}>
+                    <span aria-hidden>—</span>
+                    <span className="sr-only">{t("notInformed")}</span>
+                  </dd>
+                ) : (
+                  <dd className="text-right font-semibold tabular-nums">
+                    {`${m.value} ${unitForMeasure(m.label, unit)}`}
+                  </dd>
+                )}
               </div>
             ))}
           </dl>
+        )}
+
+        {empty && (
+          <div className="border-b border-foreground pb-6 pt-[22px]">
+            <p className="font-serif text-xl font-medium">{t("emptyTitle")}</p>
+            <p className="mt-1 text-muted-foreground">
+              {canImport ? t("emptyHintSimba") : t("emptyHint")}
+            </p>
+          </div>
+        )}
+
+        {editing && (
+          <Button
+            variant="outline"
+            className="mt-2.5"
+            disabled={rows.length >= MAX_MEASURES}
+            onClick={() => setRows((rs) => [...rs, { label: "", value: "" }])}
+          >
+            <Plus className="size-4" />
+            {t("addMeasure")}
+          </Button>
         )}
       </div>
 
@@ -325,38 +331,44 @@ export function BiometryTab({ animalId }: { animalId: string }) {
 /** Resumo para a aba "Dados do encalhe": as medidas âncora e um atalho para a aba. */
 export function BiometrySummary({ animalId, onOpen }: { animalId: string; onOpen: () => void }) {
   const t = useTranslations("biometry")
+  const ta = useTranslations("animals")
   const q = useBiometry(animalId)
   const data = q.data
-
-  if (q.isLoading) return <TableSkeleton rows={1} />
 
   const measures = data?.biometry ? withWeight(data.biometry.measures, data.weightKg) : []
   const filled = measures.filter((m) => m.value != null)
 
-  if (filled.length === 0) {
-    return (
-      <button
-        type="button"
-        onClick={onOpen}
-        className="text-sm text-muted-foreground hover:text-foreground hover:underline"
-      >
-        {t("summaryEmpty")}
-      </button>
-    )
-  }
-
   return (
-    <button type="button" onClick={onOpen} className="group block w-full text-left">
-      <p className="text-sm">
-        {t("progress", { filled: filled.length, total: measures.length })}
-        {data?.biometry?.group ? ` · ${data.biometry.group}` : ""}
-      </p>
-      <p className="mt-1 line-clamp-2 text-sm text-muted-foreground group-hover:text-foreground">
-        {filled
-          .slice(0, 3)
-          .map((m) => `${m.label}: ${m.value} ${unitForMeasure(m.label, data?.biometry?.unit)}`)
-          .join(" · ")}
-      </p>
-    </button>
+    <DataRow
+      label={ta("biometryTab")}
+      labelWidth="21%"
+      className="py-1.5"
+      action={
+        <button
+          type="button"
+          onClick={onOpen}
+          className="underline underline-offset-2 hover:text-primary"
+        >
+          {t("summaryOpen")}
+        </button>
+      }
+    >
+      {q.isLoading ? (
+        <Skeleton className="h-5 w-72" />
+      ) : filled.length === 0 ? (
+        <span className="text-muted-foreground">{t("summaryEmpty")}</span>
+      ) : (
+        <>
+          {t("progress", { filled: filled.length, total: measures.length })}
+          {data?.biometry?.group ? ` · ${data.biometry.group}` : ""}
+          <span className="mt-0.5 line-clamp-2 block text-muted-foreground">
+            {filled
+              .slice(0, 3)
+              .map((m) => `${m.label}: ${m.value} ${unitForMeasure(m.label, data?.biometry?.unit)}`)
+              .join(" · ")}
+          </span>
+        </>
+      )}
+    </DataRow>
   )
 }

@@ -4,7 +4,6 @@ import { useEffect, useState } from "react"
 import { useTranslations } from "next-intl"
 import { toast } from "sonner"
 
-import { cn } from "@/lib/utils"
 import { useErrorMessage } from "@/lib/use-error-message"
 import {
   ANTHROPIC_INTERACTION_OPTIONS,
@@ -96,106 +95,101 @@ export function NecropsyScreeningSection({
 
   return (
     // O título fica no gatilho do accordion (necropsy-tab); aqui só o corpo da seção.
-    <div className="space-y-5">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <p className="text-sm text-muted-foreground">{t("screeningSubtitle")}</p>
+    <div>
+      <div className="mb-2.5 mt-1.5 flex flex-wrap items-start justify-between gap-4">
+        <p className="text-[13px] text-muted-foreground">{t("screeningSubtitle")}</p>
         {saveM.isPending && (
-          <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            {t("screeningSaving")}
-          </span>
+          <span className="text-[13px] text-muted-foreground">{t("screeningSaving")}</span>
         )}
       </div>
 
-      <div className="space-y-5">
-        <div className="sm:max-w-sm">
-          <TriState
-            id="anthropic-interaction"
-            label={t("anthropicInteraction")}
-            value={form.anthropicInteraction}
-            onChange={setAnthropic}
-          />
-        </div>
+      <div className="max-w-[360px]">
+        <TriState
+          id="anthropic-interaction"
+          label={t("anthropicInteraction")}
+          value={form.anthropicInteraction}
+          onChange={setAnthropic}
+        />
+      </div>
 
-        {/* A lista só existe depois do "sim": perguntar o tipo antes de saber se houve
-              interação inverteria a ordem da triagem. */}
-        {form.anthropicInteraction === true && (
-          <fieldset className="space-y-3 rounded-lg border bg-muted/30 p-4">
-            <legend className="px-1 text-xs font-semibold uppercase tracking-wide text-accent-foreground">
-              {t("interactionsLabel")}
-            </legend>
-            <p className="text-sm text-muted-foreground">{t("interactionsHint")}</p>
-            <div className="grid gap-3 sm:grid-cols-2">
-              {ANTHROPIC_INTERACTION_OPTIONS.map((o) => {
-                const degree = degreeOf(o.value)
-                const checked = degree !== null
-                return (
-                  <div
-                    key={o.value}
-                    className={cn(
-                      "flex flex-wrap items-center gap-3 rounded-lg border bg-background px-3 py-2.5",
-                      checked && "border-accent-foreground/40",
-                    )}
-                  >
-                    <Checkbox
-                      id={`interaction-${o.value}`}
-                      checked={checked}
-                      onCheckedChange={(v) => toggleInteraction(o.value, v === true)}
-                    />
-                    <Label
-                      htmlFor={`interaction-${o.value}`}
-                      className="flex-1 text-sm font-normal"
+      {/* A lista só existe depois do "sim": perguntar o tipo antes de saber se houve
+          interação inverteria a ordem da triagem. */}
+      {form.anthropicInteraction === true && (
+        <fieldset className="mt-2.5 border border-l-2 border-border border-l-foreground px-3 pb-2.5 pt-2">
+          <legend className="sr-only">{t("interactionsLabel")}</legend>
+          <p
+            aria-hidden
+            className="text-xs font-bold uppercase tracking-[.05em] text-muted-foreground"
+          >
+            {t("interactionsLabel")}
+          </p>
+          <p className="text-[13px] text-muted-foreground">{t("interactionsHint")}</p>
+          <div className="mt-1 grid grid-cols-2 gap-x-8">
+            {ANTHROPIC_INTERACTION_OPTIONS.map((o) => {
+              const degree = degreeOf(o.value)
+              const checked = degree !== null
+              return (
+                <div
+                  key={o.value}
+                  className="flex min-h-[34px] items-center gap-2 border-b border-border"
+                >
+                  <Checkbox
+                    id={`interaction-${o.value}`}
+                    checked={checked}
+                    onCheckedChange={(v) => toggleInteraction(o.value, v === true)}
+                  />
+                  <Label htmlFor={`interaction-${o.value}`} className="flex-1 text-sm font-normal">
+                    {t(o.key)}
+                  </Label>
+                  {/* O grau só aparece no que está marcado: um seletor solto sugeriria que
+                      existe grau para uma interação que não houve. */}
+                  {checked && (
+                    <Select
+                      value={String(degree)}
+                      onValueChange={(v) => setDegree(o.value, Number(v))}
                     >
-                      {t(o.key)}
-                    </Label>
-                    {/* O grau só aparece no que está marcado: um seletor solto sugeriria
-                          que existe grau para uma interação que não houve. */}
-                    {checked && (
-                      <Select
-                        value={String(degree)}
-                        onValueChange={(v) => setDegree(o.value, Number(v))}
+                      <SelectTrigger
+                        className="h-[26px] w-[104px]"
+                        aria-label={t("interactionDegreeOf", { type: t(o.key) })}
+                        title={t("interactionDegreeOf", { type: t(o.key) })}
                       >
-                        <SelectTrigger
-                          className="w-32"
-                          aria-label={t("interactionDegreeOf", { type: t(o.key) })}
-                        >
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {INTERACTION_DEGREES.map((d) => (
-                            <SelectItem key={d} value={String(d)}>
-                              {t("degreeValue", { degree: d })}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    )}
-                  </div>
-                )
-              })}
-            </div>
-          </fieldset>
-        )}
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {INTERACTION_DEGREES.map((d) => (
+                          <SelectItem key={d} value={String(d)}>
+                            {t("degreeValue", { degree: d })}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        </fieldset>
+      )}
 
-        <div className="grid gap-4 border-t pt-4 sm:grid-cols-3">
-          <TriState
-            id="gi-content-collected"
-            label={t("giContentCollected")}
-            value={form.giContentCollected}
-            onChange={(v) => void save({ ...form, giContentCollected: v })}
-          />
-          <TriState
-            id="gi-solid-waste"
-            label={t("giSolidWaste")}
-            value={form.giSolidWaste}
-            onChange={(v) => void save({ ...form, giSolidWaste: v })}
-          />
-          <TriState
-            id="gi-detailed-screening"
-            label={t("giDetailedScreening")}
-            value={form.giDetailedScreening}
-            onChange={(v) => void save({ ...form, giDetailedScreening: v })}
-          />
-        </div>
+      <div className="mt-3 grid grid-cols-3 gap-x-6 gap-y-3 border-t border-border pt-2.5">
+        <TriState
+          id="gi-content-collected"
+          label={t("giContentCollected")}
+          value={form.giContentCollected}
+          onChange={(v) => void save({ ...form, giContentCollected: v })}
+        />
+        <TriState
+          id="gi-solid-waste"
+          label={t("giSolidWaste")}
+          value={form.giSolidWaste}
+          onChange={(v) => void save({ ...form, giSolidWaste: v })}
+        />
+        <TriState
+          id="gi-detailed-screening"
+          label={t("giDetailedScreening")}
+          value={form.giDetailedScreening}
+          onChange={(v) => void save({ ...form, giDetailedScreening: v })}
+        />
       </div>
     </div>
   )

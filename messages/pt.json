@@ -875,7 +875,11 @@
     "shareConflictSelectResearch": "Selecione a pesquisa no formulário para poder pedir o compartilhamento.",
     "sharePendingAlready": "Este pedido já está em aberto",
     "necropsyTab": "Necrópsia",
-    "biometryTab": "Biometria"
+    "biometryTab": "Biometria",
+    "archivedTag": "Arquivado",
+    "sectionIndividual": "Indivíduo",
+    "sectionNotesReports": "Observações e laudos",
+    "noCoordinates": "Sem coordenadas registradas: o mapa aparece quando latitude e longitude forem informadas."
   },
   "samples": {
     "new": "Nova amostra",
@@ -1146,7 +1150,8 @@
     "importConfirmChanged": "{count} medidas vieram do SIMBA, {changed} diferentes do que está salvo. As atuais serão substituídas.",
     "importConfirmSame": "{count} medidas vieram do SIMBA, iguais às que já estão salvas.",
     "importConfirmAction": "Importar",
-    "summaryEmpty": "Sem biometria registrada"
+    "summaryEmpty": "Sem biometria registrada",
+    "summaryOpen": "Abrir biometria"
   },
   "tutorial": {
     "title": "Como usar o MARES",

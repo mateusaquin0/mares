@@ -6,9 +6,10 @@ import { useRouter } from "next/navigation"
 import dynamic from "next/dynamic"
 import { useLocale, useTranslations } from "next-intl"
 import { toast } from "sonner"
-import { ArrowLeft, Fish, Pencil } from "lucide-react"
+import { ArrowLeft, Globe, MapPinOff, Pencil } from "lucide-react"
 
 import { ApiError } from "@/lib/http"
+import { cn } from "@/lib/utils"
 import { useAnimal } from "@/hooks/use-animals"
 import { useResearchList } from "@/hooks/use-research"
 import { formatDateOnly } from "@/lib/date"
@@ -16,7 +17,7 @@ import { publicationStatus } from "@/lib/publication"
 import { SEX_OPTIONS, LIFE_STAGE_OPTIONS } from "@/lib/animal-enums"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
+import { DataRow, SectionTitle } from "@/components/ui/section"
 import { Skeleton, TableSkeleton } from "@/components/ui/skeleton"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { AnimalFormDialog } from "../animal-form"
@@ -28,13 +29,19 @@ import { AnalysesTab } from "./analyses-tab"
 import { MediaTab } from "./media-tab"
 import { AuditTab } from "./audit-tab"
 
-// Mapa depende de `window` (Leaflet) — nunca renderiza no servidor.
 const PUBLICATION_LABEL = {
   published: "published",
   researchPrivate: "unpublishedResearchPrivate",
   withheld: "unpublishedWithheld",
 } as const
 
+const PUBLICATION_TIP = {
+  published: "visMapPublished",
+  researchPrivate: "visMapResearchPrivate",
+  withheld: "visMapWithheld",
+} as const
+
+// Mapa depende de `window` (Leaflet) — nunca renderiza no servidor.
 const PointMap = dynamic(() => import("@/components/map/point-map"), {
   ssr: false,
   loading: () => <div className="h-full w-full animate-pulse bg-accent/40" />,
@@ -89,7 +96,7 @@ export function AnimalDetail({
 
   if (loading) {
     return (
-      <div className="mx-auto max-w-6xl space-y-6 p-8">
+      <div className="space-y-6 px-page py-8">
         <Skeleton className="h-8 w-64" />
         <Skeleton className="h-4 w-96" />
         <TableSkeleton rows={4} />
@@ -98,231 +105,253 @@ export function AnimalDetail({
   }
   if (lostAccess) return null
   if (!animal) {
-    return <p className="p-8 text-sm text-muted-foreground">{t("notFound")}</p>
+    return <p className="px-page py-8 text-muted-foreground">{t("notFound")}</p>
   }
 
-  const na = t("notInformed")
+  const empty = "—"
   // Espécie nula = indeterminada (carcaça não identificável).
   const speciesLabel = animal.species ?? t("speciesUndetermined")
   const publication = publicationStatus(animal.isPublic, animal.research.isPublic)
   const hasCoords = animal.strandingLat != null && animal.strandingLon != null
-  const coords = hasCoords ? `${animal.strandingLat}, ${animal.strandingLon}` : na
-  const locationLabel =
-    [animal.strandingBeach, animal.municipality, animal.state].filter(Boolean).join(", ") ||
-    speciesLabel
-  const rows: { label: string; value: ReactNode }[] = [
-    { label: t("taxonFamily"), value: animal.taxonFamily ?? na },
-    { label: t("taxonOrder"), value: animal.taxonOrder ?? na },
-    { label: t("controlId"), value: animal.controlId ?? na },
-    { label: t("simbaRecordNumber"), value: animal.simbaRecordNumber ?? na },
-    { label: t("sex"), value: sexLabel(animal.sex) ?? na },
-    { label: t("lifeStage"), value: lifeStageLabel(animal.lifeStage) ?? na },
-    { label: t("bodyCondition"), value: animal.bodyCondition ?? na },
-    { label: t("decompositionStage"), value: animal.decompositionStage ?? na },
-    { label: t("deathCondition"), value: animal.deathCondition ?? na },
+  const coords = hasCoords ? `${animal.strandingLat}, ${animal.strandingLon}` : empty
+  const place = [animal.strandingBeach, animal.municipality, animal.state]
+    .filter(Boolean)
+    .join(", ")
+  const locationLabel = place || speciesLabel
+  const date = (d: string | null) => (d ? formatDateOnly(d, locale) : empty)
+
+  const groups: { title: string; rows: [string, ReactNode][] }[] = [
     {
-      label: t("eventDate"),
-      value: animal.eventDate ? formatDateOnly(animal.eventDate, locale) : na,
+      title: t("sectionIdentification"),
+      rows: [
+        [t("controlId"), animal.controlId ?? empty],
+        [t("simbaRecordNumber"), animal.simbaRecordNumber ?? empty],
+        [t("taxonFamily"), animal.taxonFamily ?? empty],
+        [t("taxonOrder"), animal.taxonOrder ?? empty],
+      ],
     },
     {
-      label: t("necropsyDate"),
-      value: animal.necropsyDate ? formatDateOnly(animal.necropsyDate, locale) : na,
+      title: t("sectionIndividual"),
+      rows: [
+        [t("sex"), sexLabel(animal.sex) ?? empty],
+        [t("lifeStage"), lifeStageLabel(animal.lifeStage) ?? empty],
+        [t("decompositionStage"), animal.decompositionStage ?? empty],
+        [t("bodyCondition"), animal.bodyCondition ?? empty],
+        [t("deathCondition"), animal.deathCondition ?? empty],
+      ],
     },
-    { label: t("necropsyWeightKg"), value: animal.necropsyWeightKg ?? na },
-    { label: t("strandingBeach"), value: animal.strandingBeach ?? na },
-    { label: t("municipality"), value: animal.municipality ?? na },
-    { label: t("state"), value: animal.state ?? na },
-    { label: t("executingInstitution"), value: animal.executingInstitution ?? na },
-    { label: `${t("strandingLat")} / ${t("strandingLon")}`, value: coords },
+    {
+      title: t("sectionStranding"),
+      rows: [
+        [t("eventDate"), date(animal.eventDate)],
+        [t("strandingBeach"), animal.strandingBeach ?? empty],
+        [t("municipality"), animal.municipality ?? empty],
+        [t("state"), animal.state ?? empty],
+        [`${t("strandingLat")} / ${t("strandingLon")}`, coords],
+        [t("executingInstitution"), animal.executingInstitution ?? empty],
+      ],
+    },
+    {
+      title: t("necropsyTab"),
+      rows: [
+        [t("necropsyDate"), date(animal.necropsyDate)],
+        [t("necropsyWeightKg"), animal.necropsyWeightKg ?? empty],
+      ],
+    },
   ]
 
-  return (
-    <div className="mx-auto flex h-full min-h-[42rem] max-w-5xl flex-col gap-6 p-8">
-      <Link
-        href={backTo.href}
-        className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
-      >
-        <ArrowLeft className="size-4" />
-        {t(backTo.labelKey)}
-      </Link>
+  // Só as pesquisas que de fato participam: um convite pendente ainda não pode ser dona de
+  // amostra nem de arquivo.
+  const owners = [
+    animal.research,
+    ...animal.participations.filter((p) => p.status === "ACCEPTED").map((p) => p.research),
+  ]
 
-      <div className="flex items-start gap-4">
-        <span className="flex size-14 shrink-0 items-center justify-center rounded-xl bg-accent text-accent-foreground">
-          <Fish className="size-7" />
-        </span>
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-3">
-            <h1 className="text-2xl font-semibold italic tracking-tight">{speciesLabel}</h1>
-            <Badge variant={publication === "published" ? "public" : "private"}>
-              {t(PUBLICATION_LABEL[publication])}
-            </Badge>
+  const compactTop = tab !== "info"
+  const backLink = (
+    <Link
+      href={backTo.href}
+      className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap text-[13px] underline underline-offset-2 hover:text-primary"
+    >
+      <ArrowLeft className="size-4" />
+      {t(backTo.labelKey)}
+    </Link>
+  )
+  const publicationBadge = (
+    <Badge
+      variant={publication === "published" ? "public" : "private"}
+      title={t(PUBLICATION_TIP[publication])}
+      className="shrink-0"
+    >
+      {publication === "published" ? <Globe /> : <MapPinOff />}
+      {t(PUBLICATION_LABEL[publication])}
+    </Badge>
+  )
+  const editButton = (
+    <Button variant="outline" className="shrink-0" onClick={() => setEditing(true)}>
+      <Pencil className="size-4" />
+      {tc("edit")}
+    </Button>
+  )
+  const cityUf = [animal.municipality, animal.state].filter(Boolean).join(", ")
+  const subtitle = (
+    <span className="text-muted-foreground">
+      {animal.controlId && <b className="font-semibold text-foreground">{animal.controlId}</b>}
+      {animal.controlId && cityUf && " · "}
+      {cityUf}
+      {(animal.controlId || cityUf) && " · "}
+      <Link
+        href={`/app/research/${animal.research.id}`}
+        className="underline underline-offset-2 hover:text-foreground"
+      >
+        {animal.research.name}
+      </Link>
+    </span>
+  )
+
+  return (
+    <div className="flex h-full min-h-[42rem] flex-col">
+      {/* Nos dados da ocorrência o topo é amplo; nas demais abas fica numa linha só, para
+          sobrar altura para tabelas e laudos. */}
+      <div className={cn("flex-none px-page", compactTop ? "pt-2" : "pt-3.5")}>
+        {compactTop ? (
+          <div className="flex items-center gap-3">
+            {backLink}
+            <span aria-hidden className="h-5 w-px shrink-0 bg-border" />
+            <h1 className="min-w-0 truncate font-serif text-[28px] font-medium italic leading-[34px]">
+              {speciesLabel}
+            </h1>
+            {publicationBadge}
+            <span className="flex-1" />
+            {editButton}
           </div>
-          <p className="mt-1 flex flex-wrap items-center gap-x-2 text-sm text-muted-foreground">
-            {[animal.controlId, [animal.municipality, animal.state].filter(Boolean).join(", ")]
-              .filter(Boolean)
-              .join(" · ")}
-            {(animal.controlId || animal.municipality || animal.state) && (
-              <span aria-hidden>·</span>
-            )}
-            <Link
-              href={`/app/research/${animal.research.id}`}
-              className="text-accent-foreground hover:underline"
-            >
-              {animal.research.name}
-            </Link>
-          </p>
-        </div>
-        <div className="flex shrink-0 items-center gap-2">
-          <Button variant="outline" size="sm" onClick={() => setEditing(true)}>
-            <Pencil className="size-4" />
-            {tc("edit")}
-          </Button>
-        </div>
+        ) : (
+          <>
+            {backLink}
+            <div className="mt-1.5 flex items-end gap-4">
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-3">
+                  <h1 className="font-serif text-4xl font-medium italic">{speciesLabel}</h1>
+                  {publicationBadge}
+                </div>
+                <p className="mt-1">{subtitle}</p>
+              </div>
+              {editButton}
+            </div>
+          </>
+        )}
+        {compactTop && <p className="mt-0.5">{subtitle}</p>}
       </div>
 
       <Tabs value={tab} onValueChange={setTab} className="flex min-h-0 flex-1 flex-col">
-        <TabsList className="flex-wrap self-start">
-          <TabsTrigger value="info">{t("detailInfo")}</TabsTrigger>
-          <TabsTrigger value="necropsy">{t("necropsyTab")}</TabsTrigger>
-          <TabsTrigger value="biometry">{t("biometryTab")}</TabsTrigger>
-          <TabsTrigger value="samples">
-            {t("samplesTab")} ({animal._count.samples})
-          </TabsTrigger>
-          <TabsTrigger value="analyses">{t("analysesTab")}</TabsTrigger>
-          <TabsTrigger value="media">
-            {t("mediaTab")} ({animal._count.media})
-          </TabsTrigger>
-          <TabsTrigger value="audit">{t("auditTab")}</TabsTrigger>
-        </TabsList>
+        <div className={cn("flex-none px-page", compactTop ? "pt-1.5" : "pt-3.5")}>
+          <TabsList className={compactTop ? "gap-6" : "gap-7"}>
+            <TabsTrigger value="info" className="py-2">
+              {t("detailInfo")}
+            </TabsTrigger>
+            <TabsTrigger value="necropsy" className="py-2">
+              {t("necropsyTab")}
+            </TabsTrigger>
+            <TabsTrigger value="biometry" className="py-2">
+              {t("biometryTab")}
+            </TabsTrigger>
+            <TabsTrigger value="samples" className="py-2">
+              {t("samplesTab")} ({animal._count.samples})
+            </TabsTrigger>
+            <TabsTrigger value="analyses" className="py-2">
+              {t("analysesTab")}
+            </TabsTrigger>
+            <TabsTrigger value="media" className="py-2">
+              {t("mediaTab")} ({animal._count.media})
+            </TabsTrigger>
+            <TabsTrigger value="audit" className="py-2">
+              {t("auditTab")}
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
-        <div className="mt-4 flex min-h-0 flex-1 flex-col">
+        <div className="flex min-h-0 flex-1 flex-col px-page py-5">
           {tab === "info" && (
-            <Card className="flex min-h-0 flex-1 flex-col">
-              <CardContent className="flex min-h-0 flex-1 flex-col overflow-hidden pt-6">
-                <div className="min-h-0 flex-1 space-y-6 overflow-y-auto">
-                  <dl className="grid grid-cols-1 gap-x-8 gap-y-4 sm:grid-cols-2 lg:grid-cols-3">
-                    {rows.map((r) => (
-                      <div key={r.label} className="flex flex-col gap-0.5">
-                        <dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                          {r.label}
-                        </dt>
-                        <dd className="text-sm text-foreground">{r.value}</dd>
-                      </div>
-                    ))}
+            <div className="grid min-h-0 flex-1 grid-cols-[minmax(0,1fr)_minmax(0,420px)] gap-10 overflow-y-auto max-xl:gap-8">
+              <div className="flex min-w-0 flex-col gap-5">
+                <div className="grid grid-cols-2 gap-x-10 gap-y-5 max-xl:grid-cols-1">
+                  {groups.map((g) => (
+                    <section key={g.title}>
+                      <SectionTitle>{g.title}</SectionTitle>
+                      <dl>
+                        {g.rows.map(([label, value]) => (
+                          <DataRow key={label} label={label}>
+                            <span className="font-medium">{value}</span>
+                          </DataRow>
+                        ))}
+                      </dl>
+                    </section>
+                  ))}
+                </div>
+                <section>
+                  <SectionTitle>{t("sectionNotesReports")}</SectionTitle>
+                  <dl>
+                    <DataRow label={t("macroscopicNotes")} labelWidth="21%" className="py-1.5">
+                      {animal.macroscopicNotes ? (
+                        <span className="whitespace-pre-wrap text-pretty">
+                          {animal.macroscopicNotes}
+                        </span>
+                      ) : (
+                        <span className="text-muted-foreground">{empty}</span>
+                      )}
+                    </DataRow>
+                    <NecropsySummary animalId={id} onOpen={() => setTab("necropsy")} />
+                    <BiometrySummary animalId={id} onOpen={() => setTab("biometry")} />
                   </dl>
-                  <div className="border-t pt-4">
-                    <ResearchShare animal={animal} isOrgAdmin={isOrgAdmin} />
-                  </div>
-                  {hasCoords && (
-                    <div className="border-t pt-4">
-                      <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                        {t("strandingLocationMap")}
-                      </p>
-                      <div className="h-[320px] overflow-hidden rounded-lg border">
+                </section>
+              </div>
+
+              <div className="flex min-w-0 flex-col gap-5">
+                <section>
+                  <SectionTitle>{t("strandingLocationMap")}</SectionTitle>
+                  {hasCoords ? (
+                    <>
+                      <div className="mt-2 h-[228px] overflow-hidden border border-border">
                         <PointMap
                           lat={animal.strandingLat as number}
                           lon={animal.strandingLon as number}
                           label={locationLabel}
                         />
                       </div>
-                    </div>
-                  )}
-                  {animal.macroscopicNotes && (
-                    <div className="border-t pt-4">
-                      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                        {t("macroscopicNotes")}
+                      <p className="mt-1.5 text-[13px] text-muted-foreground">
+                        {[place, coords].filter(Boolean).join(" · ")}
                       </p>
-                      <p className="mt-1 whitespace-pre-wrap text-sm">{animal.macroscopicNotes}</p>
-                    </div>
+                    </>
+                  ) : (
+                    <>
+                      {place && <p className="mt-2">{place}</p>}
+                      <p className="mt-0.5 flex items-center gap-1.5 text-[13px] text-muted-foreground">
+                        <MapPinOff className="size-4 shrink-0" />
+                        {t("noCoordinates")}
+                      </p>
+                    </>
                   )}
-                  <div className="border-t pt-4">
-                    <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                      {t("necropsyTab")}
-                    </p>
-                    <NecropsySummary animalId={id} onOpen={() => setTab("necropsy")} />
-                  </div>
-                  <div className="border-t pt-4">
-                    <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                      {t("biometryTab")}
-                    </p>
-                    <BiometrySummary animalId={id} onOpen={() => setTab("biometry")} />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+                </section>
+                <ResearchShare animal={animal} isOrgAdmin={isOrgAdmin} />
+              </div>
+            </div>
           )}
 
-          {tab === "necropsy" && (
-            <Card className="flex min-h-0 flex-1 flex-col">
-              <CardContent className="flex min-h-0 flex-1 flex-col overflow-hidden pt-6">
-                <NecropsyTab animalId={id} />
-              </CardContent>
-            </Card>
-          )}
+          {tab === "necropsy" && <NecropsyTab animalId={id} />}
 
-          {tab === "biometry" && (
-            <Card className="flex min-h-0 flex-1 flex-col">
-              <CardContent className="flex min-h-0 flex-1 flex-col overflow-hidden pt-6">
-                <BiometryTab animalId={id} />
-              </CardContent>
-            </Card>
-          )}
+          {tab === "biometry" && <BiometryTab animalId={id} />}
 
           {tab === "samples" && (
-            <Card className="flex min-h-0 flex-1 flex-col">
-              <CardContent className="flex min-h-0 flex-1 flex-col overflow-hidden pt-6">
-                <SamplesTab
-                  animalId={id}
-                  isOrgAdmin={isOrgAdmin}
-                  selfId={selfId}
-                  // Só as pesquisas que de fato participam: um convite pendente ainda não
-                  // pode ser dona de amostra.
-                  researches={[
-                    animal.research,
-                    ...animal.participations
-                      .filter((p) => p.status === "ACCEPTED")
-                      .map((p) => p.research),
-                  ]}
-                />
-              </CardContent>
-            </Card>
+            <SamplesTab animalId={id} isOrgAdmin={isOrgAdmin} selfId={selfId} researches={owners} />
           )}
 
-          {tab === "analyses" && (
-            <Card className="flex min-h-0 flex-1 flex-col">
-              <CardContent className="flex min-h-0 flex-1 flex-col overflow-hidden pt-6">
-                <AnalysesTab animalId={id} />
-              </CardContent>
-            </Card>
-          )}
+          {tab === "analyses" && <AnalysesTab animalId={id} />}
 
           {tab === "media" && (
-            <Card className="flex min-h-0 flex-1 flex-col">
-              <CardContent className="flex min-h-0 flex-1 flex-col overflow-hidden pt-6">
-                <MediaTab
-                  animalId={id}
-                  isOrgAdmin={isOrgAdmin}
-                  selfId={selfId}
-                  // Mesma regra das amostras: só as pesquisas que de fato participam podem
-                  // ser donas de um arquivo.
-                  researches={[
-                    animal.research,
-                    ...animal.participations
-                      .filter((p) => p.status === "ACCEPTED")
-                      .map((p) => p.research),
-                  ]}
-                />
-              </CardContent>
-            </Card>
+            <MediaTab animalId={id} isOrgAdmin={isOrgAdmin} selfId={selfId} researches={owners} />
           )}
 
-          {tab === "audit" && (
-            <Card className="flex min-h-0 flex-1 flex-col">
-              <CardContent className="flex min-h-0 flex-1 flex-col overflow-hidden pt-6">
-                <AuditTab animalId={id} />
-              </CardContent>
-            </Card>
-          )}
+          {tab === "audit" && <AuditTab animalId={id} />}
         </div>
       </Tabs>
 
