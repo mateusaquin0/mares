@@ -13,14 +13,16 @@ export default defineConfig({
     coverage: {
       provider: "v8",
       include: ["src/schemas/**", "src/lib/**"],
+      // Testes e seus utilitários (ex.: o Prisma simulado) não são código de produção.
+      exclude: ["**/__tests__/**"],
       reporter: ["text", "html"],
       // Piso (ratchet), não meta: fixa o nível atual para que a cobertura não CAIA
       // silenciosamente. Conforme novos testes entrarem, suba estes números.
       thresholds: {
-        statements: 30,
-        branches: 30,
-        functions: 26,
-        lines: 30,
+        statements: 97,
+        branches: 94,
+        functions: 98,
+        lines: 98,
       },
     },
   },
