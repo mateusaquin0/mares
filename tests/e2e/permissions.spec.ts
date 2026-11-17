@@ -51,7 +51,6 @@ test.describe("Pesquisadora (RESEARCHER)", () => {
     await page.goto("/app/admin/access-requests")
     await expect(page).toHaveURL(/\/app\/dashboard$/)
     await expect(page.getByRole("heading", { name: pt.dashboard.title, level: 1 })).toBeVisible()
-    await expect(page.getByText(pt.sidebar.adminSection, { exact: true })).toHaveCount(0)
     await expect(page.locator('a[href^="/app/admin"]')).toHaveCount(0)
 
     for (const path of ["/app/admin/organizations", "/app/admin/users", "/app/admin/feedback"]) {
@@ -162,7 +161,12 @@ test.describe("Admin global", () => {
     await expect(
       page.getByRole("heading", { name: pt.adminRequests.title, level: 1 }),
     ).toBeVisible()
-    await expect(page.getByText(pt.sidebar.adminSection, { exact: true })).toBeVisible()
+    // A navegação é a da administração, com o nome no lugar do grupo.
+    await expect(
+      page.getByText(pt.sidebar.globalAdminOrg, { exact: true }).filter({ visible: true }),
+    ).toBeVisible()
+    await expect(page.getByRole("link", { name: pt.sidebar.adminUsers, exact: true })).toBeVisible()
+    await expect(page.getByRole("link", { name: pt.sidebar.dashboard, exact: true })).toHaveCount(0)
 
     await page.goto("/app/admin/organizations")
     await expect(page).toHaveURL(/\/app\/admin\/organizations$/)

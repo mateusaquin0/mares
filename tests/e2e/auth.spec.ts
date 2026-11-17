@@ -39,8 +39,8 @@ test.describe("Autenticação", () => {
     await expect(page.getByRole("heading", { name: pt.dashboard.title, level: 1 })).toBeVisible()
     await expect(page.getByText(`Grupo de pesquisa ativo: ${orgs.a.name}.`)).toBeVisible()
 
-    // Menu do usuário no rodapé da barra lateral.
-    const userMenu = page.getByRole("button", { name: users.signIn.email })
+    // Menu do usuário, no canto direito do topo.
+    const userMenu = page.getByRole("button", { name: users.signIn.name, exact: true })
     await hydrated(userMenu)
     await userMenu.click()
     await page.getByRole("menuitem", { name: pt.sidebar.signOut }).click()

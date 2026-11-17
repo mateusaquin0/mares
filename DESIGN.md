@@ -88,8 +88,8 @@ Os valores acima são os que o app usa. A fonte da verdade é `src/app/globals.c
 CSS, claro e `.dark`) e `tailwind.config.ts`; quando este arquivo e o código divergirem,
 corrija o que estiver errado na mesma mudança. O desenho de referência é o handoff
 "MARES 1a — Caderno de campo" (Claude Design). O redesenho entra por fatias: tokens, fontes e
-primitivos já estão no código; o que está marcado **(alvo)** ainda depende da fatia da casca
-ou das telas.
+primitivos e a casca (navegação no topo) já estão no código; o que está marcado **(alvo)**
+ainda depende das telas.
 
 ## Direção
 
@@ -157,9 +157,13 @@ número; o mapa de calor usa a rampa da cor de ação.
 
 ## Larguras
 
-- **Área logada e administração**: só desktop, mínimo 1024×600 (abaixo, aviso). **(alvo)** 1024–1279:
-  casca compacta com "Mais"; 1280+: casca completa. Conteúdo limitado a 1280px
-  (`padding: 0 max(24px, calc(50% - 640px))`); o mapa usa a largura total.
+- **Área logada e administração**: só desktop, mínimo 1024×600 (abaixo, aviso com o tamanho atual
+  da janela). Navegação no topo (`src/components/layout/app-header.tsx`): 1280+ tem a faixa da
+  marca (48px: grupo, Como usar, Sugestão / Bug, Meus envios, usuário) e a dos itens (40px);
+  1024–1279 é uma faixa só (44px) com os 5 primeiros itens e o resto em "Mais". Item ativo com
+  traço inferior de 3px na cor de ação; pendências em número na cor de alerta. O admin da
+  aplicação não participa de grupos e só vê os itens da administração. **(alvo)** Conteúdo
+  limitado a 1280px (`padding: 0 max(24px, calc(50% - 640px))`); o mapa usa a largura total.
 - **(alvo)** **Públicas** (landing, login, acesso, senhas, termos, mapa público): responsivas a partir de
   360px, alvos de toque de 44px; abaixo de 760px o painel da marca vira logotipo no topo.
 

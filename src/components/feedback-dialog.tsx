@@ -5,7 +5,7 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { toast } from "sonner"
-import { MessageSquarePlus, Lightbulb, Bug } from "lucide-react"
+import { Lightbulb, Bug } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { useCreateFeedback } from "@/hooks/use-feedback"
@@ -21,7 +21,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog"
 import {
   FEEDBACK_MESSAGE_MAX,
@@ -31,15 +30,20 @@ import {
 import { FEEDBACK_ATTACHMENT_MAX_PER_TICKET } from "@/lib/feedback-media"
 import { FeedbackImagePicker, FeedbackImagePreviews } from "@/components/feedback-image-picker"
 
-// Botão + diálogo para enviar sugestão ou relatar bug (usuário autenticado).
-// Fica no rodapé da sidebar; `collapsed` esconde o rótulo.
-export function FeedbackDialog({ collapsed }: { collapsed?: boolean }) {
+// Diálogo para enviar sugestão ou relatar bug (usuário autenticado). Aberto pela navegação
+// do topo, que controla `open`.
+export function FeedbackDialog({
+  open,
+  onOpenChange,
+}: {
+  open: boolean
+  onOpenChange: (open: boolean) => void
+}) {
   const t = useTranslations("feedback")
   const em = useErrorMessage()
   const pathname = usePathname()
   const createM = useCreateFeedback()
 
-  const [open, setOpen] = useState(false)
   const [type, setType] = useState<FeedbackTypeValue>("SUGGESTION")
   const [title, setTitle] = useState("")
   const [message, setMessage] = useState("")
@@ -70,7 +74,7 @@ export function FeedbackDialog({ collapsed }: { collapsed?: boolean }) {
       // como falha do envio.
       if (failedUploads > 0) toast.warning(t("attachError"))
       else toast.success(t("sent"))
-      setOpen(false)
+      onOpenChange(false)
       reset()
     } catch (err) {
       toast.error(t("sendError"), { description: em(err) })
@@ -86,24 +90,10 @@ export function FeedbackDialog({ collapsed }: { collapsed?: boolean }) {
     <Dialog
       open={open}
       onOpenChange={(o) => {
-        setOpen(o)
+        onOpenChange(o)
         if (!o) reset()
       }}
     >
-      <DialogTrigger asChild>
-        <button
-          type="button"
-          title={t("trigger")}
-          className={cn(
-            "flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-foreground/70 transition-colors hover:bg-muted hover:text-foreground",
-            collapsed && "justify-center px-0",
-          )}
-        >
-          <MessageSquarePlus className="size-4 shrink-0" />
-          {!collapsed && <span className="truncate">{t("trigger")}</span>}
-        </button>
-      </DialogTrigger>
-
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{t("dialogTitle")}</DialogTitle>
@@ -183,7 +173,7 @@ export function FeedbackDialog({ collapsed }: { collapsed?: boolean }) {
             {/* Atalho para acompanhar o que já foi enviado (status + resposta). */}
             <Link
               href="/app/feedback"
-              onClick={() => setOpen(false)}
+              onClick={() => onOpenChange(false)}
               className="mr-auto self-center text-xs text-muted-foreground underline-offset-4 hover:underline"
             >
               {t("seeMine")}
@@ -191,7 +181,7 @@ export function FeedbackDialog({ collapsed }: { collapsed?: boolean }) {
             <Button
               type="button"
               variant="ghost"
-              onClick={() => setOpen(false)}
+              onClick={() => onOpenChange(false)}
               disabled={createM.isPending}
             >
               {t("cancel")}

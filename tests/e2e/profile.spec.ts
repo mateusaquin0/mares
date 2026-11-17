@@ -50,8 +50,8 @@ test.describe("Perfil", () => {
     await name.fill(newName)
     await saveName.click()
     await expectToast(page, p.saved)
-    // O menu do usuário, na barra lateral, passa a mostrar o novo nome.
-    await expect(page.getByRole("button", { name: user.email })).toContainText(newName)
+    // O menu do usuário, no topo, passa a mostrar o novo nome.
+    await expect(page.getByRole("button", { name: newName, exact: true })).toBeVisible()
     await page.reload()
     await expect(page.getByLabel(p.nameLabel)).toHaveValue(newName)
 
@@ -102,7 +102,7 @@ test.describe("Perfil", () => {
     await expect(pw).toHaveValue("")
 
     // Sai e confere: a senha antiga não entra mais, a nova entra.
-    await page.getByRole("button", { name: user.email }).click()
+    await page.getByRole("button", { name: newName, exact: true }).click()
     await page.getByRole("menuitem", { name: pt.sidebar.signOut }).click()
     await expect(page).toHaveURL(/\/login$/)
 
@@ -112,7 +112,7 @@ test.describe("Perfil", () => {
 
     await signIn(page, user.email, newPassword)
     await expect(page).toHaveURL(/\/app\/dashboard$/)
-    await expect(page.getByRole("button", { name: user.email })).toContainText(newName)
+    await expect(page.getByRole("button", { name: newName, exact: true })).toBeVisible()
   })
 
   test("exclui o próprio perfil: a sessão acaba e o login deixa de funcionar", async ({ page }) => {

@@ -14,7 +14,10 @@ test.describe("Idioma e tema", () => {
   test.use({ storageState: storageStatePath("workAdmin") })
 
   async function userMenu(page: Page) {
-    const menu = page.getByRole("button", { name: loadFixtures().users.workAdmin.email })
+    const menu = page.getByRole("button", {
+      name: loadFixtures().users.workAdmin.name,
+      exact: true,
+    })
     await hydrated(menu)
     await menu.click()
   }
@@ -27,13 +30,16 @@ test.describe("Idioma e tema", () => {
     await expect(page.getByRole("heading", { name: pt.dashboard.title, level: 1 })).toBeVisible()
 
     await userMenu(page)
-    await page.getByRole("menuitem", { name: "English" }).click()
+    await page.getByRole("menuitemradio", { name: "English" }).click()
 
-    // A tela atual é traduzida sem recarregar: título, menu lateral e atributo de idioma.
+    // A tela atual é traduzida sem recarregar: título, navegação e atributo de idioma.
     await expect(page.locator("html")).toHaveAttribute("lang", "en")
     await expect(page.getByRole("heading", { name: en.dashboard.title, level: 1 })).toBeVisible()
     await expect(page.getByRole("link", { name: en.sidebar.animals, exact: true })).toBeVisible()
-    await expect(page.getByRole("link", { name: en.sidebar.catalogs, exact: true })).toBeVisible()
+    // O Glossário pode trazer a contagem de pendências junto do nome.
+    await expect(
+      page.getByRole("link", { name: new RegExp(`^${en.sidebar.catalogs}`) }),
+    ).toBeVisible()
     await expect(page.getByRole("link", { name: pt.sidebar.animals, exact: true })).toHaveCount(0)
 
     // Lista de animais.
@@ -70,7 +76,7 @@ test.describe("Idioma e tema", () => {
     // Volta para português.
     await page.goto("/app/dashboard")
     await userMenu(page)
-    await page.getByRole("menuitem", { name: "Português" }).click()
+    await page.getByRole("menuitemradio", { name: "Português" }).click()
     await expect(page.locator("html")).toHaveAttribute("lang", "pt")
     await expect(page.getByRole("heading", { name: pt.dashboard.title, level: 1 })).toBeVisible()
     await expect(page.getByRole("link", { name: pt.sidebar.animals, exact: true })).toBeVisible()
@@ -82,13 +88,13 @@ test.describe("Idioma e tema", () => {
 
     await page.goto("/app/dashboard")
     await userMenu(page)
-    await page.getByRole("menuitem", { name: pt.sidebar.themeLight }).click()
+    await page.getByRole("menuitemradio", { name: pt.sidebar.themeLight }).click()
     await expect(html).toHaveClass(/\blight\b/)
     await expect(html).not.toHaveClass(/\bdark\b/)
     const light = await background()
 
     // O menu continua aberto ao escolher o tema.
-    await page.getByRole("menuitem", { name: pt.sidebar.themeDark }).click()
+    await page.getByRole("menuitemradio", { name: pt.sidebar.themeDark }).click()
     await expect(html).toHaveClass(/\bdark\b/)
     // A cor de fundo muda de fato, não só a classe.
     await expect.poll(background).not.toBe(light)
@@ -97,7 +103,7 @@ test.describe("Idioma e tema", () => {
     await expect(page.locator("html")).toHaveClass(/\bdark\b/)
 
     await userMenu(page)
-    await page.getByRole("menuitem", { name: pt.sidebar.themeLight }).click()
+    await page.getByRole("menuitemradio", { name: pt.sidebar.themeLight }).click()
     await expect(html).not.toHaveClass(/\bdark\b/)
     await expect.poll(background).toBe(light)
   })
