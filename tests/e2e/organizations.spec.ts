@@ -1,12 +1,18 @@
-import { type Page } from "@playwright/test"
+import { type Locator, type Page } from "@playwright/test"
 
 import { expect, test } from "./helpers/test"
 
-import { hydrated, pickFromSelect, pt } from "./helpers/app"
+import { hydrated, pt } from "./helpers/app"
 import { AUTH_ENABLED, AUTH_SKIP_REASON, loadFixtures, storageStatePath } from "./helpers/fixtures"
 
-// Usuário com vínculo em dois grupos: a troca do grupo ativo (seletor da barra lateral) muda os
+// Usuário com vínculo em dois grupos: a troca do grupo ativo (seletor no topo) muda os
 // dados de todas as telas. Cada grupo tem um único animal, de ID próprio.
+
+// As opções da troca de grupo trazem o nome e, embaixo, o papel nele.
+async function switchOrg(page: Page, switcher: Locator, orgName: string) {
+  await switcher.click()
+  await page.getByRole("option").filter({ hasText: orgName }).click()
+}
 
 test.describe("Grupo ativo", () => {
   test.skip(!AUTH_ENABLED, AUTH_SKIP_REASON)
@@ -45,7 +51,7 @@ test.describe("Grupo ativo", () => {
     await expect(page.getByText(second!.animal.controlId)).toHaveCount(0)
 
     // Troca sem sair da tela: a lista passa a ser a do outro grupo.
-    await pickFromSelect(page, switcher, second!.org.name)
+    await switchOrg(page, switcher, second!.org.name)
     await expect(switcher).toHaveText(second!.org.name)
     await expect(page.getByRole("row").filter({ hasText: second!.animal.controlId })).toBeVisible()
     await expect(page.getByText(first!.animal.controlId)).toHaveCount(0)
@@ -60,7 +66,7 @@ test.describe("Grupo ativo", () => {
     // O registro do outro grupo deixa de abrir enquanto ele não é o ativo… e volta ao trocar.
     await page.goto("/app/animals")
     await hydrated(switcher)
-    await pickFromSelect(page, switcher, first!.org.name)
+    await switchOrg(page, switcher, first!.org.name)
     await searchAnimals(page)
     await expect(page.getByRole("row").filter({ hasText: first!.animal.controlId })).toBeVisible()
     await expect(page.getByText(second!.animal.controlId)).toHaveCount(0)
@@ -109,7 +115,7 @@ test.describe("Grupo ativo", () => {
     await requested
 
     const done = page.waitForResponse((res) => res.url().endsWith("/api/active-org"))
-    await pickFromSelect(page, switcher, second!.org.name)
+    await switchOrg(page, switcher, second!.org.name)
     expect((await done).status()).toBe(200)
     release()
 

@@ -102,7 +102,7 @@ test.describe("Solicitação de acesso", () => {
     const row = page.getByRole("row").filter({ hasText: data.org })
     await expect(row).toContainText(data.name)
     await expect(row).toContainText(data.email)
-    // A fila conta no menu lateral.
+    // A fila conta na navegação.
     await expect(
       page.getByRole("link", { name: pt.sidebar.adminRequests }).getByRole("status"),
     ).toBeVisible()

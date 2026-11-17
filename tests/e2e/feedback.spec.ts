@@ -138,7 +138,7 @@ test.describe("Feedback", () => {
     await admin.keyboard.press("Escape")
     await expect(adminRow.getByTitle(adm.status_IN_REVIEW)).toBeVisible()
 
-    // Autora: o indicador de resposta não lida, na linha e no menu lateral.
+    // Autora: o indicador de resposta não lida, na linha e na navegação.
     const row = await openMine(author)
     await expect(row.getByRole("status", { name: mine.unreadReply })).toBeVisible()
     await expect(row.getByTitle(mine.status_IN_REVIEW)).toBeVisible()

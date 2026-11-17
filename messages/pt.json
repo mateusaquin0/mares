@@ -149,7 +149,9 @@
   },
   "minWidth": {
     "title": "Tela muito estreita",
-    "description": "O MARES foi feito para telas de pelo menos 1024x600 pixels. Aumente a janela, diminua o zoom do navegador (Ctrl -) ou use um computador para continuar."
+    "description": "O MARES foi feito para telas de pelo menos 1024x600 pixels. Aumente a janela, diminua o zoom do navegador (Ctrl -) ou use um computador para continuar.",
+    "current": "Sua janela agora",
+    "required": "Mínimo necessário"
   },
   "sidebar": {
     "dashboard": "Dashboard",
@@ -160,7 +162,6 @@
     "members": "Membros",
     "catalogs": "Glossário",
     "myOrgs": "Meus grupos de pesquisa",
-    "comingSoon": "Disponível em breve",
     "adminSection": "Administração",
     "adminRequests": "Solicitações",
     "adminOrgs": "Grupos de pesquisa",
@@ -176,12 +177,13 @@
     "roleResearcher": "Pesquisador",
     "roleAdmin": "Administrador da aplicação",
     "globalAdminOrg": "Administração da aplicação",
-    "collapse": "Recolher menu",
-    "expand": "Expandir menu",
     "adminFeedback": "Sugestões e bugs",
     "myFeedback": "Meus envios",
     "tutorial": "Como usar",
-    "pending": "{count, plural, one {# item pendente} other {# itens pendentes}}"
+    "pending": "{count, plural, one {# item pendente} other {# itens pendentes}}",
+    "more": "Mais",
+    "navLabel": "Navegação principal",
+    "switchOrg": "Trocar de grupo de pesquisa"
   },
   "dashboard": {
     "title": "Dashboard",

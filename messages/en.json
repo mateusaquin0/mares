@@ -149,7 +149,9 @@
   },
   "minWidth": {
     "title": "Screen too narrow",
-    "description": "MARES is designed for screens of at least 1024x600 pixels. Enlarge the window, zoom out in your browser (Ctrl -) or use a desktop computer to continue."
+    "description": "MARES is designed for screens of at least 1024x600 pixels. Enlarge the window, zoom out in your browser (Ctrl -) or use a desktop computer to continue.",
+    "current": "Your window now",
+    "required": "Minimum required"
   },
   "sidebar": {
     "dashboard": "Dashboard",
@@ -160,7 +162,6 @@
     "members": "Members",
     "catalogs": "Glossary",
     "myOrgs": "My research groups",
-    "comingSoon": "Coming soon",
     "adminSection": "Administration",
     "adminRequests": "Requests",
     "adminOrgs": "Research groups",
@@ -176,12 +177,13 @@
     "roleResearcher": "Researcher",
     "roleAdmin": "Application administrator",
     "globalAdminOrg": "Application administration",
-    "collapse": "Collapse menu",
-    "expand": "Expand menu",
     "adminFeedback": "Suggestions & bugs",
     "myFeedback": "My submissions",
     "tutorial": "How to use",
-    "pending": "{count, plural, one {# pending item} other {# pending items}}"
+    "pending": "{count, plural, one {# pending item} other {# pending items}}",
+    "more": "More",
+    "navLabel": "Main navigation",
+    "switchOrg": "Switch research group"
   },
   "dashboard": {
     "title": "Dashboard",
