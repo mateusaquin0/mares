@@ -17,33 +17,6 @@ import {
 
 const UNTESTED = "UNTESTED"
 
-export const RESULT_DOT: Record<string, string> = {
-  POSITIVO: "bg-[hsl(123_41%_45%)]",
-  NEGATIVO: "bg-muted-foreground/40",
-  INCONCLUSIVO: "bg-[hsl(35_80%_50%)]",
-}
-
-// Marcador circular de um resultado (ou anel vazio quando não testado). `size` em unidades tw.
-export function ResultDot({
-  result,
-  className = "",
-}: {
-  result: ResultValue | null
-  className?: string
-}) {
-  if (!result)
-    return (
-      <span
-        className={`inline-block size-2.5 shrink-0 rounded-full border border-muted-foreground/30 ${className}`}
-      />
-    )
-  return (
-    <span
-      className={`inline-block size-2.5 shrink-0 rounded-full ${RESULT_DOT[result]} ${className}`}
-    />
-  )
-}
-
 // Ícone e tom de cada resultado: cor só para positivo e inconclusivo; negativo é neutro.
 export const RESULT_META: Record<
   ResultValue | typeof UNTESTED,
@@ -178,5 +151,34 @@ export function NotesInput({
         onCommit(raw === "" ? null : raw)
       }}
     />
+  )
+}
+
+// Resultado lido (sem edição): ícone + rótulo, cor só em positivo e inconclusivo.
+export function ResultMark({
+  result,
+  iconOnly = false,
+  className,
+}: {
+  result: ResultValue | null
+  iconOnly?: boolean
+  className?: string
+}) {
+  const t = useTranslations("analyses")
+  const meta = RESULT_META[result ?? UNTESTED]
+  const Icon = meta.icon
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center gap-1.5 whitespace-nowrap",
+        result === "POSITIVO" && "font-semibold text-positive",
+        result === "INCONCLUSIVO" && "font-semibold text-warning",
+        result === null && "text-muted-foreground",
+        className,
+      )}
+    >
+      <Icon className="size-3.5 shrink-0" aria-hidden />
+      <span className={iconOnly ? "sr-only" : undefined}>{t(meta.labelKey)}</span>
+    </span>
   )
 }

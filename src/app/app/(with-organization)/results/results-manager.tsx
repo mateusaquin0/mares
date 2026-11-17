@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react"
 import Link from "next/link"
 import { useLocale, useTranslations } from "next-intl"
-import { Download, Search, X } from "lucide-react"
+import { ChevronDown, Download, Search, X } from "lucide-react"
 
 import { animalHref } from "@/lib/animal-origin"
 import { pathogenName, txt } from "@/lib/catalog-i18n"
@@ -12,10 +12,9 @@ import { SEX_OPTIONS, LIFE_STAGE_OPTIONS } from "@/lib/animal-enums"
 import { useResearchList, useResearchResults } from "@/hooks/use-research"
 import { useDragScroll } from "@/hooks/use-drag-scroll"
 import type { ProtocolEntry, ResultValue, ResultsAnimal } from "@/types/analysis"
-import { ResultDot } from "@/components/analysis-cells"
+import { ResultMark } from "@/components/analysis-cells"
 import { Truncate } from "@/components/ui/truncate"
 import { Input } from "@/components/ui/input"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { MultiSelect } from "@/components/ui/multi-select"
@@ -101,14 +100,22 @@ export function ResultsManager() {
   ]
 
   const resultOptions = [
-    { value: "POSITIVO", label: ta("resultPositive"), icon: <ResultDot result="POSITIVO" /> },
-    { value: "NEGATIVO", label: ta("resultNegative"), icon: <ResultDot result="NEGATIVO" /> },
+    {
+      value: "POSITIVO",
+      label: ta("resultPositive"),
+      icon: <ResultMark result="POSITIVO" iconOnly />,
+    },
+    {
+      value: "NEGATIVO",
+      label: ta("resultNegative"),
+      icon: <ResultMark result="NEGATIVO" iconOnly />,
+    },
     {
       value: "INCONCLUSIVO",
       label: ta("resultInconclusive"),
-      icon: <ResultDot result="INCONCLUSIVO" />,
+      icon: <ResultMark result="INCONCLUSIVO" iconOnly />,
     },
-    { value: UNTESTED, label: ta("resultUntested"), icon: <ResultDot result={null} /> },
+    { value: UNTESTED, label: ta("resultUntested"), icon: <ResultMark result={null} iconOnly /> },
   ]
 
   const hasInactive = (data?.protocol ?? []).some((p) => p.status === "INACTIVE")
@@ -266,8 +273,8 @@ export function ResultsManager() {
 
   return (
     <div className="flex h-full min-h-[42rem] flex-col gap-4 px-page pb-8 pt-3.5">
-      <div className="flex items-start justify-between gap-4">
-        <div>
+      <div className="flex flex-wrap items-end justify-between gap-x-3 gap-y-2">
+        <div className="min-w-0 flex-[1_1_420px]">
           <h1 className="font-serif text-[28px] font-medium leading-8">{t("title")}</h1>
           <p className="mt-0.5 max-w-[820px] text-pretty text-muted-foreground">{t("subtitle")}</p>
         </div>
@@ -277,6 +284,7 @@ export function ResultsManager() {
               <Button variant="outline">
                 <Download className="size-4" />
                 {t("export")}
+                <ChevronDown className="size-4 text-muted-foreground" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
@@ -291,9 +299,11 @@ export function ResultsManager() {
         )}
       </div>
 
-      <div className="flex flex-wrap items-end gap-4">
-        <div className="w-full space-y-1 sm:w-64">
-          <label className="text-sm font-medium">{t("research")}</label>
+      <div className="grid grid-cols-4 items-end gap-x-3 gap-y-2.5">
+        <div className="col-span-2 grid min-w-0 gap-px">
+          <label className="text-xs font-semibold leading-[14px] text-muted-foreground">
+            {t("research")}
+          </label>
           <Select value={researchId} onValueChange={setResearchId}>
             <SelectTrigger>
               <SelectValue placeholder={t("selectResearch")} />
@@ -309,11 +319,13 @@ export function ResultsManager() {
         </div>
 
         {tests.length > 0 && (
-          <div className="w-full space-y-1 sm:w-auto">
-            <label className="text-sm font-medium">{t("test")}</label>
+          <div className="col-span-2 grid min-w-0 gap-px">
+            <label className="text-xs font-semibold leading-[14px] text-muted-foreground">
+              {t("test")}
+            </label>
             {tests.length > 1 ? (
               <Select value={test?.key ?? ""} onValueChange={setTestKeySel}>
-                <SelectTrigger className="w-full min-w-64">
+                <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -325,7 +337,7 @@ export function ResultsManager() {
                 </SelectContent>
               </Select>
             ) : (
-              <p className="flex h-9 items-center text-sm font-semibold">
+              <p className="flex h-[30px] items-center font-semibold">
                 {test ? testOption(test) : ""}
               </p>
             )}
@@ -336,20 +348,20 @@ export function ResultsManager() {
       {resultsQ.isLoading ? (
         <TableSkeleton rows={6} />
       ) : !data || data.protocol.length === 0 ? (
-        <p className="text-sm text-muted-foreground">{t("noProtocol")}</p>
+        <p className="text-muted-foreground">{t("noProtocol")}</p>
       ) : data.animals.length === 0 ? (
-        <p className="text-sm text-muted-foreground">{t("noAnimals")}</p>
+        <p className="text-muted-foreground">{t("noAnimals")}</p>
       ) : (
         <>
           <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3">
             <div className="flex flex-wrap items-center gap-3">
-              <div className="relative min-w-0 flex-1 sm:w-72 sm:flex-none">
-                <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+              <div className="relative w-72 min-w-0">
+                <Search className="pointer-events-none absolute left-2 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   placeholder={t("searchPlaceholder")}
-                  className="h-9 pl-9"
+                  className="pl-8"
                 />
               </div>
               <MultiSelect
@@ -360,7 +372,7 @@ export function ResultsManager() {
                 emptyText={t("columnsEmpty")}
                 summary={(n) => `${t("result")} · ${t("selectedCount", { count: n })}`}
                 searchable={false}
-                triggerClassName="h-9 w-auto min-w-40"
+                triggerClassName="w-auto min-w-48"
               />
               <MultiSelect
                 options={columnOptions}
@@ -370,7 +382,7 @@ export function ResultsManager() {
                 emptyText={t("columnsEmpty")}
                 summary={(n) => `${t("columns")} · ${t("selectedCount", { count: n })}`}
                 searchable={false}
-                triggerClassName="h-9 w-auto min-w-40"
+                triggerClassName="w-auto min-w-48"
               />
               {organOptions.length > 0 && (
                 <MultiSelect
@@ -384,11 +396,11 @@ export function ResultsManager() {
                   searchPlaceholder={t("searchOrgan")}
                   emptyText={t("columnsEmpty")}
                   summary={(n) => `${t("organs")} · ${t("selectedCount", { count: n })}`}
-                  triggerClassName="h-9 w-auto min-w-40"
+                  triggerClassName="w-auto min-w-48"
                 />
               )}
               {hasInactive && (
-                <label className="flex items-center gap-2 text-sm text-muted-foreground">
+                <label className="flex items-center gap-1.5">
                   <Checkbox
                     checked={showInactive}
                     onCheckedChange={(v) => setShowInactive(v === true)}
@@ -403,7 +415,7 @@ export function ResultsManager() {
                     setQuery("")
                     setResultSel([])
                   }}
-                  className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
+                  className="inline-flex items-center gap-1 text-[13px] text-primary underline underline-offset-2 hover:text-foreground"
                 >
                   <X className="size-3.5" />
                   {tan("clearFilters")}
@@ -412,51 +424,48 @@ export function ResultsManager() {
             </div>
 
             <div className="flex w-full flex-wrap items-center justify-between gap-x-4 gap-y-1.5">
-              <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-muted-foreground">
-                <span className="flex items-center gap-1.5">
-                  <ResultDot result="POSITIVO" /> {ta("resultPositive")}
-                </span>
-                <span className="flex items-center gap-1.5">
-                  <ResultDot result="NEGATIVO" /> {ta("resultNegative")}
-                </span>
-                <span className="flex items-center gap-1.5">
-                  <ResultDot result="INCONCLUSIVO" /> {ta("resultInconclusive")}
-                </span>
-                <span className="flex items-center gap-1.5">
-                  <ResultDot result={null} /> {ta("resultUntested")}
+              <div className="flex flex-wrap items-center gap-x-[18px] gap-y-1 text-[13px]">
+                <ResultMark result="POSITIVO" />
+                <ResultMark result="NEGATIVO" />
+                <ResultMark result="INCONCLUSIVO" />
+                <ResultMark result={null} />
+                <span aria-hidden className="h-4 w-px bg-border" />
+                <span className="flex items-center gap-1.5 text-muted-foreground">
+                  <b className="font-normal text-foreground">—</b>
+                  {t("emptyCellLegend")}
                 </span>
               </div>
-              <Badge variant="secondary">{t("animalCount", { count: animals.length })}</Badge>
+              <b className="font-semibold">{t("animalCount", { count: animals.length })}</b>
             </div>
           </div>
 
           {animals.length === 0 ? (
-            <p className="text-sm text-muted-foreground">{t("noMatch")}</p>
+            <p className="text-muted-foreground">{t("noMatch")}</p>
           ) : (
-            <div className="min-h-0 flex-1 overflow-hidden rounded-lg border [&>div]:h-full">
+            <div className="min-h-0 flex-1 overflow-hidden border-t-2 border-foreground [&>div]:h-full">
               <Table ref={attachDrag} density="compact">
-                <TableHeader className="sticky top-0 z-10 [&_th]:bg-accent">
+                <TableHeader className="sticky top-0 z-10 border-t-0 bg-background">
                   <TableRow>
-                    <TableHead>{t("colId")}</TableHead>
+                    <TableHead className="sticky left-0 z-[1] border-r border-border bg-background">
+                      {t("colId")}
+                    </TableHead>
                     <TableHead>{t("colSpecies")}</TableHead>
                     {showSexStage && <TableHead>{t("colSexStage")}</TableHead>}
                     {showLocation && <TableHead>{t("colLocation")}</TableHead>}
                     {showDate && <TableHead>{t("colDate")}</TableHead>}
                     {visibleOrgans.map((o) => (
-                      <TableHead key={o.id} className="text-center">
-                        {o.label}
-                      </TableHead>
+                      <TableHead key={o.id}>{o.label}</TableHead>
                     ))}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {pagedAnimals.map((a) => (
-                    <TableRow key={a.id}>
-                      <TableCell className="align-top">
+                    <TableRow key={a.id} className="hover:bg-transparent">
+                      <TableCell className="sticky left-0 z-[1] border-r border-border bg-background align-top">
                         <Truncate>
                           <Link
                             href={animalHref(a.id, "results")}
-                            className="font-semibold tabular-nums text-primary hover:underline"
+                            className="font-semibold tabular-nums underline underline-offset-2 hover:text-primary"
                           >
                             {idOf(a)}
                           </Link>
@@ -468,10 +477,10 @@ export function ResultsManager() {
                         )}
                       </TableCell>
                       <TableCell className="align-top">
-                        <Truncate className="italic">{a.species}</Truncate>
+                        <Truncate className="font-serif text-base italic">{a.species}</Truncate>
                       </TableCell>
                       {showSexStage && (
-                        <TableCell className="align-top text-sm text-muted-foreground">
+                        <TableCell className="align-top text-muted-foreground">
                           <Truncate>
                             {[sexLabel(a.sex), stageLabel(a.lifeStage)]
                               .filter(Boolean)
@@ -480,7 +489,7 @@ export function ResultsManager() {
                         </TableCell>
                       )}
                       {showLocation && (
-                        <TableCell className="align-top text-sm text-muted-foreground">
+                        <TableCell className="align-top text-muted-foreground">
                           <Truncate>{locationOf(a) || "—"}</Truncate>
                           {a.strandingBeach && (
                             <Truncate className="mt-0.5 text-xs">{a.strandingBeach}</Truncate>
@@ -488,25 +497,22 @@ export function ResultsManager() {
                         </TableCell>
                       )}
                       {showDate && (
-                        <TableCell className="align-top whitespace-nowrap text-sm text-muted-foreground">
+                        <TableCell className="whitespace-nowrap align-top text-muted-foreground">
                           {formatDateOnly(a.eventDate, locale) || "—"}
                         </TableCell>
                       )}
                       {visibleOrgans.map((o) => {
                         const { hasSample, result } = cellOf(a, o.id)
                         return (
-                          <TableCell key={o.id} className="text-center align-middle">
+                          <TableCell key={o.id} className="align-middle">
                             {hasSample ? (
-                              <span
-                                title={`${o.label}: ${resultLabel(result)}`}
-                                className="inline-flex"
-                              >
-                                <ResultDot result={result} />
+                              <span title={`${o.label}: ${resultLabel(result)}`}>
+                                <ResultMark result={result} />
                               </span>
                             ) : (
                               <span
                                 title={`${o.label}: ${t("noSampleForOrgan")}`}
-                                className="text-muted-foreground/40"
+                                className="text-muted-foreground"
                               >
                                 —
                               </span>
