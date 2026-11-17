@@ -17,7 +17,7 @@ import * as React from "react"
 import { useMemo, useState } from "react"
 import { useTranslations } from "next-intl"
 import { toast } from "sonner"
-import { Clock, Eye, EyeOff, X } from "lucide-react"
+import { Archive, ArchiveRestore, Clock, X } from "lucide-react"
 
 import { useResearchCatalog, useResearchList } from "@/hooks/use-research"
 import { useRemoveAnimalResearch, useSetAnimalHidden, useShareAnimal } from "@/hooks/use-animals"
@@ -105,9 +105,9 @@ export function ResearchShare({
   async function toggleHidden(researchId: string, hidden: boolean) {
     try {
       await hiddenM.mutateAsync({ researchId, hidden })
-      toast.success(hidden ? t("hideDone") : t("unhideDone"))
+      toast.success(hidden ? t("archiveDone") : t("restoreDone"))
     } catch (err) {
-      toast.error(t("hideError"), { description: em(err) })
+      toast.error(t("archiveError"), { description: em(err) })
     }
   }
 
@@ -116,7 +116,7 @@ export function ResearchShare({
     (isHidden(researchId) || accepted.length > 0) && (
       <HiddenButton
         hidden={isHidden(researchId)}
-        label={isHidden(researchId) ? t("unhideAction") : t("hideAction")}
+        label={isHidden(researchId) ? t("restoreAction") : t("archiveAction")}
         disabled={hiddenM.isPending}
         onClick={() => toggleHidden(researchId, !isHidden(researchId))}
       />
@@ -126,9 +126,9 @@ export function ResearchShare({
     <div className="space-y-4">
       {hiddenInMine.length > 0 && (
         <div className="flex flex-wrap items-center gap-2 rounded-md border border-dashed bg-muted/40 px-3 py-2 text-sm">
-          <EyeOff className="size-4 shrink-0 text-muted-foreground" />
+          <Archive className="size-4 shrink-0 text-muted-foreground" />
           <span className="flex-1">
-            {t("hiddenNotice", { research: hiddenInMine.map((l) => l.research.name).join(", ") })}
+            {t("archivedNotice", { research: hiddenInMine.map((l) => l.research.name).join(", ") })}
           </span>
           {hiddenInMine.map((l) => (
             <Button
@@ -139,8 +139,8 @@ export function ResearchShare({
               onClick={() => toggleHidden(l.research.id, false)}
             >
               {hiddenInMine.length > 1
-                ? t("unhideIn", { research: l.research.name })
-                : t("unhideAction")}
+                ? t("restoreIn", { research: l.research.name })
+                : t("restoreAction")}
             </Button>
           ))}
         </div>
@@ -301,7 +301,7 @@ function HiddenButton({
   disabled: boolean
   onClick: () => void
 }) {
-  const Icon = hidden ? EyeOff : Eye
+  const Icon = hidden ? ArchiveRestore : Archive
   return (
     <button
       type="button"

@@ -24,6 +24,7 @@ export type MapPoint = {
   state: string | null
   beach: string | null
   eventDate: string | null // ISO (YYYY-MM-DD) ou null
+  // Publicado no mapa público: animal marcado E pesquisa primária pública (src/lib/publication.ts).
   isPublic: boolean
   researchName: string | null
   // Patógenos com ao menos um resultado POSITIVO (nomes já resolvidos por locale).
@@ -45,7 +46,7 @@ const mapPointSelect = {
   strandingBeach: true,
   eventDate: true,
   isPublic: true,
-  research: { select: { name: true } },
+  research: { select: { name: true, isPublic: true } },
   samples: {
     select: {
       analyses: {
@@ -69,7 +70,7 @@ type RawPoint = {
   strandingBeach: string | null
   eventDate: Date | null
   isPublic: boolean
-  research: { name: string } | null
+  research: { name: string; isPublic: boolean } | null
   samples: { analyses: { pathogen: { scientificName: string | null; name: unknown } }[] }[]
 }
 
@@ -96,7 +97,7 @@ function toMapPoint(locale: string, a: RawPoint): MapPoint {
     state: a.state,
     beach: a.strandingBeach,
     eventDate: a.eventDate ? a.eventDate.toISOString().slice(0, 10) : null,
-    isPublic: a.isPublic,
+    isPublic: a.isPublic && (a.research?.isPublic ?? false),
     researchName: a.research?.name ?? null,
     positivePathogens: [...names].sort((x, y) => x.localeCompare(y, locale)),
   }

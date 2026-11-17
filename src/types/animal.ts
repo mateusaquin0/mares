@@ -151,7 +151,7 @@ export type AnimalDetail = {
   eventDate: string | null
   macroscopicNotes: string | null
   isPublic: boolean
-  research: { id: string; name: string }
+  research: { id: string; name: string; isPublic: boolean }
   // A pesquisa primária ocultou o indivíduo da própria listagem (ver participations.hiddenAt).
   primaryHiddenAt: string | null
   // Pesquisas adicionais (mesma org) que compartilham este indivíduo. PENDING = convite

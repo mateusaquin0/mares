@@ -61,7 +61,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
     const animal = await prisma.animal.findUnique({
       where: { id },
       include: {
-        research: { select: { id: true, name: true } },
+        research: { select: { id: true, name: true, isPublic: true } },
         // Inclui os convites PENDENTES: quem enxerga o indivíduo acompanha o que já
         // convidou (e pode cancelar). O status distingue participação de convite em aberto.
         participations: {

@@ -173,7 +173,7 @@ export function MapExplorer({ points, linkBase, linkQuery, showVisibility }: Pro
       positive: t("popupPositive"),
       noPositive: t("popupNoPositive"),
       viewDetails: t("popupViewDetails"),
-      hidden: t("legendHidden"),
+      unpublished: t("legendUnpublished"),
       undetermined: ta("speciesUndetermined"),
     }),
     [t, ta],
@@ -342,7 +342,7 @@ export function MapExplorer({ points, linkBase, linkQuery, showVisibility }: Pro
               <SelectContent>
                 <SelectItem value={ALL}>{t("allVisibility")}</SelectItem>
                 <SelectItem value="public">{t("legendPublic")}</SelectItem>
-                <SelectItem value="hidden">{t("legendHidden")}</SelectItem>
+                <SelectItem value="hidden">{t("legendUnpublished")}</SelectItem>
               </SelectContent>
             </Select>
           </Field>
@@ -382,7 +382,7 @@ export function MapExplorer({ points, linkBase, linkQuery, showVisibility }: Pro
               </span>
               <span className="flex items-center gap-1.5">
                 <Lock className="size-3.5" style={{ color: "#B45309" }} />
-                {t("legendHidden")}
+                {t("legendUnpublished")}
               </span>
             </div>
           )}

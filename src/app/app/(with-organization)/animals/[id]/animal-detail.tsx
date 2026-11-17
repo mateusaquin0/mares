@@ -12,6 +12,7 @@ import { ApiError } from "@/lib/http"
 import { useAnimal } from "@/hooks/use-animals"
 import { useResearchList } from "@/hooks/use-research"
 import { formatDateOnly } from "@/lib/date"
+import { publicationStatus } from "@/lib/publication"
 import { SEX_OPTIONS, LIFE_STAGE_OPTIONS } from "@/lib/animal-enums"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -28,6 +29,12 @@ import { MediaTab } from "./media-tab"
 import { AuditTab } from "./audit-tab"
 
 // Mapa depende de `window` (Leaflet) — nunca renderiza no servidor.
+const PUBLICATION_LABEL = {
+  published: "published",
+  researchPrivate: "unpublishedResearchPrivate",
+  withheld: "unpublishedWithheld",
+} as const
+
 const PointMap = dynamic(() => import("@/components/map/point-map"), {
   ssr: false,
   loading: () => <div className="h-full w-full animate-pulse bg-accent/40" />,
@@ -97,6 +104,7 @@ export function AnimalDetail({
   const na = t("notInformed")
   // Espécie nula = indeterminada (carcaça não identificável).
   const speciesLabel = animal.species ?? t("speciesUndetermined")
+  const publication = publicationStatus(animal.isPublic, animal.research.isPublic)
   const hasCoords = animal.strandingLat != null && animal.strandingLon != null
   const coords = hasCoords ? `${animal.strandingLat}, ${animal.strandingLon}` : na
   const locationLabel =
@@ -145,8 +153,8 @@ export function AnimalDetail({
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-3">
             <h1 className="text-2xl font-semibold italic tracking-tight">{speciesLabel}</h1>
-            <Badge variant={animal.isPublic ? "public" : "private"}>
-              {animal.isPublic ? t("public") : t("hidden")}
+            <Badge variant={publication === "published" ? "public" : "private"}>
+              {t(PUBLICATION_LABEL[publication])}
             </Badge>
           </div>
           <p className="mt-1 flex flex-wrap items-center gap-x-2 text-sm text-muted-foreground">

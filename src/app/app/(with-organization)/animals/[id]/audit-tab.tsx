@@ -129,7 +129,7 @@ export function AuditTab({ animalId }: { animalId: string }) {
         )[v] ?? v
       )
     }
-    if (r.field === "isPublic") return v === "true" ? t("valuePublic") : t("valuePrivate")
+    if (r.field === "isPublic") return v === "true" ? t("valueYes") : t("valueNo")
     if (r.field === "sex" && SEX_KEY[v]) return tan(SEX_KEY[v])
     if (r.field === "lifeStage" && LIFE_STAGE_KEY[v]) return tan(LIFE_STAGE_KEY[v])
     if (r.field === "status" && SAMPLE_STATUS_KEY[v]) return ts(SAMPLE_STATUS_KEY[v])

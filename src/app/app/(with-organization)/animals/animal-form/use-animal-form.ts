@@ -65,7 +65,7 @@ export const emptyForm: FormState = {
   executingInstitution: "",
   eventDate: "",
   macroscopicNotes: "",
-  isPublic: true, // visível por padrão; o admin pode ocultar (opt-out)
+  isPublic: true, // publicado por padrão; o admin pode retirar do mapa público (opt-out)
 }
 
 // Campos de encalhe que podem ser marcados como "sem informação" (desabilitados
