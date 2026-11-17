@@ -254,10 +254,14 @@ test.describe("Glossário — solicitação e curadoria", () => {
 
     await researcher.getByRole("tab", { name: c.tabSystems }).click()
     await researcher.getByRole("button", { name: c.request }).click()
+    // O aviso do primeiro pedido pode já ter saído (dura alguns segundos); quem prova o
+    // segundo envio é a resposta do servidor, e o aviso que vem depois dela.
+    const second = researcher.waitForResponse(
+      (res) => res.url().endsWith("/api/catalog-requests") && res.request().method() === "POST",
+    )
     await submitNamed(researcher, c.requestTitle, system, `${prefix} Refused system`, c.sendRequest)
-    await expect(
-      researcher.locator("[data-sonner-toast]").filter({ hasText: c.requestSent }),
-    ).toHaveCount(2)
+    expect((await second).ok()).toBe(true)
+    await expectToast(researcher, c.requestSent)
 
     // "Minhas solicitações": as duas pendentes.
     await researcher.getByRole("link", { name: c.myRequests }).click()
