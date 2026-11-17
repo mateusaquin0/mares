@@ -10,7 +10,7 @@ colors:
   input: "#7C8079"
   primary: "#0F4F49"
   on-primary: "#FFFFFF"
-  accent: "#E6EDE6"
+  accent: "#D6E1D6"
   positive: "#1F6B2E"
   positive-subtle: "#E3EEDD"
   warning: "#8A4B08"
