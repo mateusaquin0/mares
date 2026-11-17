@@ -1428,7 +1428,7 @@ async function main() {
             data: {
               animalId: animal.id,
               systemId: sys.id,
-              position: pos,
+              position: pos + 1,
               status,
               notExaminedReason: status === "NOT_EXAMINED" ? "Autólise avançada" : null,
             },
@@ -1451,7 +1451,7 @@ async function main() {
                   parasitesPresent: parasites,
                   parasitesCollected: parasites ? chance(0.6) : null,
                   parasiteCount: parasites && chance(0.5) ? 1 + Math.floor(rand() * 40) : null,
-                  position: f,
+                  position: f + 1,
                 },
               })
             }
@@ -1461,7 +1461,12 @@ async function main() {
           const items = HISTO.filter(() => chance(0.4))
           for (const [pos, [organKey, finding]] of items.entries()) {
             await prisma.histopathologyFinding.create({
-              data: { animalId: animal.id, organId: await organ(organKey), finding, position: pos },
+              data: {
+                animalId: animal.id,
+                organId: await organ(organKey),
+                finding,
+                position: pos + 1,
+              },
             })
           }
         }
