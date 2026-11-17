@@ -31,10 +31,10 @@ export function TutorialContent() {
   const t = useTranslations("tutorial")
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6 p-8">
+    <div className="max-w-3xl space-y-4 px-page pb-8 pt-3.5">
       <div>
-        <h1 className="text-3xl font-semibold tracking-tight">{t("title")}</h1>
-        <p className="mt-1 text-sm text-muted-foreground">{t("subtitle")}</p>
+        <h1 className="font-serif text-[28px] font-medium leading-8">{t("title")}</h1>
+        <p className="mt-0.5 max-w-[820px] text-pretty text-muted-foreground">{t("subtitle")}</p>
       </div>
 
       <Accordion type="single" collapsible defaultValue="overview" className="space-y-2">

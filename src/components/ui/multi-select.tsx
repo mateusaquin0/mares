@@ -64,7 +64,7 @@ export function MultiSelect({
           variant="outline"
           role="combobox"
           aria-expanded={open}
-          className={cn("h-9 w-full justify-between font-normal", triggerClassName)}
+          className={cn("h-[30px] w-full justify-between font-normal", triggerClassName)}
         >
           <span className={cn("truncate", value.length === 0 && "text-muted-foreground")}>
             {summary}

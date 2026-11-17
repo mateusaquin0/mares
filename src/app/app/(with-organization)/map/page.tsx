@@ -22,10 +22,10 @@ export default async function MapPage() {
     : []
 
   return (
-    <div className="flex h-full min-h-fit flex-col px-8 py-8">
+    <div className="flex h-full min-h-fit flex-col px-page pb-8 pt-3.5">
       <header className="mb-6">
-        <h1 className="text-3xl font-semibold tracking-tight text-foreground">{t("title")}</h1>
-        <p className="mt-1 text-sm text-muted-foreground">{t("subtitle")}</p>
+        <h1 className="font-serif text-[28px] font-medium leading-8">{t("title")}</h1>
+        <p className="mt-0.5 max-w-[820px] text-pretty text-muted-foreground">{t("subtitle")}</p>
       </header>
       <div className="min-h-fit flex-1">
         <MapExplorer points={points} linkBase="/app/animals" linkQuery="from=map" showVisibility />

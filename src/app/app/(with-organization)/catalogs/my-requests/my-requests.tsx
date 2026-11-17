@@ -33,10 +33,12 @@ export function MyRequests() {
   const fmtDate = (iso: string) => new Date(iso).toLocaleDateString(locale)
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6 p-8">
+    <div className="space-y-4 px-page pb-8 pt-3.5">
       <div>
-        <h1 className="text-3xl font-semibold tracking-tight">{t("mineTitle")}</h1>
-        <p className="mt-1 text-sm text-muted-foreground">{t("mineSubtitle")}</p>
+        <h1 className="font-serif text-[28px] font-medium leading-8">{t("mineTitle")}</h1>
+        <p className="mt-0.5 max-w-[820px] text-pretty text-muted-foreground">
+          {t("mineSubtitle")}
+        </p>
       </div>
 
       {listQ.isLoading ? (

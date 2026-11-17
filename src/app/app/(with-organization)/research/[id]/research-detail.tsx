@@ -175,7 +175,7 @@ export function ResearchDetail({
 
   if (researchQ.isLoading) {
     return (
-      <div className="mx-auto max-w-6xl space-y-6 p-8">
+      <div className="space-y-4 px-page pb-8 pt-3.5">
         <Skeleton className="h-8 w-64" />
         <Skeleton className="h-4 w-96" />
         <TableSkeleton rows={4} />
@@ -183,11 +183,11 @@ export function ResearchDetail({
     )
   }
   if (!research) {
-    return <p className="p-8 text-sm text-muted-foreground">{t("notFound")}</p>
+    return <p className="px-page py-8 text-muted-foreground">{t("notFound")}</p>
   }
 
   return (
-    <div className="mx-auto max-w-5xl space-y-6 p-8">
+    <div className="space-y-4 px-page pb-8 pt-3.5">
       <Link
         href="/app/research"
         className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
@@ -196,10 +196,10 @@ export function ResearchDetail({
         {t("back")}
       </Link>
 
-      <div className="flex flex-wrap items-start justify-between gap-3">
+      <div className="flex flex-wrap items-end justify-between gap-x-3 gap-y-2">
         <div className="min-w-0">
           <div className="flex min-w-0 flex-wrap items-center gap-2">
-            <h1 className="min-w-0 break-words text-3xl font-semibold tracking-tight">
+            <h1 className="min-w-0 break-words font-serif text-[28px] font-medium leading-8">
               {research.name}
             </h1>
             <Badge variant={research.isPublic ? "public" : "private"} className="shrink-0">

@@ -235,7 +235,10 @@
     "timelineCount": "Ocorrências",
     "heatmapTitle": "Mapa de calor",
     "heatmapDesc": "Concentração geográfica das ocorrências registradas.",
-    "heatmapEmpty": "Nenhuma ocorrência com coordenadas para exibir."
+    "heatmapEmpty": "Nenhuma ocorrência com coordenadas para exibir.",
+    "ofTotal": "de {total}",
+    "positivityBase": "Base do cálculo",
+    "positivityColumns": "% (positivos/total)"
   },
   "map": {
     "title": "Mapa",
@@ -684,7 +687,8 @@
     "leftResearchAdmin": "Você saiu da lista de membros",
     "leftResearchAdminDesc": "Como administrador do grupo, seu acesso aos dados continua.",
     "accessByRole": "Administra",
-    "accessByRoleHint": "Acesso pelo papel de administrador do grupo — sem vínculo com esta pesquisa."
+    "accessByRoleHint": "Acesso pelo papel de administrador do grupo — sem vínculo com esta pesquisa.",
+    "count": "{count, plural, one {# pesquisa} other {# pesquisas}}"
   },
   "animals": {
     "title": "Animais",
@@ -879,7 +883,10 @@
     "archivedTag": "Arquivado",
     "sectionIndividual": "Indivíduo",
     "sectionNotesReports": "Observações e laudos",
-    "noCoordinates": "Sem coordenadas registradas: o mapa aparece quando latitude e longitude forem informadas."
+    "noCoordinates": "Sem coordenadas registradas: o mapa aparece quando latitude e longitude forem informadas.",
+    "filtersTitle": "Filtros",
+    "count": "{count, plural, one {# animal} other {# animais}}",
+    "openAnimal": "Abrir o animal"
   },
   "samples": {
     "new": "Nova amostra",

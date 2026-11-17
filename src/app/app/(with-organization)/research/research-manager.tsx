@@ -56,12 +56,7 @@ function AccessCell({
 }) {
   const t = useTranslations("research")
 
-  if (item.isMember)
-    return (
-      <Badge variant="secondary" className="max-w-full">
-        <span className="truncate">{t("accessMember")}</span>
-      </Badge>
-    )
+  if (item.isMember) return <span className="truncate">{t("accessMember")}</span>
   // Admin da org sem vínculo: acessa (e edita) pelo PAPEL, não por participar da pesquisa.
   // O selo distingue isso de "Participa" e deixa claro que não há o que solicitar aqui.
   if (item.canSeeData) {
@@ -187,11 +182,11 @@ export function ResearchManager({ isOrgAdmin, selfId }: { isOrgAdmin: boolean; s
   }
 
   return (
-    <div className="mx-auto flex h-full min-h-[42rem] max-w-6xl flex-col gap-6 p-8">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+    <div className="flex h-full min-h-[42rem] flex-col gap-4 px-page pb-8 pt-3.5">
+      <div className="flex flex-wrap items-end justify-between gap-x-3 gap-y-2">
         <div>
-          <h1 className="text-3xl font-semibold tracking-tight">{t("title")}</h1>
-          <p className="mt-1 text-sm text-muted-foreground">{t("subtitle")}</p>
+          <h1 className="font-serif text-[28px] font-medium leading-8">{t("title")}</h1>
+          <p className="mt-0.5 max-w-[820px] text-pretty text-muted-foreground">{t("subtitle")}</p>
         </div>
         <div className="flex items-center gap-2">
           {/* Fila de pedidos de acesso — só aparece para quem tem o que responder. */}
@@ -206,21 +201,22 @@ export function ResearchManager({ isOrgAdmin, selfId }: { isOrgAdmin: boolean; s
       {loading ? (
         <TableSkeleton />
       ) : (
-        <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border bg-card shadow-card">
-          <div className="border-b p-4">
-            <div className="relative max-w-sm">
-              <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+        <div className="flex min-h-0 flex-1 flex-col">
+          <div className="flex flex-wrap items-center gap-2 pb-2.5">
+            <div className="relative min-w-0 flex-[0_1_320px]">
+              <Search className="pointer-events-none absolute left-2 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder={t("searchPlaceholder")}
-                className="pl-9"
+                className="pl-8"
               />
             </div>
+            <span className="text-muted-foreground">{t("count", { count: filtered.length })}</span>
           </div>
           <div className="min-h-0 flex-1 [&>div]:h-full [&>div]:overflow-x-hidden">
             <Table className="table-fixed [&_td]:truncate">
-              <TableHeader className="sticky top-0 z-10 [&_th]:bg-accent">
+              <TableHeader className="sticky top-0 z-10 bg-background">
                 <TableRow>
                   <TableHead className="w-[32%]">{t("colName")}</TableHead>
                   <TableHead className="w-[13%]">{t("colVisibility")}</TableHead>
@@ -243,13 +239,9 @@ export function ResearchManager({ isOrgAdmin, selfId }: { isOrgAdmin: boolean; s
                     key={r.id}
                     // Sem acesso aos dados não há detalhe a abrir: a linha é só a vitrine.
                     onClick={r.canSeeData ? () => router.push(`/app/research/${r.id}`) : undefined}
-                    className={
-                      r.canSeeData
-                        ? "cursor-pointer transition-colors hover:bg-muted/50"
-                        : undefined
-                    }
+                    className={r.canSeeData ? "cursor-pointer" : undefined}
                   >
-                    <TableCell className="font-medium">
+                    <TableCell className="font-semibold">
                       <Truncate className="max-w-full">{r.name}</Truncate>
                     </TableCell>
                     <TableCell>
@@ -281,7 +273,11 @@ export function ResearchManager({ isOrgAdmin, selfId }: { isOrgAdmin: boolean; s
                       {(isOrgAdmin || r.createdById === selfId || r.isMember) && (
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="size-8">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="size-7 text-muted-foreground"
+                            >
                               <MoreHorizontal className="size-4" />
                               <span className="sr-only">{t("colActions")}</span>
                             </Button>

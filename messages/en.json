@@ -235,7 +235,10 @@
     "timelineCount": "Occurrences",
     "heatmapTitle": "Heatmap",
     "heatmapDesc": "Geographic concentration of recorded occurrences.",
-    "heatmapEmpty": "No occurrences with coordinates to display."
+    "heatmapEmpty": "No occurrences with coordinates to display.",
+    "ofTotal": "of {total}",
+    "positivityBase": "Calculation basis",
+    "positivityColumns": "% (positives/total)"
   },
   "map": {
     "title": "Map",
@@ -684,7 +687,8 @@
     "leftResearchAdmin": "You left the member list",
     "leftResearchAdminDesc": "As a group admin, your access to the data remains.",
     "accessByRole": "Admin",
-    "accessByRoleHint": "Access through the group admin role — not a member of this research."
+    "accessByRoleHint": "Access through the group admin role — not a member of this research.",
+    "count": "{count, plural, one {# research project} other {# research projects}}"
   },
   "animals": {
     "title": "Animals",
@@ -879,7 +883,10 @@
     "archivedTag": "Archived",
     "sectionIndividual": "Individual",
     "sectionNotesReports": "Notes and reports",
-    "noCoordinates": "No coordinates recorded: the map appears once latitude and longitude are filled in."
+    "noCoordinates": "No coordinates recorded: the map appears once latitude and longitude are filled in.",
+    "filtersTitle": "Filters",
+    "count": "{count, plural, one {# animal} other {# animals}}",
+    "openAnimal": "Open the animal"
   },
   "samples": {
     "new": "New sample",

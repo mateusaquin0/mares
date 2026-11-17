@@ -311,11 +311,11 @@ export function CatalogManager({
   })
 
   return (
-    <div className="mx-auto flex h-full min-h-[42rem] max-w-6xl flex-col gap-6 p-8">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+    <div className="flex h-full min-h-[42rem] flex-col gap-4 px-page pb-8 pt-3.5">
+      <div className="flex flex-wrap items-end justify-between gap-x-3 gap-y-2">
         <div>
-          <h1 className="text-3xl font-semibold tracking-tight">{t("title")}</h1>
-          <p className="mt-1 text-sm text-muted-foreground">{t("subtitle")}</p>
+          <h1 className="font-serif text-[28px] font-medium leading-8">{t("title")}</h1>
+          <p className="mt-0.5 max-w-[820px] text-pretty text-muted-foreground">{t("subtitle")}</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           {isReviewer && (
