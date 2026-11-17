@@ -132,7 +132,7 @@ export function ProfileForm({ name, email }: { name: string; email: string }) {
                 </p>
               )}
             </div>
-            <Button type="submit" loading={pwForm.formState.isSubmitting}>
+            <Button type="submit" variant="outline" loading={pwForm.formState.isSubmitting}>
               {t("changePassword")}
             </Button>
           </form>
