@@ -1,8 +1,8 @@
-import { describe, it, expect, beforeAll, afterAll, vi } from "vitest"
+import { describe, it, expect, beforeAll, afterAll } from "vitest"
 import { randomUUID } from "node:crypto"
-import { NextRequest } from "next/server"
 import { prisma } from "@/lib/prisma"
 import type { AuthUser } from "@/lib/auth"
+import { login, member, req as request } from "./helpers/route"
 
 // Isolamento na camada de APLICAÇÃO, exercitado pelos PRÓPRIOS route handlers.
 // O servidor acessa o banco pelo Prisma, que ignora o RLS — é nos handlers que mora a barreira
@@ -13,25 +13,7 @@ import type { AuthUser } from "@/lib/auth"
 // Cada bloco tem a asserção POSITIVA (o membro alcança), para que um setup quebrado — handler
 // negando tudo — não passe como isolamento.
 //
-// Só a origem da sessão é substituída: `getAuthUser` devolve o usuário do cenário e
-// `getActiveOrgId` a organização ativa. Papéis, escopo por pesquisa e consultas são os reais.
-
-const session = vi.hoisted(() => ({
-  user: null as unknown,
-  orgId: null as string | null,
-}))
-
-// Fora do Next, o `react` instalado não exporta `cache` (memoização por request).
-vi.mock("react", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("react")>()),
-  cache: <T>(fn: T) => fn,
-}))
-vi.mock("@/lib/auth", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("@/lib/auth")>()),
-  getAuthUser: async () => session.user,
-  getActiveOrgId: async () => session.orgId,
-}))
-vi.mock("next-intl/server", () => ({ getLocale: async () => "pt" }))
+// Só a origem da sessão é substituída (ver helpers/route.ts); papéis, escopo e consultas são os reais.
 
 import { GET as getAnimal } from "@/app/api/animals/[id]/route"
 import { GET as getAnimalGrid } from "@/app/api/animals/[id]/grid/route"
@@ -60,28 +42,10 @@ let pathogenId: string
 let examTypeId: string
 const controlId = `ISO-${tag}`
 
-function as(id: string, orgId: string, role: "RESEARCHER" | "ORG_ADMIN"): AuthUser {
-  return {
-    id,
-    email: `iso-${id}@test.local`,
-    name: "Teste",
-    isSystemAdmin: false,
-    memberships: [{ orgId, orgName: "Org", role }],
-  }
-}
+const as = (id: string, orgId: string, role: "RESEARCHER" | "ORG_ADMIN"): AuthUser =>
+  member(id, [orgId, role])
 
-function login(user: AuthUser | null) {
-  session.user = user
-  session.orgId = user?.memberships[0]?.orgId ?? null
-}
-
-const req = (path: string, init?: { method: string; body: unknown }) =>
-  new NextRequest(`http://localhost${path}`, {
-    method: init?.method ?? "GET",
-    ...(init
-      ? { body: JSON.stringify(init.body), headers: { "content-type": "application/json" } }
-      : {}),
-  })
+const req = (path: string, init?: { method: "PUT"; body: unknown }) => request(path, init)
 const withId = (id: string) => ({ params: Promise.resolve({ id }) })
 
 beforeAll(async () => {

@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test"
+import { expect, test } from "./helpers/test"
 
 import { fillLogin, hydrated, pt, toast } from "./helpers/app"
 import { AUTH_ENABLED, AUTH_SKIP_REASON, loadFixtures } from "./helpers/fixtures"

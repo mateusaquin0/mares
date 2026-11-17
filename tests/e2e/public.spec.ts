@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test"
+import { expect, test } from "./helpers/test"
 
 // Smoke da superfície PÚBLICA (sem login). Verifica que a landing e o mapa público
 // carregam e que a navegação entre eles funciona. Assertivas estruturais (marca, links,

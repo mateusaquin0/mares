@@ -50,3 +50,39 @@ export async function hydrated(target: Locator) {
     .poll(() => target.evaluate((el) => Object.keys(el).some((k) => k.startsWith("__reactProps$"))))
     .toBe(true)
 }
+
+// Aviso flutuante mais recente com o texto dado: várias ações seguidas repetem a mesma
+// mensagem ("Achado registrado"), e os avisos anteriores ainda estão na tela.
+//
+// O prazo é maior que o padrão: o aviso só sai depois da resposta do servidor, e num `next dev`
+// a primeira chamada de cada rota inclui a compilação dela.
+export async function expectToast(page: Page, text: string) {
+  await expect(toast(page, text).last()).toBeVisible({ timeout: 60_000 })
+}
+
+// Abre o detalhe de um animal já numa das abas (Necrópsia, Biometria, Amostras…).
+export async function openAnimalTab(page: Page, animalId: string, tab: string) {
+  await page.goto(`/app/animals/${animalId}`)
+  const trigger = page.getByRole("tab", { name: tab })
+  await hydrated(trigger)
+  await trigger.click()
+}
+
+// Diálogo de confirmação (ConfirmDialog): confirma pela ação de rótulo dado.
+export async function confirmAlert(page: Page, title: string, action: string) {
+  const dialog = page.getByRole("alertdialog", { name: title })
+  await expect(dialog).toBeVisible()
+  await dialog.getByRole("button", { name: action, exact: true }).click()
+}
+
+// Menu "⋯" de uma linha de tabela: abre e escolhe o item.
+export async function rowMenu(page: Page, row: Locator, item: string, trigger = pt.common.actions) {
+  await row.getByRole("button", { name: trigger, exact: true }).click()
+  await page.getByRole("menuitem", { name: item, exact: true }).click()
+}
+
+// PNG 1×1 válido (o servidor confere os "magic bytes" do conteúdo, não só o tipo declarado).
+export const PNG_1X1 = Buffer.from(
+  "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==",
+  "base64",
+)
