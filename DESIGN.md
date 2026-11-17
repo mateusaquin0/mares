@@ -3,7 +3,7 @@ name: MARES 1a — Caderno de campo
 colors:
   background: "#EAE6DC"
   popover: "#FBFAF6"
-  muted: "#ECE9DF"
+  muted: "#E1DCD0"
   foreground: "#1A1D1B"
   muted-foreground: "#565B56"
   border: "#D8D4C6"
