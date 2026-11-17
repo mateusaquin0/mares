@@ -10,8 +10,8 @@
 // Cada pesquisa mantém suas próprias amostras/análises sobre o indivíduo; aqui tratamos
 // apenas o vínculo (quem estuda o indivíduo).
 //
-// Cada pesquisa também pode OCULTAR o indivíduo compartilhado da própria listagem (é a saída
-// quando ele não pode ser excluído) e reexibi-lo depois — o selo da pesquisa traz o botão.
+// Cada pesquisa também pode ARQUIVAR o indivíduo compartilhado na própria listagem (é a saída
+// quando ele não pode ser excluído) e restaurá-lo depois.
 
 import * as React from "react"
 import { useMemo, useState } from "react"
@@ -23,9 +23,9 @@ import { useResearchCatalog, useResearchList } from "@/hooks/use-research"
 import { useRemoveAnimalResearch, useSetAnimalHidden, useShareAnimal } from "@/hooks/use-animals"
 import { useErrorMessage } from "@/lib/use-error-message"
 import type { AnimalDetail } from "@/types/animal"
-import { Badge } from "@/components/ui/badge"
+import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { Truncate } from "@/components/ui/truncate"
+import { DataRow, SectionTitle } from "@/components/ui/section"
 import {
   Select,
   SelectContent,
@@ -62,8 +62,8 @@ export function ResearchShare({
   const ownsAnimal = isOrgAdmin || mine.has(animal.research.id)
   const canUnlink = (researchId: string) => ownsAnimal || mine.has(researchId)
 
-  // Ocultar é decisão de cada pesquisa sobre a própria listagem (o servidor aplica a mesma
-  // regra). Só faz sentido com o indivíduo compartilhado; reexibir é sempre possível.
+  // Arquivar é decisão de cada pesquisa sobre a própria listagem (o servidor aplica a mesma
+  // regra).
   const canToggleHidden = (researchId: string) => isOrgAdmin || mine.has(researchId)
   const linked = [
     { research: animal.research, hidden: !!animal.primaryHiddenAt },
@@ -111,23 +111,28 @@ export function ResearchShare({
     }
   }
 
-  const hiddenToggle = (researchId: string) =>
-    canToggleHidden(researchId) &&
-    (isHidden(researchId) || accepted.length > 0) && (
-      <HiddenButton
-        hidden={isHidden(researchId)}
+  // Arquivar só faz sentido com o indivíduo compartilhado; restaurar é sempre possível.
+  const archiveAction = (researchId: string) =>
+    canToggleHidden(researchId) && (isHidden(researchId) || accepted.length > 0) ? (
+      <IconAction
+        icon={isHidden(researchId) ? ArchiveRestore : Archive}
         label={isHidden(researchId) ? t("restoreAction") : t("archiveAction")}
         disabled={hiddenM.isPending}
         onClick={() => toggleHidden(researchId, !isHidden(researchId))}
       />
-    )
+    ) : null
 
   return (
-    <div className="space-y-4">
+    <section>
+      <SectionTitle>{t("shareTitle")}</SectionTitle>
+      <p className="mb-0.5 mt-1.5 text-pretty text-[13px] leading-[18px] text-muted-foreground">
+        {t("shareDesc")}
+      </p>
+
       {hiddenInMine.length > 0 && (
-        <div className="flex flex-wrap items-center gap-2 rounded-md border border-dashed bg-muted/40 px-3 py-2 text-sm">
-          <Archive className="size-4 shrink-0 text-muted-foreground" />
-          <span className="flex-1">
+        <div className="my-1.5 flex flex-wrap items-center gap-x-2 gap-y-1.5 rounded-sm border border-input bg-muted px-2.5 py-1.5">
+          <Archive className="size-4 shrink-0" />
+          <span className="min-w-0 flex-[1_1_220px] text-pretty font-semibold">
             {t("archivedNotice", { research: hiddenInMine.map((l) => l.research.name).join(", ") })}
           </span>
           {hiddenInMine.map((l) => (
@@ -135,9 +140,11 @@ export function ResearchShare({
               key={l.research.id}
               size="sm"
               variant="outline"
+              className="h-[26px] bg-popover font-semibold"
               disabled={hiddenM.isPending}
               onClick={() => toggleHidden(l.research.id, false)}
             >
+              <ArchiveRestore className="size-4" />
               {hiddenInMine.length > 1
                 ? t("restoreIn", { research: l.research.name })
                 : t("restoreAction")}
@@ -145,76 +152,77 @@ export function ResearchShare({
           ))}
         </div>
       )}
-      <div>
-        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-          {t("shareTitle")}
-        </p>
-        <p className="mt-0.5 text-xs text-muted-foreground">{t("shareDesc")}</p>
-      </div>
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        <ShareGroup label={t("sharePrimaryLabel")}>
-          <Badge
-            variant="secondary"
-            className={hiddenToggle(animal.research.id) ? "gap-1 pr-1" : undefined}
+      <dl>
+        <DataRow label={t("sharePrimaryLabel")} labelWidth="38%" className="py-1.5">
+          <ShareItem
+            name={animal.research.name}
+            archived={isHidden(animal.research.id)}
+            archivedLabel={t("archivedTag")}
           >
-            <ShareName>{animal.research.name}</ShareName>
-            {hiddenToggle(animal.research.id)}
-          </Badge>
-        </ShareGroup>
+            {archiveAction(animal.research.id)}
+          </ShareItem>
+        </DataRow>
 
-        <ShareGroup
-          label={t("shareAlsoLabel")}
-          empty={accepted.length === 0 ? t("shareNone") : null}
-        >
-          {accepted.map((p) => (
-            <Badge
-              key={p.research.id}
-              variant="outline"
-              className={
-                canUnlink(p.research.id) || hiddenToggle(p.research.id) ? "gap-1 pr-1" : undefined
-              }
-            >
-              <ShareName>{p.research.name}</ShareName>
-              {hiddenToggle(p.research.id)}
-              {canUnlink(p.research.id) && (
-                <RemoveButton
-                  label={t("shareRemove")}
-                  disabled={removeM.isPending}
-                  onClick={() => remove(p.research.id, false)}
-                />
-              )}
-            </Badge>
-          ))}
-        </ShareGroup>
+        <DataRow label={t("shareAlsoLabel")} labelWidth="38%" className="py-1.5">
+          {accepted.length === 0 ? (
+            <span className="text-muted-foreground">{t("shareNone")}</span>
+          ) : (
+            <div className="flex flex-col gap-1">
+              {accepted.map((p) => (
+                <ShareItem
+                  key={p.research.id}
+                  name={p.research.name}
+                  archived={isHidden(p.research.id)}
+                  archivedLabel={t("archivedTag")}
+                >
+                  {archiveAction(p.research.id)}
+                  {canUnlink(p.research.id) && (
+                    <IconAction
+                      icon={X}
+                      label={t("shareRemove")}
+                      disabled={removeM.isPending}
+                      onClick={() => remove(p.research.id, false)}
+                    />
+                  )}
+                </ShareItem>
+              ))}
+            </div>
+          )}
+        </DataRow>
 
         {pending.length > 0 && (
-          <ShareGroup label={t("sharePendingLabel")} hint={t("sharePendingHint")}>
-            {pending.map((p) => (
-              <Badge
-                key={p.research.id}
-                variant="outline"
-                className="gap-1 border-dashed pr-1 text-muted-foreground"
-              >
-                <Clock className="size-3 shrink-0" />
-                <ShareName>{p.research.name}</ShareName>
-                {canUnlink(p.research.id) && (
-                  <RemoveButton
-                    label={t("shareInviteCancel")}
-                    disabled={removeM.isPending}
-                    onClick={() => remove(p.research.id, true)}
-                  />
-                )}
-              </Badge>
-            ))}
-          </ShareGroup>
+          <DataRow
+            label={t("sharePendingLabel")}
+            labelWidth="38%"
+            title={t("sharePendingHint")}
+            className="py-1.5"
+          >
+            <div className="flex flex-col gap-1">
+              {pending.map((p) => (
+                <ShareItem key={p.research.id} name={p.research.name} pending>
+                  {canUnlink(p.research.id) && (
+                    <IconAction
+                      icon={X}
+                      label={t("shareInviteCancel")}
+                      disabled={removeM.isPending}
+                      onClick={() => remove(p.research.id, true)}
+                    />
+                  )}
+                </ShareItem>
+              ))}
+              <span className="text-pretty text-[13px] leading-[18px] text-muted-foreground">
+                {t("sharePendingHint")}
+              </span>
+            </div>
+          </DataRow>
         )}
-      </div>
+      </dl>
 
       {available.length > 0 && (
-        <div className="flex flex-wrap items-center gap-2 border-t pt-3">
+        <div className="mt-2.5 flex gap-2">
           <Select value={toAdd} onValueChange={setToAdd}>
-            <SelectTrigger className="h-9 w-64">
+            <SelectTrigger className="min-w-0 flex-1">
               <SelectValue placeholder={t("shareAddPlaceholder")} />
             </SelectTrigger>
             <SelectContent>
@@ -225,52 +233,57 @@ export function ResearchShare({
               ))}
             </SelectContent>
           </Select>
-          <Button size="sm" variant="outline" onClick={add} disabled={!toAdd || shareM.isPending}>
+          <Button variant="outline" onClick={add} disabled={!toAdd || shareM.isPending}>
             {t("shareAddButton")}
           </Button>
         </div>
       )}
-    </div>
+    </section>
   )
 }
 
-// Nome da pesquisa dentro do selo: nomes longos são a regra, então corta com reticências
-// (o texto completo fica no tooltip) para o selo não dominar a linha.
-function ShareName({ children }: { children: React.ReactNode }) {
-  return <Truncate className="max-w-[10rem]">{children}</Truncate>
-}
-
-// Um grupo rotulado de selos (de origem / também estudam / em aberto).
-function ShareGroup({
-  label,
-  hint,
-  empty,
+// Uma pesquisa na lista: nome cortado com o texto inteiro na dica, selo de arquivado e as
+// ações à direita.
+function ShareItem({
+  name,
+  archived,
+  archivedLabel,
+  pending,
   children,
 }: {
-  label: string
-  hint?: string
-  empty?: string | null
-  children: React.ReactNode
+  name: string
+  archived?: boolean
+  archivedLabel?: string
+  pending?: boolean
+  children?: React.ReactNode
 }) {
   return (
-    <div className="flex flex-col gap-1.5">
-      <p className="text-xs text-muted-foreground" title={hint}>
-        {label}
-      </p>
-      {empty ? (
-        <span className="text-sm text-muted-foreground">{empty}</span>
-      ) : (
-        <div className="flex flex-wrap items-center gap-2">{children}</div>
+    <span className="flex min-w-0 items-center gap-2">
+      {pending && <Clock className="size-4 shrink-0 text-warning" />}
+      <span
+        title={name}
+        className={cn("min-w-0 truncate font-medium", pending && "text-muted-foreground")}
+      >
+        {name}
+      </span>
+      {archived && (
+        <span className="shrink-0 rounded-sm border border-input px-1.5 text-xs font-semibold text-muted-foreground">
+          {archivedLabel}
+        </span>
       )}
-    </div>
+      <span className="flex-1" />
+      {children}
+    </span>
   )
 }
 
-function RemoveButton({
+function IconAction({
+  icon: Icon,
   label,
   disabled,
   onClick,
 }: {
+  icon: typeof X
   label: string
   disabled: boolean
   onClick: () => void
@@ -280,38 +293,11 @@ function RemoveButton({
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className="rounded-full p-0.5 text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-50"
       aria-label={label}
       title={label}
+      className="flex size-6 shrink-0 items-center justify-center rounded-sm text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-50"
     >
-      <X className="size-3" />
-    </button>
-  )
-}
-
-// Ocultar/reexibir o indivíduo na pesquisa do selo. O ícone mostra o estado atual.
-function HiddenButton({
-  hidden,
-  label,
-  disabled,
-  onClick,
-}: {
-  hidden: boolean
-  label: string
-  disabled: boolean
-  onClick: () => void
-}) {
-  const Icon = hidden ? ArchiveRestore : Archive
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={disabled}
-      className="rounded-full p-0.5 text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-50"
-      aria-label={label}
-      title={label}
-    >
-      <Icon className="size-3" />
+      <Icon className="size-4" />
     </button>
   )
 }

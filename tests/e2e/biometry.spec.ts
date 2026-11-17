@@ -83,9 +83,10 @@ test.describe("Biometria", () => {
 
     // O resumo da aba Informações e o Histórico acompanham.
     await page.getByRole("tab", { name: pt.animals.detailInfo }).click()
-    await expect(
-      page.getByRole("button", { name: /1 de 2 medidas · Odontoceti.*Comprimento total: 183 cm/ }),
-    ).toBeVisible()
+    await expect(page.getByText(/^1 de 2 medidas · Odontoceti/)).toContainText(
+      "Comprimento total: 183 cm",
+    )
+    await expect(page.getByRole("button", { name: b.summaryOpen })).toBeVisible()
     await page.getByRole("tab", { name: pt.animals.auditTab }).click()
     await expect(page.getByRole("main").getByText(pt.audit.entityBiometry).first()).toBeVisible()
   })

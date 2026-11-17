@@ -3,13 +3,14 @@
 import { useMemo, useState } from "react"
 import { useLocale, useTranslations } from "next-intl"
 import { toast } from "sonner"
+import * as AccordionPrimitive from "@radix-ui/react-accordion"
 import {
-  ArrowRight,
   ChevronRight,
   Info,
   Pencil,
   MoveHorizontal,
   Plus,
+  RotateCw,
   Trash2,
   TriangleAlert,
   X,
@@ -34,16 +35,12 @@ import {
 } from "@/hooks/use-necropsy"
 import { useCatalogList } from "@/hooks/use-catalog"
 import type { GrossFinding, HistopathologyFinding } from "@/types/necropsy"
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion"
+import { Accordion, AccordionContent, AccordionItem } from "@/components/ui/accordion"
 import { Combobox } from "@/components/ui/combobox"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { DataRow } from "@/components/ui/section"
 import { Skeleton, TableSkeleton } from "@/components/ui/skeleton"
 import { Truncate } from "@/components/ui/truncate"
 import { ConfirmDialog } from "@/components/confirm-dialog"
@@ -147,13 +144,11 @@ function topographyOf(f: GrossFinding, locale: string): string {
 }
 
 /**
- * Tabela de achados macroscópicos: uma linha por achado, com as nove colunas do formato do
- * SIMBA e rolagem horizontal própria.
+ * Tabela de achados macroscópicos: uma linha por achado, com as colunas do formato do SIMBA.
  *
- * As nove colunas não cabem nos ~900px do cartão, e comprimi-las custava informação — os três
- * campos de parasita viravam um só, as observações truncavam. Aqui a tabela tem a largura de
- * que precisa e rola dentro da própria caixa; `overscroll-x-contain` impede que esse gesto
- * seja repassado à página quando chega ao fim.
+ * Em 1440px cabe inteira; mais estreita, rola na horizontal dentro da própria caixa, com Nº e
+ * Órgão / tecido / local fixos à esquerda. `overscroll-x-contain` impede que o gesto seja
+ * repassado à página quando chega ao fim.
  *
  * `table-fixed` + colgroup, e não larguras nas <th>: com layout automático o navegador
  * distribui a sobra entre as colunas e a de Nº estica, deixando o número solto num vão.
@@ -188,35 +183,37 @@ function FindingsTable({
       <span className="font-medium">{value ? t("yes") : t("no")}</span>
     )
 
+  const sticky = "sticky z-[1] bg-background"
+
   return (
-    /* `contain: paint` é a garantia de nível de especificação de que NADA dentro desta
-       caixa afeta layout, pintura ou área rolável fora dela. `overflow: hidden` só clipa o
-       visual — a tabela larga aqui dentro ainda inflava a área de rolagem do DOCUMENTO (a
-       janela ganhava barras com os cantos vazios) ao ser aberta no accordion. */
-    <div className="overflow-hidden rounded-lg border bg-background [contain:paint]">
-      <div className="overflow-x-auto overscroll-x-contain">
-        <table className="min-w-[1312px] table-fixed border-collapse text-sm">
+    /* `contain: paint`: a tabela larga aqui dentro não pode inflar a área de rolagem do
+       documento ao abrir o sistema. */
+    <div className="mb-2.5 ml-[26px] border border-border [contain:paint]">
+      <div className="overflow-x-auto overflow-y-hidden overscroll-x-contain">
+        <table className="w-full min-w-[1140px] table-fixed border-collapse">
           <colgroup>
-            <col className="w-12" />
-            <col className="w-52" />
-            <col className="w-36" />
-            <col className="w-28" />
-            <col className="w-28" />
-            <col className="w-72" />
-            <col className="w-28" />
-            <col className="w-28" />
-            <col className="w-24" />
-            <col className="w-20" />
+            <col className="w-11" />
+            <col className="w-[200px]" />
+            <col />
+            <col className="w-[120px]" />
+            <col className="w-[120px]" />
+            <col />
+            <col className="w-[100px]" />
+            <col className="w-[100px]" />
+            <col className="w-[100px]" />
+            <col className="w-14" />
           </colgroup>
           <thead>
-            <tr className="[&_th]:bg-accent [&_th]:px-3 [&_th]:py-2.5 [&_th]:text-left [&_th]:align-bottom [&_th]:text-xs [&_th]:font-semibold [&_th]:uppercase [&_th]:tracking-wide [&_th]:text-accent-foreground">
-              <th>{t("colNumber")}</th>
-              <th>{t("colTopography")}</th>
-              <th>{t("colLesion")}</th>
+            <tr className="border-b border-foreground bg-muted text-left align-middle text-xs font-bold uppercase leading-[14px] tracking-[.05em] text-muted-foreground [&>th]:h-[30px] [&>th]:py-1">
+              <th className={cn(sticky, "left-0 bg-muted px-2")}>{t("colNumber")}</th>
+              <th className={cn(sticky, "left-11 border-r border-border bg-muted pr-2")}>
+                {t("colTopography")}
+              </th>
+              <th className="pl-2.5">{t("colLesion")}</th>
               <th>{t("colDistribution")}</th>
               <th>{t("colSeverity")}</th>
               <th>{t("colNotes")}</th>
-              <th className="border-l">{t("colParasitesPresent")}</th>
+              <th className="border-l border-border pl-2">{t("colParasitesPresent")}</th>
               <th>{t("colParasitesCollected")}</th>
               <th>{t("colParasiteCount")}</th>
               <th />
@@ -224,15 +221,19 @@ function FindingsTable({
           </thead>
           <tbody>
             {findings.map((f) => (
-              <tr key={f.id} className="border-t align-top [&>td]:px-3 [&>td]:py-3">
-                <td className="font-semibold tabular-nums text-muted-foreground">
+              <tr key={f.id} className="border-b border-border align-middle [&>td]:py-1">
+                <td
+                  className={cn(
+                    sticky,
+                    "left-0 px-2 font-semibold tabular-nums text-muted-foreground",
+                  )}
+                >
                   {String(f.position).padStart(2, "0")}
                 </td>
-                {/* As três colunas de texto livre são limitadas em altura: sem isto uma lesão
-                    de 255 caracteres ou uma observação de 500 transformam a linha numa torre
-                    e desalinham tudo ao lado. O `Truncate` expõe o texto inteiro no tooltip
-                    nativo quando corta. */}
-                <td className="font-medium">
+                {/* As colunas de texto livre são limitadas em altura: sem isto uma lesão de 255
+                    caracteres ou uma observação de 500 transformam a linha numa torre. O
+                    `Truncate` expõe o texto inteiro na dica quando corta. */}
+                <td className={cn(sticky, "left-11 border-r border-border pr-2 font-semibold")}>
                   {topographyOf(f, locale) ? (
                     <Truncate lines={2} className="max-w-none">
                       {topographyOf(f, locale)}
@@ -241,18 +242,14 @@ function FindingsTable({
                     <span className="text-muted-foreground">—</span>
                   )}
                 </td>
-                <td className="font-medium">
-                  <Truncate lines={2} className="max-w-none">
+                <td className="px-2.5 font-medium">
+                  <Truncate lines={3} className="max-w-none">
                     {f.lesion}
                   </Truncate>
                 </td>
-                <td className="text-muted-foreground">
-                  {label(DISTRIBUTION_OPTIONS, f.distribution) ?? "—"}
-                </td>
-                <td className="text-muted-foreground">
-                  {label(SEVERITY_OPTIONS, f.severity) ?? "—"}
-                </td>
-                <td className="text-muted-foreground">
+                <td>{label(DISTRIBUTION_OPTIONS, f.distribution) ?? "—"}</td>
+                <td>{label(SEVERITY_OPTIONS, f.severity) ?? "—"}</td>
+                <td className="pr-2 text-muted-foreground">
                   {f.notes ? (
                     <Truncate lines={3} className="max-w-none">
                       {f.notes}
@@ -261,7 +258,7 @@ function FindingsTable({
                     "—"
                   )}
                 </td>
-                <td className="border-l">
+                <td className="border-l border-border pl-2">
                   <Tri value={f.parasitesPresent} />
                 </td>
                 <td>
@@ -275,27 +272,13 @@ function FindingsTable({
                   )}
                 </td>
                 <td>
-                  <div className="-mt-1 flex justify-end gap-1">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="size-8"
-                      onClick={() => onEdit(f)}
-                      title={tc("edit")}
-                    >
-                      <Pencil className="size-4" />
-                      <span className="sr-only">{tc("edit")}</span>
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="size-8 text-muted-foreground hover:text-destructive"
-                      onClick={() => onDelete(f)}
-                      title={tc("delete")}
-                    >
-                      <Trash2 className="size-4" />
-                      <span className="sr-only">{tc("delete")}</span>
-                    </Button>
+                  <div className="flex justify-end gap-0.5 pr-1">
+                    <IconButton label={tc("edit")} onClick={() => onEdit(f)}>
+                      <Pencil />
+                    </IconButton>
+                    <IconButton label={tc("delete")} destructive onClick={() => onDelete(f)}>
+                      <Trash2 />
+                    </IconButton>
                   </div>
                 </td>
               </tr>
@@ -303,12 +286,14 @@ function FindingsTable({
           </tbody>
         </table>
       </div>
-      <div className="flex flex-wrap items-center justify-between gap-3 border-t bg-muted/40 px-3 py-2">
-        <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
-          <MoveHorizontal className="size-3.5" />
+      <div className="flex flex-wrap items-center gap-2.5 bg-popover px-2 py-1.5">
+        {/* A dica só faz sentido quando a tabela não cabe (abaixo de 1280px). */}
+        <span className="flex items-center gap-1.5 text-[13px] text-muted-foreground xl:hidden">
+          <MoveHorizontal className="size-4" />
           {t("scrollHint")}
         </span>
-        <Button variant="outline" size="sm" className="border-dashed" onClick={onAdd}>
+        <span className="flex-1" />
+        <Button variant="outline" size="sm" className="h-[26px]" onClick={onAdd}>
           <Plus className="size-4" />
           {t("addFinding")}
         </Button>
@@ -317,18 +302,45 @@ function FindingsTable({
   )
 }
 
+function IconButton({
+  label,
+  destructive,
+  onClick,
+  children,
+}: {
+  label: string
+  destructive?: boolean
+  onClick: () => void
+  children: React.ReactNode
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      title={label}
+      aria-label={label}
+      className={cn(
+        "flex size-7 items-center justify-center rounded-sm text-muted-foreground hover:bg-muted [&_svg]:size-4",
+        destructive ? "hover:text-destructive" : "hover:text-foreground",
+      )}
+    >
+      {children}
+    </button>
+  )
+}
+
 // ── Cabeçalho de uma das três partes do laudo ────────────────────────────────
 // O resumo à direita é o que a parte FECHADA continua contando (respostas preenchidas,
 // sistemas avaliados, achados registrados) — sem ele, o accordion esconderia o progresso.
-// O `flex-1` deixa a seta do gatilho encostada na borda, como na aba de análises.
-function SectionHeading({ title, summary }: { title: string; summary: string }) {
+function SectionTrigger({ title, summary }: { title: string; summary: string }) {
   return (
-    <span className="flex flex-1 flex-wrap items-center gap-3">
-      <span className="text-lg font-semibold">{title}</span>
-      <span className="ml-auto shrink-0 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-        {summary}
-      </span>
-    </span>
+    <AccordionPrimitive.Header className="flex">
+      <AccordionPrimitive.Trigger className="group flex flex-1 items-baseline gap-3 border-b border-foreground py-[5px] text-left font-serif text-[17px] font-semibold leading-[22px] outline-none transition-colors hover:text-primary focus-visible:bg-accent">
+        <ChevronRight className="size-3.5 shrink-0 self-center text-muted-foreground transition-transform group-data-[state=open]:rotate-90" />
+        <span className="flex-1">{title}</span>
+        <span className="font-sans text-[13px] font-normal text-muted-foreground">{summary}</span>
+      </AccordionPrimitive.Trigger>
+    </AccordionPrimitive.Header>
   )
 }
 
@@ -483,97 +495,103 @@ export function NecropsyTab({ animalId }: { animalId: string }) {
   // sobre a necrópsia, e exibi-la quando na verdade não se sabe é pior do que não exibir nada.
   if (reportQ.isError) {
     return (
-      <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed p-10 text-center">
-        <TriangleAlert className="size-8 text-destructive" />
-        <p className="font-semibold">{t("loadError")}</p>
-        <p className="max-w-md text-sm text-muted-foreground">{em(reportQ.error)}</p>
-        <Button variant="outline" size="sm" onClick={() => void reportQ.refetch()}>
-          {tc("reload")}
-        </Button>
+      <div
+        role="alert"
+        className="grid grid-cols-[20px_minmax(0,1fr)] gap-x-2.5 gap-y-1 border-b border-t-2 border-b-border border-t-destructive py-3.5"
+      >
+        <TriangleAlert className="mt-px size-[18px] text-destructive" />
+        <b className="font-semibold">{t("loadError")}</b>
+        <span />
+        <span className="text-muted-foreground">{em(reportQ.error)}</span>
+        <span />
+        <span>
+          <Button
+            variant="outline"
+            size="sm"
+            className="mt-1.5"
+            onClick={() => void reportQ.refetch()}
+          >
+            <RotateCw className="size-4" />
+            {tc("reload")}
+          </Button>
+        </span>
       </div>
     )
   }
 
   return (
     <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-      {/* Um único elemento rolável, no molde de samples-tab.tsx: a raiz fica fixa e este
-          contêiner absorve tanto a altura (accordion aberto) quanto a largura (tabela de 9
-          colunas). `overflow-auto` explícito nos DOIS eixos — deixar o horizontal em
-          `visible` fazia o conteúdo largo escapar para a janela. */}
-      {/* Mesma razão do `contain:paint` na caixa da tabela, no outro eixo: com o accordion
-          aberto o conteúdo cresce e inflava a altura de rolagem do DOCUMENTO, mesmo com este
-          contêiner rolando por conta própria. `overflow` clipa o visual; `contain` é o que
-          impede o subtree de contribuir para a área rolável de fora. */}
+      {/* Um único elemento rolável: a raiz fica fixa e este contêiner absorve a altura
+          (accordion aberto). `contain: paint` impede que o conteúdo infle a rolagem do
+          documento. */}
       <div className="min-h-0 min-w-0 flex-1 overflow-auto overscroll-contain [contain:paint]">
-        {/* As três partes do laudo, uma aberta por vez (`type="single"`): abertas todas
-            juntas, a tabela de nove colunas do macro empurrava a histopatologia para fora
-            da tela e a rolagem era o único jeito de saber que ela existia. O resumo à
-            direita de cada título é o que a seção fechada continua dizendo.
-            `collapsible` permite fechar a que está aberta e ver as três de relance. */}
-        <Accordion type="single" collapsible defaultValue="screening" className="space-y-3">
+        {/* As três partes do laudo, uma aberta por vez: abertas todas juntas, a tabela do
+            macro empurrava a histopatologia para fora da tela. O resumo à direita de cada
+            título é o que a seção fechada continua dizendo. */}
+        <Accordion
+          type="single"
+          collapsible
+          defaultValue="screening"
+          className="flex flex-col gap-3.5 pb-8"
+        >
           {/* ── Triagem da carcaça ───────────────────────────────────────────── */}
           {/* Vem antes do exame por sistema porque é a leitura da carcaça inteira: interação
               antrópica e conteúdo gastrointestinal valem para o indivíduo, não para um
-              sistema. `screening` só falta enquanto a query carrega, o que já foi tratado. */}
+              sistema. */}
           <AccordionItem value="screening">
-            <AccordionTrigger>
-              <SectionHeading
-                title={t("screeningTitle")}
-                summary={t("screeningProgress", { answered: screeningAnswered, total: 4 })}
-              />
-            </AccordionTrigger>
-            <AccordionContent className="p-4">
+            <SectionTrigger
+              title={t("screeningTitle")}
+              summary={t("screeningProgress", { answered: screeningAnswered, total: 4 })}
+            />
+            <AccordionContent className="pb-0 pt-1.5">
               {screening && <NecropsyScreeningSection animalId={animalId} screening={screening} />}
             </AccordionContent>
           </AccordionItem>
 
           {/* ── Macroscópico ─────────────────────────────────────────────────── */}
           <AccordionItem value="macro" className="min-w-0">
-            <AccordionTrigger>
-              <SectionHeading
-                title={t("macroTitle")}
-                summary={t("progress", { assessed, total })}
-              />
-            </AccordionTrigger>
-            <AccordionContent className="min-w-0 space-y-4 p-4">
-              <p className="text-sm text-muted-foreground">{t("macroSubtitle", { total })}</p>
+            <SectionTrigger title={t("macroTitle")} summary={t("progress", { assessed, total })} />
+            <AccordionContent className="min-w-0 pb-0 pt-1.5">
+              <p className="mb-1 text-[13px] text-muted-foreground">
+                {t("macroSubtitle", { total })}
+              </p>
 
               {total > 0 && assessed === 0 && (
-                <div className="flex gap-3 rounded-lg border border-accent-foreground/30 bg-accent/40 p-4">
-                  <Info className="mt-0.5 size-5 shrink-0 text-accent-foreground" />
-                  <p className="text-sm">{t("macroEmptyHint")}</p>
+                <div
+                  role="note"
+                  className="my-1.5 grid grid-cols-[18px_minmax(0,1fr)] gap-2.5 border border-info bg-info-subtle px-3 py-2"
+                >
+                  <Info className="mt-0.5 size-4 text-info" />
+                  <span className="text-pretty">{t("macroEmptyHint")}</span>
                 </div>
               )}
 
               {total === 0 ? (
-                <div className="flex flex-col items-center gap-2 rounded-xl border border-dashed bg-muted/30 px-6 py-10 text-center">
+                <div className="my-2 border border-dashed border-input px-6 py-8 text-center">
                   <p className="font-semibold text-muted-foreground">{t("noSystemsTitle")}</p>
-                  <p className="max-w-xl text-sm text-muted-foreground">
+                  <p className="mx-auto mt-1 max-w-xl text-muted-foreground">
                     {catalog.length === 0 ? t("catalogEmptyHint") : t("noSystemsHint")}
                   </p>
                 </div>
               ) : (
-                <div className="overflow-hidden rounded-xl border">
-                  {rows.map((r, i) => {
+                <div>
+                  {rows.map((r) => {
                     const isOpen = openSystems.has(r.systemId)
                     const unset = r.status === null
                     const expandable = r.status === "ALTERED"
                     return (
-                      <div
-                        key={r.examId}
-                        className={cn(i > 0 && "border-t", unset && "bg-muted/30")}
-                      >
-                        <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3.5">
+                      <div key={r.examId} className="border-b border-border">
+                        <div className="flex min-h-[38px] items-center gap-3">
                           {expandable ? (
                             <button
                               type="button"
                               onClick={() => toggleSystem(r.systemId)}
                               aria-expanded={isOpen}
-                              className="flex items-center gap-2.5 text-left font-semibold"
+                              className="flex items-center gap-3 text-left font-semibold hover:text-primary"
                             >
                               <ChevronRight
                                 className={cn(
-                                  "size-4 text-muted-foreground transition-transform",
+                                  "size-3.5 shrink-0 text-muted-foreground transition-transform",
                                   isOpen && "rotate-90",
                                 )}
                               />
@@ -582,90 +600,83 @@ export function NecropsyTab({ animalId }: { animalId: string }) {
                           ) : (
                             <span
                               className={cn(
-                                "flex items-center gap-2.5 font-semibold",
+                                "flex items-center gap-3 font-semibold",
                                 unset && "font-medium text-muted-foreground",
                               )}
                             >
-                              <ChevronRight className="size-4 text-transparent" />
+                              <span aria-hidden className="w-3.5 shrink-0" />
                               {r.label}
                             </span>
                           )}
+                          <span className="flex-1" />
 
-                          <div className="flex flex-wrap items-center gap-3">
-                            {r.status === "NOT_EXAMINED" && r.exam?.notExaminedReason && (
-                              <span className="text-sm text-muted-foreground">
-                                {t("reasonPrefix")}{" "}
-                                <span className="font-medium text-foreground">
-                                  {r.exam.notExaminedReason}
-                                </span>
-                              </span>
-                            )}
-                            {expandable && (
-                              <span className="text-sm text-muted-foreground">
-                                {t("findingCount", { count: r.findings.length })}
-                              </span>
-                            )}
-                            <DropdownMenu>
-                              <DropdownMenuTrigger
-                                className="rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                                aria-label={t("changeStatus", { system: r.label })}
-                              >
-                                <NecropsyStatusBadge status={r.status} className="cursor-pointer" />
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                {NECROPSY_STATUS_OPTIONS.map((o) => (
-                                  <DropdownMenuItem
-                                    key={o.value}
-                                    onSelect={() => chooseStatus(r.systemId, o.value)}
-                                  >
-                                    <span className="flex items-center gap-2">
-                                      <NecropsyStatusIcon status={o.value} />
-                                      {statusLabel(o.value)}
-                                    </span>
-                                  </DropdownMenuItem>
-                                ))}
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                            {/* Tira o sistema DESTE laudo; o catálogo continua intacto. */}
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="size-8 text-muted-foreground hover:text-destructive"
-                              onClick={() => void removeSystem(r.systemId)}
-                              title={t("removeSystem")}
+                          {r.status === "NOT_EXAMINED" && r.exam?.notExaminedReason && (
+                            <span className="text-muted-foreground">
+                              {t("reasonPrefix")}{" "}
+                              <b className="font-semibold text-foreground">
+                                {r.exam.notExaminedReason}
+                              </b>
+                            </span>
+                          )}
+                          {expandable && (
+                            <span className="text-muted-foreground">
+                              {t("findingCount", { count: r.findings.length })}
+                            </span>
+                          )}
+                          <DropdownMenu>
+                            <DropdownMenuTrigger
+                              className="outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                              aria-label={t("changeStatus", { system: r.label })}
+                              title={t("changeStatus", { system: r.label })}
                             >
-                              <X className="size-4" />
-                              <span className="sr-only">{t("removeSystem")}</span>
-                            </Button>
-                          </div>
+                              <NecropsyStatusBadge status={r.status} selector />
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              {NECROPSY_STATUS_OPTIONS.map((o) => (
+                                <DropdownMenuItem
+                                  key={o.value}
+                                  onSelect={() => chooseStatus(r.systemId, o.value)}
+                                >
+                                  <NecropsyStatusIcon status={o.value} />
+                                  {statusLabel(o.value)}
+                                </DropdownMenuItem>
+                              ))}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                          {/* Tira o sistema DESTE laudo; o catálogo continua intacto. */}
+                          <IconButton
+                            label={t("removeSystem")}
+                            destructive
+                            onClick={() => void removeSystem(r.systemId)}
+                          >
+                            <X />
+                          </IconButton>
                         </div>
 
-                        {expandable && isOpen && (
-                          <div className="px-4 pb-4">
-                            {r.findings.length === 0 ? (
-                              <div className="flex flex-col items-center gap-3 rounded-lg border border-dashed p-8 text-center">
-                                <p className="text-sm text-muted-foreground">
-                                  {t("noFindingsYet")}
-                                </p>
-                                <Button
-                                  size="sm"
-                                  onClick={() => setFindingDialog({ systemId: r.systemId })}
-                                >
-                                  <Plus className="size-4" />
-                                  {t("addFinding")}
-                                </Button>
-                              </div>
-                            ) : (
-                              <FindingsTable
-                                findings={r.findings}
-                                locale={locale}
-                                onAdd={() => setFindingDialog({ systemId: r.systemId })}
-                                onEdit={(f) => setFindingDialog({ systemId: r.systemId, row: f })}
-                                onDelete={(f) => setConfirmFinding(f)}
-                              />
-                            )}
-                          </div>
-                        )}
+                        {expandable &&
+                          isOpen &&
+                          (r.findings.length === 0 ? (
+                            <div className="mb-2.5 ml-[26px] flex flex-wrap items-center gap-3 border border-border px-3 py-2.5">
+                              <span className="flex-1 text-muted-foreground">
+                                {t("noFindingsYet")}
+                              </span>
+                              <Button
+                                size="sm"
+                                onClick={() => setFindingDialog({ systemId: r.systemId })}
+                              >
+                                <Plus className="size-4" />
+                                {t("addFinding")}
+                              </Button>
+                            </div>
+                          ) : (
+                            <FindingsTable
+                              findings={r.findings}
+                              locale={locale}
+                              onAdd={() => setFindingDialog({ systemId: r.systemId })}
+                              onEdit={(f) => setFindingDialog({ systemId: r.systemId, row: f })}
+                              onDelete={(f) => setConfirmFinding(f)}
+                            />
+                          ))}
                       </div>
                     )
                   })}
@@ -673,55 +684,57 @@ export function NecropsyTab({ animalId }: { animalId: string }) {
               )}
 
               {/* Acrescentar sistema ao laudo. A lista vem do catálogo (aba Sistemas do
-            glossário) e exclui o que já está no laudo. */}
-              {adding ? (
-                <div className="flex flex-wrap items-center gap-2">
-                  <div className="min-w-64 flex-1 sm:max-w-sm">
-                    <Combobox
-                      options={available.map((c) => ({ value: c.id, label: txt(locale, c.name) }))}
-                      value=""
-                      onChange={(v) => void addSystem(v)}
-                      placeholder={t("systemPlaceholder")}
-                      searchPlaceholder={tc("search")}
-                      emptyText={catalog.length === 0 ? t("catalogEmpty") : t("allSystemsAdded")}
-                      loading={catalogQ.isLoading}
-                    />
+                  glossário) e exclui o que já está no laudo. */}
+              <div className="mt-2.5">
+                {adding ? (
+                  <div className="flex flex-wrap items-start gap-2">
+                    <div className="min-w-64 flex-[0_1_360px]">
+                      <Combobox
+                        options={available.map((c) => ({
+                          value: c.id,
+                          label: txt(locale, c.name),
+                        }))}
+                        value=""
+                        onChange={(v) => void addSystem(v)}
+                        placeholder={t("systemPlaceholder")}
+                        searchPlaceholder={tc("search")}
+                        emptyText={catalog.length === 0 ? t("catalogEmpty") : t("allSystemsAdded")}
+                        loading={catalogQ.isLoading}
+                      />
+                    </div>
+                    <Button variant="ghost" onClick={() => setAdding(false)}>
+                      {tc("cancel")}
+                    </Button>
                   </div>
-                  <Button variant="ghost" size="sm" onClick={() => setAdding(false)}>
-                    {tc("cancel")}
+                ) : (
+                  <Button
+                    variant="outline"
+                    className="border-dashed"
+                    onClick={() => setAdding(true)}
+                    disabled={catalogQ.isLoading || available.length === 0}
+                  >
+                    <Plus className="size-4" />
+                    {t("addSystem")}
                   </Button>
-                </div>
-              ) : (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="border-dashed"
-                  onClick={() => setAdding(true)}
-                  disabled={catalogQ.isLoading || available.length === 0}
-                >
-                  <Plus className="size-4" />
-                  {t("addSystem")}
-                </Button>
-              )}
+                )}
+              </div>
             </AccordionContent>
           </AccordionItem>
 
           {/* ── Histopatológico ──────────────────────────────────────────────── */}
           <AccordionItem value="micro">
-            <AccordionTrigger>
-              <SectionHeading
-                title={t("microTitle")}
-                summary={
-                  histopathology.length === 0
-                    ? t("microEmpty")
-                    : t("microCount", { count: histopathology.length })
-                }
-              />
-            </AccordionTrigger>
-            <AccordionContent className="space-y-4 p-4">
-              {/* O botão sai do cabeçalho: dentro do gatilho do accordion ele seria um botão
-                  aninhado em outro, que o HTML não permite. */}
-              <div className="flex flex-wrap justify-end gap-2">
+            <SectionTrigger
+              title={t("microTitle")}
+              summary={
+                histopathology.length === 0
+                  ? t("microEmpty")
+                  : t("microCount", { count: histopathology.length })
+              }
+            />
+            <AccordionContent className="pb-0 pt-0">
+              {/* O botão fica fora do cabeçalho: dentro do gatilho do accordion ele seria um
+                  botão aninhado em outro, que o HTML não permite. */}
+              <div className="flex justify-end py-2">
                 <Button onClick={() => setHistoDialog({})}>
                   <Plus className="size-4" />
                   {t("addHisto")}
@@ -729,61 +742,41 @@ export function NecropsyTab({ animalId }: { animalId: string }) {
               </div>
 
               {histopathology.length === 0 ? (
-                <div className="flex flex-col items-center gap-1.5 rounded-xl border border-dashed bg-muted/30 px-6 py-9 text-center">
+                <div className="border-t border-foreground px-6 py-8 text-center">
                   <p className="font-semibold text-muted-foreground">{t("microEmptyTitle")}</p>
-                  <p className="max-w-lg text-sm text-muted-foreground">{t("microEmptyHint")}</p>
+                  <p className="mx-auto mt-1 max-w-lg text-muted-foreground">
+                    {t("microEmptyHint")}
+                  </p>
                 </div>
               ) : (
-                <ul className="overflow-hidden rounded-xl border">
-                  {histopathology.map((f, i) => (
+                <ul className="border-t border-foreground">
+                  {histopathology.map((f) => (
                     <li
                       key={f.id}
-                      className={cn(
-                        "flex items-start gap-3 px-4 py-3",
-                        i > 0 && "border-t",
-                        i % 2 === 1 && "bg-muted/30",
-                      )}
+                      className="grid grid-cols-[32px_minmax(0,1fr)_64px] gap-2 border-b border-border py-2"
                     >
-                      {/* `leading-6` no número E no parágrafo: as duas caixas passam a ter 24px, e
-                    a primeira linha do texto fica na mesma altura do número. `tabular-nums`
-                    evita o 01/02/10 dançarem de largura. */}
-                      <span className="w-6 shrink-0 text-xs font-semibold leading-6 tabular-nums text-muted-foreground">
+                      <span className="font-semibold tabular-nums text-muted-foreground">
                         {String(f.position).padStart(2, "0")}
                       </span>
-                      {/* Órgão em cima, achado embaixo. Inline, o órgão se perdia no meio de um
-                    bloco de texto longo e a quebra ficava irregular. Os rótulos
-                    "Órgão:/Achado:" saem porque a estrutura já os diz — o formato corrido do
-                    SIMBA continua saindo pelo "copiar diagnóstico descritivo". */}
-                      <div className="min-w-0 flex-1">
-                        <p className="text-sm font-semibold leading-6">
-                          {txt(locale, f.organ.name)}
-                        </p>
-                        <p className="text-sm leading-6 text-muted-foreground">{f.finding}</p>
-                      </div>
-                      {/* Botão de 32px sobre linha de 24px: sobe 4px para o centro óptico do
-                    ícone cair na primeira linha, em vez de transbordar por baixo. */}
-                      <div className="-mt-1 flex shrink-0 gap-1">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="size-8"
-                          onClick={() => setHistoDialog({ row: f })}
-                          title={tc("edit")}
-                        >
-                          <Pencil className="size-4" />
-                          <span className="sr-only">{tc("edit")}</span>
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="size-8 text-muted-foreground hover:text-destructive"
+                      {/* Órgão em cima, achado embaixo. Os rótulos "Órgão:/Achado:" saem porque
+                          a estrutura já os diz — o formato corrido do SIMBA continua saindo pelo
+                          "copiar diagnóstico descritivo". */}
+                      <span>
+                        <b className="block font-semibold">{txt(locale, f.organ.name)}</b>
+                        <span className="block text-pretty text-muted-foreground">{f.finding}</span>
+                      </span>
+                      <span className="-mt-1 flex justify-end gap-0.5">
+                        <IconButton label={tc("edit")} onClick={() => setHistoDialog({ row: f })}>
+                          <Pencil />
+                        </IconButton>
+                        <IconButton
+                          label={tc("delete")}
+                          destructive
                           onClick={() => setConfirmHisto(f)}
-                          title={tc("delete")}
                         >
-                          <Trash2 className="size-4" />
-                          <span className="sr-only">{tc("delete")}</span>
-                        </Button>
-                      </div>
+                          <Trash2 />
+                        </IconButton>
+                      </span>
                     </li>
                   ))}
                 </ul>
@@ -857,31 +850,37 @@ export function NecropsyTab({ animalId }: { animalId: string }) {
 // uma aba que ninguém abre.
 export function NecropsySummary({ animalId, onOpen }: { animalId: string; onOpen: () => void }) {
   const t = useTranslations("necropsy")
+  const ta = useTranslations("animals")
   const reportQ = useNecropsy(animalId)
   const systems = reportQ.data?.systems ?? []
   const altered = systems.filter((s) => s.status === "ALTERED").length
   const micro = reportQ.data?.histopathology.length ?? 0
 
-  if (reportQ.isLoading) return <Skeleton className="h-5 w-72" />
-
   return (
-    <div className="flex flex-wrap items-center gap-2 text-sm">
-      <span className="text-muted-foreground">
-        {reportQ.isError
-          ? // Mesmo motivo do corpo da aba: sem os dados, o resumo não afirma nada.
-            t("loadError")
-          : systems.length === 0 && micro === 0
-            ? t("summaryEmpty")
-            : t("summary", { altered, micro })}
-      </span>
-      <button
-        type="button"
-        onClick={onOpen}
-        className="inline-flex items-center gap-1 font-medium text-accent-foreground underline underline-offset-2"
-      >
-        {t("summaryOpen")}
-        <ArrowRight className="size-3.5" />
-      </button>
-    </div>
+    <DataRow
+      label={ta("necropsyTab")}
+      labelWidth="21%"
+      className="py-1.5"
+      action={
+        <button
+          type="button"
+          onClick={onOpen}
+          className="underline underline-offset-2 hover:text-primary"
+        >
+          {t("summaryOpen")}
+        </button>
+      }
+    >
+      {reportQ.isLoading ? (
+        <Skeleton className="h-5 w-72" />
+      ) : reportQ.isError ? (
+        // Mesmo motivo do corpo da aba: sem os dados, o resumo não afirma nada.
+        <span className="text-muted-foreground">{t("loadError")}</span>
+      ) : systems.length === 0 && micro === 0 ? (
+        <span className="text-muted-foreground">{t("summaryEmpty")}</span>
+      ) : (
+        t("summary", { altered, micro })
+      )}
+    </DataRow>
   )
 }

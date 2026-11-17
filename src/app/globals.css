@@ -7,19 +7,19 @@
      Uma cor de ação (primary); positive/warning/info/destructive só para status, sempre com
      ícone ou rótulo; as variantes -subtle são o fundo dos selos. "Negativo" é neutro. */
   :root {
-    --background: 47 31% 94%; /* #F5F3EC */
+    --background: 43 25% 89%; /* #EAE6DC */
     --foreground: 140 5% 11%; /* #1A1D1B */
-    --card: 47 31% 94%;
+    --card: 43 25% 89%;
     --card-foreground: 140 5% 11%;
     --popover: 48 38% 97%; /* #FBFAF6 — superfície de campos, menus e diálogos */
     --popover-foreground: 140 5% 11%;
     --primary: 174 68% 18%; /* #0F4F49 */
     --primary-foreground: 0 0% 100%;
-    --secondary: 46 25% 90%; /* #ECE9DF */
+    --secondary: 43 22% 85%; /* #E1DCD0 */
     --secondary-foreground: 140 5% 11%;
-    --muted: 46 25% 90%;
+    --muted: 43 22% 85%;
     --muted-foreground: 120 3% 35%; /* #565B56 */
-    --accent: 120 16% 92%; /* #E6EDE6 — seleção */
+    --accent: 120 16% 86%; /* #D6E1D6 — seleção */
     --accent-foreground: 140 5% 11%;
     --destructive: 3 72% 37%; /* #A3211B */
     --destructive-foreground: 47 31% 94%;
@@ -176,4 +176,12 @@ input[type="number"]::-webkit-outer-spin-button {
 }
 ::-webkit-scrollbar-thumb:hover {
   background-color: hsl(var(--muted-foreground) / 0.55);
+}
+
+/* Margem lateral das telas da área logada: conteúdo limitado a 1280px, mínimo de 24px. */
+@layer utilities {
+  .px-page {
+    padding-left: max(24px, calc(50% - 640px));
+    padding-right: max(24px, calc(50% - 640px));
+  }
 }

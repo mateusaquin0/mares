@@ -1,6 +1,9 @@
 "use client"
 
 import { useTranslations } from "next-intl"
+import { CircleDashed, CircleHelp, CircleMinus, CirclePlus, type LucideIcon } from "lucide-react"
+
+import { cn } from "@/lib/utils"
 
 import type { ResultValue } from "@/types/analysis"
 import { Input } from "@/components/ui/input"
@@ -41,7 +44,26 @@ export function ResultDot({
   )
 }
 
-// Seletor de resultado (POSITIVO/NEGATIVO/INCONCLUSIVO/não testado) com marcadores coloridos.
+// Ícone e tom de cada resultado: cor só para positivo e inconclusivo; negativo é neutro.
+export const RESULT_META: Record<
+  ResultValue | typeof UNTESTED,
+  { icon: LucideIcon; labelKey: string; trigger: string }
+> = {
+  POSITIVO: {
+    icon: CirclePlus,
+    labelKey: "resultPositive",
+    trigger: "border-positive bg-positive-subtle font-semibold text-positive",
+  },
+  NEGATIVO: { icon: CircleMinus, labelKey: "resultNegative", trigger: "font-semibold" },
+  INCONCLUSIVO: {
+    icon: CircleHelp,
+    labelKey: "resultInconclusive",
+    trigger: "border-warning bg-warning-subtle font-semibold text-warning",
+  },
+  [UNTESTED]: { icon: CircleDashed, labelKey: "resultUntested", trigger: "text-muted-foreground" },
+}
+
+// Seletor de resultado (POSITIVO/NEGATIVO/INCONCLUSIVO/não testado).
 // Compartilhado entre a aba de análises do animal e a tela de resultados por pesquisa.
 export function ResultSelect({
   value,
@@ -53,35 +75,29 @@ export function ResultSelect({
   disabled?: boolean
 }) {
   const t = useTranslations("analyses")
+  const current = RESULT_META[value ?? UNTESTED]
   return (
     <Select
       value={value ?? UNTESTED}
       onValueChange={(v) => onChange(v === UNTESTED ? null : (v as ResultValue))}
       disabled={disabled}
     >
-      <SelectTrigger className="h-8">
+      <SelectTrigger className={cn("h-[26px] px-1.5", current.trigger)}>
         <SelectValue />
       </SelectTrigger>
       <SelectContent>
-        <SelectItem value={UNTESTED}>{t("resultUntested")}</SelectItem>
-        <SelectItem value="POSITIVO">
-          <span className="flex items-center gap-2">
-            <span className="size-2 shrink-0 rounded-full bg-[hsl(123_41%_45%)]" />
-            {t("resultPositive")}
-          </span>
-        </SelectItem>
-        <SelectItem value="NEGATIVO">
-          <span className="flex items-center gap-2">
-            <span className="size-2 shrink-0 rounded-full bg-muted-foreground/40" />
-            {t("resultNegative")}
-          </span>
-        </SelectItem>
-        <SelectItem value="INCONCLUSIVO">
-          <span className="flex items-center gap-2">
-            <span className="size-2 shrink-0 rounded-full bg-[hsl(35_80%_50%)]" />
-            {t("resultInconclusive")}
-          </span>
-        </SelectItem>
+        {([UNTESTED, "POSITIVO", "NEGATIVO", "INCONCLUSIVO"] as const).map((v) => {
+          const meta = RESULT_META[v]
+          const Icon = meta.icon
+          return (
+            <SelectItem key={v} value={v}>
+              <span className="flex items-center gap-1.5">
+                <Icon className="size-3.5 shrink-0" aria-hidden />
+                {t(meta.labelKey)}
+              </span>
+            </SelectItem>
+          )
+        })}
       </SelectContent>
     </Select>
   )
@@ -115,7 +131,7 @@ export function MeasureInput({
       step="any"
       placeholder={placeholder}
       title={placeholder}
-      className="h-8"
+      className="h-[26px] px-1.5 text-right tabular-nums"
       disabled={disabled}
       onBlur={(e) => {
         const raw = e.target.value.trim()
@@ -155,7 +171,7 @@ export function NotesInput({
       key={`${value ?? ""}|${resetKey}`}
       defaultValue={value ?? ""}
       placeholder={placeholder}
-      className="h-8"
+      className="h-[26px] px-1.5"
       disabled={disabled}
       onBlur={(e) => {
         const raw = e.target.value.trim()

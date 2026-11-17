@@ -3,8 +3,10 @@
 import { Fragment, useEffect, useRef, useState } from "react"
 import { useLocale, useTranslations } from "next-intl"
 import { toast } from "sonner"
-import { FlaskConical, Search, X } from "lucide-react"
+import * as AccordionPrimitive from "@radix-ui/react-accordion"
+import { ChevronRight, Search, X } from "lucide-react"
 
+import { cn } from "@/lib/utils"
 import { pathogenName, txt } from "@/lib/catalog-i18n"
 import { isBroadPathogen } from "@/lib/pathogen"
 import { useErrorMessage } from "@/lib/use-error-message"
@@ -29,16 +31,11 @@ import { SampleStatusBadge } from "@/components/sample-status-badge"
 import { ConfirmationPanel } from "./confirmation-panel"
 import { ConfirmDialog } from "@/components/confirm-dialog"
 import { Truncate } from "@/components/ui/truncate"
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion"
-import { Button } from "@/components/ui/button"
+import { Accordion, AccordionContent } from "@/components/ui/accordion"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Checkbox } from "@/components/ui/checkbox"
+import { SectionTitle } from "@/components/ui/section"
 import { TableSkeleton } from "@/components/ui/skeleton"
 import {
   Table,
@@ -226,9 +223,12 @@ export function AnalysesTab({ animalId }: { animalId: string }) {
   if (loading) return <TableSkeleton rows={4} />
   if (!grid) return null
   if (grid.sections.length === 0)
-    return <p className="text-sm text-muted-foreground">{t("noSamples")}</p>
+    return (
+      <div className="border-b border-t-2 border-foreground pb-6 pt-[22px]">
+        <p className="font-serif text-xl font-medium">{t("noSamples")}</p>
+      </div>
+    )
 
-  // Indivíduo compartilhado: uma seção por pesquisa. Com uma só pesquisa, oculta o cabeçalho.
   const multi = grid.sections.length > 1
 
   // Protocolos inativos: ocultos por padrão; o toggle os revela em leitura (badge, sem editar).
@@ -288,19 +288,19 @@ export function AnalysesTab({ animalId }: { animalId: string }) {
     .filter(({ samples }) => samples.length > 0)
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-6">
-      <div className="flex flex-wrap items-center gap-3">
-        <div className="relative min-w-0 flex-1 sm:max-w-xs">
-          <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+    <div className="flex min-h-0 flex-1 flex-col gap-4">
+      <div className="flex flex-wrap items-center gap-2">
+        <div className="relative min-w-0 max-w-[340px] flex-[1_1_260px]">
+          <Search className="pointer-events-none absolute left-2 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder={t("searchPlaceholder")}
-            className="h-9 pl-9"
+            className="pl-8"
           />
         </div>
         <Select value={fResult} onValueChange={setFResult}>
-          <SelectTrigger className="h-9 w-auto min-w-36">
+          <SelectTrigger className="w-[190px]">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -315,7 +315,7 @@ export function AnalysesTab({ animalId }: { animalId: string }) {
         </Select>
         {organOptions.length > 1 && (
           <Select value={fOrgan} onValueChange={setFOrgan}>
-            <SelectTrigger className="h-9 w-auto min-w-36">
+            <SelectTrigger className="w-[176px]">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -330,7 +330,7 @@ export function AnalysesTab({ animalId }: { animalId: string }) {
         )}
         {multi && (
           <Select value={fResearch} onValueChange={setFResearch}>
-            <SelectTrigger className="h-9 w-auto min-w-36">
+            <SelectTrigger className="w-[176px]">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -344,63 +344,75 @@ export function AnalysesTab({ animalId }: { animalId: string }) {
           </Select>
         )}
         {hasInactive && (
-          <label className="flex items-center gap-2 text-sm text-muted-foreground">
+          <label className="flex items-center gap-1.5">
             <Checkbox checked={showInactive} onCheckedChange={(v) => setShowInactive(v === true)} />
             {t("showInactive")}
           </label>
         )}
         {hasFilters && (
-          <Button variant="ghost" size="sm" onClick={clearFilters} className="gap-1">
+          <button
+            type="button"
+            onClick={clearFilters}
+            className="flex items-center gap-1 text-[13px] text-primary underline underline-offset-2 hover:text-foreground"
+          >
             <X className="size-3.5" />
             {ts("clearFilters")}
-          </Button>
+          </button>
         )}
       </div>
 
       {sectionsToRender.length === 0 ? (
-        <p className="text-sm text-muted-foreground">{t("noMatch")}</p>
+        <p className="text-muted-foreground">{t("noMatch")}</p>
       ) : (
-        <div className="min-h-0 flex-1 space-y-10 overflow-y-auto">
+        <div className="min-h-0 flex-1 space-y-4 overflow-y-auto pb-8">
           {sectionsToRender.map(({ sec: section, samples }) => (
-            <div key={section.research.id} className="space-y-6">
-              {multi && (
-                <div className="flex items-center gap-2 border-b pb-1.5">
-                  <FlaskConical className="size-4 text-muted-foreground" />
-                  <h3 className="text-sm font-semibold">{section.research.name}</h3>
-                </div>
-              )}
+            <section key={section.research.id}>
+              {/* Indivíduo compartilhado: uma seção por pesquisa. */}
+              <SectionTitle>{section.research.name}</SectionTitle>
               <Accordion
                 type="multiple"
                 key={samples.map(({ sample }) => sample.id).join(",")}
                 defaultValue={samples.map(({ sample }) => sample.id)}
-                className="space-y-3"
               >
                 {samples.map(({ sample, entries }) => (
-                  <AccordionItem key={sample.id} value={sample.id}>
-                    <AccordionTrigger>
-                      <span className="flex flex-1 flex-wrap items-center gap-2">
-                        <span className="font-semibold">
-                          {txt(locale, sample.organ.name)}
-                          <span className="font-normal"> ({sample.sampleType})</span>
+                  <AccordionPrimitive.Item
+                    key={sample.id}
+                    value={sample.id}
+                    className="border-b border-border"
+                  >
+                    <AccordionPrimitive.Header className="flex">
+                      <AccordionPrimitive.Trigger className="group flex min-h-9 flex-1 items-center gap-3 text-left outline-none hover:text-primary focus-visible:bg-accent">
+                        <ChevronRight className="size-3.5 shrink-0 text-muted-foreground transition-transform group-data-[state=open]:rotate-90" />
+                        <span>
+                          <b className="font-semibold">{txt(locale, sample.organ.name)}</b> (
+                          {sample.sampleType})
                         </span>
-                        <span className="ml-auto shrink-0 text-xs font-normal text-muted-foreground">
+                        <span className="flex-1" />
+                        <span className="text-muted-foreground">
                           {t("entryCount", { count: entries.length })}
                         </span>
                         <SampleStatusBadge status={sample.status} className="shrink-0" />
-                      </span>
-                    </AccordionTrigger>
-                    <AccordionContent>
+                      </AccordionPrimitive.Trigger>
+                    </AccordionPrimitive.Header>
+                    <AccordionContent className="mb-3 ml-[26px] pb-0 pt-0">
                       {entries.length === 0 ? (
-                        <p className="text-sm text-muted-foreground">{t("noApplicable")}</p>
+                        <p className="py-2 text-muted-foreground">{t("noApplicable")}</p>
                       ) : (
-                        <Table density="compact">
-                          <TableHeader>
+                        <Table density="compact" className="table-fixed">
+                          <colgroup>
+                            <col className="w-[27%]" />
+                            <col className="w-[23%]" />
+                            <col className="w-[168px]" />
+                            <col className="w-[120px]" />
+                            <col />
+                          </colgroup>
+                          <TableHeader className="border-t-0">
                             <TableRow>
-                              <TableHead>{t("colPathogen")}</TableHead>
-                              <TableHead>{t("colExam")}</TableHead>
-                              <TableHead className="w-44">{t("colResult")}</TableHead>
-                              <TableHead className="w-32">{t("colMeasure")}</TableHead>
-                              <TableHead>{t("colNotes")}</TableHead>
+                              <TableHead className="h-7 pl-0">{t("colPathogen")}</TableHead>
+                              <TableHead className="h-7">{t("colExam")}</TableHead>
+                              <TableHead className="h-7">{t("colResult")}</TableHead>
+                              <TableHead className="h-7 text-right">{t("colMeasure")}</TableHead>
+                              <TableHead className="h-7">{t("colNotes")}</TableHead>
                             </TableRow>
                           </TableHeader>
                           <TableBody>
@@ -420,16 +432,23 @@ export function AnalysesTab({ animalId }: { animalId: string }) {
                                 confirmations.length > 0
                               return (
                                 <Fragment key={k}>
-                                  <TableRow>
-                                    <TableCell className="font-medium">
+                                  <TableRow className="hover:bg-transparent">
+                                    <TableCell className="h-9 pl-0">
                                       <span className="flex items-center gap-2">
-                                        <Truncate>{pathogenName(locale, entry.pathogen)}</Truncate>
+                                        <Truncate
+                                          className={cn(
+                                            entry.pathogen.scientificName &&
+                                              "font-serif text-base italic",
+                                          )}
+                                        >
+                                          {pathogenName(locale, entry.pathogen)}
+                                        </Truncate>
                                         {inactive && (
-                                          <Badge variant="secondary">{t("inactive")}</Badge>
+                                          <Badge variant="outline">{t("inactive")}</Badge>
                                         )}
                                       </span>
                                     </TableCell>
-                                    <TableCell className="text-muted-foreground">
+                                    <TableCell>
                                       <Truncate>{txt(locale, entry.examType.name)}</Truncate>
                                     </TableCell>
                                     <TableCell>
@@ -441,7 +460,7 @@ export function AnalysesTab({ animalId }: { animalId: string }) {
                                         }
                                       />
                                     </TableCell>
-                                    <TableCell>
+                                    <TableCell className="text-right">
                                       {entry.examType.measureLabel ? (
                                         <MeasureInput
                                           value={cell.measureValue}
@@ -455,10 +474,10 @@ export function AnalysesTab({ animalId }: { animalId: string }) {
                                           }}
                                         />
                                       ) : (
-                                        <span className="text-sm text-muted-foreground">—</span>
+                                        <span className="pr-1.5 text-muted-foreground">—</span>
                                       )}
                                     </TableCell>
-                                    <TableCell>
+                                    <TableCell className="pr-0">
                                       <NotesInput
                                         value={cell.notes}
                                         placeholder={t("notesPlaceholder")}
@@ -473,7 +492,7 @@ export function AnalysesTab({ animalId }: { animalId: string }) {
                                   </TableRow>
                                   {showPanel && cell.id && (
                                     <TableRow className="hover:bg-transparent">
-                                      <TableCell colSpan={5} className="pb-4 pt-0">
+                                      <TableCell colSpan={5} className="p-0">
                                         <ConfirmationPanel
                                           animalId={animalId}
                                           parentId={cell.id}
@@ -491,10 +510,10 @@ export function AnalysesTab({ animalId }: { animalId: string }) {
                         </Table>
                       )}
                     </AccordionContent>
-                  </AccordionItem>
+                  </AccordionPrimitive.Item>
                 ))}
               </Accordion>
-            </div>
+            </section>
           ))}
         </div>
       )}

@@ -158,7 +158,10 @@ test.describe("Análises", () => {
     const confirmation = page.getByRole("listitem").filter({
       hasText: catalog.pathogenConfirm.label,
     })
-    await expect(confirmation).toContainText("18S rRNA · MN123456 · 99.2%")
+    // Sequências em tabela: marcador, nº de acesso e % de identidade, cada um na sua coluna.
+    for (const cell of ["18S rRNA", "MN123456", "99.2"]) {
+      await expect(confirmation).toContainText(cell)
+    }
     await expect(confirmation).toContainText(catalog.examMeasured.label)
     await expect(page.getByText(an.confirmEmpty)).toHaveCount(0)
 
@@ -169,7 +172,10 @@ test.describe("Análises", () => {
     await page.getByPlaceholder(an.seqAccession).fill("OP654321")
     await page.getByPlaceholder(an.seqPlatform).fill("Sanger")
     await save.click()
-    await expect(confirmation).toContainText("18S rRNA · OP654321 · 99.2%")
+    // Sequências em tabela: marcador, nº de acesso e % de identidade, cada um na sua coluna.
+    for (const cell of ["18S rRNA", "OP654321", "99.2"]) {
+      await expect(confirmation).toContainText(cell)
+    }
 
     // Persistência.
     await open(page)

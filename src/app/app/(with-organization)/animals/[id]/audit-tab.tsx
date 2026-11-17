@@ -1,16 +1,7 @@
 "use client"
 
 import { useLocale, useTranslations } from "next-intl"
-import {
-  ArrowRight,
-  Clock,
-  User,
-  Fish,
-  FlaskConical,
-  Microscope,
-  Ruler,
-  Stethoscope,
-} from "lucide-react"
+import { ArrowRight } from "lucide-react"
 
 import { pathogenName, txt } from "@/lib/catalog-i18n"
 import { SEX_OPTIONS, LIFE_STAGE_OPTIONS } from "@/lib/animal-enums"
@@ -18,8 +9,15 @@ import { formatDateOnly } from "@/lib/date"
 import { ANTHROPIC_INTERACTION_OPTIONS, NECROPSY_STATUS_OPTIONS } from "@/lib/necropsy-enums"
 import { useAnimalAudit } from "@/hooks/use-animals"
 import type { AuditEntry } from "@/types/animal"
-import { Badge } from "@/components/ui/badge"
 import { TableSkeleton } from "@/components/ui/skeleton"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
 
 const SEX_KEY = Object.fromEntries(SEX_OPTIONS.map((o) => [o.value, o.key]))
 const LIFE_STAGE_KEY = Object.fromEntries(LIFE_STAGE_OPTIONS.map((o) => [o.value, o.key]))
@@ -71,19 +69,19 @@ export function AuditTab({ animalId }: { animalId: string }) {
   const items = auditQ.data ?? []
   const loading = auditQ.isLoading
 
-  // Ícone + rótulo da entidade de origem da entrada. O `??` é rede de segurança: a rota
-  // devolve `entity` como texto do banco, então uma entidade nova que ganhe auditoria e não
-  // passe por aqui derrubava a timeline inteira em vez de aparecer sem tradução.
-  const entityMeta = (e: AuditEntry["entity"]) =>
+  // Rótulo da entidade de origem da entrada. O `??` é rede de segurança: a rota devolve
+  // `entity` como texto do banco, então uma entidade nova que ganhe auditoria e não passe por
+  // aqui derrubava o histórico inteiro em vez de aparecer sem tradução.
+  const entityLabel = (e: AuditEntry["entity"]) =>
     ({
-      Animal: { icon: Fish, label: t("entityAnimal") },
-      Biometry: { icon: Ruler, label: t("entityBiometry") },
-      Sample: { icon: FlaskConical, label: t("entitySample") },
-      Analysis: { icon: Microscope, label: t("entityAnalysis") },
-      NecropsySystemExam: { icon: Stethoscope, label: t("entityNecropsySystem") },
-      GrossFinding: { icon: Stethoscope, label: t("entityGrossFinding") },
-      HistopathologyFinding: { icon: Microscope, label: t("entityHistopathology") },
-    })[e] ?? { icon: Fish, label: e }
+      Animal: t("entityAnimal"),
+      Biometry: t("entityBiometry"),
+      Sample: t("entitySample"),
+      Analysis: t("entityAnalysis"),
+      NecropsySystemExam: t("entityNecropsySystem"),
+      GrossFinding: t("entityGrossFinding"),
+      HistopathologyFinding: t("entityHistopathology"),
+    })[e] ?? e
 
   const fieldLabel = (r: AuditEntry) => {
     if (r.field === "created") return t("created")
@@ -157,21 +155,7 @@ export function AuditTab({ animalId }: { animalId: string }) {
     return v
   }
 
-  const resultVariant = (
-    r: AuditEntry,
-    v: string | null,
-  ): "positive" | "negative" | "inconclusive" | "secondary" => {
-    if (r.entity !== "Analysis" || r.field !== "result" || !v) return "secondary"
-    return v === "POSITIVO"
-      ? "positive"
-      : v === "NEGATIVO"
-        ? "negative"
-        : v === "INCONCLUSIVO"
-          ? "inconclusive"
-          : "secondary"
-  }
-
-  // Contexto exibido abaixo do cabeçalho: amostra e (para análises) órgão·patógeno·exame.
+  // Contexto da entrada: amostra e (para análises) órgão · patógeno · exame.
   const contextOf = (r: AuditEntry) =>
     [
       r.sample ? r.sample.identification : null,
@@ -183,71 +167,73 @@ export function AuditTab({ animalId }: { animalId: string }) {
       .join(" · ")
 
   const fmtDate = (iso: string) =>
-    new Date(iso).toLocaleDateString(locale, { day: "2-digit", month: "short", year: "numeric" })
+    new Date(iso).toLocaleDateString(locale, { day: "2-digit", month: "2-digit", year: "numeric" })
   const fmtTime = (iso: string) =>
     new Date(iso).toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" })
 
   if (loading) return <TableSkeleton rows={4} />
-  if (items.length === 0) return <p className="text-sm text-muted-foreground">{t("empty")}</p>
+  if (items.length === 0)
+    return (
+      <div className="border-b border-t-2 border-foreground pb-6 pt-[22px]">
+        <p className="font-serif text-xl font-medium">{t("empty")}</p>
+      </div>
+    )
 
   return (
-    <div className="min-h-0 flex-1 overflow-y-auto">
-      <div className="relative ml-4">
-        <div className="absolute left-0 top-0 bottom-0 w-px bg-border" />
-
-        <div className="space-y-6">
+    <div className="min-h-0 flex-1 overflow-y-auto pb-8">
+      <Table className="table-fixed">
+        <colgroup>
+          <col className="w-[132px]" />
+          <col className="w-[168px]" />
+          <col />
+          <col className="w-[150px]" />
+          <col />
+        </colgroup>
+        <TableHeader className="sticky top-0 z-[1] bg-background">
+          <TableRow>
+            <TableHead className="pl-0">{t("colWhen")}</TableHead>
+            <TableHead>{t("colWho")}</TableHead>
+            <TableHead>{t("colContext")}</TableHead>
+            <TableHead>{t("colField")}</TableHead>
+            <TableHead>{t("colChange")}</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
           {items.map((r) => {
-            const meta = entityMeta(r.entity)
-            const Icon = meta.icon
             const isCreated = r.field === "created"
+            const context = contextOf(r)
             return (
-              <div key={r.id} className="relative pl-8">
-                <div className="absolute left-0 top-2 -translate-x-1/2 size-3 rounded-full border-2 border-accent-foreground bg-card" />
-
-                <div className="rounded-lg border bg-card p-4 shadow-sm">
-                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
-                    <span className="inline-flex items-center gap-1 font-medium text-foreground">
-                      <Icon className="size-3.5" />
-                      {meta.label}
-                    </span>
-                    <span className="inline-flex items-center gap-1">
-                      <Clock className="size-3" />
-                      {fmtDate(r.changedAt)} · {fmtTime(r.changedAt)}
-                    </span>
-                    <span className="inline-flex items-center gap-1">
-                      <User className="size-3" />
-                      {r.author}
-                    </span>
-                  </div>
-
-                  {contextOf(r) && (
-                    <p className="mt-1 text-xs text-muted-foreground">{contextOf(r)}</p>
+              <TableRow key={r.id} className="align-baseline hover:bg-transparent">
+                <TableCell className="pl-0 tabular-nums">
+                  {fmtDate(r.changedAt)} {fmtTime(r.changedAt)}
+                </TableCell>
+                <TableCell>{r.author}</TableCell>
+                <TableCell>
+                  <span className="text-xs font-bold uppercase tracking-[.05em] text-muted-foreground">
+                    {entityLabel(r.entity)}
+                  </span>
+                  {context && <> {context}</>}
+                </TableCell>
+                <TableCell className="text-muted-foreground">{fieldLabel(r)}</TableCell>
+                <TableCell>
+                  {isCreated ? (
+                    <b className="font-semibold">{r.newValue}</b>
+                  ) : (
+                    <>
+                      <span className="text-muted-foreground">{valueLabel(r, r.oldValue)}</span>{" "}
+                      <ArrowRight
+                        className="inline size-3 text-muted-foreground"
+                        aria-label={t("changedTo")}
+                      />{" "}
+                      <b className="font-semibold">{valueLabel(r, r.newValue)}</b>
+                    </>
                   )}
-
-                  <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
-                    <span className="font-medium text-foreground">{fieldLabel(r)}</span>
-                    {isCreated ? (
-                      <Badge variant="secondary" className="text-xs">
-                        {r.newValue}
-                      </Badge>
-                    ) : (
-                      <>
-                        <Badge variant={resultVariant(r, r.oldValue)} className="text-xs">
-                          {valueLabel(r, r.oldValue)}
-                        </Badge>
-                        <ArrowRight className="size-3.5 shrink-0 text-muted-foreground" />
-                        <Badge variant={resultVariant(r, r.newValue)} className="text-xs">
-                          {valueLabel(r, r.newValue)}
-                        </Badge>
-                      </>
-                    )}
-                  </div>
-                </div>
-              </div>
+                </TableCell>
+              </TableRow>
             )
           })}
-        </div>
-      </div>
+        </TableBody>
+      </Table>
     </div>
   )
 }

@@ -1,16 +1,16 @@
 ---
 name: MARES 1a — Caderno de campo
 colors:
-  background: "#F5F3EC"
+  background: "#EAE6DC"
   popover: "#FBFAF6"
-  muted: "#ECE9DF"
+  muted: "#E1DCD0"
   foreground: "#1A1D1B"
   muted-foreground: "#565B56"
   border: "#D8D4C6"
   input: "#7C8079"
   primary: "#0F4F49"
   on-primary: "#FFFFFF"
-  accent: "#E6EDE6"
+  accent: "#D6E1D6"
   positive: "#1F6B2E"
   positive-subtle: "#E3EEDD"
   warning: "#8A4B08"
