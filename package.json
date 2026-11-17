@@ -16,6 +16,7 @@
     "db:seed": "prisma db seed",
     "db:teste:migrate": "node --env-file=.env.teste node_modules/prisma/build/index.js migrate deploy",
     "db:teste:seed": "node --env-file=.env.teste node_modules/prisma/build/index.js db seed",
+    "db:teste:demo": "tsx --env-file=.env.teste scripts/seed-demo.ts",
     "db:studio": "prisma studio",
     "db:audit-orphans": "tsx scripts/audit-orphan-analyses.ts",
     "test": "vitest run",

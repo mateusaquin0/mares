@@ -206,9 +206,19 @@ async function seedAdmin() {
     auth: { autoRefreshToken: false, persistSession: false },
   })
 
-  // Se já existe registro local, apenas promove (email é único).
-  const existing = await prisma.user.findUnique({ where: { email } })
+  // Se já existe registro local, apenas promove (email é único). Admin global não participa
+  // de grupos: quem ainda é membro de algum precisa sair antes de ser promovido.
+  const existing = await prisma.user.findUnique({
+    where: { email },
+    include: { _count: { select: { memberships: true } } },
+  })
   if (existing) {
+    if (!existing.isSystemAdmin && existing._count.memberships > 0) {
+      console.warn(
+        `${email} é membro de ${existing._count.memberships} grupo(s) de pesquisa e não pode ser admin global. Remova os vínculos e rode o seed de novo.`,
+      )
+      return
+    }
     await prisma.user.update({ where: { email }, data: { isSystemAdmin: true } })
     console.log(`Admin global garantido: ${email}`)
     return
