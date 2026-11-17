@@ -551,7 +551,8 @@ export async function seed(db: Db): Promise<E2eFixtures> {
   }
 
   // Edição: dois animais com todos os campos visíveis diferentes entre si.
-  const edit = await work("Pesquisa da edição")
+  // Pública: o selo do animal só chega a "Publicado" quando a pesquisa também é pública.
+  const edit = await research("Pesquisa da edição", W, admin, true)
   const editFirst = await workAnimal("ED1", `Editus primus e2e${runId}`, edit.id, {
     municipality: "Itajaí",
     strandingBeach: "Praia Um",

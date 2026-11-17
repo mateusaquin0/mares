@@ -35,7 +35,7 @@ const rawPoint = (over: Record<string, unknown> = {}) => ({
   strandingBeach: "Praia Brava",
   eventDate: new Date("2026-03-15T00:00:00.000Z"),
   isPublic: true,
-  research: { name: "Cetáceos SC" },
+  research: { name: "Cetáceos SC", isPublic: true },
   samples: [],
   ...over,
 })
@@ -78,6 +78,14 @@ describe("publicMapPoints — mapa sem login", () => {
       researchName: "Cetáceos SC",
       positivePathogens: [],
     })
+  })
+
+  it("o ponto só sai como publicado com o animal marcado e a pesquisa pública", async () => {
+    m("animal", "findMany").mockResolvedValue([
+      rawPoint({ research: { name: "Privada", isPublic: false } }),
+    ])
+    const [point] = await publicMapPoints("pt")
+    expect(point?.isPublic).toBe(false)
   })
 
   it("sem data nem pesquisa carregada os campos ficam null", async () => {

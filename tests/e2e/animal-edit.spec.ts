@@ -144,40 +144,40 @@ test.describe("Edição de animal (admin do grupo)", () => {
     ).toBeVisible()
   })
 
-  test("tornar público e ocultar de novo: o selo e o Histórico acompanham", async ({ page }) => {
+  test("publicar e retirar de novo: o selo e o Histórico acompanham", async ({ page }) => {
     const { second } = loadFixtures().work.edit
-    const hidden = () => editDialog(page).getByRole("checkbox", { name: a.isHiddenHint })
+    const publish = () => editDialog(page).getByRole("checkbox", { name: a.publishLabel })
 
     await page.goto(`/app/animals/${second.id}`)
     const heading = page.getByRole("heading", { level: 1 })
     await expect(heading).toHaveText(second.species)
     const badge = heading.locator("xpath=..")
-    await expect(badge).toContainText(a.hidden)
+    await expect(badge).toContainText(a.unpublishedWithheld)
 
     const editButton = page.getByRole("button", { name: pt.common.edit, exact: true }).first()
     await hydrated(editButton)
     await editButton.click()
-    await expect(hidden()).toBeChecked()
-    await hidden().uncheck()
+    await expect(publish()).not.toBeChecked()
+    await publish().check()
     await editDialog(page).getByRole("button", { name: pt.common.save, exact: true }).click()
     await expectToast(page, a.updated)
-    await expect(badge).toContainText(a.public)
+    await expect(badge).toContainText(a.published)
 
     await page.reload()
-    await expect(heading.locator("xpath=..")).toContainText(a.public)
+    await expect(heading.locator("xpath=..")).toContainText(a.published)
 
     await hydrated(editButton)
     await editButton.click()
-    await expect(hidden()).not.toBeChecked()
-    await hidden().check()
+    await expect(publish()).toBeChecked()
+    await publish().uncheck()
     await editDialog(page).getByRole("button", { name: pt.common.save, exact: true }).click()
-    await expect(heading.locator("xpath=..")).toContainText(a.hidden)
+    await expect(heading.locator("xpath=..")).toContainText(a.unpublishedWithheld)
 
     await page.getByRole("tab", { name: a.auditTab }).click()
     const main = page.getByRole("main")
     await expect(main.getByText(pt.audit.fieldVisibility, { exact: true })).toHaveCount(2)
-    await expect(main.getByText(pt.audit.valuePublic, { exact: true }).first()).toBeVisible()
-    await expect(main.getByText(pt.audit.valuePrivate, { exact: true }).first()).toBeVisible()
+    await expect(main.getByText(pt.audit.valueYes, { exact: true }).first()).toBeVisible()
+    await expect(main.getByText(pt.audit.valueNo, { exact: true }).first()).toBeVisible()
   })
 })
 
@@ -196,7 +196,7 @@ test.describe("Edição de animal (pesquisadora)", () => {
     await page.getByRole("button", { name: pt.common.edit, exact: true }).first().click()
     const dialog = editDialog(page)
     await expect(dialog.getByLabel(a.controlId)).toHaveValue(animal.controlId)
-    await expect(dialog.getByRole("checkbox", { name: a.isHiddenHint })).toHaveCount(0)
+    await expect(dialog.getByRole("checkbox", { name: a.publishLabel })).toHaveCount(0)
 
     await dialog.getByLabel(a.deathCondition).fill("Natural")
     await dialog.getByRole("button", { name: pt.common.save, exact: true }).click()

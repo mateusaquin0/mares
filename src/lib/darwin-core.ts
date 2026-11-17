@@ -29,7 +29,7 @@ export const dwcAnimalSelect = {
   strandingBeach: true,
   macroscopicNotes: true,
   simbaRecordNumber: true,
-  research: { select: { name: true, organization: { select: { name: true } } } },
+  research: { select: { name: true, isPublic: true, organization: { select: { name: true } } } },
 } as const
 
 // Campos do animal usados na exportação (selecionados na rota). A pesquisa é embutida por

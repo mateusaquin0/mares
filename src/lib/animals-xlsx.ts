@@ -1,5 +1,5 @@
 // MARES — Exportação de animais em Excel (.xlsx) (Fase 6). Gera uma planilha tabular com
-// os animais selecionados. Cabeçalhos e rótulos (sexo, estágio de vida, visibilidade) são
+// os animais selecionados. Cabeçalhos e rótulos (sexo, estágio de vida, publicação) são
 // localizados (pt/en). Roda no runtime Node da rota de exportação.
 
 import ExcelJS from "exceljs"
@@ -7,6 +7,7 @@ import ExcelJS from "exceljs"
 import { txt, pathogenName, type I18nText } from "@/lib/catalog-i18n"
 import { buildDescriptiveDiagnosis } from "@/lib/necropsy-report"
 import { normalizeLabel, unitForMeasure, withWeight } from "@/lib/biometry"
+import { publicationStatus } from "@/lib/publication"
 import type { AnimalBiometry } from "@/types/biometry"
 import type { SexValue, LifeStageValue } from "@/lib/animal-enums"
 
@@ -88,7 +89,7 @@ export type XlsxAnimal = {
   giSolidWaste: boolean | null
   giDetailedScreening: boolean | null
   anthropicInteractions: { type: string; degree: number }[]
-  research: { name: string }
+  research: { name: string; isPublic: boolean }
   _count: { samples: number }
   samples: XlsxSample[]
   // Laudo anatomopatológico: macro por sistema e micro por órgão.
@@ -221,7 +222,7 @@ const COLUMNS: { key: string; pt: string; en: string; width: number }[] = [
   { key: "lat", pt: "Latitude", en: "Latitude", width: 12 },
   { key: "lon", pt: "Longitude", en: "Longitude", width: 12 },
   { key: "research", pt: "Pesquisa", en: "Research", width: 24 },
-  { key: "visibility", pt: "Visibilidade", en: "Visibility", width: 12 },
+  { key: "visibility", pt: "Mapa público", en: "Public map", width: 14 },
   { key: "samples", pt: "Amostras", en: "Samples", width: 10 },
   { key: "positives", pt: "Patógenos positivos", en: "Positive pathogens", width: 32 },
   {
@@ -313,8 +314,15 @@ function rowFor(a: XlsxAnimal, loc: Loc): Record<string, string | number> {
   const lifeStage = a.lifeStage
     ? (LIFE_STAGE[a.lifeStage as LifeStageValue]?.[loc] ?? a.lifeStage)
     : ""
+  const published = publicationStatus(a.isPublic, a.research.isPublic) === "published"
   const visible =
-    loc === "en" ? (a.isPublic ? "Public" : "Hidden") : a.isPublic ? "Público" : "Oculto"
+    loc === "en"
+      ? published
+        ? "Published"
+        : "Not published"
+      : published
+        ? "Publicado"
+        : "Não publicado"
   return {
     controlId: a.controlId ?? "",
     simba: a.simbaRecordNumber ?? "",

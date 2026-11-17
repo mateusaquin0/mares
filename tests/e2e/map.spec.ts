@@ -22,9 +22,7 @@ async function searchSpecies(page: Page, species: string) {
 test.describe("Mapa público", () => {
   test.skip(!AUTH_ENABLED, AUTH_SKIP_REASON)
 
-  test("mostra, sem login, o animal público de pesquisa pública — e não o oculto", async ({
-    page,
-  }) => {
+  test("mostra, sem login, o animal publicado — e não o retido pelo grupo", async ({ page }) => {
     const { animals, research } = loadFixtures()
 
     await page.goto("/map")
@@ -46,7 +44,9 @@ test.describe("Mapa público", () => {
     await expect(popup.getByRole("link")).toHaveCount(0)
   })
 
-  test("o animal oculto e os de pesquisa privada não chegam ao navegador", async ({ page }) => {
+  test("o animal não publicado e os de pesquisa privada não chegam ao navegador", async ({
+    page,
+  }) => {
     const { animals } = loadFixtures()
 
     const response = await page.goto("/map")
@@ -67,7 +67,7 @@ test.describe("Mapa do grupo", () => {
   test.skip(!AUTH_ENABLED, AUTH_SKIP_REASON)
   test.use({ storageState: storageStatePath("orgAdmin") })
 
-  test("dentro do grupo, o animal oculto aparece no mapa, marcado como oculto", async ({
+  test("dentro do grupo, o animal não publicado aparece no mapa, marcado como não publicado", async ({
     page,
   }) => {
     const { animals } = loadFixtures()
@@ -85,6 +85,6 @@ test.describe("Mapa do grupo", () => {
     await marker.click()
     const popup = page.locator(".leaflet-popup-content")
     await expect(popup).toContainText(animals.mapHidden.controlId)
-    await expect(popup).toContainText(pt.map.legendHidden)
+    await expect(popup).toContainText(pt.map.legendUnpublished)
   })
 })

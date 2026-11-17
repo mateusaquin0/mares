@@ -44,7 +44,7 @@ function animal(over: Partial<XlsxAnimal> = {}): XlsxAnimal {
     giSolidWaste: null,
     giDetailedScreening: null,
     anthropicInteractions: [],
-    research: { name: "Projeto X" },
+    research: { name: "Projeto X", isPublic: true },
     _count: { samples: 0 },
     samples: [],
     necropsySystems: [],

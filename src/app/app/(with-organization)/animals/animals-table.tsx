@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils"
 import { formatDateOnly } from "@/lib/date"
 import { SEX_OPTIONS, LIFE_STAGE_OPTIONS } from "@/lib/animal-enums"
 import { downloadAnimalsExport, type ExportFormat } from "@/lib/export-download"
+import { publicationStatus } from "@/lib/publication"
 import { Badge } from "@/components/ui/badge"
 import { Truncate } from "@/components/ui/truncate"
 import { Button } from "@/components/ui/button"
@@ -41,6 +42,12 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+
+const PUBLICATION_TOOLTIP = {
+  published: "visMapPublished",
+  researchPrivate: "visMapResearchPrivate",
+  withheld: "visMapWithheld",
+} as const
 
 // Tabela de animais com filtros, ordenação e paginação SERVER-SIDE. O estado da consulta
 // (`query`) vive no AnimalsManager, que busca a página e as facetas; aqui só apresentamos e
@@ -80,11 +87,10 @@ export function AnimalsTable({
     const o = SEX_OPTIONS.find((x) => x.value === s)
     return o ? t(o.key) : (s ?? "")
   }
-  const isEffectivePublic = (a: AnimalListItem) => a.isPublic && a.research.isPublic
-  const visibilityTooltip = (a: AnimalListItem) => {
-    if (!a.research.isPublic) return t("visMapResearchPrivate")
-    return a.isPublic ? t("visMapPublic") : t("visMapAnimalHidden")
-  }
+  const isEffectivePublic = (a: AnimalListItem) =>
+    publicationStatus(a.isPublic, a.research.isPublic) === "published"
+  const visibilityTooltip = (a: AnimalListItem) =>
+    t(PUBLICATION_TOOLTIP[publicationStatus(a.isPublic, a.research.isPublic)])
 
   // ── Opções dos filtros: vêm das facetas (todo o escopo), não da página. ──
   const speciesOptions = useMemo<MultiSelectOption[]>(
@@ -324,8 +330,8 @@ export function AnimalsTable({
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">{t("allVisibility")}</SelectItem>
-              <SelectItem value="public">{t("public")}</SelectItem>
-              <SelectItem value="private">{t("private")}</SelectItem>
+              <SelectItem value="public">{t("published")}</SelectItem>
+              <SelectItem value="private">{t("unpublished")}</SelectItem>
             </SelectContent>
           </Select>,
         )}
@@ -346,7 +352,7 @@ export function AnimalsTable({
           </Select>,
         )}
         {filterField(
-          t("filterHidden"),
+          t("filterArchived"),
           <Select
             value={query.hidden}
             onValueChange={(v) => patchQuery({ hidden: v as AnimalListQuery["hidden"] })}
@@ -355,8 +361,8 @@ export function AnimalsTable({
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="listed">{t("hiddenListed")}</SelectItem>
-              <SelectItem value="only">{t("hiddenOnly")}</SelectItem>
+              <SelectItem value="listed">{t("archivedExclude")}</SelectItem>
+              <SelectItem value="only">{t("archivedOnly")}</SelectItem>
             </SelectContent>
           </Select>,
         )}
@@ -393,9 +399,9 @@ export function AnimalsTable({
           placeholder={tc("search")}
           className="max-w-sm"
         />
-        {/* Indivíduo oculto não é exportado (o servidor aplica a mesma regra). */}
+        {/* Indivíduo arquivado não é exportado (o servidor aplica a mesma regra). */}
         {query.hidden === "only" ? (
-          <span className="text-sm text-muted-foreground">{t("hiddenNotExported")}</span>
+          <span className="text-sm text-muted-foreground">{t("archivedNotExported")}</span>
         ) : (
           selected.size > 0 && (
             <div className="flex items-center gap-2">
@@ -553,7 +559,7 @@ export function AnimalsTable({
                         title={visibilityTooltip(a)}
                       >
                         <Globe className="size-3 shrink-0" />
-                        <span className="truncate">{t("public")}</span>
+                        <span className="truncate">{t("published")}</span>
                       </Badge>
                     ) : (
                       <Badge
@@ -562,7 +568,7 @@ export function AnimalsTable({
                         title={visibilityTooltip(a)}
                       >
                         <Lock className="size-3 shrink-0" />
-                        <span className="truncate">{t("private")}</span>
+                        <span className="truncate">{t("unpublished")}</span>
                       </Badge>
                     )}
                   </TableCell>

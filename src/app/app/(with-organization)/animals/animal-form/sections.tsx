@@ -447,14 +447,20 @@ export function NotesSection({
       {isOrgAdmin && (
         <div className="flex items-start gap-2">
           <Checkbox
-            id="isHidden"
-            checked={!form.isPublic}
-            onCheckedChange={(v) => set({ isPublic: v !== true })}
+            id="isPublic"
+            checked={form.isPublic}
+            onCheckedChange={(v) => set({ isPublic: v === true })}
             className="mt-0.5"
+            aria-describedby="isPublic-hint"
           />
-          <Label htmlFor="isHidden" className="text-sm font-normal text-muted-foreground">
-            {t("isHiddenHint")}
-          </Label>
+          <div className="grid gap-0.5">
+            <Label htmlFor="isPublic" className="text-sm font-normal">
+              {t("publishLabel")}
+            </Label>
+            <p id="isPublic-hint" className="text-xs text-muted-foreground">
+              {t("publishHint")}
+            </p>
+          </div>
         </div>
       )}
     </Section>

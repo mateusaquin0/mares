@@ -43,7 +43,7 @@ test.describe("Compartilhamento de indivíduo", () => {
   test.skip(!AUTH_ENABLED, AUTH_SKIP_REASON)
   test.describe.configure({ mode: "serial" })
 
-  test("convite aceito: o indivíduo passa a constar nas duas pesquisas; ocultar e desvincular", async ({
+  test("convite aceito: o indivíduo passa a constar nas duas pesquisas; arquivar e desvincular", async ({
     browser,
   }) => {
     const { origin, target, accept } = loadFixtures().work.sharing
@@ -87,19 +87,19 @@ test.describe("Compartilhamento de indivíduo", () => {
     await researcher.reload()
     await expect(group(researcher, a.shareAlsoLabel)).toContainText(target.name)
 
-    // Ocultar na pesquisa participante: some da listagem dela, continua na de origem.
-    await also.getByRole("button", { name: a.hideAction }).click()
-    await expectToast(admin, a.hideDone)
-    await expect(also.getByRole("button", { name: a.unhideAction })).toBeVisible()
+    // Arquivar na pesquisa participante: some da listagem dela, continua na de origem.
+    await also.getByRole("button", { name: a.archiveAction }).click()
+    await expectToast(admin, a.archiveDone)
+    await expect(also.getByRole("button", { name: a.restoreAction })).toBeVisible()
     await listByResearch(admin, target.name)
     await expect(admin.getByText(pt.common.noResults)).toBeVisible()
     await listByResearch(admin, origin.name)
     await expect(admin.getByRole("row").filter({ hasText: accept.controlId })).toBeVisible()
 
-    // Reexibir.
+    // Restaurar.
     await openDetail(admin, accept)
-    await group(admin, a.shareAlsoLabel).getByRole("button", { name: a.unhideAction }).click()
-    await expectToast(admin, a.unhideDone)
+    await group(admin, a.shareAlsoLabel).getByRole("button", { name: a.restoreAction }).click()
+    await expectToast(admin, a.restoreDone)
     await listByResearch(admin, target.name)
     await expect(admin.getByRole("row").filter({ hasText: accept.controlId })).toBeVisible()
 

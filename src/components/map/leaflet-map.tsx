@@ -22,7 +22,7 @@ export type PopupLabels = {
   positive: string
   noPositive: string
   viewDetails: string
-  hidden: string
+  unpublished: string
   undetermined: string
 }
 
@@ -99,15 +99,15 @@ function popupHtml(
         )
         .join("")}</div>`
     : `<div style="margin-top:6px;color:#64748b">${esc(labels.noPositive)}</div>`
-  const hiddenBadge = !p.isPublic
-    ? `<span style="margin-left:6px;padding:1px 6px;border-radius:9999px;background:#fef3c7;color:#92400e;font-size:10px;vertical-align:middle">${esc(labels.hidden)}</span>`
+  const unpublishedBadge = !p.isPublic
+    ? `<span style="margin-left:6px;padding:1px 6px;border-radius:9999px;background:#fef3c7;color:#92400e;font-size:10px;vertical-align:middle">${esc(labels.unpublished)}</span>`
     : ""
   const link =
     linkBase != null
       ? `<a href="${linkBase}/${encodeURIComponent(p.id)}${linkQuery ? `?${linkQuery}` : ""}" style="display:inline-block;margin-top:8px;color:#006876;font-weight:600;font-size:12px;text-decoration:none">${esc(labels.viewDetails)} →</a>`
       : ""
   return `<div style="min-width:190px;font-size:13px;line-height:1.5;color:#0f172a">
-    <div style="font-weight:700">${title}${hiddenBadge}</div>
+    <div style="font-weight:700">${title}${unpublishedBadge}</div>
     ${species}
     <div style="margin-top:6px">${rows.join("")}</div>
     ${positives}
