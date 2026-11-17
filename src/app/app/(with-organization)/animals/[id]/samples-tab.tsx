@@ -5,6 +5,7 @@ import { useLocale, useTranslations } from "next-intl"
 import { toast } from "sonner"
 import { MoreHorizontal, Plus, Search, X } from "lucide-react"
 
+import { cn } from "@/lib/utils"
 import { txt } from "@/lib/catalog-i18n"
 import { formatDateOnly } from "@/lib/date"
 import { LIMITS } from "@/schemas/limits"
@@ -280,33 +281,25 @@ export function SamplesTab({
   }
   const colCount = multiResearch ? 10 : 9
 
-  return (
-    <div className="flex min-h-0 flex-1 flex-col gap-4">
-      <div className="flex justify-end">
-        <Button size="sm" onClick={openCreate}>
-          <Plus className="size-4" />
-          {t("new")}
-        </Button>
-      </div>
+  // Identificação fica fixa à esquerda quando a tabela rola na horizontal.
+  const stickyCell = "sticky left-0 z-[1] border-r border-border bg-background"
 
-      {loading ? (
-        <TableSkeleton rows={3} />
-      ) : items.length === 0 ? (
-        <p className="text-sm text-muted-foreground">{t("empty")}</p>
-      ) : (
-        <>
-          <div className="flex flex-wrap items-center gap-3">
-            <div className="relative min-w-0 flex-1 sm:max-w-xs">
-              <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+  return (
+    <div className="flex min-h-0 flex-1 flex-col">
+      <div className="flex flex-wrap items-center gap-2 pb-2.5">
+        {!loading && items.length > 0 && (
+          <>
+            <div className="relative min-w-0 max-w-[360px] flex-[1_1_280px]">
+              <Search className="pointer-events-none absolute left-2 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder={t("searchPlaceholder")}
-                className="h-9 pl-9"
+                className="pl-8"
               />
             </div>
             <Select value={fStatus} onValueChange={setFStatus}>
-              <SelectTrigger className="h-9 w-auto min-w-36">
+              <SelectTrigger className="w-[168px]">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -323,7 +316,7 @@ export function SamplesTab({
             </Select>
             {organOptions.length > 1 && (
               <Select value={fOrgan} onValueChange={setFOrgan}>
-                <SelectTrigger className="h-9 w-auto min-w-36">
+                <SelectTrigger className="w-[176px]">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -338,7 +331,7 @@ export function SamplesTab({
             )}
             {multiResearch && researchFilterOptions.length > 1 && (
               <Select value={fResearch} onValueChange={setFResearch}>
-                <SelectTrigger className="h-9 w-auto min-w-36">
+                <SelectTrigger className="w-[176px]">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -352,95 +345,112 @@ export function SamplesTab({
               </Select>
             )}
             {hasFilters && (
-              <Button variant="ghost" size="sm" onClick={clearFilters} className="gap-1">
+              <button
+                type="button"
+                onClick={clearFilters}
+                className="flex items-center gap-1 text-[13px] text-primary underline underline-offset-2 hover:text-foreground"
+              >
                 <X className="size-3.5" />
                 {t("clearFilters")}
-              </Button>
+              </button>
             )}
-          </div>
+          </>
+        )}
+        <span className="flex-1" />
+        <Button onClick={openCreate}>
+          <Plus className="size-4" />
+          {t("new")}
+        </Button>
+      </div>
 
-          <div className="min-h-0 flex-1 overflow-hidden rounded-md border [&>div]:h-full">
-            <Table>
-              <TableHeader className="sticky top-0 z-10 [&_th]:bg-accent">
-                <TableRow>
-                  <TableHead>{t("colIdentification")}</TableHead>
-                  {multiResearch && <TableHead>{t("colResearch")}</TableHead>}
-                  <TableHead>{t("colOrgan")}</TableHead>
-                  <TableHead>{t("colType")}</TableHead>
-                  <TableHead>{t("colCollection")}</TableHead>
-                  <TableHead>{t("colStorage")}</TableHead>
-                  <TableHead className="text-right">{t("colTemp")}</TableHead>
-                  <TableHead className="text-center">{t("colStatus")}</TableHead>
-                  <TableHead className="text-right">{t("colAnalyses")}</TableHead>
-                  <TableHead className="w-12 text-right">
-                    <ReloadButton />
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filtered.length === 0 && (
-                  <TableEmpty colSpan={colCount}>{tc("noResults")}</TableEmpty>
-                )}
-                {filtered.map((s) => (
-                  <TableRow key={s.id}>
-                    <TableCell className="font-medium">
-                      <Truncate>{s.identification}</Truncate>
-                    </TableCell>
-                    {multiResearch && (
-                      <TableCell>
-                        <Truncate lines={2} className="max-w-[10rem]">
-                          {s.research.name}
-                        </Truncate>
-                      </TableCell>
-                    )}
+      {loading ? (
+        <TableSkeleton rows={3} />
+      ) : items.length === 0 ? (
+        <div className="border-b border-t-2 border-b-foreground border-t-foreground pb-6 pt-[22px]">
+          <p className="font-serif text-xl font-medium">{t("empty")}</p>
+        </div>
+      ) : (
+        <div className="min-h-0 flex-1 overflow-hidden [&>div]:h-full [&>div]:overscroll-contain">
+          <Table className="min-w-[1080px]">
+            <TableHeader className="sticky top-0 z-[2] bg-background">
+              <TableRow>
+                <TableHead className={cn(stickyCell, "z-[3] w-[112px]")}>
+                  {t("colIdentification")}
+                </TableHead>
+                {multiResearch && <TableHead>{t("colResearch")}</TableHead>}
+                <TableHead>{t("colOrgan")}</TableHead>
+                <TableHead>{t("colType")}</TableHead>
+                <TableHead className="w-24">{t("colCollection")}</TableHead>
+                <TableHead>{t("colStorage")}</TableHead>
+                <TableHead className="w-[84px] text-right">{t("colTemp")}</TableHead>
+                <TableHead className="w-32">{t("colStatus")}</TableHead>
+                <TableHead className="w-[76px] text-right">{t("colAnalyses")}</TableHead>
+                <TableHead className="w-10 text-right">
+                  <ReloadButton />
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filtered.length === 0 && (
+                <TableEmpty colSpan={colCount}>{tc("noResults")}</TableEmpty>
+              )}
+              {filtered.map((s) => (
+                <TableRow key={s.id}>
+                  <TableCell className={cn(stickyCell, "font-semibold")}>
+                    <Truncate>{s.identification}</Truncate>
+                  </TableCell>
+                  {multiResearch && (
                     <TableCell>
-                      <Truncate>{txt(locale, s.organ.name)}</Truncate>
+                      <Truncate className="max-w-[14rem]">{s.research.name}</Truncate>
                     </TableCell>
-                    <TableCell>
-                      <Truncate>{s.sampleType}</Truncate>
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {fmtDate(s.collectionDate)}
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      <Truncate>{s.storageLocation ?? ""}</Truncate>
-                    </TableCell>
-                    <TableCell className="text-right text-muted-foreground">
-                      {s.storageTemp ?? ""}
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <SampleStatusBadge status={s.status} iconOnly />
-                    </TableCell>
-                    <TableCell className="text-right">{s._count.analyses}</TableCell>
-                    <TableCell className="text-right">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="size-8">
-                            <MoreHorizontal className="size-4" />
-                            <span className="sr-only">{tc("actions")}</span>
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onSelect={() => openEdit(s)}>
-                            {tc("edit")}
+                  )}
+                  <TableCell>
+                    <Truncate>{txt(locale, s.organ.name)}</Truncate>
+                  </TableCell>
+                  <TableCell>
+                    <Truncate>{s.sampleType}</Truncate>
+                  </TableCell>
+                  <TableCell>{s.collectionDate ? fmtDate(s.collectionDate) : "—"}</TableCell>
+                  <TableCell>
+                    <Truncate>{s.storageLocation || "—"}</Truncate>
+                  </TableCell>
+                  <TableCell className="text-right">{s.storageTemp ?? "—"}</TableCell>
+                  <TableCell>
+                    <SampleStatusBadge status={s.status} />
+                  </TableCell>
+                  <TableCell className="text-right">{s._count.analyses}</TableCell>
+                  <TableCell className="text-right">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="size-7 text-muted-foreground"
+                        >
+                          <MoreHorizontal className="size-4" />
+                          <span className="sr-only">{tc("actions")}</span>
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onSelect={() => openEdit(s)}>
+                          {tc("edit")}
+                        </DropdownMenuItem>
+                        {canDelete(s) && (
+                          <DropdownMenuItem
+                            className="text-destructive focus:text-destructive"
+                            onSelect={() => setConfirm(s)}
+                          >
+                            {tc("delete")}
                           </DropdownMenuItem>
-                          {canDelete(s) && (
-                            <DropdownMenuItem
-                              className="text-destructive focus:text-destructive"
-                              onSelect={() => setConfirm(s)}
-                            >
-                              {tc("delete")}
-                            </DropdownMenuItem>
-                          )}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        </>
+                        )}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
       )}
 
       {confirm && (

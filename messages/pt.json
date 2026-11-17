@@ -998,7 +998,8 @@
     "deleted": "Arquivo excluído",
     "deleteError": "Não foi possível excluir",
     "deleteTitle": "Excluir arquivo",
-    "deleteDesc": "Excluir este arquivo? Esta ação é irreversível."
+    "deleteDesc": "Excluir este arquivo? Esta ação é irreversível.",
+    "chooseFile": "Escolher arquivo…"
   },
   "necropsy": {
     "macroTitle": "Exame anatomopatológico (macroscópico)",
@@ -1313,7 +1314,8 @@
     "entityNecropsySystem": "Sistema (necrópsia)",
     "entityGrossFinding": "Achado macroscópico",
     "entityHistopathology": "Achado histopatológico",
-    "deleted": "removido"
+    "deleted": "removido",
+    "changedTo": "passou a"
   },
   "results": {
     "title": "Resultados",

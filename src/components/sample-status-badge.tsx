@@ -1,7 +1,7 @@
 "use client"
 
 import { useTranslations } from "next-intl"
-import { Microscope, Package, PackageOpen, TriangleAlert, type LucideIcon } from "lucide-react"
+import { Archive, CircleSlash, FlaskConical, TriangleAlert, type LucideIcon } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { Badge, type BadgeProps } from "@/components/ui/badge"
@@ -11,9 +11,9 @@ export const SAMPLE_STATUS_META: Record<
   SampleStatus,
   { icon: LucideIcon; labelKey: string; variant: BadgeProps["variant"] }
 > = {
-  STORED: { icon: Package, labelKey: "statusStored", variant: "highlight" },
-  IN_USE: { icon: Microscope, labelKey: "statusInUse", variant: "default" },
-  DEPLETED: { icon: PackageOpen, labelKey: "statusDepleted", variant: "faded" },
+  STORED: { icon: Archive, labelKey: "statusStored", variant: "positive" },
+  IN_USE: { icon: FlaskConical, labelKey: "statusInUse", variant: "info" },
+  DEPLETED: { icon: CircleSlash, labelKey: "statusDepleted", variant: "outline" },
   DEGRADED: { icon: TriangleAlert, labelKey: "statusDegraded", variant: "destructive" },
 }
 

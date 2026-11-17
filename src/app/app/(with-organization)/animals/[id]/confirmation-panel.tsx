@@ -6,17 +6,17 @@ import { useLocale, useTranslations } from "next-intl"
 import { toast } from "sonner"
 import { AlertTriangle, Pencil, Plus, Trash2, X } from "lucide-react"
 
+import { cn } from "@/lib/utils"
 import { pathogenName, txt } from "@/lib/catalog-i18n"
 import { useErrorMessage } from "@/lib/use-error-message"
 import { usePathogens, useExamTypes } from "@/hooks/use-catalog"
 import { useDeleteConfirmation, useSaveConfirmation } from "@/hooks/use-analyses"
 import type { AnalysisRow, PathogenLite, ResultValue } from "@/types/analysis"
 import type { ConfirmationPayload } from "@/services/analyses"
-import { ResultDot, ResultSelect } from "@/components/analysis-cells"
+import { RESULT_META, ResultSelect } from "@/components/analysis-cells"
 import { ConfirmDialog } from "@/components/confirm-dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Badge } from "@/components/ui/badge"
 import { Truncate } from "@/components/ui/truncate"
 import { Combobox } from "@/components/ui/combobox"
 
@@ -54,13 +54,6 @@ function toForm(row: AnalysisRow | null, defaultExamId: string): FormState {
         }))
       : [emptySeq()],
   }
-}
-
-// Resumo textual de uma sequência (marcador · acesso · % identidade).
-function seqSummary(s: AnalysisRow["sequences"][number]): string {
-  return [s.marker, s.accession, s.pctIdentity != null ? `${s.pctIdentity}%` : null]
-    .filter(Boolean)
-    .join(" · ")
 }
 
 export function ConfirmationPanel({
@@ -175,83 +168,131 @@ export function ConfirmationPanel({
 
   const canSave = !!form.pathogenId && !!form.examTypeId
 
+  const fieldLabel = "text-xs font-semibold leading-[14px] text-muted-foreground"
+  const seqGrid = "grid grid-cols-[120px_150px_110px_minmax(0,1fr)] gap-x-3"
+
   return (
-    <div className="space-y-3 rounded-md border border-dashed bg-muted/30 p-3">
-      <div className="flex items-center justify-between gap-2">
-        <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+    <div className="mb-0 ml-4 border-l-2 border-l-foreground pb-2.5 pl-3 pt-2">
+      <div className="flex items-center gap-3">
+        <span className="text-xs font-bold uppercase tracking-[.05em] text-muted-foreground">
           {t("confirmTitle")}
         </span>
+        <span className="flex-1" />
         {!editing && (
-          <Button variant="outline" size="sm" className="h-7 gap-1" onClick={openNew}>
-            <Plus className="size-3.5" />
+          <Button variant="outline" size="sm" className="h-[26px]" onClick={openNew}>
+            <Plus className="size-4" />
             {t("confirmAdd")}
           </Button>
         )}
       </div>
 
       {!parentIsPositive && confirmations.length > 0 && (
-        <p className="flex items-center gap-1.5 text-xs text-[hsl(35_80%_40%)]">
-          <AlertTriangle className="size-3.5 shrink-0" />
+        <p className="mt-1.5 flex items-center gap-2 rounded-sm border border-warning bg-warning-subtle px-2.5 py-1 font-semibold text-warning">
+          <AlertTriangle className="size-4 shrink-0" />
           {t("confirmOrphanWarning")}
         </p>
       )}
 
       {confirmations.length === 0 && !editing ? (
-        <p className="text-xs text-muted-foreground">{t("confirmEmpty")}</p>
+        <p className="mt-1 text-[13px] text-muted-foreground">{t("confirmEmpty")}</p>
       ) : (
-        <ul className="space-y-2">
-          {confirmations.map((c) => (
-            <li
-              key={c.id}
-              className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded border bg-background px-2.5 py-1.5"
-            >
-              <span className="flex items-center gap-2 font-medium">
-                <ResultDot result={c.result} />
-                <Truncate className="max-w-[16rem]">{pathogenName(locale, c.pathogen)}</Truncate>
-              </span>
-              <span className="text-xs text-muted-foreground">{txt(locale, c.examType.name)}</span>
-              {c.sequences.map((s) => (
-                <Badge key={s.id} variant="secondary" className="font-normal">
-                  {seqSummary(s) || t("seqEmpty")}
-                </Badge>
-              ))}
-              <span className="ml-auto flex items-center gap-1">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="size-7"
-                  onClick={() => openEdit(c)}
-                  aria-label={t("confirmEdit")}
-                >
-                  <Pencil className="size-3.5" />
-                </Button>
-                <ConfirmDialog
-                  destructive
-                  title={t("confirmDeleteTitle")}
-                  description={t("confirmDeleteDesc")}
-                  onConfirm={() => remove(c.id)}
-                  trigger={
+        <ul>
+          {confirmations.map((c) => {
+            const meta = RESULT_META[c.result ?? "UNTESTED"]
+            const Icon = meta.icon
+            return (
+              <li key={c.id} className="mt-1">
+                <div className="flex flex-wrap items-baseline gap-x-2.5">
+                  <span
+                    title={t("colResult")}
+                    className={cn(
+                      "inline-flex items-center gap-1 self-center text-[13px] font-semibold",
+                      c.result === "POSITIVO" && "text-positive",
+                      c.result === "INCONCLUSIVO" && "text-warning",
+                      c.result === null && "font-normal text-muted-foreground",
+                    )}
+                  >
+                    <Icon className="size-3.5" aria-hidden />
+                    {t(meta.labelKey)}
+                  </span>
+                  <Truncate
+                    className={cn(
+                      "max-w-[20rem] font-medium",
+                      c.pathogen.scientificName && "font-serif text-base italic",
+                    )}
+                  >
+                    {pathogenName(locale, c.pathogen)}
+                  </Truncate>
+                  <span className="text-muted-foreground">{txt(locale, c.examType.name)}</span>
+                  {c.notes && <span className="text-muted-foreground">· {c.notes}</span>}
+                  <span className="flex-1" />
+                  <span className="flex items-center gap-0.5 self-center">
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="size-7 text-destructive"
-                      aria-label={t("confirmDelete")}
+                      className="size-7 text-muted-foreground"
+                      onClick={() => openEdit(c)}
+                      aria-label={t("confirmEdit")}
+                      title={t("confirmEdit")}
                     >
-                      <Trash2 className="size-3.5" />
+                      <Pencil className="size-4" />
                     </Button>
-                  }
-                />
-              </span>
-            </li>
-          ))}
+                    <ConfirmDialog
+                      destructive
+                      title={t("confirmDeleteTitle")}
+                      description={t("confirmDeleteDesc")}
+                      onConfirm={() => remove(c.id)}
+                      trigger={
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="size-7 text-muted-foreground hover:text-destructive"
+                          aria-label={t("confirmDelete")}
+                          title={t("confirmDelete")}
+                        >
+                          <Trash2 className="size-4" />
+                        </Button>
+                      }
+                    />
+                  </span>
+                </div>
+                {c.sequences.length > 0 && (
+                  <div className="mt-1">
+                    <div
+                      className={cn(
+                        seqGrid,
+                        "border-b border-border py-[3px] text-xs font-bold uppercase tracking-[.05em] text-muted-foreground",
+                      )}
+                    >
+                      <span>{t("seqMarker")}</span>
+                      <span>{t("seqAccession")}</span>
+                      <span className="text-right">{t("seqIdentity")}</span>
+                      <span>{t("seqPlatform")}</span>
+                    </div>
+                    {c.sequences.map((s) => (
+                      <div
+                        key={s.id}
+                        className={cn(seqGrid, "border-b border-border py-1 last:border-b-0")}
+                      >
+                        <span>{s.marker || "—"}</span>
+                        <span>{s.accession || "—"}</span>
+                        <span className="text-right tabular-nums">{s.pctIdentity ?? "—"}</span>
+                        <span>{s.platform || "—"}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </li>
+            )
+          })}
         </ul>
       )}
 
       {editing && (
-        <div className="space-y-3 rounded border bg-background p-3">
-          <div className="grid gap-3 sm:grid-cols-2">
-            <div className="space-y-1">
-              <span className="text-xs font-medium">{t("confirmSpecies")}</span>
+        <div className="mt-2 space-y-2.5 rounded-sm border border-input bg-popover px-3 py-2.5">
+          <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-2.5">
+            <div className="grid min-w-0 gap-0.5">
+              <span className={fieldLabel}>{t("confirmSpecies")}</span>
               <Combobox
                 options={speciesOptions}
                 value={form.pathogenId || undefined}
@@ -263,8 +304,8 @@ export function ConfirmationPanel({
                 loading={pathogensQ.isLoading}
               />
             </div>
-            <div className="space-y-1">
-              <span className="text-xs font-medium">{t("confirmExam")}</span>
+            <div className="grid min-w-0 gap-0.5">
+              <span className={fieldLabel}>{t("confirmExam")}</span>
               <Combobox
                 options={examOptions}
                 value={form.examTypeId || undefined}
@@ -276,39 +317,38 @@ export function ConfirmationPanel({
                 loading={examTypesQ.isLoading}
               />
             </div>
-            <label className="space-y-1">
-              <span className="text-xs font-medium">{t("colResult")}</span>
+            <label className="grid min-w-0 gap-0.5">
+              <span className={fieldLabel}>{t("colResult")}</span>
               <ResultSelect
                 value={form.result}
                 onChange={(result) => setForm((f) => ({ ...f, result }))}
               />
             </label>
-            <label className="space-y-1">
-              <span className="text-xs font-medium">{t("colNotes")}</span>
+            <label className="grid min-w-0 gap-0.5">
+              <span className={fieldLabel}>{t("colNotes")}</span>
               <Input
                 value={form.notes}
                 onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))}
                 placeholder={t("notesPlaceholder")}
-                className="h-8"
               />
             </label>
           </div>
 
-          <div className="space-y-2">
-            <span className="text-xs font-medium">{t("seqTitle")}</span>
+          <div className="space-y-1.5">
+            <span className={fieldLabel}>{t("seqTitle")}</span>
             {form.sequences.map((s, i) => (
               <div key={i} className="flex flex-wrap items-center gap-2">
                 <Input
                   value={s.marker}
                   onChange={(e) => setSeq(i, { marker: e.target.value })}
                   placeholder={t("seqMarker")}
-                  className="h-8 w-32"
+                  className="w-32"
                 />
                 <Input
                   value={s.accession}
                   onChange={(e) => setSeq(i, { accession: e.target.value })}
                   placeholder={t("seqAccession")}
-                  className="h-8 w-36"
+                  className="w-36"
                 />
                 <Input
                   value={s.pctIdentity}
@@ -316,13 +356,13 @@ export function ConfirmationPanel({
                   placeholder={t("seqIdentity")}
                   type="number"
                   step="any"
-                  className="h-8 w-28"
+                  className="w-28 text-right"
                 />
                 <Input
                   value={s.platform}
                   onChange={(e) => setSeq(i, { platform: e.target.value })}
                   placeholder={t("seqPlatform")}
-                  className="h-8 w-32"
+                  className="w-32"
                 />
                 <Button
                   variant="ghost"
@@ -330,22 +370,23 @@ export function ConfirmationPanel({
                   className="size-7 text-muted-foreground"
                   onClick={() => removeSeq(i)}
                   aria-label={t("seqRemove")}
+                  title={t("seqRemove")}
                 >
-                  <X className="size-3.5" />
+                  <X className="size-4" />
                 </Button>
               </div>
             ))}
-            <Button variant="ghost" size="sm" className="h-7 gap-1" onClick={addSeq}>
-              <Plus className="size-3.5" />
+            <Button variant="outline" size="sm" className="h-[26px]" onClick={addSeq}>
+              <Plus className="size-4" />
               {t("seqAdd")}
             </Button>
           </div>
 
           <div className="flex items-center justify-end gap-2">
-            <Button variant="ghost" size="sm" onClick={cancel} disabled={saveM.isPending}>
+            <Button variant="outline" onClick={cancel} disabled={saveM.isPending}>
               {tc("cancel")}
             </Button>
-            <Button size="sm" onClick={save} disabled={!canSave || saveM.isPending}>
+            <Button onClick={save} disabled={!canSave || saveM.isPending}>
               {tc("save")}
             </Button>
           </div>
