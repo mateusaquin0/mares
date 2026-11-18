@@ -85,9 +85,6 @@ export function IdentificationSection({
             <InputActionButton
               onClick={toggleSpeciesIndet}
               title={speciesIndet ? t("speciesUndeterminedEnable") : t("speciesUndeterminedMark")}
-              aria-label={
-                speciesIndet ? t("speciesUndeterminedEnable") : t("speciesUndeterminedMark")
-              }
               aria-pressed={speciesIndet}
             >
               <Ban />
@@ -140,7 +137,6 @@ export function IdentificationSection({
                 loading={checkingId}
                 disabled={!form.controlId.trim()}
                 title={t("idCheck")}
-                aria-label={t("idCheck")}
               >
                 {!checkingId && <Search />}
               </InputActionButton>
@@ -163,7 +159,6 @@ export function IdentificationSection({
                 loading={fetchingSimba}
                 disabled={!form.simbaRecordNumber.trim()}
                 title={t("simbaFetch")}
-                aria-label={t("simbaFetch")}
               >
                 {!fetchingSimba && <Search />}
               </InputActionButton>
@@ -216,7 +211,6 @@ function StrandingField({
           <InputActionButton
             onClick={onToggle}
             title={disabled ? t("noInfoEnable") : t("noInfoMark")}
-            aria-label={disabled ? t("noInfoEnable") : t("noInfoMark")}
             aria-pressed={disabled}
           >
             <Ban />

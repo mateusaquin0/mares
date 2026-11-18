@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useTranslations } from "next-intl"
 import { toast } from "sonner"
-import { Trash2, Search } from "lucide-react"
+import { Check, Search, Trash2 } from "lucide-react"
 
 import { addMemberSchema, type AddMemberData } from "@/schemas/organization.schema"
 import { useAddOrgMember, useSetOrgMemberRole, useRemoveOrgMember } from "@/hooks/use-admin"
@@ -172,7 +172,6 @@ export function OrgMembers({ org }: { org: AdminOrg }) {
                   onClick={lookupEmail}
                   loading={lookupM.isPending}
                   title={t("addLookupTitle")}
-                  aria-label={t("addLookupTitle")}
                 >
                   {!lookupM.isPending && <Search />}
                 </InputActionButton>
@@ -199,7 +198,12 @@ export function OrgMembers({ org }: { org: AdminOrg }) {
                 {tval(form.formState.errors.email.message!)}
               </p>
             )}
-            {lookup?.found && <p className="text-xs text-success">{t("addLookupFound")}</p>}
+            {lookup?.found && (
+              <p className="flex items-center gap-1 text-[13px] font-semibold text-positive">
+                <Check className="size-3.5 shrink-0" aria-hidden />
+                {t("addLookupFound")}
+              </p>
+            )}
           </div>
 
           <div className="grid grid-cols-2 gap-x-3.5 gap-y-2.5">

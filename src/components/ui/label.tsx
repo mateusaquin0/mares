@@ -25,16 +25,18 @@ const Label = React.forwardRef<
   React.ElementRef<typeof LabelPrimitive.Root>,
   React.ComponentPropsWithoutRef<typeof LabelPrimitive.Root> &
     VariantProps<typeof labelVariants> & { required?: boolean }
->(({ className, required, children, ...props }, ref) => (
-  <LabelPrimitive.Root ref={ref} className={cn(labelVariants(), className)} {...props}>
-    {children}
-    {required && (
-      <>
-        {" "}
-        <RequiredMark />
-      </>
+>(({ className, required, ...props }, ref) => (
+  // O "*" de obrigatório é desenhado por CSS: fica fora do texto do rótulo, que continua sendo
+  // exatamente o nome do campo para leitores de tela e para os testes.
+  <LabelPrimitive.Root
+    ref={ref}
+    className={cn(
+      labelVariants(),
+      required && "after:ml-1 after:text-destructive after:content-['*']",
+      className,
     )}
-  </LabelPrimitive.Root>
+    {...props}
+  />
 ))
 Label.displayName = LabelPrimitive.Root.displayName
 

@@ -387,18 +387,25 @@ export function FeedbackThreadPane({
         ) : (
           thread.messages.map((m) => {
             const mine = m.party === thread.party
-            // A linha à esquerda marca quem fala: forte para o outro lado, clara para quem lê.
+            // Cada lado da conversa fica num lado da coluna: quem lê à direita, com o fundo de
+            // destaque; o outro lado à esquerda, com borda e fundo neutro.
             return (
               <div
                 key={m.id}
-                className={cn(
-                  "mt-2.5 border-l-2 py-2 pl-3 [overflow-wrap:anywhere]",
-                  mine ? "ml-16 border-border" : "mr-16 border-foreground",
-                )}
+                className={cn("mt-3 flex flex-col gap-1", mine ? "items-end" : "items-start")}
               >
-                <p className="whitespace-pre-wrap text-pretty">{m.body}</p>
+                <p
+                  className={cn(
+                    "max-w-[78%] whitespace-pre-wrap rounded-sm px-3 py-2 text-pretty [overflow-wrap:anywhere]",
+                    mine
+                      ? "bg-accent text-accent-foreground"
+                      : "border border-border bg-muted text-foreground",
+                  )}
+                >
+                  {m.body}
+                </p>
                 {m.attachments.length > 0 && (
-                  <div className="mt-1.5 flex flex-wrap gap-2">
+                  <div className={cn("flex max-w-[78%] flex-wrap gap-2", mine && "justify-end")}>
                     {m.attachments.map((a) => (
                       <AttachmentThumb
                         key={a.id}
@@ -412,7 +419,7 @@ export function FeedbackThreadPane({
                     ))}
                   </div>
                 )}
-                <p className="mt-0.5 flex flex-wrap items-baseline gap-x-2 text-[13px] text-muted-foreground">
+                <p className="flex flex-wrap items-baseline gap-x-2 text-[13px] text-muted-foreground [overflow-wrap:anywhere]">
                   <b className="font-semibold text-foreground">
                     {partyLabel(m.party, m.createdByName, m.createdByEmail)}
                   </b>
