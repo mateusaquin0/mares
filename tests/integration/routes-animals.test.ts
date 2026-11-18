@@ -958,8 +958,21 @@ describe("GET /api/animals/[id]/audit — timeline", () => {
   let sampleP: { id: string; identification: string }
   let sampleQ: { id: string; identification: string }
 
+  // Instantes explícitos e crescentes: inserções seguidas podem cair no mesmo milissegundo e
+  // deixar a ordem "mais recente primeiro" indefinida.
+  let tick = Date.now() - 60_000
   const log = (entity: string, entityId: string, field: string, newValue: string, userId: string) =>
-    prisma.auditLog.create({ data: { entity, entityId, field, oldValue: null, newValue, userId } })
+    prisma.auditLog.create({
+      data: {
+        entity,
+        entityId,
+        field,
+        oldValue: null,
+        newValue,
+        userId,
+        changedAt: new Date((tick += 1000)),
+      },
+    })
   const timeline = async (id = animal) => json<Entry[]>(await audit(id))
 
   beforeAll(async () => {
