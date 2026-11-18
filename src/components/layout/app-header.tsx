@@ -250,8 +250,13 @@ export function AppHeader({
           </DropdownMenu>
         </nav>
         <span className="flex-1" />
-        {orgSwitcher("max-w-[200px]")}
-        <Divider className="my-3 self-stretch" />
+        {/* Sem grupo ativo (admin da aplicação) o rótulo é fixo e não cabe na faixa compacta. */}
+        {activeOrg && (
+          <>
+            {orgSwitcher("max-w-[200px]")}
+            <Divider className="my-3 self-stretch" />
+          </>
+        )}
         {userMenu(true)}
       </div>
 

@@ -2,13 +2,13 @@
 
 import { useState, useCallback } from "react"
 import { useLocale, useTranslations } from "next-intl"
+import { Search } from "lucide-react"
 
 import { getCountryName } from "@/lib/countries"
 import { useTable } from "@/lib/use-table"
 import { useAdminOrganizations } from "@/hooks/use-admin"
 import type { AdminOrg } from "@/types/admin"
 import { CountryFlag } from "@/components/country-flag"
-import { Badge } from "@/components/ui/badge"
 import { TableSkeleton } from "@/components/ui/skeleton"
 import { Input } from "@/components/ui/input"
 import { OrgMembers } from "./org-members"
@@ -81,7 +81,7 @@ export default function AdminOrganizationsPage() {
   })
 
   return (
-    <div className="space-y-4 px-page pb-8 pt-3.5">
+    <div className="px-page pb-8 pt-3.5">
       <div>
         <h1 className="font-serif text-[28px] font-medium leading-8">{t("title")}</h1>
         <p className="mt-0.5 max-w-[820px] text-pretty text-muted-foreground">{t("subtitle")}</p>
@@ -91,78 +91,93 @@ export default function AdminOrganizationsPage() {
         <TableSkeleton />
       ) : (
         <>
-          <p className="text-xs text-muted-foreground">{t("hint")}</p>
-          <Input
-            value={table.query}
-            onChange={(e) => table.setQuery(e.target.value)}
-            placeholder={tc("search")}
-            className="max-w-sm"
-          />
-          <div>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <SortableHead sortKey="name" sort={table.sort} onToggle={table.toggleSort}>
-                    {t("colName")}
-                  </SortableHead>
-                  <SortableHead sortKey="location" sort={table.sort} onToggle={table.toggleSort}>
-                    {t("colLocation")}
-                  </SortableHead>
-                  <SortableHead
-                    sortKey="members"
-                    sort={table.sort}
-                    onToggle={table.toggleSort}
-                    align="right"
-                  >
-                    {t("colMembers")}
-                  </SortableHead>
-                  <SortableHead
-                    sortKey="research"
-                    sort={table.sort}
-                    onToggle={table.toggleSort}
-                    align="right"
-                  >
-                    {t("colResearch")}
-                  </SortableHead>
-                  <SortableHead sortKey="created" sort={table.sort} onToggle={table.toggleSort}>
-                    {t("colCreated")}
-                  </SortableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {table.rows.length === 0 ? (
-                  <TableEmpty colSpan={5}>
-                    {orgs.length === 0 ? t("empty") : tc("noResults")}
-                  </TableEmpty>
-                ) : (
-                  table.rows.map((o) => (
-                    <TableRow
-                      key={o.id}
-                      className="cursor-pointer"
-                      onClick={() => setSelectedId(o.id)}
-                    >
-                      <TableCell className="font-medium">
-                        <span className="flex items-center gap-2">
-                          <Truncate>{o.name}</Truncate>
-                          {o.deactivatedAt && (
-                            <Badge variant="secondary">{t("deactivatedBadge")}</Badge>
-                          )}
-                        </span>
-                      </TableCell>
-                      <TableCell className="text-muted-foreground">
-                        <Truncate>{renderLocation(o)}</Truncate>
-                      </TableCell>
-                      <TableCell className="text-right">{o.members.length}</TableCell>
-                      <TableCell className="text-right">{o.researchCount}</TableCell>
-                      <TableCell className="text-muted-foreground">
-                        {fmtDate(o.createdAt)}
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
+          <div className="flex flex-wrap items-center gap-2 py-2.5">
+            <div className="relative min-w-0 flex-[0_1_320px]">
+              <Search className="pointer-events-none absolute left-2 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                value={table.query}
+                onChange={(e) => table.setQuery(e.target.value)}
+                placeholder={tc("search")}
+                className="pl-8"
+              />
+            </div>
+            <span className="text-muted-foreground">{t("hint")}</span>
           </div>
+          <Table className="table-fixed">
+            <TableHeader>
+              <TableRow>
+                <SortableHead sortKey="name" sort={table.sort} onToggle={table.toggleSort}>
+                  {t("colName")}
+                </SortableHead>
+                <SortableHead
+                  sortKey="location"
+                  sort={table.sort}
+                  onToggle={table.toggleSort}
+                  className="w-[36%]"
+                >
+                  {t("colLocation")}
+                </SortableHead>
+                <SortableHead
+                  sortKey="members"
+                  sort={table.sort}
+                  onToggle={table.toggleSort}
+                  align="right"
+                  className="w-[118px]"
+                >
+                  {t("colMembers")}
+                </SortableHead>
+                <SortableHead
+                  sortKey="research"
+                  sort={table.sort}
+                  onToggle={table.toggleSort}
+                  align="right"
+                  className="w-[118px]"
+                >
+                  {t("colResearch")}
+                </SortableHead>
+                <SortableHead
+                  sortKey="created"
+                  sort={table.sort}
+                  onToggle={table.toggleSort}
+                  className="w-[124px]"
+                >
+                  {t("colCreated")}
+                </SortableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {table.rows.length === 0 ? (
+                <TableEmpty colSpan={5}>
+                  {orgs.length === 0 ? t("empty") : tc("noResults")}
+                </TableEmpty>
+              ) : (
+                table.rows.map((o) => (
+                  <TableRow
+                    key={o.id}
+                    className="cursor-pointer"
+                    onClick={() => setSelectedId(o.id)}
+                  >
+                    <TableCell>
+                      <Truncate className="max-w-full font-semibold">{o.name}</Truncate>
+                      {o.deactivatedAt && (
+                        <span className="block text-[13px] text-muted-foreground">
+                          {t("deactivatedBadge")}
+                        </span>
+                      )}
+                    </TableCell>
+                    <TableCell className={locationText(o) ? undefined : "text-muted-foreground"}>
+                      <Truncate className="max-w-full">
+                        {locationText(o) || t("noLocation")}
+                      </Truncate>
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums">{o.members.length}</TableCell>
+                    <TableCell className="text-right tabular-nums">{o.researchCount}</TableCell>
+                    <TableCell className="text-muted-foreground">{fmtDate(o.createdAt)}</TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
         </>
       )}
 

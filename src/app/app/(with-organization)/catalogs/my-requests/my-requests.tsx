@@ -1,15 +1,12 @@
 "use client"
 
-import { Check, Clock, X } from "lucide-react"
 import { useLocale, useTranslations } from "next-intl"
 
 import { useMyRequests } from "@/hooks/use-catalog-request"
-import type { CatalogRequestStatus } from "@/types/catalog-request"
-import { requestItemName } from "../request-display"
-import { Badge } from "@/components/ui/badge"
+import { RequestItemName } from "../request-item-name"
+import { RequestStatusBadge } from "../request-status-badge"
 import { TableSkeleton } from "@/components/ui/skeleton"
 import { ReloadButton } from "@/components/ui/reload-button"
-import { Truncate } from "@/components/ui/truncate"
 import {
   Table,
   TableBody,
@@ -19,16 +16,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-
-// Pendente pede atenção; aprovada e rejeitada são o desfecho, com a cor do resultado.
-const STATUS_META: Record<
-  CatalogRequestStatus,
-  { variant: "warning" | "positive" | "destructive"; icon: typeof Clock }
-> = {
-  PENDING: { variant: "warning", icon: Clock },
-  APPROVED: { variant: "positive", icon: Check },
-  REJECTED: { variant: "destructive", icon: X },
-}
 
 export function MyRequests() {
   const t = useTranslations("catalogRequests")
@@ -74,20 +61,20 @@ export function MyRequests() {
                       </span>
                     )}
                   </TableCell>
-                  <TableCell className="font-semibold">
-                    <Truncate className="max-w-full">{requestItemName(locale, r)}</Truncate>
+                  <TableCell>
+                    <RequestItemName locale={locale} request={r} />
                   </TableCell>
                   <TableCell>
-                    <StatusBadge status={r.status} label={t(`status_${r.status}`)} />
+                    <RequestStatusBadge status={r.status} />
                   </TableCell>
                   <TableCell className="text-muted-foreground">
                     {r.status === "REJECTED"
                       ? r.reviewNote === "duplicate"
                         ? t("rejectedDuplicate")
-                        : r.reviewNote || "—"
+                        : r.reviewNote || "â€”"
                       : r.status === "APPROVED"
                         ? t("approvedNote")
-                        : "—"}
+                        : "â€”"}
                   </TableCell>
                   <TableCell className="whitespace-nowrap text-right text-muted-foreground">
                     {fmtDate(r.createdAt)}
@@ -99,15 +86,5 @@ export function MyRequests() {
         </div>
       )}
     </div>
-  )
-}
-
-function StatusBadge({ status, label }: { status: CatalogRequestStatus; label: string }) {
-  const { variant, icon: Icon } = STATUS_META[status]
-  return (
-    <Badge variant={variant}>
-      <Icon />
-      {label}
-    </Badge>
   )
 }

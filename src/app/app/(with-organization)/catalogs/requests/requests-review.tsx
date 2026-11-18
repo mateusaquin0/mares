@@ -17,6 +17,8 @@ import {
 import type { CatalogRequestItem, CatalogRequestStatus } from "@/types/catalog-request"
 import type { NamedRow, PathogenRow } from "@/types/catalog"
 import { catalogTypeOfRequest, requestItemName, requestNormalizedNames } from "../request-display"
+import { RequestItemName } from "../request-item-name"
+import { RequestStatusBadge } from "../request-status-badge"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Textarea } from "@/components/ui/textarea"
@@ -135,13 +137,17 @@ export function RequestsReview({ isSystemAdmin }: { isSystemAdmin: boolean }) {
         : t("fromUnknown")
 
   return (
-    <div className="space-y-4 px-page pb-8 pt-3.5">
+    <div className="px-page pb-8 pt-3.5">
       <div>
         <h1 className="font-serif text-[28px] font-medium leading-8">{t("title")}</h1>
         <p className="mt-0.5 max-w-[820px] text-pretty text-muted-foreground">{t("subtitle")}</p>
       </div>
 
-      <Tabs value={status} onValueChange={(v) => setStatus(v as CatalogRequestStatus)}>
+      <Tabs
+        value={status}
+        onValueChange={(v) => setStatus(v as CatalogRequestStatus)}
+        className="mb-2.5 mt-2.5"
+      >
         <TabsList>
           {STATUSES.map((s) => (
             <TabsTrigger key={s} value={s}>
@@ -154,51 +160,49 @@ export function RequestsReview({ isSystemAdmin }: { isSystemAdmin: boolean }) {
       {listQ.isLoading ? (
         <TableSkeleton />
       ) : (
-        <div>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-28">{t("colType")}</TableHead>
-                <TableHead>{t("colItem")}</TableHead>
-                <TableHead className="w-56">{t("colRequester")}</TableHead>
-                <TableHead className="w-28">{t("colDate")}</TableHead>
-                <TableHead className="w-16 text-right">
-                  <ReloadButton onReload={async () => void (await listQ.refetch())} />
-                </TableHead>
+        <Table className="table-fixed">
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-[190px]">{t("colType")}</TableHead>
+              <TableHead>{t("colItem")}</TableHead>
+              <TableHead className="w-[38%]">{t("colRequester")}</TableHead>
+              <TableHead className="w-[104px]">{t("colDate")}</TableHead>
+              <TableHead className="w-[120px] text-right">
+                <ReloadButton onReload={async () => void (await listQ.refetch())} />
+              </TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {items.length === 0 && <TableEmpty colSpan={5}>{t("empty")}</TableEmpty>}
+            {items.map((r) => (
+              <TableRow
+                key={r.id}
+                onClick={() => setSelected(r)}
+                className="cursor-pointer"
+                title={t("viewDetails")}
+              >
+                <TableCell>
+                  {t(`type_${r.type}`)}
+                  {r.targetId && (
+                    <span className="block text-[13px] text-muted-foreground">{t("kindEdit")}</span>
+                  )}
+                </TableCell>
+                <TableCell>
+                  <RequestItemName locale={locale} request={r} />
+                </TableCell>
+                <TableCell className="text-muted-foreground">
+                  <Truncate className="max-w-full">{requesterLabel(r)}</Truncate>
+                </TableCell>
+                <TableCell className="whitespace-nowrap text-muted-foreground">
+                  {fmtDate(r.createdAt)}
+                </TableCell>
+                <TableCell>
+                  <RequestStatusBadge status={r.status} />
+                </TableCell>
               </TableRow>
-            </TableHeader>
-            <TableBody>
-              {items.length === 0 && <TableEmpty colSpan={5}>{t("empty")}</TableEmpty>}
-              {items.map((r) => (
-                <TableRow
-                  key={r.id}
-                  onClick={() => setSelected(r)}
-                  className="cursor-pointer"
-                  title={t("viewDetails")}
-                >
-                  <TableCell>
-                    <div className="flex flex-wrap items-center gap-1">
-                      <Badge variant="secondary">{t(`type_${r.type}`)}</Badge>
-                      {r.targetId && <Badge variant="highlight">{t("kindEdit")}</Badge>}
-                    </div>
-                  </TableCell>
-                  <TableCell className="font-medium">
-                    <Truncate className="max-w-[20rem]">{requestItemName(locale, r)}</Truncate>
-                  </TableCell>
-                  <TableCell className="text-sm text-muted-foreground">
-                    <Truncate>{requesterLabel(r)}</Truncate>
-                  </TableCell>
-                  <TableCell className="whitespace-nowrap text-sm text-muted-foreground">
-                    {fmtDate(r.createdAt)}
-                  </TableCell>
-                  <TableCell className="text-right text-sm text-muted-foreground">
-                    <Badge variant={statusVariant[r.status]}>{t(`status_${r.status}`)}</Badge>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
+            ))}
+          </TableBody>
+        </Table>
       )}
 
       <Dialog open={!!selected} onOpenChange={(o) => !o && closeAll()}>
