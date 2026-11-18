@@ -3,9 +3,8 @@
 import { useState } from "react"
 import { useTranslations, useLocale } from "next-intl"
 import { toast } from "sonner"
-import { MoreHorizontal } from "lucide-react"
+import { MoreHorizontal, Search } from "lucide-react"
 
-import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { TableSkeleton } from "@/components/ui/skeleton"
@@ -21,7 +20,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useErrorMessage } from "@/lib/use-error-message"
 import { useFeedbackList, useUpdateFeedback } from "@/hooks/use-feedback"
 import type { FeedbackItem, FeedbackStatus, FeedbackType } from "@/types/feedback"
-import { FeedbackStatusBadge, FeedbackTypeBadge } from "@/components/feedback-badges"
+import { FEEDBACK_TYPE_META, FeedbackStatusBadge } from "@/components/feedback-badges"
 import { ThreadSummaryCell } from "@/components/feedback-thread"
 import { FeedbackTicketDialog } from "@/components/feedback-ticket-dialog"
 import {
@@ -49,6 +48,9 @@ const STATUSES: FeedbackStatus[] = ["NEW", "REOPENED", "IN_REVIEW", "RESOLVED", 
 const QUICK_STATUSES: FeedbackStatus[] = ["NEW", "IN_REVIEW", "RESOLVED"]
 
 const TYPES: FeedbackType[] = ["SUGGESTION", "BUG"]
+
+const SEGMENT =
+  "px-2.5 py-[3px] data-[state=active]:bg-foreground data-[state=active]:text-background data-[state=active]:shadow-none"
 
 export default function AdminFeedbackPage() {
   const t = useTranslations("adminFeedback")
@@ -106,15 +108,8 @@ export default function AdminFeedbackPage() {
     return acc
   }, {})
 
-  const filterField = (label: string, control: React.ReactNode, widthClass = "w-44") => (
-    <label className={cn("flex flex-col gap-1 text-xs", widthClass)}>
-      <span className="font-semibold uppercase tracking-wide text-muted-foreground">{label}</span>
-      {control}
-    </label>
-  )
-
   return (
-    <div className="space-y-4 px-page pb-8 pt-3.5">
+    <div className="px-page pb-8 pt-3.5">
       <div>
         <h1 className="font-serif text-[28px] font-medium leading-8">{t("title")}</h1>
         <p className="mt-0.5 max-w-[820px] text-pretty text-muted-foreground">{t("subtitle")}</p>
@@ -123,151 +118,153 @@ export default function AdminFeedbackPage() {
       {listQ.isLoading ? (
         <TableSkeleton />
       ) : all.length === 0 ? (
-        <p className="text-sm text-muted-foreground">{t("empty")}</p>
+        <p className="py-2.5 text-muted-foreground">{t("empty")}</p>
       ) : (
         <>
-          <Tabs
-            value={statusFilter}
-            onValueChange={(v) => setStatusFilter(v as FeedbackStatus | "ALL")}
-          >
-            <TabsList>
-              <TabsTrigger value="ALL">{t("filterAll")}</TabsTrigger>
-              {STATUSES.map((s) => (
-                <TabsTrigger key={s} value={s} className="relative">
-                  {t(`status_${s}`)}
-                  {(unreadByStatus[s] ?? 0) > 0 && (
-                    <span
-                      role="status"
-                      aria-label={t("unreadReply")}
-                      title={t("unreadReply")}
-                      className="absolute -right-0.5 -top-0.5 size-2 rounded-full bg-orange-500"
-                    />
-                  )}
-                </TabsTrigger>
-              ))}
-            </TabsList>
-          </Tabs>
-
-          <div className="flex flex-wrap items-end gap-3">
-            {filterField(
-              t("filterType"),
-              <Select
-                value={typeFilter}
-                onValueChange={(v) => setTypeFilter(v as FeedbackType | "ALL")}
-              >
-                <SelectTrigger className="h-9">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="ALL">{t("filterAll")}</SelectItem>
-                  {TYPES.map((ty) => (
-                    <SelectItem key={ty} value={ty}>
-                      {t(ty === "BUG" ? "typeBug" : "typeSuggestion")}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>,
-            )}
-            {filterField(
-              t("colAuthor"),
+          <div className="flex flex-wrap items-center gap-2 py-2.5">
+            <div className="relative min-w-0 flex-[0_1_320px]">
+              <Search className="pointer-events-none absolute left-2 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 value={author}
                 onChange={(e) => setAuthor(e.target.value)}
                 placeholder={t("authorPlaceholder")}
-                className="h-9"
-              />,
-              "w-64",
-            )}
+                aria-label={t("colAuthor")}
+                className="pl-8"
+              />
+            </div>
+            <Tabs
+              value={statusFilter}
+              onValueChange={(v) => setStatusFilter(v as FeedbackStatus | "ALL")}
+            >
+              <TabsList
+                aria-label={t("filterStatus")}
+                className="gap-0 rounded-sm border border-input text-sm"
+              >
+                <TabsTrigger value="ALL" className={SEGMENT}>
+                  {t("filterAll")}
+                </TabsTrigger>
+                {STATUSES.map((s) => (
+                  <TabsTrigger key={s} value={s} className={`relative ${SEGMENT}`}>
+                    {t(`status_${s}`)}
+                    {(unreadByStatus[s] ?? 0) > 0 && (
+                      <span
+                        role="status"
+                        aria-label={t("unreadReply")}
+                        title={t("unreadReply")}
+                        className="absolute right-0.5 top-0.5 size-1.5 rounded-full bg-info"
+                      />
+                    )}
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+            </Tabs>
+            <Select
+              value={typeFilter}
+              onValueChange={(v) => setTypeFilter(v as FeedbackType | "ALL")}
+            >
+              <SelectTrigger className="w-[150px]" aria-label={t("filterType")}>
+                <span>
+                  <span className="text-muted-foreground">{t("filterType")}</span> <SelectValue />
+                </span>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ALL">{t("filterAll")}</SelectItem>
+                {TYPES.map((ty) => (
+                  <SelectItem key={ty} value={ty}>
+                    {t(ty === "BUG" ? "typeBug" : "typeSuggestion")}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <span className="text-muted-foreground">{t("count", { count: items.length })}</span>
           </div>
 
-          <div>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-20 text-center">{t("colType")}</TableHead>
-                  <TableHead>{t("colTitle")}</TableHead>
-                  <TableHead className="w-56">{t("colAuthor")}</TableHead>
-                  <TableHead className="w-36">{t("colDate")}</TableHead>
-                  <TableHead className="w-20 text-center">{t("colStatus")}</TableHead>
-                  <TableHead className="w-24">{t("colThread")}</TableHead>
-                  <TableHead className="w-16 text-right">
-                    <ReloadButton
-                      onReload={async () => {
-                        await listQ.refetch()
-                      }}
-                    />
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {items.length === 0 && <TableEmpty colSpan={7}>{tc("noResults")}</TableEmpty>}
-                {items.map((f) => (
-                  <TableRow
-                    key={f.id}
-                    onClick={() => {
-                      setSelectedId(f.id)
-                      setDiscardIntent(false)
+          <Table className="table-fixed">
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-[90px]">{t("colType")}</TableHead>
+                <TableHead>{t("colTitle")}</TableHead>
+                <TableHead className="w-[22%]">{t("colAuthor")}</TableHead>
+                <TableHead className="w-[100px]">{t("colDate")}</TableHead>
+                <TableHead className="w-[126px]">{t("colStatus")}</TableHead>
+                <TableHead className="w-[236px]">{t("colThread")}</TableHead>
+                <TableHead className="w-11 text-right">
+                  <ReloadButton
+                    onReload={async () => {
+                      await listQ.refetch()
                     }}
-                    className="cursor-pointer"
-                    title={t("viewDetails")}
-                  >
-                    <TableCell className="text-center">
-                      <FeedbackTypeBadge type={f.type} ns="adminFeedback" iconOnly />
-                    </TableCell>
-                    <TableCell className="font-medium">
-                      <Truncate className="max-w-[22rem]">{f.title}</Truncate>
-                    </TableCell>
-                    <TableCell className="text-sm">
-                      <Truncate>{f.createdByEmail}</Truncate>
-                    </TableCell>
-                    <TableCell className="whitespace-nowrap text-sm text-muted-foreground">
-                      {new Date(f.createdAt).toLocaleDateString(locale)}
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <FeedbackStatusBadge status={f.status} ns="adminFeedback" iconOnly />
-                    </TableCell>
-                    <TableCell>
-                      <ThreadSummaryCell summary={f} ns="adminFeedback" />
-                    </TableCell>
-                    {/* stopPropagation: o menu de ações não deve abrir o diálogo do ticket. */}
-                    <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="size-8"
-                            disabled={busy === f.id}
-                            loading={busy === f.id}
+                  />
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {items.length === 0 && <TableEmpty colSpan={7}>{tc("noResults")}</TableEmpty>}
+              {items.map((f) => (
+                <TableRow
+                  key={f.id}
+                  onClick={() => {
+                    setSelectedId(f.id)
+                    setDiscardIntent(false)
+                  }}
+                  className="cursor-pointer"
+                  title={t("viewDetails")}
+                >
+                  <TableCell className={f.type === "BUG" ? "font-semibold" : undefined}>
+                    {t(FEEDBACK_TYPE_META[f.type].labelKey)}
+                  </TableCell>
+                  <TableCell className="font-semibold">
+                    <Truncate className="max-w-full">{f.title}</Truncate>
+                  </TableCell>
+                  <TableCell className="text-muted-foreground">
+                    <Truncate className="max-w-full">{f.createdByEmail}</Truncate>
+                  </TableCell>
+                  <TableCell className="whitespace-nowrap">
+                    {new Date(f.createdAt).toLocaleDateString(locale)}
+                  </TableCell>
+                  <TableCell>
+                    <FeedbackStatusBadge status={f.status} ns="adminFeedback" />
+                  </TableCell>
+                  <TableCell>
+                    <ThreadSummaryCell summary={f} ns="adminFeedback" />
+                  </TableCell>
+                  {/* stopPropagation: o menu de ações não deve abrir o diálogo do ticket. */}
+                  <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="size-7 text-muted-foreground"
+                          disabled={busy === f.id}
+                          loading={busy === f.id}
+                        >
+                          {busy !== f.id && <MoreHorizontal className="size-4" />}
+                          <span className="sr-only">{t("colActions")}</span>
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        {QUICK_STATUSES.filter((s) => s !== f.status).map((s) => (
+                          <DropdownMenuItem
+                            key={s}
+                            onSelect={() =>
+                              run(f.id, { id: f.id, status: s }, t("updated")).catch(() => {})
+                            }
                           >
-                            {busy !== f.id && <MoreHorizontal className="size-4" />}
-                            <span className="sr-only">{t("colActions")}</span>
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          {QUICK_STATUSES.filter((s) => s !== f.status).map((s) => (
-                            <DropdownMenuItem
-                              key={s}
-                              onSelect={() =>
-                                run(f.id, { id: f.id, status: s }, t("updated")).catch(() => {})
-                              }
-                            >
-                              {t("setStatus", { status: t(`status_${s}`) })}
-                            </DropdownMenuItem>
-                          ))}
-                          {f.status !== "WONT_FIX" && (
-                            <DropdownMenuItem onSelect={() => openDiscard(f)}>
-                              {t("discard")}
-                            </DropdownMenuItem>
-                          )}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+                            {t("setStatus", { status: t(`status_${s}`) })}
+                          </DropdownMenuItem>
+                        ))}
+                        {f.status !== "WONT_FIX" && (
+                          <DropdownMenuItem onSelect={() => openDiscard(f)}>
+                            {t("discard")}
+                          </DropdownMenuItem>
+                        )}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         </>
       )}
 

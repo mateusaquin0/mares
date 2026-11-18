@@ -1,15 +1,14 @@
 "use client"
 
-import { Check, Clock, X } from "lucide-react"
+import { ArrowLeft } from "lucide-react"
+import Link from "next/link"
 import { useLocale, useTranslations } from "next-intl"
 
 import { useMyRequests } from "@/hooks/use-catalog-request"
-import type { CatalogRequestStatus } from "@/types/catalog-request"
-import { requestItemName } from "../request-display"
-import { Badge } from "@/components/ui/badge"
+import { RequestItemName } from "../request-item-name"
+import { RequestStatusBadge } from "../request-status-badge"
 import { TableSkeleton } from "@/components/ui/skeleton"
 import { ReloadButton } from "@/components/ui/reload-button"
-import { Truncate } from "@/components/ui/truncate"
 import {
   Table,
   TableBody,
@@ -19,16 +18,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-
-// Pendente pede atenção; aprovada e rejeitada são o desfecho, com a cor do resultado.
-const STATUS_META: Record<
-  CatalogRequestStatus,
-  { variant: "warning" | "positive" | "destructive"; icon: typeof Clock }
-> = {
-  PENDING: { variant: "warning", icon: Clock },
-  APPROVED: { variant: "positive", icon: Check },
-  REJECTED: { variant: "destructive", icon: X },
-}
 
 export function MyRequests() {
   const t = useTranslations("catalogRequests")
@@ -40,7 +29,17 @@ export function MyRequests() {
   return (
     <div className="space-y-4 px-page pb-8 pt-3.5">
       <div>
-        <h1 className="font-serif text-[28px] font-medium leading-8">{t("mineTitle")}</h1>
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
+          <Link
+            href="/app/catalogs"
+            className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap text-[13px] underline underline-offset-2 hover:text-primary"
+          >
+            <ArrowLeft className="size-4" />
+            {t("backToGlossary")}
+          </Link>
+          <span aria-hidden className="h-5 w-px bg-border" />
+          <h1 className="font-serif text-[28px] font-medium leading-8">{t("mineTitle")}</h1>
+        </div>
         <p className="mt-0.5 max-w-[820px] text-pretty text-muted-foreground">
           {t("mineSubtitle")}
         </p>
@@ -74,20 +73,20 @@ export function MyRequests() {
                       </span>
                     )}
                   </TableCell>
-                  <TableCell className="font-semibold">
-                    <Truncate className="max-w-full">{requestItemName(locale, r)}</Truncate>
+                  <TableCell>
+                    <RequestItemName locale={locale} request={r} />
                   </TableCell>
                   <TableCell>
-                    <StatusBadge status={r.status} label={t(`status_${r.status}`)} />
+                    <RequestStatusBadge status={r.status} />
                   </TableCell>
                   <TableCell className="text-muted-foreground">
                     {r.status === "REJECTED"
                       ? r.reviewNote === "duplicate"
                         ? t("rejectedDuplicate")
-                        : r.reviewNote || "—"
+                        : r.reviewNote || "â€”"
                       : r.status === "APPROVED"
                         ? t("approvedNote")
-                        : "—"}
+                        : "â€”"}
                   </TableCell>
                   <TableCell className="whitespace-nowrap text-right text-muted-foreground">
                     {fmtDate(r.createdAt)}
@@ -99,15 +98,5 @@ export function MyRequests() {
         </div>
       )}
     </div>
-  )
-}
-
-function StatusBadge({ status, label }: { status: CatalogRequestStatus; label: string }) {
-  const { variant, icon: Icon } = STATUS_META[status]
-  return (
-    <Badge variant={variant}>
-      <Icon />
-      {label}
-    </Badge>
   )
 }

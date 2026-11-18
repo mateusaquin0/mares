@@ -423,7 +423,8 @@
     "resendInvite": "Reenviar convite",
     "resendSuccess": "Convite reenviado por e-mail",
     "resendError": "Não foi possível reenviar o convite",
-    "empty": "Nenhum usuário."
+    "empty": "Nenhum usuário.",
+    "count": "{count, plural, one {# usuário} other {# usuários}}"
   },
   "adminOrgs": {
     "title": "Grupos de pesquisa",
@@ -477,7 +478,8 @@
     "empty": "Nenhuma solicitação pendente.",
     "approved": "Solicitação aprovada — convite enviado",
     "rejected": "Solicitação rejeitada",
-    "opError": "Falha na operação"
+    "opError": "Falha na operação",
+    "count": "{count, plural, one {# solicitação pendente} other {# solicitações pendentes}}"
   },
   "validation": {
     "email": "E-mail inválido",
@@ -1621,7 +1623,8 @@
     "messageLabel": "Mensagem",
     "editLocked": "Já em triagem — a descrição não pode mais ser editada.",
     "moveTo": "Mover para",
-    "messageCount": "{count, plural, one {# mensagem} other {# mensagens}}"
+    "messageCount": "{count, plural, one {# mensagem} other {# mensagens}}",
+    "count": "{count, plural, one {# ticket} other {# tickets}}"
   },
   "catalogRequests": {
     "title": "Solicitações de glossário",
@@ -1663,6 +1666,7 @@
     "opError": "Não foi possível concluir a operação",
     "rejectedDuplicate": "Já existe um item equivalente",
     "approvedNote": "Adicionado ao glossário",
-    "kindEdit": "Edição"
+    "kindEdit": "Edição",
+    "backToGlossary": "Glossário"
   }
 }

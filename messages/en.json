@@ -423,7 +423,8 @@
     "resendInvite": "Resend invitation",
     "resendSuccess": "Invitation resent by email",
     "resendError": "Could not resend the invitation",
-    "empty": "No users."
+    "empty": "No users.",
+    "count": "{count, plural, one {# user} other {# users}}"
   },
   "adminOrgs": {
     "title": "Research groups",
@@ -477,7 +478,8 @@
     "empty": "No pending requests.",
     "approved": "Request approved — invite sent",
     "rejected": "Request rejected",
-    "opError": "Operation failed"
+    "opError": "Operation failed",
+    "count": "{count, plural, one {# pending request} other {# pending requests}}"
   },
   "validation": {
     "email": "Invalid email",
@@ -1621,7 +1623,8 @@
     "messageLabel": "Message",
     "editLocked": "Already in triage — the description can no longer be edited.",
     "moveTo": "Move to",
-    "messageCount": "{count, plural, one {# message} other {# messages}}"
+    "messageCount": "{count, plural, one {# message} other {# messages}}",
+    "count": "{count, plural, one {# ticket} other {# tickets}}"
   },
   "catalogRequests": {
     "title": "Glossary requests",
@@ -1663,6 +1666,7 @@
     "opError": "Could not complete the operation",
     "rejectedDuplicate": "An equivalent item already exists",
     "approvedNote": "Added to the glossary",
-    "kindEdit": "Edit"
+    "kindEdit": "Edit",
+    "backToGlossary": "Glossary"
   }
 }

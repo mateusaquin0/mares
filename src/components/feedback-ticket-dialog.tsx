@@ -253,7 +253,7 @@ export function FeedbackTicketDialog({
         {/* Duas colunas: o ticket à esquerda, status e fechar à direita — as duas linhas do
             topo têm a mesma altura (`min-h-8`, a do botão) para os quatro elementos ficarem
             na mesma linha ótica. */}
-        <DialogHeader className="shrink-0 space-y-0 border-b p-5 text-left">
+        <DialogHeader className="mx-0 shrink-0 space-y-0 border-b p-5 text-left">
           <div className="flex items-start gap-4">
             <div className="flex min-w-0 flex-1 flex-col gap-2">
               <div className="flex min-h-8 flex-wrap items-center gap-2">

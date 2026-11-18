@@ -2,7 +2,7 @@ import { type Page } from "@playwright/test"
 
 import { expect, test } from "./helpers/test"
 
-import { expectToast, hydrated, pt, rowMenu } from "./helpers/app"
+import { expectToast, hydrated, pt } from "./helpers/app"
 import { AUTH_ENABLED, AUTH_SKIP_REASON, loadFixtures, storageStatePath } from "./helpers/fixtures"
 
 // Solicitação de acesso: o formulário público (/request-access) e a fila do admin global, além
@@ -107,8 +107,8 @@ test.describe("Solicitação de acesso", () => {
       page.getByRole("link", { name: pt.sidebar.adminRequests }).getByRole("status"),
     ).toBeVisible()
 
-    await hydrated(row.getByRole("button", { name: ar.colActions }))
-    await rowMenu(page, row, ar.reject, ar.colActions)
+    await hydrated(row.getByRole("button", { name: ar.reject }))
+    await row.getByRole("button", { name: ar.reject }).click()
     await expectToast(page, ar.rejected)
     await expect(row).toHaveCount(0)
 
@@ -152,9 +152,9 @@ test.describe("Administração global: listagens", () => {
     // O admin da aplicação não pode ser excluído por aqui.
     await search.fill(users.systemAdmin.email)
     const self = page.getByRole("row").filter({ hasText: users.systemAdmin.email })
-    await expect(self.getByLabel(u.globalAdmin)).toBeVisible()
+    await expect(self).toContainText(u.globalAdmin)
     await expect(self).toContainText(u.noOrg)
-    await expect(self.getByRole("button", { name: pt.common.delete })).toBeDisabled()
+    await expect(self.getByRole("button", { name: pt.common.delete })).toHaveCount(0)
 
     // Busca pelo nome do grupo e ordenação por e-mail.
     await search.fill(`${prefix} Grupo de Trabalho`)
