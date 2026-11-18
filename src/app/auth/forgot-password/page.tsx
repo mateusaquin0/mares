@@ -12,6 +12,8 @@ import { createClient } from "@/lib/supabase/client"
 import { forgotPasswordSchema, type ForgotPasswordData } from "@/schemas/auth.schema"
 import { MailCheck } from "lucide-react"
 
+import { AuthState } from "@/components/auth-state"
+
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -45,41 +47,40 @@ export default function ForgotPasswordPage() {
 
   if (sent) {
     return (
-      <div className="text-center">
-        <span className="mb-5 inline-flex size-16 items-center justify-center rounded-full bg-[hsl(var(--bio)/0.14)] text-[hsl(123_44%_30%)]">
-          <MailCheck className="size-8" />
-        </span>
-        <h2 className="mb-2.5 text-2xl font-semibold tracking-tight text-foreground">
-          {t("sentTitle")}
-        </h2>
-        <p className="mx-auto mb-7 max-w-sm text-sm leading-relaxed text-muted-foreground">
-          {t("sentDescription")}
-        </p>
-        <Button variant="outline" asChild>
+      <AuthState
+        icon={MailCheck}
+        tone="positive"
+        title={t("sentTitle")}
+        description={t("sentDescription")}
+      >
+        <Button variant="outline" className="h-12 w-full text-base" asChild>
           <Link href="/login">{tc("backToLogin")}</Link>
         </Button>
-      </div>
+      </AuthState>
     )
   }
 
   return (
     <div>
-      <h2 className="text-2xl font-semibold tracking-tight text-foreground">{t("title")}</h2>
-      <p className="mt-1.5 mb-7 text-sm text-muted-foreground">{t("description")}</p>
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-        <div className="space-y-2">
+      <h1 className="font-serif text-[32px] font-medium leading-[38px]">{t("title")}</h1>
+      <p className="mt-1.5 text-pretty text-muted-foreground">{t("description")}</p>
+      <form onSubmit={handleSubmit(onSubmit)} className="mt-5 grid gap-3.5">
+        <div className="grid gap-[3px]">
           <Label htmlFor="email">{tc("email")}</Label>
           <Input id="email" type="email" autoComplete="email" {...register("email")} />
           {errors.email && (
             <p className="text-sm text-destructive">{tval(errors.email.message!)}</p>
           )}
         </div>
-        <Button type="submit" className="w-full" loading={loading}>
+        <Button type="submit" className="h-12 w-full text-base" loading={loading}>
           {t("submit")}
         </Button>
       </form>
-      <p className="mt-6 text-center text-sm text-muted-foreground">
-        <Link href="/login" className="font-semibold text-accent-foreground hover:underline">
+      <p className="mt-4 text-muted-foreground">
+        <Link
+          href="/login"
+          className="inline-flex min-h-11 items-center text-primary underline underline-offset-2 hover:text-foreground"
+        >
           {tc("backToLogin")}
         </Link>
       </p>

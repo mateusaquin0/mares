@@ -7,7 +7,7 @@ import { useTranslations } from "next-intl"
 
 import { cn } from "@/lib/utils"
 
-// Alternância simples claro/escuro (usada na landing pública, fora da sidebar).
+// Alternância simples claro/escuro das páginas públicas (alvo de toque de 44px).
 // next-themes só resolve o tema no cliente — renderiza um ícone neutro até montar
 // para evitar divergência de hidratação.
 export function ThemeToggle({ className }: { className?: string }) {
@@ -26,7 +26,7 @@ export function ThemeToggle({ className }: { className?: string }) {
       aria-label={label}
       title={label}
       className={cn(
-        "inline-flex size-8 items-center justify-center rounded-lg transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+        "inline-flex size-11 items-center justify-center rounded-sm transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
         className,
       )}
     >

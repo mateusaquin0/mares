@@ -2,6 +2,7 @@
 
 import Link from "next/link"
 import { useTranslations } from "next-intl"
+import { CircleAlert } from "lucide-react"
 
 import { Checkbox } from "@/components/ui/checkbox"
 
@@ -19,21 +20,20 @@ export function TermsCheckbox({
   const t = useTranslations("terms")
 
   return (
-    <div className="space-y-1">
-      <div className="flex items-start gap-2">
+    <div>
+      <div className="flex min-h-11 items-center gap-2.5">
         <Checkbox
           id="acceptTerms"
           checked={checked}
           onCheckedChange={(v) => onCheckedChange(v === true)}
-          className="mt-0.5"
         />
-        <label htmlFor="acceptTerms" className="text-sm leading-snug text-muted-foreground">
+        <label htmlFor="acceptTerms" className="leading-snug">
           {t.rich("acceptLabel", {
             link: (chunks) => (
               <Link
                 href="/terms"
                 target="_blank"
-                className="font-medium text-primary hover:underline"
+                className="text-primary underline underline-offset-2 hover:text-foreground"
               >
                 {chunks}
               </Link>
@@ -41,7 +41,15 @@ export function TermsCheckbox({
           })}
         </label>
       </div>
-      {error && <p className="text-sm text-destructive">{error}</p>}
+      {error && (
+        <p
+          role="alert"
+          className="flex items-center gap-1.5 text-sm font-semibold text-destructive"
+        >
+          <CircleAlert className="size-4 shrink-0" aria-hidden />
+          {error}
+        </p>
+      )}
     </div>
   )
 }

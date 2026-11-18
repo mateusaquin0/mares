@@ -286,7 +286,8 @@
     "popupResearch": "Pesquisa",
     "popupPositive": "Positivo para",
     "popupNoPositive": "Sem resultado positivo",
-    "popupViewDetails": "Ver detalhes"
+    "popupViewDetails": "Ver detalhes",
+    "filters": "Filtros"
   },
   "terms": {
     "title": "Termos de Uso",

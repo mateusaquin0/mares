@@ -7,11 +7,10 @@ import { useRouter } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { locales, localeNames, type Locale } from "@/i18n/config"
 import { setLocale } from "@/i18n/actions"
-import { LocaleFlag } from "@/components/flags"
 import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/ui/select"
 
-// Seletor de idioma customizado (shadcn/Radix) com bandeiras. Grava o cookie via server
-// action e recarrega os dados do servidor.
+// Seletor de idioma das páginas públicas: mostra a sigla do idioma ativo e abre a lista com
+// os nomes. Grava o cookie via server action e recarrega os dados do servidor.
 export function LocaleSwitcher({ className }: { className?: string }) {
   const active = useLocale() as Locale
   const router = useRouter()
@@ -28,20 +27,18 @@ export function LocaleSwitcher({ className }: { className?: string }) {
     <Select value={active} onValueChange={onChange} disabled={pending}>
       <SelectTrigger
         className={cn(
-          "h-8 w-auto gap-1 border-transparent px-2 shadow-none [&>svg]:opacity-60",
+          "h-11 w-auto min-w-11 justify-center border-transparent bg-transparent px-2 text-sm font-semibold uppercase shadow-none hover:bg-accent [&>svg]:hidden",
           className,
         )}
         aria-label={localeNames[active]}
+        title={localeNames[active]}
       >
-        <LocaleFlag locale={active} />
+        {active.slice(0, 2)}
       </SelectTrigger>
       <SelectContent>
         {locales.map((l: Locale) => (
           <SelectItem key={l} value={l}>
-            <span className="flex items-center gap-2">
-              <LocaleFlag locale={l} />
-              {localeNames[l]}
-            </span>
+            {localeNames[l]}
           </SelectItem>
         ))}
       </SelectContent>

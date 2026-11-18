@@ -5,7 +5,7 @@ import Link from "next/link"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { toast } from "sonner"
-import { ArrowRight, MailCheck } from "lucide-react"
+import { MailCheck } from "lucide-react"
 
 import { useTranslations } from "next-intl"
 
@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { TermsCheckbox } from "@/components/terms-checkbox"
+import { AuthState } from "@/components/auth-state"
 
 export default function RequestAccessPage() {
   const t = useTranslations("requestAccess")
@@ -50,29 +51,25 @@ export default function RequestAccessPage() {
 
   if (sent) {
     return (
-      <div className="text-center">
-        <span className="mb-5 inline-flex size-16 items-center justify-center rounded-full bg-[hsl(var(--bio)/0.14)] text-[hsl(123_44%_30%)]">
-          <MailCheck className="size-8" />
-        </span>
-        <h2 className="mb-2.5 text-2xl font-semibold tracking-tight text-foreground">
-          {t("sentTitle")}
-        </h2>
-        <p className="mx-auto mb-7 max-w-sm text-sm leading-relaxed text-muted-foreground">
-          {t("sentDescription")}
-        </p>
-        <Button variant="outline" asChild>
+      <AuthState
+        icon={MailCheck}
+        tone="positive"
+        title={t("sentTitle")}
+        description={t("sentDescription")}
+      >
+        <Button variant="outline" className="h-12 w-full text-base" asChild>
           <Link href="/login">{tc("backToLogin")}</Link>
         </Button>
-      </div>
+      </AuthState>
     )
   }
 
   return (
     <div>
-      <h2 className="text-2xl font-semibold tracking-tight text-foreground">{t("title")}</h2>
-      <p className="mt-1.5 mb-7 text-sm text-muted-foreground">{t("panelInfoDesc")}</p>
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-        <div className="space-y-2">
+      <h1 className="font-serif text-[32px] font-medium leading-[38px]">{t("title")}</h1>
+      <p className="mt-1.5 text-pretty text-muted-foreground">{t("panelInfoDesc")}</p>
+      <form onSubmit={handleSubmit(onSubmit)} className="mt-5 grid gap-3.5">
+        <div className="grid gap-[3px]">
           <Label htmlFor="requesterName">{t("name")}</Label>
           <Input
             id="requesterName"
@@ -84,7 +81,7 @@ export default function RequestAccessPage() {
             <p className="text-sm text-destructive">{tval(errors.requesterName.message!)}</p>
           )}
         </div>
-        <div className="space-y-2">
+        <div className="grid gap-[3px]">
           <Label htmlFor="email">{tc("email")}</Label>
           <Input
             id="email"
@@ -97,7 +94,7 @@ export default function RequestAccessPage() {
             <p className="text-sm text-destructive">{tval(errors.email.message!)}</p>
           )}
         </div>
-        <div className="space-y-2">
+        <div className="grid gap-[3px]">
           <Label htmlFor="organizationName">{t("orgName")}</Label>
           <Input
             id="organizationName"
@@ -114,19 +111,19 @@ export default function RequestAccessPage() {
           onCheckedChange={(v) => setValue("acceptTerms", v, { shouldValidate: true })}
           error={errors.acceptTerms ? tval(errors.acceptTerms.message!) : undefined}
         />
-        <div className="flex items-center justify-end gap-3 pt-2">
-          <Button type="button" variant="ghost" asChild>
-            <Link href="/login">{t("cancel")}</Link>
-          </Button>
-          <Button type="submit" loading={createM.isPending}>
-            {t("submit")}
-            {!createM.isPending && <ArrowRight className="size-4" />}
-          </Button>
-        </div>
+        <Button type="submit" className="h-12 w-full text-base" loading={createM.isPending}>
+          {t("submit")}
+        </Button>
+        <Button type="button" variant="outline" className="h-12 w-full text-base" asChild>
+          <Link href="/login">{t("cancel")}</Link>
+        </Button>
       </form>
-      <p className="mt-6 text-center text-sm text-muted-foreground">
+      <p className="mt-4 text-muted-foreground">
         {t("haveAccount")}{" "}
-        <Link href="/login" className="font-semibold text-accent-foreground hover:underline">
+        <Link
+          href="/login"
+          className="inline-flex min-h-11 items-center text-primary underline underline-offset-2 hover:text-foreground"
+        >
           {t("signIn")}
         </Link>
       </p>

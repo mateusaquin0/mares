@@ -8,7 +8,7 @@ import { useMemo, useState } from "react"
 import dynamic from "next/dynamic"
 import { cn } from "@/lib/utils"
 import { useTranslations, useLocale } from "next-intl"
-import { Download, Globe, Lock, X } from "lucide-react"
+import { ChevronDown, Download, Globe, Lock, SlidersHorizontal, X } from "lucide-react"
 
 import type { MapPoint } from "@/lib/map-points"
 import type { PopupLabels } from "@/components/map/leaflet-map"
@@ -72,6 +72,9 @@ type Props = {
   heading?: React.ReactNode
   // Mapa de ponta a ponta: anula a margem lateral de 24px da página.
   flush?: boolean
+  // Mapa público: abaixo de 760px os filtros recolhem atrás do botão "Filtros" e o Exportar
+  // vira só ícone, para o mapa ocupar a tela do celular.
+  collapsibleFilters?: boolean
 }
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
@@ -90,11 +93,13 @@ export function MapExplorer({
   showVisibility,
   heading,
   flush,
+  collapsibleFilters,
 }: Props) {
   const t = useTranslations("map")
   const ta = useTranslations("animals")
   const locale = useLocale()
 
+  const [filtersOpen, setFiltersOpen] = useState(false)
   const [species, setSpecies] = useState<string[]>([])
   const [pathogen, setPathogen] = useState<string[]>([])
   const [sex, setSex] = useState<string[]>([])
@@ -260,21 +265,51 @@ export function MapExplorer({
     <div className="flex h-full flex-col" data-testid="map-explorer">
       <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
         {heading}
-        <b className="whitespace-nowrap font-semibold tabular-nums">
+        {collapsibleFilters && (
+          <Button
+            variant="outline"
+            className="h-11 self-center min-[760px]:hidden"
+            aria-expanded={filtersOpen}
+            onClick={() => setFiltersOpen((o) => !o)}
+          >
+            <SlidersHorizontal className="size-4" />
+            {t("filters")}
+            <ChevronDown
+              className={cn("size-4 transition-transform", filtersOpen && "rotate-180")}
+            />
+          </Button>
+        )}
+        <b
+          className={cn(
+            "whitespace-nowrap font-semibold tabular-nums",
+            collapsibleFilters && "max-[759px]:self-center",
+          )}
+        >
           {t("resultsCount", { count: filtered.length })}
         </b>
         <Button
           variant="outline"
           size="sm"
-          className="self-center"
+          className={cn(
+            "self-center",
+            collapsibleFilters && "max-[759px]:ml-auto max-[759px]:size-11 max-[759px]:px-0",
+          )}
           onClick={exportCsv}
           disabled={filtered.length === 0}
+          title={t("exportCsv")}
         >
           <Download className="size-4" />
-          {t("exportCsv")}
+          <span className={cn(collapsibleFilters && "max-[759px]:sr-only")}>{t("exportCsv")}</span>
         </Button>
       </div>
-      <div className="mt-1.5 grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-x-2 gap-y-1.5 pb-2">
+      <div
+        className={cn(
+          "mt-1.5 grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-x-2 gap-y-1.5 pb-2",
+          collapsibleFilters &&
+            "max-[759px]:grid-cols-2 max-[759px]:[&_button]:h-11 max-[759px]:[&_input]:h-11",
+          collapsibleFilters && !filtersOpen && "max-[759px]:hidden",
+        )}
+      >
         <Field label={t("filterSpecies")}>
           <div className="w-full">
             <MultiSelect
