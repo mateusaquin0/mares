@@ -235,7 +235,10 @@
     "timelineCount": "Occurrences",
     "heatmapTitle": "Heatmap",
     "heatmapDesc": "Geographic concentration of recorded occurrences.",
-    "heatmapEmpty": "No occurrences with coordinates to display."
+    "heatmapEmpty": "No occurrences with coordinates to display.",
+    "ofTotal": "of {total}",
+    "positivityBase": "Calculation basis",
+    "positivityColumns": "% (positives/total)"
   },
   "map": {
     "title": "Map",
@@ -684,7 +687,8 @@
     "leftResearchAdmin": "You left the member list",
     "leftResearchAdminDesc": "As a group admin, your access to the data remains.",
     "accessByRole": "Admin",
-    "accessByRoleHint": "Access through the group admin role — not a member of this research."
+    "accessByRoleHint": "Access through the group admin role — not a member of this research.",
+    "count": "{count, plural, one {# research project} other {# research projects}}"
   },
   "animals": {
     "title": "Animals",
@@ -879,7 +883,10 @@
     "archivedTag": "Archived",
     "sectionIndividual": "Individual",
     "sectionNotesReports": "Notes and reports",
-    "noCoordinates": "No coordinates recorded: the map appears once latitude and longitude are filled in."
+    "noCoordinates": "No coordinates recorded: the map appears once latitude and longitude are filled in.",
+    "filtersTitle": "Filters",
+    "count": "{count, plural, one {# animal} other {# animals}}",
+    "openAnimal": "Open the animal"
   },
   "samples": {
     "new": "New sample",
@@ -1343,7 +1350,8 @@
     "noSampleForOrgan": "No sample for this material",
     "showInactive": "Show inactive",
     "noMatch": "No animal matches the filter.",
-    "animalCount": "{count, plural, =0 {no animals} one {# animal} other {# animals}}"
+    "animalCount": "{count, plural, =0 {no animals} one {# animal} other {# animals}}",
+    "emptyCellLegend": "Empty cell: the animal has no sample of this material"
   },
   "protocol": {
     "title": "Protocol",
@@ -1437,7 +1445,8 @@
     "suggestEditTitle": "Suggest an edit",
     "suggestEditDesc": "You cannot change this item directly — either you did not register it, or it is already in use. Propose the change and a curator applies it.",
     "editRequestSent": "Edit suggestion sent for curation",
-    "editRequestError": "Could not send the suggestion"
+    "editRequestError": "Could not send the suggestion",
+    "itemCount": "{count, plural, one {# item} other {# items}}"
   },
   "feedback": {
     "trigger": "Suggestion / Bug",
@@ -1532,7 +1541,8 @@
     "discardConfirm": "Dismiss",
     "detailAdminNote": "Administration note",
     "adminNoteVisible": "Internal — the author cannot see it",
-    "moveTo": "Move to"
+    "moveTo": "Move to",
+    "messageCount": "{count, plural, one {# message} other {# messages}}"
   },
   "adminFeedback": {
     "title": "Suggestions & bugs",
@@ -1610,7 +1620,8 @@
     "titleLabel": "Title",
     "messageLabel": "Message",
     "editLocked": "Already in triage — the description can no longer be edited.",
-    "moveTo": "Move to"
+    "moveTo": "Move to",
+    "messageCount": "{count, plural, one {# message} other {# messages}}"
   },
   "catalogRequests": {
     "title": "Glossary requests",

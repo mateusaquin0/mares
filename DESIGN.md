@@ -151,8 +151,8 @@ borda superior de 2px `--foreground`. Sem pílulas, sem degradês, sem cartões 
 
 ## Mapas
 
-Leaflet com tiles do OpenStreetMap dessaturados (`.map-tiles`: `grayscale(.85)`), claros nos
-dois temas. **(alvo)** Marcadores: publicado preenchido, não publicado vazado; grupos são quadrados com o
+Leaflet com os tiles coloridos do OpenStreetMap, sem filtro (decisão do usuário: o mapa base
+dessaturado do desenho não foi adotado), claros nos dois temas. **(alvo)** Marcadores: publicado preenchido, não publicado vazado; grupos são quadrados com o
 número; o mapa de calor usa a rampa da cor de ação.
 
 ## Larguras

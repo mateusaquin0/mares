@@ -7,6 +7,7 @@ import {
   Image as ImageIcon,
   Lock,
   MessageSquare,
+  MessageSquareDot,
   Paperclip,
   Pencil,
   RotateCcw,
@@ -15,6 +16,7 @@ import {
 } from "lucide-react"
 
 import { cn } from "@/lib/utils"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { useErrorMessage } from "@/lib/use-error-message"
@@ -468,32 +470,28 @@ export function ThreadSummaryCell({
   ns: FeedbackNamespace
 }) {
   const t = useTranslations(ns)
+  // Resposta não lida tem prioridade: é o que a pessoa precisa ver na lista.
+  if (summary.unread) {
+    return (
+      <Badge variant="info" role="status" aria-label={t("unreadReply")} title={t("unreadReply")}>
+        <MessageSquareDot aria-hidden />
+        <span className="truncate">{t("unreadReply")}</span>
+      </Badge>
+    )
+  }
   if (!summary.messageCount && !summary.attachmentCount) {
     return <span className="text-muted-foreground">—</span>
   }
   return (
-    <span className="inline-flex items-center gap-1.5 text-sm text-muted-foreground">
+    <span className="inline-flex items-center gap-2.5 text-muted-foreground">
       {summary.messageCount > 0 && (
-        <span className="inline-flex items-center gap-1" title={t("threadTitle")}>
-          <MessageSquare className="size-3.5" aria-hidden />
-          {summary.messageCount}
-        </span>
+        <span title={t("threadTitle")}>{t("messageCount", { count: summary.messageCount })}</span>
       )}
       {summary.attachmentCount > 0 && (
         <span className="inline-flex items-center gap-1" title={t("sectionAttachments")}>
           <Paperclip className="size-3.5" aria-hidden />
           {summary.attachmentCount}
         </span>
-      )}
-      {/* Depois dos contadores: aparecendo e sumindo à esquerda, a bolinha empurrava os
-          ícones e eles deixavam de alinhar entre as linhas. */}
-      {summary.unread && (
-        <span
-          role="status"
-          aria-label={t("unreadReply")}
-          title={t("unreadReply")}
-          className="size-2 shrink-0 rounded-full bg-orange-500"
-        />
       )}
     </span>
   )

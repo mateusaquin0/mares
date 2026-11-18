@@ -27,7 +27,6 @@ export default function HeatMap({ points }: Props) {
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
       maxZoom: 19,
-      className: "map-tiles",
     }).addTo(map)
     mapRef.current = map
     return () => {
@@ -49,16 +48,19 @@ export default function HeatMap({ points }: Props) {
     // `maxZoom` baixo é essencial: o leaflet.heat escala a intensidade por
     // 1/2^(maxZoom−zoom), então um valor alto some com a mancha nos zooms
     // nacionais. Com maxZoom 3 a intensidade fica cheia em qualquer zoom ≥ 3.
-    // `minOpacity` garante que até um encalhe isolado apareça; `max` faz as
-    // concentrações escurecerem para o vermelho conforme os pontos se sobrepõem.
+    // `minOpacity` garante que até um encalhe isolado apareça, ainda que discreto; `max`
+    // alto faz o vermelho ficar reservado às concentrações de fato (muitas sobreposições).
     const heat = L.heatLayer(heatPoints, {
-      radius: 28,
+      radius: 22,
       blur: 20,
-      minOpacity: 0.4,
+      minOpacity: 0.2,
       maxZoom: 3,
-      max: 4,
+      max: 30,
     })
     heat.addTo(map)
+    // A camada fica semitransparente para o mapa base continuar legível sob as manchas.
+    const canvas = (heat as unknown as { _canvas?: HTMLCanvasElement })._canvas
+    if (canvas) canvas.style.opacity = "0.7"
     heatRef.current = heat
     const bounds = L.latLngBounds(points as L.LatLngTuple[])
     map.fitBounds(bounds.pad(0.2), { maxZoom: 11 })

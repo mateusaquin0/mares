@@ -6,7 +6,7 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useTranslations } from "next-intl"
 import { toast } from "sonner"
-import { MoreHorizontal, Pencil, UserPlus, Search, Users, Mail, Send } from "lucide-react"
+import { MoreHorizontal, Pencil, Search, ShieldCheck, User, UserPlus } from "lucide-react"
 
 import {
   addMemberSchema,
@@ -31,7 +31,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { TableSkeleton } from "@/components/ui/skeleton"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { DataRow, SectionTitle } from "@/components/ui/section"
 import { ConfirmDialog } from "@/components/confirm-dialog"
 import { LocationPicker } from "@/components/location-picker"
 import { useErrorMessage } from "@/lib/use-error-message"
@@ -267,14 +267,6 @@ export function MembersManager({
       }[confirm.kind]
     : null
 
-  const initials = (s: string) =>
-    s
-      .split(" ")
-      .map((p) => p[0])
-      .filter(Boolean)
-      .slice(0, 2)
-      .join("")
-      .toUpperCase()
   const q = query.trim().toLowerCase()
   const filtered = members.filter(
     (m) => (m.name ?? "").toLowerCase().includes(q) || m.email.toLowerCase().includes(q),
@@ -283,11 +275,11 @@ export function MembersManager({
   const pending = members.filter((m) => m.status === "INVITED")
 
   return (
-    <div className="mx-auto flex h-full min-h-[42rem] max-w-6xl flex-col gap-6 p-8">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+    <div className="flex h-full min-h-[42rem] flex-col gap-4 px-page pb-8 pt-3.5">
+      <div className="flex flex-wrap items-end justify-between gap-x-3 gap-y-2">
         <div>
-          <h1 className="text-3xl font-semibold tracking-tight">{t("title")}</h1>
-          <p className="mt-1 text-sm text-muted-foreground">{orgName}</p>
+          <h1 className="font-serif text-[28px] font-medium leading-8">{t("title")}</h1>
+          <p className="mt-0.5 max-w-[820px] text-pretty text-muted-foreground">{orgName}</p>
         </div>
         {canManage && (
           <div className="flex gap-2">
@@ -306,78 +298,68 @@ export function MembersManager({
       {loading ? (
         <TableSkeleton />
       ) : members.length === 0 ? (
-        <p className="text-sm text-muted-foreground">{t("empty")}</p>
+        <p className="text-muted-foreground">{t("empty")}</p>
       ) : (
-        <div className="grid min-h-0 flex-1 grid-cols-1 gap-6 lg:grid-cols-3 lg:[grid-template-rows:minmax(0,1fr)]">
-          <div className="flex min-h-0 flex-col overflow-hidden rounded-xl border bg-card shadow-card lg:col-span-2">
-            <div className="border-b p-4">
-              <div className="relative max-w-sm">
-                <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+        <div className="flex min-h-0 flex-1 flex-wrap gap-x-10 gap-y-5">
+          <section className="flex min-h-0 min-w-0 flex-[1_1_600px] flex-col">
+            <div className="pb-2.5">
+              <div className="relative w-[320px] max-w-full">
+                <Search className="pointer-events-none absolute left-2 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   placeholder={t("searchPlaceholder")}
-                  className="pl-9"
+                  className="pl-8"
                 />
               </div>
             </div>
             <div className="min-h-0 flex-1 [&>div]:h-full">
-              <Table>
-                <TableHeader className="sticky top-0 z-10 [&_th]:bg-accent">
+              <Table className="table-fixed">
+                <TableHeader className="sticky top-0 z-10 bg-background">
                   <TableRow>
                     <TableHead>{t("colName")}</TableHead>
-                    <TableHead>{t("colRole")}</TableHead>
-                    {canManage && (
-                      <TableHead className="w-16 text-right">
-                        <ReloadButton />
-                      </TableHead>
-                    )}
+                    <TableHead className="w-[38%]">{tc("email")}</TableHead>
+                    <TableHead className="w-[150px]">{t("colRole")}</TableHead>
+                    <TableHead className="w-12 text-right">
+                      <ReloadButton />
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filtered.length === 0 && (
-                    <TableEmpty colSpan={canManage ? 3 : 2}>{tc("noResults")}</TableEmpty>
-                  )}
+                  {filtered.length === 0 && <TableEmpty colSpan={4}>{tc("noResults")}</TableEmpty>}
                   {filtered.map((m) => {
                     const isSelf = m.userId === selfId
                     const isAdmin = m.role === "ORG_ADMIN"
+                    const RoleIcon = isAdmin ? ShieldCheck : User
                     return (
-                      <TableRow key={m.userId}>
-                        <TableCell>
-                          <div className="flex items-center gap-3">
-                            <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-accent text-xs font-semibold text-accent-foreground">
-                              {initials(m.name ?? m.email)}
-                            </span>
-                            <div className="min-w-0">
-                              <div className="flex items-center gap-2 font-medium">
-                                <Truncate className="max-w-full">{m.name ?? "—"}</Truncate>
-                                {m.status === "INVITED" && (
-                                  <Badge variant="secondary">{tc("invited")}</Badge>
-                                )}
-                              </div>
-                              <Truncate className="max-w-full text-xs text-muted-foreground">
-                                {m.email}
-                              </Truncate>
-                            </div>
-                          </div>
+                      <TableRow key={m.userId} className="hover:bg-transparent">
+                        <TableCell className="font-semibold">
+                          <span className="flex min-w-0 items-center gap-2">
+                            <Truncate className="max-w-full">{m.name ?? "—"}</Truncate>
+                            {m.status === "INVITED" && (
+                              <Badge variant="outline" className="h-[18px] px-1.5 text-xs">
+                                {tc("invited")}
+                              </Badge>
+                            )}
+                          </span>
+                        </TableCell>
+                        <TableCell className="text-muted-foreground">
+                          <Truncate className="max-w-full">{m.email}</Truncate>
                         </TableCell>
                         <TableCell>
-                          {isAdmin ? (
-                            <Badge className="border-transparent bg-primary text-primary-foreground hover:bg-primary/90">
-                              {tc("roleAdmin")}
-                            </Badge>
-                          ) : (
-                            <Badge variant="secondary">{tc("roleResearcher")}</Badge>
-                          )}
+                          <span className="flex items-center gap-1.5">
+                            <RoleIcon className="size-4 shrink-0 text-muted-foreground" />
+                            {isAdmin ? tc("roleAdmin") : tc("roleResearcher")}
+                          </span>
                         </TableCell>
-                        {canManage && (
-                          <TableCell className="text-right">
+                        <TableCell className="text-right">
+                          {canManage && (
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
                                 <Button
                                   variant="ghost"
                                   size="icon"
-                                  className="size-8"
+                                  className="size-7 text-muted-foreground"
                                   disabled={busy === m.userId}
                                 >
                                   <MoreHorizontal className="size-4" />
@@ -427,81 +409,67 @@ export function MembersManager({
                                 )}
                               </DropdownMenuContent>
                             </DropdownMenu>
-                          </TableCell>
-                        )}
+                          )}
+                        </TableCell>
                       </TableRow>
                     )
                   })}
                 </TableBody>
               </Table>
             </div>
-          </div>
+          </section>
 
-          <div className="space-y-6 lg:min-h-0 lg:overflow-y-auto">
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="flex items-center gap-2 text-base">
-                  <Users className="size-4 text-accent-foreground" />
-                  {t("summaryTitle")}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2 text-sm">
-                <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">{t("summaryTotal")}</span>
-                  <span className="font-semibold">{members.length}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">{t("summaryAdmins")}</span>
-                  <span className="font-semibold">{adminCount}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">{t("summaryResearchers")}</span>
-                  <span className="font-semibold">{members.length - adminCount}</span>
-                </div>
-              </CardContent>
-            </Card>
+          <aside className="flex min-w-0 flex-[1_1_300px] flex-col gap-5">
+            <section>
+              <SectionTitle>{t("summaryTitle")}</SectionTitle>
+              <dl>
+                <DataRow label={t("summaryTotal")} labelWidth="minmax(0,1fr)">
+                  <b className="block text-right font-semibold">{members.length}</b>
+                </DataRow>
+                <DataRow label={t("summaryAdmins")} labelWidth="minmax(0,1fr)">
+                  <b className="block text-right font-semibold">{adminCount}</b>
+                </DataRow>
+                <DataRow label={t("summaryResearchers")} labelWidth="minmax(0,1fr)">
+                  <b className="block text-right font-semibold">{members.length - adminCount}</b>
+                </DataRow>
+              </dl>
+            </section>
 
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="flex items-center gap-2 text-base">
-                  <Mail className="size-4 text-accent-foreground" />
-                  {t("pendingTitle")}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {pending.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">{t("pendingEmpty")}</p>
-                ) : (
-                  <ul className="space-y-3">
-                    {pending.map((m) => (
-                      <li key={m.userId} className="flex items-center gap-3">
-                        <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-semibold text-muted-foreground">
-                          {initials(m.name ?? m.email)}
+            <section>
+              <SectionTitle>{t("pendingTitle")}</SectionTitle>
+              {pending.length === 0 ? (
+                <p className="py-1.5 text-muted-foreground">{t("pendingEmpty")}</p>
+              ) : (
+                <ul>
+                  {pending.map((m) => (
+                    <li
+                      key={m.userId}
+                      className="flex items-center gap-2.5 border-b border-border py-1.5"
+                    >
+                      <span className="min-w-0 flex-1">
+                        <b className="block truncate font-semibold">{m.email}</b>
+                        <span className="block text-[13px] text-muted-foreground">
+                          {t("pendingLabel")}
                         </span>
-                        <div className="min-w-0 flex-1">
-                          <p className="truncate text-sm font-medium">{m.email}</p>
-                          <p className="text-xs text-muted-foreground">{t("pendingLabel")}</p>
-                        </div>
-                        {canManage && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="shrink-0 gap-1"
-                            loading={busy === m.userId}
-                            onClick={() => resend(m)}
-                            title={t("resendInvite")}
-                          >
-                            {busy !== m.userId && <Send className="size-3.5" />}
-                            {t("resend")}
-                          </Button>
-                        )}
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </CardContent>
-            </Card>
-          </div>
+                      </span>
+                      {canManage && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-[26px] shrink-0"
+                          loading={busy === m.userId}
+                          onClick={() => resend(m)}
+                          title={t("resendInvite")}
+                        >
+                          {t("resend")}
+                        </Button>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </section>
+          </aside>
         </div>
       )}
 

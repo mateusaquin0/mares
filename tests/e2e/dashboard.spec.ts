@@ -49,7 +49,8 @@ test.describe("Dashboard", () => {
     }
     // …os gráficos de espécies e da linha do tempo são desenhados, e a positividade por exame
     // lista o exame que tem resultado lançado…
-    await expect(page.locator("svg.recharts-surface")).toHaveCount(2)
+    await expect(page.locator("[data-chart=species] li").first()).toBeVisible()
+    await expect(page.locator("[data-chart=timeline] > div").first()).toBeVisible()
     await expect(page.getByText(animals.shared.species).first()).toBeVisible()
     await expect(page.getByText(catalog.examType.label).first()).toBeVisible()
     // …e o mapa de calor monta.

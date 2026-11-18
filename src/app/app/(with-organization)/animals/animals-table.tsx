@@ -4,7 +4,16 @@ import { useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
 import { useLocale, useTranslations } from "next-intl"
 import { toast } from "sonner"
-import { Download, Globe, Lock, MoreHorizontal, X } from "lucide-react"
+import {
+  Archive,
+  ChevronDown,
+  Download,
+  Globe,
+  MapPinOff,
+  MoreHorizontal,
+  Search,
+  X,
+} from "lucide-react"
 
 import type { AnimalFacets, AnimalListItem, AnimalListQuery, AnimalSortKey } from "@/types/animal"
 import { cn } from "@/lib/utils"
@@ -229,15 +238,28 @@ export function AnimalsTable({
   }
 
   const filterField = (label: string, control: React.ReactNode) => (
-    <label className="flex w-44 flex-col gap-1 text-xs">
-      <span className="font-semibold uppercase tracking-wide text-muted-foreground">{label}</span>
+    <label className="grid gap-0.5">
+      <span className="text-xs font-semibold text-muted-foreground">{label}</span>
       {control}
     </label>
   )
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-3">
-      <div className="flex flex-wrap items-end gap-3 rounded-xl border bg-card p-3 shadow-card">
+    <div className="flex min-h-0 flex-1 border-t border-border">
+      <aside className="flex w-[232px] shrink-0 flex-col gap-2 overflow-y-auto border-r border-border py-3 pr-4">
+        <div className="flex items-baseline justify-between gap-2">
+          <h2 className="font-serif text-[17px] font-semibold">{t("filtersTitle")}</h2>
+          {hasFilters && (
+            <button
+              type="button"
+              onClick={clearFilters}
+              className="flex items-center gap-1 text-[13px] text-primary underline underline-offset-2 hover:text-foreground"
+            >
+              <X className="size-3.5" />
+              {t("clearFilters")}
+            </button>
+          )}
+        </div>
         {filterField(
           t("filterSpecies"),
           <div className="w-full">
@@ -325,7 +347,7 @@ export function AnimalsTable({
             value={query.visibility}
             onValueChange={(v) => patchQuery({ visibility: v as AnimalListQuery["visibility"] })}
           >
-            <SelectTrigger className="h-9 w-full">
+            <SelectTrigger className="w-full">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -341,7 +363,7 @@ export function AnimalsTable({
             value={query.samples}
             onValueChange={(v) => patchQuery({ samples: v as AnimalListQuery["samples"] })}
           >
-            <SelectTrigger className="h-9 w-full">
+            <SelectTrigger className="w-full">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -357,7 +379,7 @@ export function AnimalsTable({
             value={query.hidden}
             onValueChange={(v) => patchQuery({ hidden: v as AnimalListQuery["hidden"] })}
           >
-            <SelectTrigger className="h-9 w-full">
+            <SelectTrigger className="w-full">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -372,7 +394,7 @@ export function AnimalsTable({
             type="date"
             value={query.from}
             onChange={(e) => patchQuery({ from: e.target.value })}
-            className="h-9 w-full"
+            className="w-full"
           />,
         )}
         {filterField(
@@ -381,233 +403,248 @@ export function AnimalsTable({
             type="date"
             value={query.to}
             onChange={(e) => patchQuery({ to: e.target.value })}
-            className="h-9 w-full"
+            className="w-full"
           />,
         )}
-        {hasFilters && (
-          <Button variant="ghost" size="sm" onClick={clearFilters} className="gap-1">
-            <X className="size-3.5" />
-            {t("clearFilters")}
-          </Button>
-        )}
-      </div>
+      </aside>
 
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <Input
-          value={searchInput}
-          onChange={(e) => setSearchInput(e.target.value)}
-          placeholder={tc("search")}
-          className="max-w-sm"
-        />
-        {/* Indivíduo arquivado não é exportado (o servidor aplica a mesma regra). */}
-        {query.hidden === "only" ? (
-          <span className="text-sm text-muted-foreground">{t("archivedNotExported")}</span>
-        ) : (
-          selected.size > 0 && (
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground">
-                {t("selectedCount", { count: selected.size })}
-              </span>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm" loading={exporting}>
-                    <Download className="size-4" />
-                    {t("export")}
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onSelect={() => exportAs("xlsx")}>
-                    {t("exportExcel")}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onSelect={() => exportAs("darwin-core")}>
-                    {t("exportDarwin")}
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-          )
-        )}
-      </div>
+      <section className="flex min-w-0 flex-1 flex-col pl-4">
+        <div className="flex min-h-12 flex-wrap items-center gap-3 py-2">
+          <div className="relative w-[320px] min-w-0">
+            <Search className="pointer-events-none absolute left-2 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              placeholder={tc("search")}
+              className="pl-8"
+            />
+          </div>
+          <span className="text-muted-foreground">{t("count", { count: total })}</span>
+          <span className="flex-1" />
+          {/* Indivíduo arquivado não é exportado (o servidor aplica a mesma regra). */}
+          {query.hidden === "only" ? (
+            <span className="flex items-center gap-1.5 text-muted-foreground">
+              <Archive className="size-4" />
+              {t("archivedNotExported")}
+            </span>
+          ) : (
+            selected.size > 0 && (
+              <div className="flex items-center gap-2">
+                <span className="font-semibold">
+                  {t("selectedCount", { count: selected.size })}
+                </span>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" loading={exporting}>
+                      <Download className="size-4" />
+                      {t("export")}
+                      <ChevronDown className="size-4 text-muted-foreground" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onSelect={() => exportAs("xlsx")}>
+                      {t("exportExcel")}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => exportAs("darwin-core")}>
+                      {t("exportDarwin")}
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+            )
+          )}
+        </div>
 
-      <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border bg-card shadow-card [&>div]:min-h-0 [&>div]:flex-1 [&>div]:overflow-x-hidden">
-        <Table
-          className={cn("table-fixed [&_td]:truncate", loading && "opacity-60 transition-opacity")}
-        >
-          <TableHeader className="sticky top-0 z-10 [&_th]:bg-accent">
-            <TableRow>
-              <TableHead className="w-10">
-                <Checkbox
-                  aria-label={t("selectAll")}
-                  disabled={selectingAll || total === 0 || query.hidden === "only"}
-                  checked={allSelected ? true : someSelected ? "indeterminate" : false}
-                  onCheckedChange={(v) => toggleAll(v === true)}
-                />
-              </TableHead>
-              <SortableHead
-                sortKey="control"
-                sort={{ key: query.sort, dir: query.dir }}
-                onToggle={toggleSort}
-                className="w-[15%]"
-              >
-                {t("colControl")}
-              </SortableHead>
-              <SortableHead
-                sortKey="species"
-                sort={{ key: query.sort, dir: query.dir }}
-                onToggle={toggleSort}
-                className="w-[16%]"
-              >
-                {t("colSpecies")}
-              </SortableHead>
-              <SortableHead
-                sortKey="sex"
-                sort={{ key: query.sort, dir: query.dir }}
-                onToggle={toggleSort}
-                className="w-[9%]"
-              >
-                {t("colSex")}
-              </SortableHead>
-              <SortableHead
-                sortKey="location"
-                sort={{ key: query.sort, dir: query.dir }}
-                onToggle={toggleSort}
-                className="w-[17%]"
-              >
-                {t("colLocation")}
-              </SortableHead>
-              <SortableHead
-                sortKey="date"
-                sort={{ key: query.sort, dir: query.dir }}
-                onToggle={toggleSort}
-                className="w-[11%]"
-              >
-                {t("colDate")}
-              </SortableHead>
-              <SortableHead
-                sortKey="isPublic"
-                sort={{ key: query.sort, dir: query.dir }}
-                onToggle={toggleSort}
-                className="w-[12%]"
-              >
-                {t("colVisibility")}
-              </SortableHead>
-              <SortableHead
-                sortKey="samples"
-                sort={{ key: query.sort, dir: query.dir }}
-                onToggle={toggleSort}
-                align="right"
-                className="w-[8%]"
-              >
-                {t("colSamples")}
-              </SortableHead>
-              <TableHead className="w-14 px-2 text-right">
-                <ReloadButton />
-              </TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {items.length === 0 ? (
+        <div className="flex min-h-0 flex-1 flex-col [&>div]:min-h-0 [&>div]:flex-1 [&>div]:overflow-x-hidden">
+          <Table
+            className={cn(
+              "table-fixed [&_td]:truncate",
+              loading && "opacity-60 transition-opacity",
+            )}
+          >
+            <TableHeader className="sticky top-0 z-10 bg-background">
               <TableRow>
-                <TableCell colSpan={9} className="text-center text-sm text-muted-foreground">
-                  {hasFilters ? tc("noResults") : t("empty")}
-                </TableCell>
-              </TableRow>
-            ) : (
-              items.map((a) => (
-                <TableRow
-                  key={a.id}
-                  data-state={selected.has(a.id) ? "selected" : undefined}
-                  onClick={() => router.push(`/app/animals/${a.id}`)}
-                  className="cursor-pointer transition-colors hover:bg-muted/50"
+                <TableHead className="w-10">
+                  <Checkbox
+                    aria-label={t("selectAll")}
+                    disabled={selectingAll || total === 0 || query.hidden === "only"}
+                    checked={allSelected ? true : someSelected ? "indeterminate" : false}
+                    onCheckedChange={(v) => toggleAll(v === true)}
+                  />
+                </TableHead>
+                <SortableHead
+                  sortKey="control"
+                  sort={{ key: query.sort, dir: query.dir }}
+                  onToggle={toggleSort}
+                  className="w-[124px]"
                 >
-                  <TableCell onClick={(e) => e.stopPropagation()}>
-                    <Checkbox
-                      aria-label={t("selectRow")}
-                      checked={selected.has(a.id)}
-                      disabled={query.hidden === "only"}
-                      onCheckedChange={(v) => toggleRow(a.id, v === true)}
-                    />
-                  </TableCell>
-                  <TableCell className="font-medium tabular-nums">
-                    <Truncate className="max-w-full">
-                      {controlOf(a) || (
-                        <span className="text-muted-foreground">{t("notInformed")}</span>
-                      )}
-                    </Truncate>
-                  </TableCell>
-                  <TableCell>
-                    <Truncate className="max-w-full">
-                      {a.species ? (
-                        <span className="italic">{a.species}</span>
-                      ) : (
-                        <span className="text-muted-foreground">{t("speciesUndetermined")}</span>
-                      )}
-                    </Truncate>
-                  </TableCell>
-                  <TableCell className="text-muted-foreground">
-                    <Truncate className="max-w-full">{sexLabel(a.sex)}</Truncate>
-                  </TableCell>
-                  <TableCell className="text-muted-foreground">
-                    <Truncate className="max-w-full">{locationOf(a)}</Truncate>
-                  </TableCell>
-                  <TableCell className="text-muted-foreground">{fmtDate(a.eventDate)}</TableCell>
-                  <TableCell>
-                    {isEffectivePublic(a) ? (
-                      <Badge
-                        variant="public"
-                        className="max-w-full gap-1"
-                        title={visibilityTooltip(a)}
-                      >
-                        <Globe className="size-3 shrink-0" />
-                        <span className="truncate">{t("published")}</span>
-                      </Badge>
-                    ) : (
-                      <Badge
-                        variant="private"
-                        className="max-w-full gap-1"
-                        title={visibilityTooltip(a)}
-                      >
-                        <Lock className="size-3 shrink-0" />
-                        <span className="truncate">{t("unpublished")}</span>
-                      </Badge>
-                    )}
-                  </TableCell>
-                  <TableCell className="text-right tabular-nums">{a._count.samples}</TableCell>
-                  <TableCell className="px-2 text-right" onClick={(e) => e.stopPropagation()}>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="size-8">
-                          <MoreHorizontal className="size-4" />
-                          <span className="sr-only">{tc("actions")}</span>
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onSelect={() => onEdit(a)}>{tc("edit")}</DropdownMenuItem>
-                        {canDelete(a) && (
-                          <DropdownMenuItem
-                            className="text-destructive focus:text-destructive"
-                            onSelect={() => onDelete(a)}
-                          >
-                            {tc("delete")}
-                          </DropdownMenuItem>
-                        )}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                  {t("colControl")}
+                </SortableHead>
+                <SortableHead
+                  sortKey="species"
+                  sort={{ key: query.sort, dir: query.dir }}
+                  onToggle={toggleSort}
+                  className="w-[20%]"
+                >
+                  {t("colSpecies")}
+                </SortableHead>
+                <SortableHead
+                  sortKey="sex"
+                  sort={{ key: query.sort, dir: query.dir }}
+                  onToggle={toggleSort}
+                  className="w-[96px]"
+                >
+                  {t("colSex")}
+                </SortableHead>
+                <SortableHead
+                  sortKey="location"
+                  sort={{ key: query.sort, dir: query.dir }}
+                  onToggle={toggleSort}
+                  className="w-[18%]"
+                >
+                  {t("colLocation")}
+                </SortableHead>
+                <SortableHead
+                  sortKey="date"
+                  sort={{ key: query.sort, dir: query.dir }}
+                  onToggle={toggleSort}
+                  className="w-[132px]"
+                >
+                  {t("colDate")}
+                </SortableHead>
+                <SortableHead
+                  sortKey="isPublic"
+                  sort={{ key: query.sort, dir: query.dir }}
+                  onToggle={toggleSort}
+                  className="w-[148px]"
+                >
+                  {t("colVisibility")}
+                </SortableHead>
+                <SortableHead
+                  sortKey="samples"
+                  sort={{ key: query.sort, dir: query.dir }}
+                  onToggle={toggleSort}
+                  align="right"
+                  className="w-[104px]"
+                >
+                  {t("colSamples")}
+                </SortableHead>
+                <TableHead className="w-14 px-2 text-right">
+                  <ReloadButton />
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {items.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={9} className="text-center text-sm text-muted-foreground">
+                    {hasFilters ? tc("noResults") : t("empty")}
                   </TableCell>
                 </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </div>
+              ) : (
+                items.map((a) => (
+                  <TableRow
+                    key={a.id}
+                    data-state={selected.has(a.id) ? "selected" : undefined}
+                    onClick={() => router.push(`/app/animals/${a.id}`)}
+                    title={t("openAnimal")}
+                    className="cursor-pointer"
+                  >
+                    <TableCell onClick={(e) => e.stopPropagation()}>
+                      <Checkbox
+                        aria-label={t("selectRow")}
+                        checked={selected.has(a.id)}
+                        disabled={query.hidden === "only"}
+                        onCheckedChange={(v) => toggleRow(a.id, v === true)}
+                      />
+                    </TableCell>
+                    <TableCell className="font-semibold tabular-nums">
+                      <Truncate className="max-w-full">
+                        {controlOf(a) || (
+                          <span className="text-muted-foreground">{t("notInformed")}</span>
+                        )}
+                      </Truncate>
+                    </TableCell>
+                    <TableCell>
+                      <Truncate className="max-w-full">
+                        {a.species ? (
+                          <span className="font-serif text-base italic">{a.species}</span>
+                        ) : (
+                          <span className="text-muted-foreground">{t("speciesUndetermined")}</span>
+                        )}
+                      </Truncate>
+                    </TableCell>
+                    <TableCell>
+                      <Truncate className="max-w-full">{sexLabel(a.sex)}</Truncate>
+                    </TableCell>
+                    <TableCell>
+                      <Truncate className="max-w-full">{locationOf(a) || "—"}</Truncate>
+                    </TableCell>
+                    <TableCell>{fmtDate(a.eventDate)}</TableCell>
+                    <TableCell>
+                      {isEffectivePublic(a) ? (
+                        <Badge
+                          variant="public"
+                          className="max-w-full gap-1"
+                          title={visibilityTooltip(a)}
+                        >
+                          <Globe className="size-3 shrink-0" />
+                          <span className="truncate">{t("published")}</span>
+                        </Badge>
+                      ) : (
+                        <Badge
+                          variant="private"
+                          className="max-w-full gap-1"
+                          title={visibilityTooltip(a)}
+                        >
+                          <MapPinOff className="size-3 shrink-0" />
+                          <span className="truncate">{t("unpublished")}</span>
+                        </Badge>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums">{a._count.samples}</TableCell>
+                    <TableCell className="px-2 text-right" onClick={(e) => e.stopPropagation()}>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="size-7 text-muted-foreground"
+                          >
+                            <MoreHorizontal className="size-4" />
+                            <span className="sr-only">{tc("actions")}</span>
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onSelect={() => onEdit(a)}>
+                            {tc("edit")}
+                          </DropdownMenuItem>
+                          {canDelete(a) && (
+                            <DropdownMenuItem
+                              className="text-destructive focus:text-destructive"
+                              onSelect={() => onDelete(a)}
+                            >
+                              {tc("delete")}
+                            </DropdownMenuItem>
+                          )}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
 
-      <TablePagination
-        page={query.page}
-        pageSize={query.pageSize}
-        total={total}
-        onPageChange={(p) => patchQuery({ page: p })}
-        onPageSizeChange={(ps) => patchQuery({ pageSize: ps })}
-      />
+        <TablePagination
+          page={query.page}
+          pageSize={query.pageSize}
+          total={total}
+          onPageChange={(p) => patchQuery({ page: p })}
+          onPageSizeChange={(ps) => patchQuery({ pageSize: ps })}
+        />
+      </section>
     </div>
   )
 }

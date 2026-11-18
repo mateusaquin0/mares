@@ -7,7 +7,6 @@ import { toast } from "sonner"
 import { Clock, Plus } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
 import { ConfirmDialog } from "@/components/confirm-dialog"
 import { useErrorMessage } from "@/lib/use-error-message"
 import { useLeaveOrganization } from "@/hooks/use-members"
@@ -76,20 +75,13 @@ export function MyOrganizations({
   }
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6 p-8">
-      <div className="flex flex-wrap items-start justify-between gap-3">
+    <div className="space-y-4 px-page pb-8 pt-3.5">
+      <div className="flex flex-wrap items-end justify-between gap-x-3 gap-y-2">
         <div>
-          <h1 className="text-3xl font-semibold tracking-tight">{t("title")}</h1>
-          <p className="mt-1 text-sm text-muted-foreground">{t("subtitle")}</p>
+          <h1 className="font-serif text-[28px] font-medium leading-8">{t("title")}</h1>
+          <p className="mt-0.5 max-w-[820px] text-pretty text-muted-foreground">{t("subtitle")}</p>
         </div>
-        {pendingRequest ? (
-          <Badge variant="outline" className="gap-1 border-dashed py-1.5 text-muted-foreground">
-            <Clock className="size-3.5 shrink-0" />
-            <Truncate className="max-w-[16rem]">
-              {t("requestPending", { org: pendingRequest.organizationName })}
-            </Truncate>
-          </Badge>
-        ) : (
+        {!pendingRequest && (
           <Button onClick={() => setRequesting(true)} disabled={requestQ.isLoading}>
             <Plus className="size-4" />
             {t("requestNew")}
@@ -97,13 +89,21 @@ export function MyOrganizations({
         )}
       </div>
 
-      <div className="max-w-3xl overflow-hidden rounded-xl border bg-card shadow-card">
+      {/* Pedido de grupo novo em análise: um por vez, por isso o botão some enquanto existe. */}
+      {pendingRequest && (
+        <div className="flex items-center gap-2 rounded-sm border border-warning bg-warning-subtle px-2.5 py-1.5 font-semibold text-warning">
+          <Clock className="size-4 shrink-0" />
+          {t("requestPending", { org: pendingRequest.organizationName })}
+        </div>
+      )}
+
+      <div>
         <Table className="table-fixed [&_td]:truncate">
           <TableHeader>
             <TableRow>
-              <TableHead className="w-[50%]">{t("colOrg")}</TableHead>
-              <TableHead className="w-[22%]">{t("colRole")}</TableHead>
-              <TableHead className="w-[28%] text-right">
+              <TableHead className="w-[60%]">{t("colOrg")}</TableHead>
+              <TableHead>{t("colRole")}</TableHead>
+              <TableHead className="w-[120px] text-right">
                 <ReloadButton />
               </TableHead>
             </TableRow>
@@ -111,19 +111,12 @@ export function MyOrganizations({
           <TableBody>
             {list.length === 0 && <TableEmpty colSpan={3}>{t("empty")}</TableEmpty>}
             {list.map((m) => (
-              <TableRow key={m.orgId}>
-                <TableCell className="font-medium">
+              <TableRow key={m.orgId} className="hover:bg-transparent">
+                <TableCell className="font-semibold">
                   <Truncate className="max-w-full">{m.orgName}</Truncate>
                 </TableCell>
                 <TableCell>
-                  <Badge
-                    variant={m.role === "ORG_ADMIN" ? "default" : "secondary"}
-                    className="max-w-full"
-                  >
-                    <span className="truncate">
-                      {m.role === "ORG_ADMIN" ? tc("roleAdmin") : tc("roleResearcher")}
-                    </span>
-                  </Badge>
+                  {m.role === "ORG_ADMIN" ? tc("roleAdmin") : tc("roleResearcher")}
                 </TableCell>
                 <TableCell className="text-right">
                   <ConfirmDialog
@@ -137,7 +130,12 @@ export function MyOrganizations({
                     destructive
                     onConfirm={() => leave(m)}
                     trigger={
-                      <Button variant="outline" size="sm" disabled={busy === m.orgId}>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-[26px]"
+                        disabled={busy === m.orgId}
+                      >
                         {tc("leave")}
                       </Button>
                     }

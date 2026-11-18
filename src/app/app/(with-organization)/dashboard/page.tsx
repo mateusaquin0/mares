@@ -39,17 +39,19 @@ export default async function DashboardPage({
   const t = await getTranslations("dashboard")
 
   return (
-    <div className="mx-auto max-w-6xl px-8 py-8">
-      <header className="mb-6">
-        <h1 className="text-3xl font-semibold tracking-tight text-foreground">{t("title")}</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          {t("greeting", { name: user.name ?? user.email })}{" "}
-          {t("activeOrg", { org: activeOrg.orgName })}
-        </p>
-        <p className="text-sm text-muted-foreground">{t("subtitle")}</p>
-      </header>
-
-      <DashboardClient initial={initial} />
+    <div className="px-page pb-8 pt-3.5">
+      <DashboardClient
+        initial={initial}
+        heading={
+          <>
+            <h1 className="font-serif text-[28px] font-medium leading-8">{t("title")}</h1>
+            <p className="mt-0.5 max-w-[820px] text-pretty text-muted-foreground">
+              {t("greeting", { name: user.name ?? user.email })}{" "}
+              {t("activeOrg", { org: activeOrg.orgName })} {t("subtitle")}
+            </p>
+          </>
+        }
+      />
     </div>
   )
 }

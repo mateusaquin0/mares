@@ -17,7 +17,7 @@ import {
 import type { UserSampleType } from "@/types/user-sample-type"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { SectionTitle } from "@/components/ui/section"
 import { Skeleton } from "@/components/ui/skeleton"
 
 export function SampleTypesCard() {
@@ -67,11 +67,9 @@ export function SampleTypesCard() {
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-lg">{t("title")}</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
+    <section>
+      <SectionTitle>{t("title")}</SectionTitle>
+      <div className="space-y-2 pt-1.5">
         <p className="text-sm text-muted-foreground">{t("description")}</p>
 
         <form onSubmit={onAdd} className="flex gap-2">
@@ -98,7 +96,7 @@ export function SampleTypesCard() {
         ) : items.length === 0 ? (
           <p className="text-sm text-muted-foreground">{t("empty")}</p>
         ) : (
-          <ul className="divide-y rounded-md border">
+          <ul className="border-t border-foreground [&>li]:border-b [&>li]:border-border">
             {items.map((item) => (
               <li key={item.id} className="flex items-center gap-2 px-3 py-2">
                 {editing?.id === item.id ? (
@@ -170,7 +168,7 @@ export function SampleTypesCard() {
             ))}
           </ul>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </section>
   )
 }

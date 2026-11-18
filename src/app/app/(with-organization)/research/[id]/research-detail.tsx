@@ -7,6 +7,8 @@ import { toast } from "sonner"
 import {
   ArrowLeft,
   Ban,
+  Globe,
+  Lock,
   MoreHorizontal,
   Pencil,
   Plus,
@@ -14,6 +16,8 @@ import {
   Search,
   Trash2,
 } from "lucide-react"
+
+import { cn } from "@/lib/utils"
 
 import { type CreateResearchData } from "@/schemas/research.schema"
 import {
@@ -35,7 +39,7 @@ import {
   Accordion,
   AccordionContent,
   AccordionItem,
-  AccordionTrigger,
+  AccordionSectionTrigger,
 } from "@/components/ui/accordion"
 import { Skeleton, TableSkeleton } from "@/components/ui/skeleton"
 import { Combobox, type ComboboxOption } from "@/components/ui/combobox"
@@ -175,7 +179,7 @@ export function ResearchDetail({
 
   if (researchQ.isLoading) {
     return (
-      <div className="mx-auto max-w-6xl space-y-6 p-8">
+      <div className="space-y-4 px-page pb-8 pt-3.5">
         <Skeleton className="h-8 w-64" />
         <Skeleton className="h-4 w-96" />
         <TableSkeleton rows={4} />
@@ -183,58 +187,59 @@ export function ResearchDetail({
     )
   }
   if (!research) {
-    return <p className="p-8 text-sm text-muted-foreground">{t("notFound")}</p>
+    return <p className="px-page py-8 text-muted-foreground">{t("notFound")}</p>
   }
 
   return (
-    <div className="mx-auto max-w-5xl space-y-6 p-8">
-      <Link
-        href="/app/research"
-        className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
-      >
-        <ArrowLeft className="size-4" />
-        {t("back")}
-      </Link>
-
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="min-w-0">
-          <div className="flex min-w-0 flex-wrap items-center gap-2">
-            <h1 className="min-w-0 break-words text-3xl font-semibold tracking-tight">
-              {research.name}
-            </h1>
-            <Badge variant={research.isPublic ? "public" : "private"} className="shrink-0">
-              {research.isPublic ? t("public") : t("private")}
-            </Badge>
-          </div>
-          {research.description && (
-            <p className="mt-1 max-w-2xl break-words text-sm text-muted-foreground">
-              {research.description}
-            </p>
-          )}
-          <p className="mt-1 text-xs text-muted-foreground">
-            {t("animalsCount", { count: research._count.animals })}
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          {canEditContent && (
-            <Button variant="outline" onClick={() => setEditOpen(true)}>
-              <Pencil className="size-4" />
-              {tc("edit")}
-            </Button>
-          )}
-        </div>
+    <div className="px-page pb-8 pt-2">
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
+        <Link
+          href="/app/research"
+          className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap text-[13px] underline underline-offset-2 hover:text-primary"
+        >
+          <ArrowLeft className="size-4" />
+          {t("back")}
+        </Link>
+        <span aria-hidden className="h-5 w-px bg-border" />
+        <h1 className="min-w-0 break-words font-serif text-[28px] font-medium leading-[34px]">
+          {research.name}
+        </h1>
+        <Badge variant={research.isPublic ? "public" : "private"} className="shrink-0">
+          {research.isPublic ? <Globe /> : <Lock />}
+          {research.isPublic ? t("public") : t("private")}
+        </Badge>
+        <span className="flex-1" />
+        {canEditContent && (
+          <Button variant="outline" onClick={() => setEditOpen(true)}>
+            <Pencil className="size-4" />
+            {tc("edit")}
+          </Button>
+        )}
       </div>
+      {research.description && (
+        <p className="mt-0.5 max-w-[820px] break-words text-muted-foreground">
+          {research.description}
+        </p>
+      )}
+      <p className="mt-0.5 text-[13px] text-muted-foreground">
+        {t("animalsCount", { count: research._count.animals })}
+      </p>
 
-      <Accordion type="single" collapsible defaultValue="protocol" className="space-y-3">
+      <Accordion
+        type="single"
+        collapsible
+        defaultValue="protocol"
+        className="mt-3.5 flex flex-col gap-3.5"
+      >
         <AccordionItem value="protocol">
-          <AccordionTrigger>{tp("title")}</AccordionTrigger>
-          <AccordionContent className="space-y-3">
-            <p className="text-sm text-muted-foreground">{tp("subtitle")}</p>
+          <AccordionSectionTrigger title={tp("title")} />
+          <AccordionContent className="pb-0 pt-1.5">
+            <p className="mb-2 text-[13px] text-muted-foreground">{tp("subtitle")}</p>
             {/* Sem gate de papel: gerir o protocolo = enxergar a pesquisa. O admin da org
                 enxerga todas as pesquisas da org; o pesquisador, só aquelas às quais está
                 vinculado. Se a pesquisa carregou aqui, o usuário já pode editá-la — a rota
                 aplica a mesma regra (RESEARCHER + assertResearchVisible). */}
-            <div className="grid gap-2 rounded-lg border bg-muted/30 p-3 sm:grid-cols-[1fr_1fr_1fr_auto]">
+            <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_auto] gap-2 border-b border-border pb-2.5">
               <Combobox
                 options={opts(examTypesQ.data)}
                 value={examTypeId}
@@ -279,18 +284,18 @@ export function ResearchDetail({
               </Button>
             </div>
 
-            <div className="flex flex-wrap items-center gap-3">
-              <div className="relative max-w-sm flex-1">
-                <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+            <div className="flex flex-wrap items-center gap-3 py-2">
+              <div className="relative min-w-0 flex-[0_1_340px]">
+                <Search className="pointer-events-none absolute left-2 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   value={protocolQuery}
                   onChange={(e) => setProtocolQuery(e.target.value)}
                   placeholder={tp("searchPlaceholder")}
-                  className="pl-9"
+                  className="pl-8"
                 />
               </div>
               {hasInactive && (
-                <label className="flex items-center gap-2 text-sm text-muted-foreground">
+                <label className="flex items-center gap-1.5">
                   <Checkbox
                     checked={showInactive}
                     onCheckedChange={(v) => setShowInactive(v === true)}
@@ -299,9 +304,9 @@ export function ResearchDetail({
                 </label>
               )}
             </div>
-            <div className="overflow-hidden rounded-lg border">
+            <div>
               <Table>
-                <TableHeader>
+                <TableHeader className="border-t">
                   <TableRow>
                     <TableHead>{tp("examType")}</TableHead>
                     <TableHead>{tp("pathogen")}</TableHead>
@@ -322,16 +327,27 @@ export function ResearchDetail({
                     return (
                       <TableRow
                         key={p.id}
-                        className={inactive ? "text-muted-foreground" : undefined}
+                        className={cn("hover:bg-transparent", inactive && "text-muted-foreground")}
                       >
                         <TableCell>
                           <span className="flex items-center gap-2">
                             <Truncate>{txt(locale, p.examType.name)}</Truncate>
-                            {inactive && <Badge variant="secondary">{tp("inactive")}</Badge>}
+                            {inactive && (
+                              <Badge variant="outline">
+                                <Ban />
+                                {tp("inactive")}
+                              </Badge>
+                            )}
                           </span>
                         </TableCell>
                         <TableCell>
-                          <Truncate>{pathogenName(locale, p.pathogen)}</Truncate>
+                          <Truncate
+                            className={cn(
+                              p.pathogen.scientificName && "font-serif text-base italic",
+                            )}
+                          >
+                            {pathogenName(locale, p.pathogen)}
+                          </Truncate>
                         </TableCell>
                         <TableCell>
                           <Truncate>{txt(locale, p.organ.name)}</Truncate>
@@ -342,7 +358,7 @@ export function ResearchDetail({
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                className="size-8"
+                                className="size-7 text-muted-foreground"
                                 aria-label={tp("actions")}
                               >
                                 <MoreHorizontal className="size-4" />
@@ -389,8 +405,8 @@ export function ResearchDetail({
           </AccordionContent>
         </AccordionItem>
         <AccordionItem value="members">
-          <AccordionTrigger>{t("membersTitle")}</AccordionTrigger>
-          <AccordionContent>
+          <AccordionSectionTrigger title={t("membersTitle")} />
+          <AccordionContent className="pb-0 pt-1.5">
             <ResearchMembers
               researchId={id}
               researchName={research.name}

@@ -1,13 +1,13 @@
 "use client"
 
 import {
+  Ban,
   Bug,
-  CircleCheck,
-  CircleSlash,
-  Eye,
-  Inbox,
+  Check,
+  CircleDot,
   Lightbulb,
   RotateCcw,
+  Search,
   type LucideIcon,
 } from "lucide-react"
 import { useTranslations } from "next-intl"
@@ -41,26 +41,21 @@ export const FEEDBACK_TYPE_META: Record<FeedbackType, BadgeMeta> = {
 }
 
 export const FEEDBACK_STATUS_META: Record<FeedbackStatus, BadgeMeta> = {
-  NEW: { icon: Inbox, labelKey: "status_NEW", variant: "inconclusive", dot: "bg-warning" },
-  IN_REVIEW: { icon: Eye, labelKey: "status_IN_REVIEW", variant: "private", dot: "bg-primary" },
-  RESOLVED: {
-    icon: CircleCheck,
-    labelKey: "status_RESOLVED",
-    variant: "positive",
-    dot: "bg-[hsl(var(--bio))]",
-  },
+  NEW: { icon: CircleDot, labelKey: "status_NEW", variant: "info", dot: "bg-info" },
+  IN_REVIEW: { icon: Search, labelKey: "status_IN_REVIEW", variant: "warning", dot: "bg-warning" },
+  RESOLVED: { icon: Check, labelKey: "status_RESOLVED", variant: "positive", dot: "bg-positive" },
   WONT_FIX: {
-    icon: CircleSlash,
+    icon: Ban,
     labelKey: "status_WONT_FIX",
-    variant: "negative",
+    variant: "outline",
     dot: "bg-muted-foreground",
   },
   // Encerrado que o autor pediu para revisitar: volta à fila do admin, por isso o mesmo
-  // destaque de "pendente" que o NEW.
+  // destaque de "em análise".
   REOPENED: {
     icon: RotateCcw,
     labelKey: "status_REOPENED",
-    variant: "inconclusive",
+    variant: "warning",
     dot: "bg-warning",
   },
 }

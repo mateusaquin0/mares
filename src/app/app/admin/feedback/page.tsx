@@ -114,10 +114,10 @@ export default function AdminFeedbackPage() {
   )
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6 p-8">
+    <div className="space-y-4 px-page pb-8 pt-3.5">
       <div>
-        <h1 className="text-3xl font-semibold tracking-tight">{t("title")}</h1>
-        <p className="mt-1 text-sm text-muted-foreground">{t("subtitle")}</p>
+        <h1 className="font-serif text-[28px] font-medium leading-8">{t("title")}</h1>
+        <p className="mt-0.5 max-w-[820px] text-pretty text-muted-foreground">{t("subtitle")}</p>
       </div>
 
       {listQ.isLoading ? (
@@ -148,7 +148,7 @@ export default function AdminFeedbackPage() {
             </TabsList>
           </Tabs>
 
-          <div className="flex flex-wrap items-end gap-3 rounded-xl border bg-card p-3 shadow-card">
+          <div className="flex flex-wrap items-end gap-3">
             {filterField(
               t("filterType"),
               <Select
@@ -180,7 +180,7 @@ export default function AdminFeedbackPage() {
             )}
           </div>
 
-          <div className="overflow-hidden rounded-xl border bg-card shadow-card">
+          <div>
             <Table>
               <TableHeader>
                 <TableRow>

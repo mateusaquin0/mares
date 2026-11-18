@@ -106,10 +106,10 @@ export function ResearchMembers({
   }
 
   return (
-    <div className="space-y-3">
-      <p className="text-sm text-muted-foreground">{t("membersSubtitle")}</p>
+    <div>
+      <p className="mb-2 text-pretty text-[13px] text-muted-foreground">{t("membersSubtitle")}</p>
       {canManage && (
-        <div className="grid gap-2 rounded-lg border bg-muted/30 p-3 sm:grid-cols-[1fr_auto]">
+        <div className="grid max-w-[560px] grid-cols-[minmax(0,1fr)_auto] gap-2 pb-2.5">
           <Combobox
             options={candidates}
             value={selected}
@@ -126,13 +126,13 @@ export function ResearchMembers({
         </div>
       )}
 
-      <div className="overflow-hidden rounded-lg border">
+      <div>
         <Table>
-          <TableHeader>
+          <TableHeader className="border-t">
             <TableRow>
               <TableHead>{t("colName")}</TableHead>
               <TableHead>{tc("email")}</TableHead>
-              {showActions && <TableHead className="w-16 text-right" />}
+              {showActions && <TableHead className="w-[170px] text-right" />}
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -140,11 +140,11 @@ export function ResearchMembers({
               <TableEmpty colSpan={showActions ? 3 : 2}>{t("membersEmpty")}</TableEmpty>
             )}
             {members.map((m) => (
-              <TableRow key={m.userId}>
-                <TableCell className="font-medium">
+              <TableRow key={m.userId} className="hover:bg-transparent">
+                <TableCell className="font-semibold">
                   <span className="flex flex-wrap items-center gap-2">
                     <Truncate>{m.name ?? m.email}</Truncate>
-                    {m.isCreator && <Badge variant="secondary">{t("memberCreator")}</Badge>}
+                    {m.isCreator && <Badge variant="outline">{t("memberCreator")}</Badge>}
                   </span>
                 </TableCell>
                 <TableCell className="text-muted-foreground">
@@ -164,7 +164,11 @@ export function ResearchMembers({
                         destructive
                         onConfirm={() => leave()}
                         trigger={
-                          <Button variant="ghost" size="sm" className="text-destructive">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-[26px] font-semibold text-destructive hover:text-destructive"
+                          >
                             <LogOut className="size-4" />
                             {t("leave")}
                           </Button>
@@ -182,7 +186,7 @@ export function ResearchMembers({
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="size-8 text-destructive"
+                              className="size-7 text-muted-foreground hover:text-destructive"
                               aria-label={tc("remove")}
                             >
                               <Trash2 className="size-4" />

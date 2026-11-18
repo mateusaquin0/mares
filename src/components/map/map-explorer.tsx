@@ -6,6 +6,7 @@
 
 import { useMemo, useState } from "react"
 import dynamic from "next/dynamic"
+import { cn } from "@/lib/utils"
 import { useTranslations, useLocale } from "next-intl"
 import { Download, Globe, Lock, X } from "lucide-react"
 
@@ -67,18 +68,29 @@ type Props = {
   linkQuery?: string
   // Mapa privado: mostra a legenda de visibilidade (público vs. oculto) e o filtro de visibilidade.
   showVisibility?: boolean
+  // Título da tela, na mesma linha da contagem e da exportação.
+  heading?: React.ReactNode
+  // Mapa de ponta a ponta: anula a margem lateral de 24px da página.
+  flush?: boolean
 }
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <label className="flex flex-col gap-1 text-xs">
-      <span className="font-semibold uppercase tracking-wide text-muted-foreground">{label}</span>
+    <label className="min-w-0" title={label}>
+      <span className="sr-only">{label}</span>
       {children}
     </label>
   )
 }
 
-export function MapExplorer({ points, linkBase, linkQuery, showVisibility }: Props) {
+export function MapExplorer({
+  points,
+  linkBase,
+  linkQuery,
+  showVisibility,
+  heading,
+  flush,
+}: Props) {
   const t = useTranslations("map")
   const ta = useTranslations("animals")
   const locale = useLocale()
@@ -245,10 +257,26 @@ export function MapExplorer({ points, linkBase, linkQuery, showVisibility }: Pro
   }
 
   return (
-    <div className="flex h-full flex-col gap-3" data-testid="map-explorer">
-      <div className="flex flex-wrap items-end gap-3 rounded-lg border bg-card p-3 shadow-sm">
+    <div className="flex h-full flex-col" data-testid="map-explorer">
+      <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        {heading}
+        <b className="whitespace-nowrap font-semibold tabular-nums">
+          {t("resultsCount", { count: filtered.length })}
+        </b>
+        <Button
+          variant="outline"
+          size="sm"
+          className="self-center"
+          onClick={exportCsv}
+          disabled={filtered.length === 0}
+        >
+          <Download className="size-4" />
+          {t("exportCsv")}
+        </Button>
+      </div>
+      <div className="mt-1.5 grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-x-2 gap-y-1.5 pb-2">
         <Field label={t("filterSpecies")}>
-          <div className="w-48">
+          <div className="w-full">
             <MultiSelect
               options={speciesOptions}
               value={species}
@@ -261,7 +289,7 @@ export function MapExplorer({ points, linkBase, linkQuery, showVisibility }: Pro
         </Field>
 
         <Field label={t("filterPathogen")}>
-          <div className="w-48">
+          <div className="w-full">
             <MultiSelect
               options={pathogenOptions}
               value={pathogen}
@@ -275,7 +303,7 @@ export function MapExplorer({ points, linkBase, linkQuery, showVisibility }: Pro
 
         {sexOptions.length > 0 && (
           <Field label={t("filterSex")}>
-            <div className="w-40">
+            <div className="w-full">
               <MultiSelect
                 options={sexOptions}
                 value={sex}
@@ -290,7 +318,7 @@ export function MapExplorer({ points, linkBase, linkQuery, showVisibility }: Pro
 
         {lifeStageOptions.length > 0 && (
           <Field label={t("filterLifeStage")}>
-            <div className="w-44">
+            <div className="w-full">
               <MultiSelect
                 options={lifeStageOptions}
                 value={lifeStage}
@@ -305,7 +333,7 @@ export function MapExplorer({ points, linkBase, linkQuery, showVisibility }: Pro
 
         {stateOptions.length > 0 && (
           <Field label={t("filterState")}>
-            <div className="w-44">
+            <div className="w-full">
               <MultiSelect
                 options={stateOptions}
                 value={state}
@@ -320,7 +348,7 @@ export function MapExplorer({ points, linkBase, linkQuery, showVisibility }: Pro
 
         {researchOptions.length > 1 && (
           <Field label={t("filterResearch")}>
-            <div className="w-52">
+            <div className="w-full">
               <MultiSelect
                 options={researchOptions}
                 value={research}
@@ -336,7 +364,7 @@ export function MapExplorer({ points, linkBase, linkQuery, showVisibility }: Pro
         {showVisibility && (
           <Field label={t("filterVisibility")}>
             <Select value={visibility} onValueChange={setVisibility}>
-              <SelectTrigger className="h-9 w-40">
+              <SelectTrigger className="w-full">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -353,7 +381,7 @@ export function MapExplorer({ points, linkBase, linkQuery, showVisibility }: Pro
             type="date"
             value={from}
             onChange={(e) => setFrom(e.target.value)}
-            className="h-9 w-40"
+            className="w-full"
           />
         </Field>
 
@@ -362,47 +390,28 @@ export function MapExplorer({ points, linkBase, linkQuery, showVisibility }: Pro
             type="date"
             value={to}
             onChange={(e) => setTo(e.target.value)}
-            className="h-9 w-40"
+            className="w-full"
           />
         </Field>
 
         {hasFilters && (
-          <Button variant="ghost" size="sm" onClick={clear} className="gap-1">
+          <button
+            type="button"
+            onClick={clear}
+            className="flex h-[30px] items-center gap-1 text-[13px] text-primary underline underline-offset-2 hover:text-foreground"
+          >
             <X className="size-3.5" />
             {t("clear")}
-          </Button>
+          </button>
         )}
-
-        <div className="ml-auto flex items-center gap-4 text-xs text-muted-foreground">
-          {showVisibility && (
-            <div className="hidden items-center gap-3 sm:flex">
-              <span className="flex items-center gap-1.5">
-                <Globe className="size-3.5" style={{ color: "#003366" }} />
-                {t("legendPublic")}
-              </span>
-              <span className="flex items-center gap-1.5">
-                <Lock className="size-3.5" style={{ color: "#B45309" }} />
-                {t("legendUnpublished")}
-              </span>
-            </div>
-          )}
-          <span className="font-medium tabular-nums">
-            {t("resultsCount", { count: filtered.length })}
-          </span>
-          <Button
-            variant="outline"
-            size="sm"
-            className="gap-1"
-            onClick={exportCsv}
-            disabled={filtered.length === 0}
-          >
-            <Download className="size-3.5" />
-            {t("exportCsv")}
-          </Button>
-        </div>
       </div>
 
-      <div className="relative min-h-[420px] flex-1 overflow-hidden rounded-lg border shadow-sm">
+      <div
+        className={cn(
+          "relative min-h-[340px] flex-1 overflow-hidden border-t border-foreground",
+          flush && "-mx-6",
+        )}
+      >
         <LeafletMap
           points={filtered}
           labels={labels}
@@ -410,8 +419,20 @@ export function MapExplorer({ points, linkBase, linkQuery, showVisibility }: Pro
           linkQuery={linkQuery}
           locale={locale}
         />
+        {showVisibility && (
+          <div className="absolute right-3 top-3 z-[800] flex gap-3.5 border border-foreground bg-popover px-2.5 py-1.5 text-[13px]">
+            <span className="flex items-center gap-1.5">
+              <Globe className="size-3.5" style={{ color: "#003366" }} />
+              {t("legendPublic")}
+            </span>
+            <span className="flex items-center gap-1.5">
+              <Lock className="size-3.5" style={{ color: "#B45309" }} />
+              {t("legendUnpublished")}
+            </span>
+          </div>
+        )}
         {filtered.length === 0 && (
-          <div className="pointer-events-none absolute left-1/2 top-4 z-[1000] -translate-x-1/2 rounded-full border bg-card/95 px-4 py-2 text-sm text-muted-foreground shadow-sm backdrop-blur">
+          <div className="pointer-events-none absolute left-1/2 top-4 z-[1000] -translate-x-1/2 border border-foreground bg-popover px-4 py-2 text-muted-foreground">
             {t("empty")}
           </div>
         )}

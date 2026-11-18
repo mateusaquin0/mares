@@ -1,33 +1,21 @@
 "use client"
 
 // MARES — Conteúdo interativo do Dashboard (Fase 5): filtros globais (pesquisa e período),
-// cartões de métricas, gráficos (espécies, positividade, linha do tempo) e heatmap geográfico.
+// faixa de indicadores, barras (espécies, positividade, linha do tempo) e mapa de calor.
 // Os dados vêm de /api/dashboard (react-query); trocar um filtro refaz a busca.
 
 import { useEffect, useMemo, useState } from "react"
 import dynamic from "next/dynamic"
-import { useTheme } from "next-themes"
 import { useTranslations, useLocale } from "next-intl"
-import { Fish, TestTubes, Microscope, Activity, Biohazard, X } from "lucide-react"
-import {
-  ResponsiveContainer,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  AreaChart,
-  Area,
-} from "recharts"
+import { X } from "lucide-react"
 
 import { useDashboard } from "@/hooks/use-dashboard"
 import { useResearchList } from "@/hooks/use-research"
 import { usePathogens } from "@/hooks/use-catalog"
 import { txt } from "@/lib/catalog-i18n"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { cn } from "@/lib/utils"
+import { SectionTitle } from "@/components/ui/section"
 import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
 import {
   Select,
   SelectContent,
@@ -38,25 +26,6 @@ import {
 import { Combobox } from "@/components/ui/combobox"
 
 const ALL = "__all__"
-// Hex dos tokens --chart-1, --muted-foreground e --border (claro / escuro).
-const CHART_LIGHT = "#0F4F49"
-const CHART_DARK = "#8ACDC2"
-
-// Estilo do tooltip do recharts. Como `contentStyle`/`labelStyle`/`itemStyle` viram `style`
-// inline (onde `var()` resolve), usamos os tokens do DS direto — adapta ao tema sozinho,
-// sem depender do tema resolvido em JS. Antes o fundo era branco fixo (ilegível no dark).
-const TOOLTIP_STYLE = {
-  contentStyle: {
-    background: "hsl(var(--popover))",
-    border: "1px solid hsl(var(--foreground))",
-    borderRadius: 2,
-    color: "hsl(var(--popover-foreground))",
-    boxShadow: "0 8px 24px rgb(0 0 0 / 0.18)",
-    fontSize: 12,
-  },
-  labelStyle: { color: "hsl(var(--popover-foreground))", fontWeight: 600 },
-  itemStyle: { color: "hsl(var(--popover-foreground))" },
-} as const
 
 // Heatmap depende de `window` (Leaflet) — nunca renderiza no servidor.
 const HeatMap = dynamic(() => import("@/components/map/heat-map"), {
@@ -71,10 +40,16 @@ export type DashboardFilterParams = {
   to?: string
 }
 
-export function DashboardClient({ initial }: { initial?: DashboardFilterParams }) {
+// `heading`: título e saudação, montados no servidor; os filtros ficam ao lado deles.
+export function DashboardClient({
+  initial,
+  heading,
+}: {
+  initial?: DashboardFilterParams
+  heading: React.ReactNode
+}) {
   const t = useTranslations("dashboard")
   const locale = useLocale()
-  const { resolvedTheme } = useTheme()
   const [research, setResearch] = useState(initial?.research ?? ALL)
   const [pathogen, setPathogen] = useState(initial?.pathogen ?? ALL)
   const [from, setFrom] = useState(initial?.from ?? "")
@@ -152,64 +127,48 @@ export function DashboardClient({ initial }: { initial?: DashboardFilterParams }
       ? { value: totals?.positivityBySample ?? 0, denom: totals?.testedSamples ?? 0 }
       : { value: totals?.positivityByAnimal ?? 0, denom: totals?.testedAnimals ?? 0 }
 
-  // Recharts seta `stroke`/`fill` como atributos SVG, onde `var()` não resolve — por isso
-  // estas cores são escolhidas em JS conforme o tema resolvido (equivalem aos tokens do DS).
-  // Os três gráficos têm uma série só (contagem ou taxa): a cor é a mesma em todas as
-  // barras, porque cor por posição sugeriria categorias que não existem.
-  const isDark = resolvedTheme === "dark"
-  const seriesColor = isDark ? CHART_DARK : CHART_LIGHT
-  const axisTick = isDark ? "#A4A99F" : "#565B56"
-  const gridStroke = isDark ? "#343A35" : "#D8D4C6"
-
   const stats = [
     {
       id: "animals",
       label: t("statAnimals"),
       value: totals ? numberFmt.format(totals.animals) : "—",
-      icon: Fish,
     },
     {
       id: "samples",
       label: t("statSamples"),
       value: totals ? numberFmt.format(totals.samples) : "—",
-      icon: TestTubes,
     },
     {
       id: "tested",
       label: t("statTestedAnimals"),
       value: totals ? numberFmt.format(totals.testedAnimals) : "—",
-      icon: Microscope,
-    },
-    {
-      id: "positivity",
-      label: t("statPositivity"),
-      value: totals && posRate.denom > 0 ? pctFmt(posRate.value) : "—",
-      icon: Activity,
-    },
-    {
-      id: "positives",
-      label: t("statPositives"),
-      value: totals
-        ? numberFmt.format(posMode === "sample" ? totals.positiveSamples : totals.positiveAnimals)
-        : "—",
-      icon: Biohazard,
     },
   ]
+  const positivityValue = totals && posRate.denom > 0 ? pctFmt(posRate.value) : "—"
+  const positivesValue = totals
+    ? numberFmt.format(posMode === "sample" ? totals.positiveSamples : totals.positiveAnimals)
+    : "—"
 
   const species = data?.species ?? []
   const positivity = data?.positivityByExam ?? []
   const timeline = data?.timeline ?? []
   const heat = data?.heat ?? []
+  const maxSpecies = Math.max(1, ...species.map((s) => s.count))
+  const maxMonth = Math.max(1, ...timeline.map((m) => m.count))
+
+  const filterLabel = "text-xs font-semibold text-muted-foreground"
+  const statLabel = "text-xs font-bold uppercase tracking-[.05em] text-muted-foreground"
+  const statValue = "font-serif text-[40px] font-medium leading-[44px] tabular-nums lining-nums"
+  const sectionNote = "font-sans text-xs font-bold uppercase tracking-[.05em] text-muted-foreground"
 
   return (
     <div className={isLoading ? "opacity-60 transition-opacity" : "transition-opacity"}>
-      <div className="mb-6 flex flex-wrap items-end gap-3 rounded-lg border bg-card p-3 shadow-sm">
-        <label className="flex flex-col gap-1 text-xs">
-          <span className="font-semibold uppercase tracking-wide text-muted-foreground">
-            {t("filterResearch")}
-          </span>
+      <div className="flex flex-wrap items-end gap-3 pb-3.5">
+        <div className="min-w-0 flex-[1_1_360px]">{heading}</div>
+        <label className="grid w-[200px] gap-0.5">
+          <span className={filterLabel}>{t("filterResearch")}</span>
           <Select value={research} onValueChange={setResearch}>
-            <SelectTrigger className="w-56">
+            <SelectTrigger>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -222,243 +181,215 @@ export function DashboardClient({ initial }: { initial?: DashboardFilterParams }
             </SelectContent>
           </Select>
         </label>
-        <label className="flex flex-col gap-1 text-xs">
-          <span className="font-semibold uppercase tracking-wide text-muted-foreground">
-            {t("filterPathogen")}
-          </span>
-          <div className="w-56">
-            <Combobox
-              options={pathogenOptions}
-              value={pathogen}
-              onChange={setPathogen}
-              placeholder={t("allPathogens")}
-              searchPlaceholder={t("searchPathogen")}
-              emptyText={t("noPathogenFound")}
-              loading={!pathogens}
-            />
-          </div>
-        </label>
-        <label className="flex flex-col gap-1 text-xs">
-          <span className="font-semibold uppercase tracking-wide text-muted-foreground">
-            {t("filterFrom")}
-          </span>
-          <Input
-            type="date"
-            name="from"
-            value={from}
-            onChange={(e) => setFrom(e.target.value)}
-            className="h-9 w-40"
+        <label className="grid w-[200px] gap-0.5">
+          <span className={filterLabel}>{t("filterPathogen")}</span>
+          <Combobox
+            options={pathogenOptions}
+            value={pathogen}
+            onChange={setPathogen}
+            placeholder={t("allPathogens")}
+            searchPlaceholder={t("searchPathogen")}
+            emptyText={t("noPathogenFound")}
+            loading={!pathogens}
           />
         </label>
-        <label className="flex flex-col gap-1 text-xs">
-          <span className="font-semibold uppercase tracking-wide text-muted-foreground">
-            {t("filterTo")}
-          </span>
-          <Input
-            type="date"
-            name="to"
-            value={to}
-            onChange={(e) => setTo(e.target.value)}
-            className="h-9 w-40"
-          />
+        <label className="grid w-[136px] gap-0.5">
+          <span className={filterLabel}>{t("filterFrom")}</span>
+          <Input type="date" name="from" value={from} onChange={(e) => setFrom(e.target.value)} />
+        </label>
+        <label className="grid w-[136px] gap-0.5">
+          <span className={filterLabel}>{t("filterTo")}</span>
+          <Input type="date" name="to" value={to} onChange={(e) => setTo(e.target.value)} />
         </label>
         {hasFilters && (
-          <Button variant="ghost" size="sm" onClick={clear} className="gap-1">
+          <button
+            type="button"
+            onClick={clear}
+            className="flex h-[30px] items-center gap-1 text-[13px] text-primary underline underline-offset-2 hover:text-foreground"
+          >
             <X className="size-3.5" />
             {t("clearFilters")}
-          </Button>
+          </button>
         )}
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
-        {stats.map((s) => {
-          const Icon = s.icon
-          return (
-            <Card key={s.id} className="transition-shadow hover:shadow-card-hover">
-              <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
-                <CardDescription className="text-xs font-semibold uppercase tracking-wide">
-                  {s.label}
-                </CardDescription>
-                <span className="flex size-8 items-center justify-center rounded-lg bg-accent text-accent-foreground">
-                  <Icon className="size-4" />
+      {/* Indicadores numa faixa só; a positividade divide a última célula com a base do
+          cálculo (por animal / por amostra). */}
+      <div className="grid grid-cols-[repeat(3,minmax(0,1fr))_minmax(0,2.2fr)] border-b border-t-2 border-b-foreground border-t-foreground">
+        {stats.map((s, i) => (
+          <div
+            key={s.id}
+            className={cn("border-r border-border pb-3 pt-2.5", i === 0 ? "pr-4" : "px-4")}
+          >
+            <div className={statLabel}>{s.label}</div>
+            <div className={statValue}>{s.value}</div>
+          </div>
+        ))}
+        <div className="grid grid-cols-[1fr_1fr_auto] items-end gap-x-4 pb-3 pl-4 pt-2.5">
+          <div>
+            <div className={statLabel}>{t("statPositivity")}</div>
+            <div className={statValue}>{positivityValue}</div>
+          </div>
+          <div>
+            <div className={statLabel}>{t("statPositives")}</div>
+            <div className={statValue}>
+              {positivesValue}
+              {totals && (
+                <span className="ml-1.5 font-sans text-sm font-normal text-muted-foreground">
+                  {t("ofTotal", { total: numberFmt.format(posRate.denom) })}
                 </span>
-              </CardHeader>
-              <CardContent>
-                <p className="text-3xl font-bold tabular-nums tracking-tight text-foreground">
-                  {s.value}
-                </p>
-                {(s.id === "positivity" || s.id === "positives") && (
-                  <div
-                    role="group"
-                    aria-label={s.label}
-                    className="mt-3 grid grid-cols-2 gap-0.5 rounded-md bg-secondary p-0.5"
-                  >
-                    {posModes.map((m) => (
-                      <button
-                        key={m.key}
-                        type="button"
-                        onClick={() => setPosMode(m.key)}
-                        aria-pressed={posMode === m.key}
-                        className={`rounded px-2 py-1 text-xs font-medium transition-colors ${
-                          posMode === m.key
-                            ? "bg-card text-foreground shadow-sm"
-                            : "text-muted-foreground hover:text-foreground"
-                        }`}
-                      >
-                        {m.label}
-                      </button>
-                    ))}
-                  </div>
+              )}
+            </div>
+          </div>
+          <div
+            role="group"
+            aria-label={t("positivityBase")}
+            className="mb-2 flex rounded-sm border border-input text-[13px]"
+          >
+            {posModes.map((m) => (
+              <button
+                key={m.key}
+                type="button"
+                onClick={() => setPosMode(m.key)}
+                aria-pressed={posMode === m.key}
+                className={cn(
+                  "h-[26px] px-2.5 first:border-r first:border-input",
+                  posMode === m.key
+                    ? "bg-accent font-semibold text-foreground shadow-[inset_0_-2px_0_hsl(var(--primary))]"
+                    : "text-muted-foreground hover:text-foreground",
                 )}
-              </CardContent>
-            </Card>
-          )
-        })}
+              >
+                {m.label}
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
 
-      <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">{t("chartSpeciesTitle")}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {species.length === 0 ? (
-              <p className="py-16 text-center text-sm text-muted-foreground">
-                {t("chartSpeciesEmpty")}
-              </p>
-            ) : (
-              <ResponsiveContainer width="100%" height={Math.max(160, species.length * 42)}>
-                <BarChart layout="vertical" data={species} margin={{ left: 8, right: 24 }}>
-                  <CartesianGrid horizontal={false} stroke={gridStroke} />
-                  <XAxis
-                    type="number"
-                    allowDecimals={false}
-                    tick={{ fontSize: 12, fill: axisTick }}
-                  />
-                  <YAxis
-                    type="category"
-                    dataKey="name"
-                    width={150}
-                    tick={{ fontSize: 12, fontStyle: "italic", fill: axisTick }}
-                  />
-                  <Tooltip
-                    formatter={(v) => [numberFmt.format(Number(v)), t("speciesCount")]}
-                    cursor={{ fill: "hsl(var(--accent))" }}
-                    contentStyle={TOOLTIP_STYLE.contentStyle}
-                    labelStyle={TOOLTIP_STYLE.labelStyle}
-                    itemStyle={TOOLTIP_STYLE.itemStyle}
-                  />
-                  <Bar dataKey="count" radius={[0, 4, 4, 0]} fill={seriesColor} />
-                </BarChart>
-              </ResponsiveContainer>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">{t("chartPositivityTitle")}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {positivity.length === 0 ? (
-              <p className="py-16 text-center text-sm text-muted-foreground">
-                {t("chartPositivityEmpty")}
-              </p>
-            ) : (
-              <div className="flex flex-col gap-4 py-2">
-                {positivity.map((r) => {
-                  return (
-                    <div key={r.label}>
-                      <div className="mb-1.5 flex items-center justify-between text-sm">
-                        <span className="truncate text-foreground" title={r.label}>
-                          {r.label}
-                        </span>
-                        <span className="font-bold tabular-nums text-foreground">
-                          {pctFmt(r.pct)}{" "}
-                          <span className="font-normal text-muted-foreground">
-                            ({numberFmt.format(r.positives)}/{numberFmt.format(r.total)})
-                          </span>
-                        </span>
-                      </div>
-                      <div className="h-2.5 overflow-hidden rounded bg-secondary">
-                        <div
-                          className="h-full rounded"
-                          style={{ width: `${r.pct}%`, background: seriesColor }}
-                        />
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-
-      <Card className="mt-6">
-        <CardHeader>
-          <CardTitle className="text-lg">{t("chartTimelineTitle")}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {timeline.length === 0 ? (
-            <p className="py-16 text-center text-sm text-muted-foreground">
-              {t("chartTimelineEmpty")}
-            </p>
+      <div className="mt-[18px] grid grid-cols-2 gap-x-10 gap-y-[18px]">
+        <section>
+          <SectionTitle className="mb-1 justify-between">
+            {t("chartSpeciesTitle")}
+            <span className={sectionNote}>{t("speciesCount")}</span>
+          </SectionTitle>
+          {species.length === 0 ? (
+            <p className="py-10 text-center text-muted-foreground">{t("chartSpeciesEmpty")}</p>
           ) : (
-            <ResponsiveContainer width="100%" height={260}>
-              <AreaChart data={timeline} margin={{ left: 0, right: 16, top: 8 }}>
-                <defs>
-                  <linearGradient id="areaFill" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor={seriesColor} stopOpacity={0.35} />
-                    <stop offset="100%" stopColor={seriesColor} stopOpacity={0.02} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid stroke={gridStroke} vertical={false} />
-                <XAxis
-                  dataKey="month"
-                  tickFormatter={fmtMonth}
-                  tick={{ fontSize: 12, fill: axisTick }}
-                  minTickGap={16}
-                />
-                <YAxis allowDecimals={false} tick={{ fontSize: 12, fill: axisTick }} width={32} />
-                <Tooltip
-                  labelFormatter={(m) => fmtMonth(String(m))}
-                  formatter={(v) => [numberFmt.format(Number(v)), t("timelineCount")]}
-                  cursor={{ stroke: seriesColor, strokeWidth: 1 }}
-                  contentStyle={TOOLTIP_STYLE.contentStyle}
-                  labelStyle={TOOLTIP_STYLE.labelStyle}
-                  itemStyle={TOOLTIP_STYLE.itemStyle}
-                />
-                <Area
-                  type="monotone"
-                  dataKey="count"
-                  stroke={seriesColor}
-                  strokeWidth={2}
-                  fill="url(#areaFill)"
-                />
-              </AreaChart>
-            </ResponsiveContainer>
+            <ul data-chart="species">
+              {species.map((s) => (
+                <li
+                  key={s.name}
+                  className="grid h-6 grid-cols-[190px_minmax(0,1fr)_44px] items-center gap-3 border-b border-border"
+                >
+                  <span className="truncate font-serif text-[15px] italic" title={s.name}>
+                    {s.name}
+                  </span>
+                  <span className="h-2.5">
+                    <span
+                      className="block h-full bg-chart-1"
+                      style={{ width: `${(s.count / maxSpecies) * 100}%` }}
+                    />
+                  </span>
+                  <span className="text-right font-semibold tabular-nums">
+                    {numberFmt.format(s.count)}
+                  </span>
+                </li>
+              ))}
+            </ul>
           )}
-        </CardContent>
-      </Card>
+        </section>
 
-      <Card className="mt-6">
-        <CardHeader>
-          <CardTitle className="text-lg">{t("heatmapTitle")}</CardTitle>
-          <CardDescription>{t("heatmapDesc")}</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="h-[420px] overflow-hidden rounded-lg border">
+        <section>
+          <SectionTitle className="mb-1 justify-between">
+            {t("chartPositivityTitle")}
+            <span className={sectionNote}>{t("positivityColumns")}</span>
+          </SectionTitle>
+          {positivity.length === 0 ? (
+            <p className="py-10 text-center text-muted-foreground">{t("chartPositivityEmpty")}</p>
+          ) : (
+            <ul>
+              {positivity.map((r) => (
+                <li
+                  key={r.label}
+                  className="grid h-8 grid-cols-[190px_minmax(0,1fr)_56px_72px] items-center gap-3 border-b border-border"
+                >
+                  <span className="truncate" title={r.label}>
+                    {r.label}
+                  </span>
+                  <span className="h-2.5 bg-muted">
+                    <span className="block h-full bg-chart-1" style={{ width: `${r.pct}%` }} />
+                  </span>
+                  <span className="text-right font-semibold tabular-nums">{pctFmt(r.pct)}</span>
+                  <span className="text-right tabular-nums text-muted-foreground">
+                    ({numberFmt.format(r.positives)}/{numberFmt.format(r.total)})
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+
+        <section className="flex min-h-[260px] flex-col">
+          <SectionTitle className="justify-between">
+            {t("chartTimelineTitle")}
+            <span className={sectionNote}>{t("timelineCount")}</span>
+          </SectionTitle>
+          {timeline.length === 0 ? (
+            <p className="py-10 text-center text-muted-foreground">{t("chartTimelineEmpty")}</p>
+          ) : (
+            <>
+              <div
+                data-chart="timeline"
+                className="flex min-h-[200px] flex-1 items-stretch gap-1.5 border-b border-foreground pt-[22px]"
+              >
+                {timeline.map((m) => (
+                  <div
+                    key={m.month}
+                    className="flex min-w-0 flex-1 flex-col items-center justify-end gap-0.5"
+                    title={`${fmtMonth(m.month)}: ${numberFmt.format(m.count)}`}
+                  >
+                    {timeline.length <= 18 && (
+                      <span className="text-xs font-semibold tabular-nums">
+                        {numberFmt.format(m.count)}
+                      </span>
+                    )}
+                    <span
+                      className="block w-full bg-chart-1"
+                      style={{ height: `${(m.count / maxMonth) * 100}%`, minHeight: 1 }}
+                    />
+                  </div>
+                ))}
+              </div>
+              <div className="flex gap-1.5 pt-1 text-xs text-muted-foreground">
+                {timeline.map((m, i) => (
+                  <span key={m.month} className="min-w-0 flex-1 overflow-visible whitespace-nowrap">
+                    {/* Com muitos meses, só um rótulo a cada três para não encavalar. */}
+                    {timeline.length <= 18 || i % 3 === 0 ? fmtMonth(m.month) : ""}
+                  </span>
+                ))}
+              </div>
+            </>
+          )}
+        </section>
+
+        <section className="flex min-h-[320px] flex-col">
+          <SectionTitle>
+            {t("heatmapTitle")}
+            <span className="font-sans text-sm font-normal text-muted-foreground">
+              — {t("heatmapDesc")}
+            </span>
+          </SectionTitle>
+          <div className="relative mt-2 min-h-[280px] flex-1 overflow-hidden border border-border">
             {heat.length === 0 ? (
-              <div className="flex h-full items-center justify-center text-center text-sm text-muted-foreground">
+              <div className="flex h-full items-center justify-center text-center text-muted-foreground">
                 {t("heatmapEmpty")}
               </div>
             ) : (
               <HeatMap points={heat} />
             )}
           </div>
-        </CardContent>
-      </Card>
+        </section>
+      </div>
     </div>
   )
 }

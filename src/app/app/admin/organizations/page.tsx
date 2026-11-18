@@ -81,10 +81,10 @@ export default function AdminOrganizationsPage() {
   })
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6 p-8">
+    <div className="space-y-4 px-page pb-8 pt-3.5">
       <div>
-        <h1 className="text-3xl font-semibold tracking-tight">{t("title")}</h1>
-        <p className="mt-1 text-sm text-muted-foreground">{t("subtitle")}</p>
+        <h1 className="font-serif text-[28px] font-medium leading-8">{t("title")}</h1>
+        <p className="mt-0.5 max-w-[820px] text-pretty text-muted-foreground">{t("subtitle")}</p>
       </div>
 
       {loading ? (
@@ -98,7 +98,7 @@ export default function AdminOrganizationsPage() {
             placeholder={tc("search")}
             className="max-w-sm"
           />
-          <div className="overflow-hidden rounded-xl border bg-card shadow-card">
+          <div>
             <Table>
               <TableHeader>
                 <TableRow>

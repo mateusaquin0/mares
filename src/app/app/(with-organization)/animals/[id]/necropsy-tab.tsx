@@ -3,7 +3,6 @@
 import { useMemo, useState } from "react"
 import { useLocale, useTranslations } from "next-intl"
 import { toast } from "sonner"
-import * as AccordionPrimitive from "@radix-ui/react-accordion"
 import {
   ChevronRight,
   Info,
@@ -35,7 +34,12 @@ import {
 } from "@/hooks/use-necropsy"
 import { useCatalogList } from "@/hooks/use-catalog"
 import type { GrossFinding, HistopathologyFinding } from "@/types/necropsy"
-import { Accordion, AccordionContent, AccordionItem } from "@/components/ui/accordion"
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionSectionTrigger,
+} from "@/components/ui/accordion"
 import { Combobox } from "@/components/ui/combobox"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -329,21 +333,6 @@ function IconButton({
   )
 }
 
-// ── Cabeçalho de uma das três partes do laudo ────────────────────────────────
-// O resumo à direita é o que a parte FECHADA continua contando (respostas preenchidas,
-// sistemas avaliados, achados registrados) — sem ele, o accordion esconderia o progresso.
-function SectionTrigger({ title, summary }: { title: string; summary: string }) {
-  return (
-    <AccordionPrimitive.Header className="flex">
-      <AccordionPrimitive.Trigger className="group flex flex-1 items-baseline gap-3 border-b border-foreground py-[5px] text-left font-serif text-[17px] font-semibold leading-[22px] outline-none transition-colors hover:text-primary focus-visible:bg-accent">
-        <ChevronRight className="size-3.5 shrink-0 self-center text-muted-foreground transition-transform group-data-[state=open]:rotate-90" />
-        <span className="flex-1">{title}</span>
-        <span className="font-sans text-[13px] font-normal text-muted-foreground">{summary}</span>
-      </AccordionPrimitive.Trigger>
-    </AccordionPrimitive.Header>
-  )
-}
-
 // ── Aba ──────────────────────────────────────────────────────────────────────
 
 export function NecropsyTab({ animalId }: { animalId: string }) {
@@ -539,7 +528,7 @@ export function NecropsyTab({ animalId }: { animalId: string }) {
               antrópica e conteúdo gastrointestinal valem para o indivíduo, não para um
               sistema. */}
           <AccordionItem value="screening">
-            <SectionTrigger
+            <AccordionSectionTrigger
               title={t("screeningTitle")}
               summary={t("screeningProgress", { answered: screeningAnswered, total: 4 })}
             />
@@ -550,7 +539,10 @@ export function NecropsyTab({ animalId }: { animalId: string }) {
 
           {/* ── Macroscópico ─────────────────────────────────────────────────── */}
           <AccordionItem value="macro" className="min-w-0">
-            <SectionTrigger title={t("macroTitle")} summary={t("progress", { assessed, total })} />
+            <AccordionSectionTrigger
+              title={t("macroTitle")}
+              summary={t("progress", { assessed, total })}
+            />
             <AccordionContent className="min-w-0 pb-0 pt-1.5">
               <p className="mb-1 text-[13px] text-muted-foreground">
                 {t("macroSubtitle", { total })}
@@ -723,7 +715,7 @@ export function NecropsyTab({ animalId }: { animalId: string }) {
 
           {/* ── Histopatológico ──────────────────────────────────────────────── */}
           <AccordionItem value="micro">
-            <SectionTrigger
+            <AccordionSectionTrigger
               title={t("microTitle")}
               summary={
                 histopathology.length === 0

@@ -146,13 +146,6 @@ input[type="number"]::-webkit-outer-spin-button {
   z-index: 0;
 }
 
-/* Mapa base dessaturado para não disputar com a cor de ação e com os marcadores de status.
-   Só a camada de tiles recebe o filtro; marcadores e balões ficam com as cores reais. Os
-   tiles continuam claros nos dois temas. */
-.map-tiles {
-  filter: grayscale(0.85) brightness(1.05);
-}
-
 /* Scrollbars personalizadas: finas, nas cores do design system e com um respiro entre o
    thumb e o conteúdo. O gap vem de uma borda transparente + `background-clip: padding-box`
    (o thumb visível fica menor que a trilha). Firefox usa `scrollbar-width/color` (sem gap). */

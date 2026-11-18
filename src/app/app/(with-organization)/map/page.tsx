@@ -22,14 +22,21 @@ export default async function MapPage() {
     : []
 
   return (
-    <div className="flex h-full min-h-fit flex-col px-8 py-8">
-      <header className="mb-6">
-        <h1 className="text-3xl font-semibold tracking-tight text-foreground">{t("title")}</h1>
-        <p className="mt-1 text-sm text-muted-foreground">{t("subtitle")}</p>
-      </header>
-      <div className="min-h-fit flex-1">
-        <MapExplorer points={points} linkBase="/app/animals" linkQuery="from=map" showVisibility />
-      </div>
+    // O mapa usa a largura inteira da janela, sem o limite de 1280px das outras telas.
+    <div className="flex h-full min-h-[600px] flex-col px-6 pt-2">
+      <MapExplorer
+        points={points}
+        linkBase="/app/animals"
+        linkQuery="from=map"
+        showVisibility
+        flush
+        heading={
+          <>
+            <h1 className="font-serif text-[26px] font-medium leading-[30px]">{t("title")}</h1>
+            <span className="min-w-0 flex-[1_1_300px] text-muted-foreground">{t("subtitle")}</span>
+          </>
+        }
+      />
     </div>
   )
 }
