@@ -70,6 +70,13 @@ export function MyOrganizations({
       setBusy(null)
     }
     toast.success(result?.orgDeactivated ? t("orgDeactivated") : t("leftOrg"))
+    // Sem nenhum grupo, a área do grupo deixa de existir para a pessoa: vai direto para a
+    // tela de quem não tem grupo. Depender do redirect do servidor durante um
+    // router.refresh() falhava de forma intermitente. Navegação no cliente mantém o aviso.
+    if (list.length <= 1) {
+      router.replace("/app/no-organization")
+      return
+    }
     setList((prev) => prev.filter((x) => x.orgId !== m.orgId))
     router.refresh()
   }
