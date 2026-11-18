@@ -24,12 +24,14 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Combobox } from "@/components/ui/combobox"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { DataRow, FormSectionTitle } from "@/components/ui/section"
 import { Textarea } from "@/components/ui/textarea"
 import { CharCounter } from "@/components/ui/char-counter"
 import {
   Dialog,
   DialogBody,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -166,23 +168,21 @@ export function GrossFindingDialog({
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent dirty={isDirty} className="max-w-3xl">
+      <DialogContent dirty={isDirty} className="max-w-[700px]">
         <DialogHeader>
           <DialogTitle>{row ? t("editFindingTitle") : t("addFindingTitle")}</DialogTitle>
-          <p className="text-sm text-muted-foreground">
+          <DialogDescription>
             {t("findingSubtitle", { system: systemLabel, position })}
-          </p>
+          </DialogDescription>
         </DialogHeader>
         <form onSubmit={onSubmit} className="flex min-h-0 flex-1 flex-col gap-4">
-          <DialogBody className="space-y-4">
+          <DialogBody className="space-y-2.5">
             {/* Topografia dentro do sistema — o sistema já está no subtítulo do diálogo e
                 por isso não se repete aqui. */}
-            <fieldset className="space-y-3 rounded-xl border p-4">
-              <legend className="px-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                {t("topography")}
-              </legend>
-              <div className="grid gap-3 sm:grid-cols-3">
-                <div className="space-y-1">
+            <section>
+              <FormSectionTitle className="mt-0">{t("topography")}</FormSectionTitle>
+              <div className="mt-2 grid grid-cols-3 gap-x-3.5 gap-y-2.5">
+                <div className="space-y-0.5">
                   <Label htmlFor="finding-organ">{t("organ")}</Label>
                   <Combobox
                     options={organs.map((o) => ({ value: o.id, label: txt(locale, o.name) }))}
@@ -194,7 +194,7 @@ export function GrossFindingDialog({
                     loading={organsLoading}
                   />
                 </div>
-                <div className="space-y-1">
+                <div className="space-y-0.5">
                   <Label htmlFor="tissue">{t("tissue")}</Label>
                   <Input
                     id="tissue"
@@ -204,7 +204,7 @@ export function GrossFindingDialog({
                     onChange={(e) => set({ tissue: e.target.value })}
                   />
                 </div>
-                <div className="space-y-1">
+                <div className="space-y-0.5">
                   <Label htmlFor="site">{t("site")}</Label>
                   <Input
                     id="site"
@@ -215,21 +215,20 @@ export function GrossFindingDialog({
                   />
                 </div>
               </div>
-            </fieldset>
-
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div className="space-y-1">
-                <Label htmlFor="lesion">{t("colLesion")}</Label>
-                <Input
-                  id="lesion"
-                  maxLength={LIMITS.name}
-                  value={form.lesion}
-                  onChange={(e) => set({ lesion: e.target.value })}
-                />
-                {errors.lesion && <p className="text-xs text-destructive">{tval("required")}</p>}
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1">
+              <div className="mt-2.5 grid grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)] gap-x-3.5 gap-y-2.5">
+                <div className="space-y-0.5">
+                  <Label htmlFor="lesion" required>
+                    {t("colLesion")}
+                  </Label>
+                  <Input
+                    id="lesion"
+                    maxLength={LIMITS.name}
+                    value={form.lesion}
+                    onChange={(e) => set({ lesion: e.target.value })}
+                  />
+                  {errors.lesion && <p className="text-xs text-destructive">{tval("required")}</p>}
+                </div>
+                <div className="space-y-0.5">
                   <Label htmlFor="distribution">{t("colDistribution")}</Label>
                   <Select value={form.distribution} onValueChange={(v) => set({ distribution: v })}>
                     <SelectTrigger id="distribution">
@@ -245,7 +244,7 @@ export function GrossFindingDialog({
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="space-y-1">
+                <div className="space-y-0.5">
                   <Label htmlFor="severity">{t("colSeverity")}</Label>
                   <Select value={form.severity} onValueChange={(v) => set({ severity: v })}>
                     <SelectTrigger id="severity">
@@ -262,27 +261,25 @@ export function GrossFindingDialog({
                   </Select>
                 </div>
               </div>
-            </div>
 
-            <div className="space-y-1">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="finding-notes">{t("colNotes")}</Label>
-                <CharCounter value={form.notes} max={LIMITS.longText} />
+              <div className="mt-2.5 space-y-0.5">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="finding-notes">{t("colNotes")}</Label>
+                  <CharCounter value={form.notes} max={LIMITS.longText} />
+                </div>
+                <Textarea
+                  id="finding-notes"
+                  rows={4}
+                  maxLength={LIMITS.longText}
+                  value={form.notes}
+                  onChange={(e) => set({ notes: e.target.value })}
+                />
               </div>
-              <Textarea
-                id="finding-notes"
-                rows={4}
-                maxLength={LIMITS.longText}
-                value={form.notes}
-                onChange={(e) => set({ notes: e.target.value })}
-              />
-            </div>
+            </section>
 
-            <fieldset className="space-y-3 rounded-xl border bg-muted/30 p-4">
-              <legend className="px-1 text-xs font-semibold uppercase tracking-wide text-accent-foreground">
-                {t("parasites")}
-              </legend>
-              <div className="grid gap-4 sm:grid-cols-3">
+            <section>
+              <FormSectionTitle>{t("parasites")}</FormSectionTitle>
+              <div className="mt-2 grid grid-cols-3 gap-x-3.5 gap-y-2.5">
                 <TriState
                   id="parasites-present"
                   label={t("colParasitesPresent")}
@@ -297,7 +294,7 @@ export function GrossFindingDialog({
                     set({ parasitesCollected: v, ...(v === true ? {} : { parasiteCount: "" }) })
                   }
                 />
-                <div className="space-y-1.5">
+                <div className="space-y-0.5">
                   <Label htmlFor="parasite-count">{t("colParasiteCount")}</Label>
                   {/* Contar o que não foi coletado é contradição; o schema recusa no
                       servidor, e aqui o campo simplesmente não abre. */}
@@ -313,20 +310,16 @@ export function GrossFindingDialog({
                   />
                 </div>
               </div>
-            </fieldset>
+            </section>
+            <p className="text-[13px] text-muted-foreground">{t("blankMeansUnknown")}</p>
           </DialogBody>
-          <DialogFooter className="sm:justify-between">
-            <span className="hidden text-xs text-muted-foreground sm:block">
-              {t("blankMeansUnknown")}
-            </span>
-            <div className="flex gap-2">
-              <Button type="button" variant="outline" onClick={onClose}>
-                {tc("cancel")}
-              </Button>
-              <Button type="submit" loading={saving}>
-                {tc("save")}
-              </Button>
-            </div>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={onClose}>
+              {tc("cancel")}
+            </Button>
+            <Button type="submit" loading={saving}>
+              {tc("save")}
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>
@@ -435,9 +428,11 @@ export function HistopathologyDialog({
           }}
           className="flex min-h-0 flex-1 flex-col gap-4"
         >
-          <DialogBody className="space-y-4">
-            <div className="space-y-1">
-              <Label htmlFor="histo-organ">{t("organ")}</Label>
+          <DialogBody className="space-y-2.5">
+            <div className="space-y-0.5">
+              <Label htmlFor="histo-organ" required>
+                {t("organ")}
+              </Label>
               <Combobox
                 options={organs.map((o) => ({ value: o.id, label: txt(locale, o.name) }))}
                 value={organId}
@@ -450,9 +445,11 @@ export function HistopathologyDialog({
               {errors.organId && <p className="text-xs text-destructive">{tval("required")}</p>}
             </div>
 
-            <div className="space-y-1">
+            <div className="space-y-0.5">
               <div className="flex items-center justify-between">
-                <Label htmlFor="histo-finding">{t("finding")}</Label>
+                <Label htmlFor="histo-finding" required>
+                  {t("finding")}
+                </Label>
                 <CharCounter value={finding} max={LIMITS.longText} />
               </div>
               <Textarea
@@ -469,18 +466,16 @@ export function HistopathologyDialog({
             </div>
 
             {added.length > 0 && (
-              <div className="space-y-2 rounded-xl border bg-muted/30 p-4">
-                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                  {t("histoAddedNow")}
-                </p>
-                <ul className="space-y-1">
+              <section>
+                <FormSectionTitle>{t("histoAddedNow")}</FormSectionTitle>
+                <dl>
                   {added.map((a, i) => (
-                    <li key={i} className="text-sm text-muted-foreground">
-                      <span className="font-medium text-foreground">{a.organ}</span>: {a.finding}
-                    </li>
+                    <DataRow key={i} label={a.organ}>
+                      <span className="font-semibold">{a.finding}</span>
+                    </DataRow>
                   ))}
-                </ul>
-              </div>
+                </dl>
+              </section>
             )}
           </DialogBody>
           <DialogFooter className="sm:justify-between">

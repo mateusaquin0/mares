@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useTranslations } from "next-intl"
 import { toast } from "sonner"
-import { UserPlus, Trash2, Search } from "lucide-react"
+import { Trash2, Search } from "lucide-react"
 
 import { addMemberSchema, type AddMemberData } from "@/schemas/organization.schema"
 import { useAddOrgMember, useSetOrgMemberRole, useRemoveOrgMember } from "@/hooks/use-admin"
@@ -16,7 +16,9 @@ import { useErrorMessage } from "@/lib/use-error-message"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Badge } from "@/components/ui/badge"
+import { DialogBody, DialogFooter } from "@/components/ui/dialog"
+import { InputActionButton, InputWithAction } from "@/components/ui/input-action"
+import { FormSectionTitle } from "@/components/ui/section"
 import { ConfirmDialog } from "@/components/confirm-dialog"
 import {
   Select,
@@ -25,16 +27,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
 import { Truncate } from "@/components/ui/truncate"
-import { ReloadButton } from "@/components/ui/reload-button"
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
@@ -110,159 +103,146 @@ export function OrgMembers({ org }: { org: AdminOrg }) {
     }
   }
 
+  // Corpo e rodapé do diálogo do grupo: a lista de usuários e o formulário de adição rolam
+  // juntos; o botão Adicionar fica na faixa do rodapé.
   return (
-    <div className="space-y-4">
-      <div>
-        <p className="text-sm font-medium">{t("membersSection")}</p>
+    <form onSubmit={form.handleSubmit(onAdd)} className="flex min-h-0 flex-1 flex-col gap-4">
+      <DialogBody>
+        <FormSectionTitle className="mt-0">{t("membersSection")}</FormSectionTitle>
         {org.members.length === 0 ? (
-          <p className="mt-1 text-sm text-muted-foreground">{t("noMembers")}</p>
+          <p className="py-2 text-muted-foreground">{t("noMembers")}</p>
         ) : (
-          <div className="mt-2 rounded-md border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>{t("colUserName")}</TableHead>
-                  <TableHead className="w-40">{t("colUserRole")}</TableHead>
-                  <TableHead className="w-12 text-right">
-                    <ReloadButton />
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {org.members.map((m) => (
-                  <TableRow key={m.userId}>
-                    <TableCell>
-                      <Truncate className="font-medium">{m.name ?? "—"}</Truncate>
-                      <Truncate className="text-xs text-muted-foreground">{m.email}</Truncate>
-                    </TableCell>
-                    <TableCell>
-                      <Select
-                        value={m.role}
-                        onValueChange={(v) => changeRole(m.userId, v as OrgMemberRole)}
-                      >
-                        <SelectTrigger className="h-8">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="ORG_ADMIN">{tc("roleAdmin")}</SelectItem>
-                          <SelectItem value="RESEARCHER">{tc("roleResearcher")}</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <ConfirmDialog
-                        title={t("removeMemberTitle")}
-                        description={t("removeMemberDesc", { email: m.email })}
-                        confirmLabel={tc("remove")}
-                        destructive
-                        onConfirm={() => remove(m.userId)}
-                        trigger={
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="size-8 text-destructive hover:text-destructive"
-                            disabled={removing === m.userId}
-                          >
-                            <Trash2 className="size-4" />
-                            <span className="sr-only">{tc("remove")}</span>
-                          </Button>
-                        }
-                      />
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        )}
-      </div>
-
-      <form onSubmit={form.handleSubmit(onAdd)} className="space-y-4 rounded-md border p-4">
-        <p className="text-sm font-medium">{t("addMemberTitle")}</p>
-
-        <div className="space-y-1">
-          <Label htmlFor="add-email">{t("addEmailLabel")}</Label>
-          <div className="flex items-center gap-2">
-            {(() => {
-              const emailReg = form.register("email")
-              return (
-                <Input
-                  id="add-email"
-                  type="email"
-                  {...emailReg}
-                  onChange={(e) => {
-                    emailReg.onChange(e)
-                    // Editar o e-mail invalida a busca anterior.
-                    if (lookup) setLookup(null)
-                  }}
+          <ul>
+            {org.members.map((m) => (
+              <li key={m.userId} className="flex items-center gap-2 border-b border-border py-2">
+                <span className="min-w-0 flex-1">
+                  <Truncate className="max-w-full font-semibold">{m.name ?? "—"}</Truncate>
+                  <Truncate className="max-w-full text-[13px] text-muted-foreground">
+                    {m.email}
+                  </Truncate>
+                </span>
+                <Select
+                  value={m.role}
+                  onValueChange={(v) => changeRole(m.userId, v as OrgMemberRole)}
+                >
+                  <SelectTrigger
+                    className="w-[164px] shrink-0"
+                    aria-label={`${t("colUserRole")}: ${m.name ?? m.email}`}
+                  >
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ORG_ADMIN">{tc("roleAdmin")}</SelectItem>
+                    <SelectItem value="RESEARCHER">{tc("roleResearcher")}</SelectItem>
+                  </SelectContent>
+                </Select>
+                <ConfirmDialog
+                  title={t("removeMemberTitle")}
+                  description={t("removeMemberDesc", { email: m.email })}
+                  confirmLabel={tc("remove")}
+                  destructive
+                  onConfirm={() => remove(m.userId)}
+                  trigger={
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="size-7 shrink-0 text-destructive hover:text-destructive"
+                      disabled={removing === m.userId}
+                    >
+                      <Trash2 className="size-4" />
+                      <span className="sr-only">{tc("remove")}</span>
+                    </Button>
+                  }
                 />
-              )
-            })()}
-            <Button
-              type="button"
-              variant="outline"
-              size="icon"
-              className="shrink-0"
-              onClick={lookupEmail}
-              loading={lookupM.isPending}
-              title={t("addLookupTitle")}
-            >
-              {!lookupM.isPending && <Search className="size-4" />}
-            </Button>
-          </div>
-          {form.formState.errors.email && (
-            <p className="text-xs text-destructive">{tval(form.formState.errors.email.message!)}</p>
-          )}
-          {lookup?.found && <p className="text-xs text-success">{t("addLookupFound")}</p>}
-        </div>
+              </li>
+            ))}
+          </ul>
+        )}
 
-        <div className="grid gap-3 sm:grid-cols-2">
-          <div className="space-y-1">
-            <Label htmlFor="add-name">{t("addNameLabel")}</Label>
-            <Input id="add-name" readOnly={lookup?.found} {...form.register("name")} />
-            {lookup == null ? (
-              <p className="text-xs text-muted-foreground">{t("addNameLookupHint")}</p>
-            ) : (
-              !lookup.found && (
-                <p className="text-xs text-muted-foreground">{t("addNameNewUserHint")}</p>
-              )
-            )}
-            {form.formState.errors.name && (
+        <FormSectionTitle>{t("addMemberTitle")}</FormSectionTitle>
+        <div className="mt-2 space-y-2.5">
+          <div className="space-y-0.5">
+            <Label htmlFor="add-email" required>
+              {t("addEmailLabel")}
+            </Label>
+            <InputWithAction
+              action={
+                <InputActionButton
+                  onClick={lookupEmail}
+                  loading={lookupM.isPending}
+                  title={t("addLookupTitle")}
+                  aria-label={t("addLookupTitle")}
+                >
+                  {!lookupM.isPending && <Search />}
+                </InputActionButton>
+              }
+            >
+              {(() => {
+                const emailReg = form.register("email")
+                return (
+                  <Input
+                    id="add-email"
+                    type="email"
+                    {...emailReg}
+                    onChange={(e) => {
+                      emailReg.onChange(e)
+                      // Editar o e-mail invalida a busca anterior.
+                      if (lookup) setLookup(null)
+                    }}
+                  />
+                )
+              })()}
+            </InputWithAction>
+            {form.formState.errors.email && (
               <p className="text-xs text-destructive">
-                {tval(form.formState.errors.name.message!)}
+                {tval(form.formState.errors.email.message!)}
               </p>
             )}
+            {lookup?.found && <p className="text-xs text-success">{t("addLookupFound")}</p>}
           </div>
-          <div className="space-y-1">
-            <Label>{t("colUserRole")}</Label>
-            <Select
-              value={form.watch("role") ?? "RESEARCHER"}
-              onValueChange={(v) => form.setValue("role", v as OrgMemberRole)}
-            >
-              <SelectTrigger className="h-10 w-full">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="ORG_ADMIN">{tc("roleAdmin")}</SelectItem>
-                <SelectItem value="RESEARCHER">{tc("roleResearcher")}</SelectItem>
-              </SelectContent>
-            </Select>
+
+          <div className="grid grid-cols-2 gap-x-3.5 gap-y-2.5">
+            <div className="space-y-0.5">
+              <Label htmlFor="add-name">{t("addNameLabel")}</Label>
+              <Input id="add-name" readOnly={lookup?.found} {...form.register("name")} />
+              {lookup == null ? (
+                <p className="text-[13px] text-muted-foreground">{t("addNameLookupHint")}</p>
+              ) : (
+                !lookup.found && (
+                  <p className="text-[13px] text-muted-foreground">{t("addNameNewUserHint")}</p>
+                )
+              )}
+              {form.formState.errors.name && (
+                <p className="text-xs text-destructive">
+                  {tval(form.formState.errors.name.message!)}
+                </p>
+              )}
+            </div>
+            <div className="space-y-0.5">
+              <Label htmlFor="add-role">{t("colUserRole")}</Label>
+              <Select
+                value={form.watch("role") ?? "RESEARCHER"}
+                onValueChange={(v) => form.setValue("role", v as OrgMemberRole)}
+              >
+                <SelectTrigger id="add-role">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ORG_ADMIN">{tc("roleAdmin")}</SelectItem>
+                  <SelectItem value="RESEARCHER">{tc("roleResearcher")}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </div>
+      </DialogBody>
 
-        <div className="flex justify-end border-t pt-3">
-          <Button type="submit" loading={form.formState.isSubmitting} className="w-full sm:w-auto">
-            <UserPlus className="size-4" />
-            {t("addMemberButton")}
-          </Button>
-        </div>
-      </form>
-
-      {org.deactivatedAt && (
-        <Badge variant="secondary" className="gap-1">
-          {t("deactivatedBadge")}
-        </Badge>
-      )}
-    </div>
+      <DialogFooter>
+        <Button type="submit" loading={form.formState.isSubmitting}>
+          {t("addMemberButton")}
+        </Button>
+      </DialogFooter>
+    </form>
   )
 }

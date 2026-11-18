@@ -57,9 +57,11 @@ export function NewOrgRequestDialog({
           <DialogTitle>{t("requestTitle")}</DialogTitle>
           <DialogDescription>{t("requestDesc")}</DialogDescription>
         </DialogHeader>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-          <div className="space-y-1">
-            <Label htmlFor="new-org-name">{t("requestNameLabel")}</Label>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-2.5">
+          <div className="space-y-0.5">
+            <Label htmlFor="new-org-name" required>
+              {t("requestNameLabel")}
+            </Label>
             <Input
               id="new-org-name"
               maxLength={LIMITS.name}

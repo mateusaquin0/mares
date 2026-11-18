@@ -1472,7 +1472,8 @@
     "attachTooLarge": "Imagem maior que {max} MB.",
     "attachLimit": "Máximo de {max} imagens.",
     "removeAttachment": "Remover imagem",
-    "attachError": "Feedback enviado, mas alguma imagem não subiu."
+    "attachError": "Feedback enviado, mas alguma imagem não subiu.",
+    "chooseImages": "Escolher imagens…"
   },
   "myFeedback": {
     "title": "Meus envios",
@@ -1544,7 +1545,8 @@
     "detailAdminNote": "Nota da administração",
     "adminNoteVisible": "Interna — o autor não vê",
     "moveTo": "Mover para",
-    "messageCount": "{count, plural, one {# mensagem} other {# mensagens}}"
+    "messageCount": "{count, plural, one {# mensagem} other {# mensagens}}",
+    "chooseImages": "Escolher imagens…"
   },
   "adminFeedback": {
     "title": "Sugestões e bugs",
@@ -1624,7 +1626,8 @@
     "editLocked": "Já em triagem — a descrição não pode mais ser editada.",
     "moveTo": "Mover para",
     "messageCount": "{count, plural, one {# mensagem} other {# mensagens}}",
-    "count": "{count, plural, one {# ticket} other {# tickets}}"
+    "count": "{count, plural, one {# ticket} other {# tickets}}",
+    "chooseImages": "Escolher imagens…"
   },
   "catalogRequests": {
     "title": "Solicitações de glossário",

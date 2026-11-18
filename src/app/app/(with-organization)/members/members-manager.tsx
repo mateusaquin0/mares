@@ -492,9 +492,11 @@ export function MembersManager({
             <DialogTitle>{t("addMember")}</DialogTitle>
             <DialogDescription>{t("addMemberDesc")}</DialogDescription>
           </DialogHeader>
-          <form onSubmit={addForm.handleSubmit(onAdd)} className="space-y-4">
-            <div className="space-y-1">
-              <Label htmlFor="email">{t("emailLabel")}</Label>
+          <form onSubmit={addForm.handleSubmit(onAdd)} className="space-y-2.5">
+            <div className="space-y-0.5">
+              <Label htmlFor="email" required>
+                {t("emailLabel")}
+              </Label>
               <div className="flex items-center gap-2">
                 {(() => {
                   const emailReg = addForm.register("email")
@@ -532,7 +534,7 @@ export function MembersManager({
               )}
               {lookup?.found && <p className="text-xs text-success">{t("lookupFound")}</p>}
             </div>
-            <div className="space-y-1">
+            <div className="space-y-0.5">
               <Label htmlFor="name">{t("nameLabel")}</Label>
               <Input
                 id="name"
@@ -553,7 +555,7 @@ export function MembersManager({
                 </p>
               )}
             </div>
-            <div className="space-y-1">
+            <div className="space-y-0.5">
               <Label>{t("roleLabel")}</Label>
               <Select
                 value={addForm.watch("role") ?? "RESEARCHER"}
@@ -586,9 +588,11 @@ export function MembersManager({
             <DialogTitle>{t("editOrg")}</DialogTitle>
             <DialogDescription>{t("editOrgDesc")}</DialogDescription>
           </DialogHeader>
-          <form onSubmit={editForm.handleSubmit(onEditOrg)} className="space-y-4">
-            <div className="space-y-1">
-              <Label htmlFor="orgName">{t("orgName")}</Label>
+          <form onSubmit={editForm.handleSubmit(onEditOrg)} className="space-y-2.5">
+            <div className="space-y-0.5">
+              <Label htmlFor="orgName" required>
+                {t("orgName")}
+              </Label>
               <Input id="orgName" maxLength={LIMITS.name} {...editForm.register("name")} />
               {editForm.formState.errors.name && (
                 <p className="text-xs text-destructive">

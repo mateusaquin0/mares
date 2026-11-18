@@ -279,7 +279,7 @@ export function MediaTab({
           <DialogHeader>
             <DialogTitle>{t("editLabel")}</DialogTitle>
           </DialogHeader>
-          <DialogBody className="space-y-1">
+          <DialogBody className="space-y-0.5">
             <Label htmlFor="media-label">{t("label")}</Label>
             <Input
               id="media-label"

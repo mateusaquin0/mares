@@ -6,6 +6,7 @@ import { toast } from "sonner"
 import { ImagePlus, X } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
+import { Label } from "@/components/ui/label"
 import {
   FEEDBACK_ATTACHMENT_ALLOWED,
   FEEDBACK_ATTACHMENT_MAX_BYTES,
@@ -75,10 +76,13 @@ export function FeedbackImagePicker({
   remaining,
   ns,
   disabled,
+  asField = false,
 }: PickerProps & {
   // Quantas imagens ainda cabem no ticket (teto por ticket, somando os dois lados).
   remaining: number
   disabled?: boolean
+  // Em formulário: rótulo, uma caixa no formato de campo e a legenda embaixo.
+  asField?: boolean
 }) {
   const t = useTranslations(ns)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -107,6 +111,42 @@ export function FeedbackImagePicker({
     if (inputRef.current) inputRef.current.value = ""
   }
 
+  const limitTitle = atLimit
+    ? t("attachLimit", { max: FEEDBACK_ATTACHMENT_MAX_PER_TICKET })
+    : undefined
+
+  if (asField) {
+    return (
+      <div className="space-y-0.5">
+        <input
+          ref={inputRef}
+          id="feedback-attach"
+          type="file"
+          accept={FEEDBACK_ATTACHMENT_ALLOWED.join(",")}
+          multiple
+          className="hidden"
+          onChange={(e) => pick(e.target.files)}
+        />
+        <Label htmlFor="feedback-attach-button">{t("attach")}</Label>
+        <span className="block" title={limitTitle}>
+          <button
+            id="feedback-attach-button"
+            type="button"
+            disabled={disabled || atLimit}
+            onClick={() => inputRef.current?.click()}
+            className="flex h-[30px] w-full items-center justify-between gap-2 rounded-sm border border-input bg-field px-2 text-left text-sm text-muted-foreground ring-offset-background transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {t("chooseImages")}
+            <ImagePlus className="size-4 shrink-0" aria-hidden />
+          </button>
+        </span>
+        <p className="text-[13px] text-muted-foreground">
+          {t("attachHint", { max: FEEDBACK_ATTACHMENT_MAX_BYTES / MB })}
+        </p>
+      </div>
+    )
+  }
+
   return (
     <div className="flex min-w-0 items-center gap-3">
       <input
@@ -119,10 +159,7 @@ export function FeedbackImagePicker({
       />
       {/* O `title` fica no wrapper, não no botão: botão desabilitado não dispara hover, e
           sem isso a pessoa não descobre POR QUE não consegue mais anexar. */}
-      <span
-        className="shrink-0"
-        title={atLimit ? t("attachLimit", { max: FEEDBACK_ATTACHMENT_MAX_PER_TICKET }) : undefined}
-      >
+      <span className="shrink-0" title={limitTitle}>
         <Button
           type="button"
           variant="outline"

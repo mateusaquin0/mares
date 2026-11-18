@@ -471,9 +471,11 @@ export function SamplesTab({
             <DialogTitle>{dialog?.mode === "edit" ? t("editTitle") : t("addTitle")}</DialogTitle>
           </DialogHeader>
           <form onSubmit={onSubmit} className="flex min-h-0 flex-1 flex-col gap-4">
-            <DialogBody className="space-y-4">
-              <div className="space-y-1">
-                <Label htmlFor="identification">{t("identification")}</Label>
+            <DialogBody className="space-y-2.5">
+              <div className="space-y-0.5">
+                <Label htmlFor="identification" required>
+                  {t("identification")}
+                </Label>
                 <Input
                   id="identification"
                   name="sampleIdentification"
@@ -488,8 +490,10 @@ export function SamplesTab({
                 )}
               </div>
               {multiResearch && (
-                <div className="space-y-1">
-                  <Label htmlFor="sample-research">{t("research")}</Label>
+                <div className="space-y-0.5">
+                  <Label htmlFor="sample-research" required>
+                    {t("research")}
+                  </Label>
                   <Select
                     value={form.researchId}
                     // Trocar a pesquisa reinicia o órgão e reaplica o filtro do protocolo.
@@ -515,9 +519,11 @@ export function SamplesTab({
                   )}
                 </div>
               )}
-              <div className="space-y-1">
+              <div className="space-y-0.5">
                 <div className="flex items-center justify-between gap-2">
-                  <Label htmlFor="organ">{t("organ")}</Label>
+                  <Label htmlFor="organ" required>
+                    {t("organ")}
+                  </Label>
                   {hasProtocol && (
                     <button
                       type="button"
@@ -543,9 +549,11 @@ export function SamplesTab({
                 )}
                 {errors.organId && <p className="text-xs text-destructive">{tval("required")}</p>}
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1">
-                  <Label htmlFor="sampleType">{t("sampleType")}</Label>
+              <div className="grid grid-cols-2 gap-x-3.5 gap-y-2.5">
+                <div className="space-y-0.5">
+                  <Label htmlFor="sampleType" required>
+                    {t("sampleType")}
+                  </Label>
                   <TextSuggest
                     id="sampleType"
                     name="sampleType"
@@ -559,7 +567,7 @@ export function SamplesTab({
                     <p className="text-xs text-destructive">{tval("required")}</p>
                   )}
                 </div>
-                <div className="space-y-1">
+                <div className="space-y-0.5">
                   <Label htmlFor="status">{t("status")}</Label>
                   <Select
                     value={form.status}
@@ -581,8 +589,8 @@ export function SamplesTab({
                   </Select>
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1">
+              <div className="grid grid-cols-2 gap-x-3.5 gap-y-2.5">
+                <div className="space-y-0.5">
                   <Label htmlFor="collectionDate">{t("collectionDate")}</Label>
                   <Input
                     id="collectionDate"
@@ -591,7 +599,7 @@ export function SamplesTab({
                     onChange={(e) => set({ collectionDate: e.target.value })}
                   />
                 </div>
-                <div className="space-y-1">
+                <div className="space-y-0.5">
                   <Label htmlFor="storageTemp">{t("storageTemp")}</Label>
                   <Input
                     id="storageTemp"
@@ -604,7 +612,7 @@ export function SamplesTab({
                   />
                 </div>
               </div>
-              <div className="space-y-1">
+              <div className="space-y-0.5">
                 <Label htmlFor="storageLocation">{t("storageLocation")}</Label>
                 <Input
                   id="storageLocation"
@@ -615,7 +623,7 @@ export function SamplesTab({
                   onChange={(e) => set({ storageLocation: e.target.value })}
                 />
               </div>
-              <div className="space-y-1">
+              <div className="space-y-0.5">
                 <div className="flex items-center justify-between">
                   <Label htmlFor="notes">{t("notes")}</Label>
                   <CharCounter value={form.notes} max={LIMITS.longText} />

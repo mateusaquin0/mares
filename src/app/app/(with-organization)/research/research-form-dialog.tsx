@@ -74,10 +74,12 @@ export function ResearchFormDialog({
           <DialogTitle>{isEdit ? t("editTitle") : t("createTitle")}</DialogTitle>
           <DialogDescription>{t("createDesc")}</DialogDescription>
         </DialogHeader>
-        <form onSubmit={submit} className="space-y-4">
-          <div className="space-y-1">
+        <form onSubmit={submit} className="space-y-2.5">
+          <div className="space-y-0.5">
             <div className="flex items-center justify-between">
-              <Label htmlFor="research-name">{t("nameLabel")}</Label>
+              <Label htmlFor="research-name" required>
+                {t("nameLabel")}
+              </Label>
               <CharCounter value={form.watch("name")} max={LIMITS.researchName} />
             </div>
             <Input id="research-name" maxLength={LIMITS.researchName} {...form.register("name")} />
@@ -87,7 +89,7 @@ export function ResearchFormDialog({
               </p>
             )}
           </div>
-          <div className="space-y-1">
+          <div className="space-y-0.5">
             <div className="flex items-center justify-between">
               <Label htmlFor="research-description">{t("descriptionLabel")}</Label>
               <CharCounter value={form.watch("description")} max={LIMITS.longText} />

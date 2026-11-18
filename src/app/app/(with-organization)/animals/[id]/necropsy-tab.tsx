@@ -112,8 +112,10 @@ function ReasonDialog({
           className="flex flex-col gap-4"
         >
           <DialogBody>
-            <div className="space-y-1">
-              <Label htmlFor="not-examined-reason">{t("reasonLabel")}</Label>
+            <div className="space-y-0.5">
+              <Label htmlFor="not-examined-reason" required>
+                {t("reasonLabel")}
+              </Label>
               <Input
                 id="not-examined-reason"
                 autoFocus

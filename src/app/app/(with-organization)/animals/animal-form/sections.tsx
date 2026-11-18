@@ -1,12 +1,13 @@
 "use client"
 
-import type { ComponentType, ReactNode } from "react"
+import type { ReactNode } from "react"
 import { useTranslations } from "next-intl"
-import { Search, ChevronDown, Fish, MapPin, Stethoscope, FileText, Ban } from "lucide-react"
+import { Search, Ban } from "lucide-react"
 
-import { Button } from "@/components/ui/button"
+import { InputActionButton, InputWithAction } from "@/components/ui/input-action"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { FormSectionTitle } from "@/components/ui/section"
 import { Checkbox } from "@/components/ui/checkbox"
 import { SpeciesAutocomplete } from "@/components/species-autocomplete"
 import { Field, TextField, TextareaField, SelectField } from "@/components/form"
@@ -18,26 +19,12 @@ import type { ResearchOption } from "."
 // Props comuns a todas as seções: a fatia de estado/erros/mutação do formulário.
 type SectionProps = Pick<AnimalFormApi, "form" | "errors" | "set">
 
-function Section({
-  title,
-  icon: Icon,
-  children,
-}: {
-  title: string
-  icon: ComponentType<{ className?: string }>
-  children: ReactNode
-}) {
+function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <details open className="group rounded-xl border bg-card">
-      <summary className="flex cursor-pointer list-none items-center gap-2 px-4 py-3 [&::-webkit-details-marker]:hidden">
-        <span className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-accent text-accent-foreground">
-          <Icon className="size-4" />
-        </span>
-        <span className="text-sm font-semibold">{title}</span>
-        <ChevronDown className="ml-auto size-4 text-muted-foreground transition-transform group-open:rotate-180" />
-      </summary>
-      <div className="space-y-3 border-t px-4 py-4">{children}</div>
-    </details>
+    <section>
+      <FormSectionTitle>{title}</FormSectionTitle>
+      <div className="mt-2 space-y-2.5">{children}</div>
+    </section>
   )
 }
 
@@ -67,7 +54,7 @@ export function IdentificationSection({
   const t = useTranslations("animals")
 
   return (
-    <Section title={t("sectionIdentification")} icon={Fish}>
+    <Section title={t("sectionIdentification")}>
       {mode === "edit" ? (
         <Field htmlFor="research" label={t("research")} required error={errors.researchId}>
           <Input disabled value={researches.find((r) => r.id === form.researchId)?.name ?? ""} />
@@ -93,11 +80,24 @@ export function IdentificationSection({
         required={!speciesIndet}
         error={speciesIndet ? undefined : errors.species}
       >
-        <div className="flex items-center gap-2">
+        <InputWithAction
+          action={
+            <InputActionButton
+              onClick={toggleSpeciesIndet}
+              title={speciesIndet ? t("speciesUndeterminedEnable") : t("speciesUndeterminedMark")}
+              aria-label={
+                speciesIndet ? t("speciesUndeterminedEnable") : t("speciesUndeterminedMark")
+              }
+              aria-pressed={speciesIndet}
+            >
+              <Ban />
+            </InputActionButton>
+          }
+        >
           {speciesIndet ? (
-            <Input disabled value="" placeholder={t("speciesUndetermined")} className="flex-1" />
+            <Input disabled value="" placeholder={t("speciesUndetermined")} />
           ) : (
-            <div className="flex-1">
+            <div>
               <SpeciesAutocomplete
                 id="species"
                 value={form.species}
@@ -116,18 +116,7 @@ export function IdentificationSection({
               />
             </div>
           )}
-          <Button
-            type="button"
-            variant={speciesIndet ? "secondary" : "outline"}
-            size="icon"
-            className="shrink-0"
-            onClick={toggleSpeciesIndet}
-            title={speciesIndet ? t("speciesUndeterminedEnable") : t("speciesUndeterminedMark")}
-            aria-pressed={speciesIndet}
-          >
-            <Ban className={speciesIndet ? "size-4 text-destructive" : "size-4"} />
-          </Button>
-        </div>
+        </InputWithAction>
         {!speciesIndet && form.wormsAphiaId && (
           <p className="text-xs text-muted-foreground">
             {t("wormsLinked", {
@@ -139,12 +128,24 @@ export function IdentificationSection({
         )}
       </Field>
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 gap-x-3.5 gap-y-2.5">
         {/* O ID de controle é único por ORGANIZAÇÃO, mas a listagem é filtrada por pesquisa:
             a lupa confere se o identificador já existe no grupo antes de a pessoa preencher
             o resto do formulário — inclusive em pesquisas que ela não enxerga. */}
         <Field htmlFor="controlId" label={t("controlId")} required error={errors.controlId}>
-          <div className="flex items-center gap-2">
+          <InputWithAction
+            action={
+              <InputActionButton
+                onClick={() => checkIdentifier("controlId")}
+                loading={checkingId}
+                disabled={!form.controlId.trim()}
+                title={t("idCheck")}
+                aria-label={t("idCheck")}
+              >
+                {!checkingId && <Search />}
+              </InputActionButton>
+            }
+          >
             <Input
               id="controlId"
               value={form.controlId}
@@ -152,22 +153,22 @@ export function IdentificationSection({
               aria-invalid={!!errors.controlId || undefined}
               onChange={(e) => set({ controlId: e.target.value })}
             />
-            <Button
-              type="button"
-              variant="outline"
-              size="icon"
-              className="shrink-0"
-              onClick={() => checkIdentifier("controlId")}
-              loading={checkingId}
-              disabled={!form.controlId.trim()}
-              title={t("idCheck")}
-            >
-              {!checkingId && <Search className="size-4" />}
-            </Button>
-          </div>
+          </InputWithAction>
         </Field>
         <Field htmlFor="simba" label={t("simbaRecordNumber")} error={errors.simbaRecordNumber}>
-          <div className="flex items-center gap-2">
+          <InputWithAction
+            action={
+              <InputActionButton
+                onClick={fetchSimba}
+                loading={fetchingSimba}
+                disabled={!form.simbaRecordNumber.trim()}
+                title={t("simbaFetch")}
+                aria-label={t("simbaFetch")}
+              >
+                {!fetchingSimba && <Search />}
+              </InputActionButton>
+            }
+          >
             <Input
               id="simba"
               value={form.simbaRecordNumber}
@@ -175,19 +176,7 @@ export function IdentificationSection({
               aria-invalid={!!errors.simbaRecordNumber || undefined}
               onChange={(e) => set({ simbaRecordNumber: e.target.value })}
             />
-            <Button
-              type="button"
-              variant="outline"
-              size="icon"
-              className="shrink-0"
-              onClick={fetchSimba}
-              loading={fetchingSimba}
-              disabled={!form.simbaRecordNumber.trim()}
-              title={t("simbaFetch")}
-            >
-              {!fetchingSimba && <Search className="size-4" />}
-            </Button>
-          </div>
+          </InputWithAction>
         </Field>
       </div>
     </Section>
@@ -222,7 +211,18 @@ function StrandingField({
   const t = useTranslations("animals")
   return (
     <Field htmlFor={id} label={label} required={!disabled} error={disabled ? undefined : error}>
-      <div className="flex items-center gap-2">
+      <InputWithAction
+        action={
+          <InputActionButton
+            onClick={onToggle}
+            title={disabled ? t("noInfoEnable") : t("noInfoMark")}
+            aria-label={disabled ? t("noInfoEnable") : t("noInfoMark")}
+            aria-pressed={disabled}
+          >
+            <Ban />
+          </InputActionButton>
+        }
+      >
         <Input
           id={id}
           type={type}
@@ -234,18 +234,7 @@ function StrandingField({
           aria-invalid={!disabled && !!error ? true : undefined}
           onChange={(e) => onChange(e.target.value)}
         />
-        <Button
-          type="button"
-          variant={disabled ? "secondary" : "outline"}
-          size="icon"
-          className="shrink-0"
-          onClick={onToggle}
-          title={disabled ? t("noInfoEnable") : t("noInfoMark")}
-          aria-pressed={disabled}
-        >
-          <Ban className={disabled ? "size-4 text-destructive" : "size-4"} />
-        </Button>
-      </div>
+      </InputWithAction>
     </Field>
   )
 }
@@ -263,8 +252,8 @@ export function StrandingSection({
   const t = useTranslations("animals")
 
   return (
-    <Section title={t("sectionStranding")} icon={MapPin}>
-      <div className="grid grid-cols-2 gap-3">
+    <Section title={t("sectionStranding")}>
+      <div className="grid grid-cols-2 gap-x-3.5 gap-y-2.5">
         <StrandingField
           id="eventDate"
           label={t("eventDate")}
@@ -355,8 +344,8 @@ export function ConditionSection({ form, errors, set }: SectionProps) {
   const lifeStageOptions = LIFE_STAGE_OPTIONS.map((o) => ({ value: o.value, label: t(o.key) }))
 
   return (
-    <Section title={t("sectionCondition")} icon={Stethoscope}>
-      <div className="grid grid-cols-2 gap-3">
+    <Section title={t("sectionCondition")}>
+      <div className="grid grid-cols-2 gap-x-3.5 gap-y-2.5">
         <SelectField
           id="sex"
           label={t("sex")}
@@ -434,7 +423,7 @@ export function NotesSection({
   const t = useTranslations("animals")
 
   return (
-    <Section title={t("sectionNotes")} icon={FileText}>
+    <Section title={t("sectionNotes")}>
       <TextareaField
         id="notes"
         label={t("macroscopicNotes")}

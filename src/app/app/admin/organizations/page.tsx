@@ -8,7 +8,6 @@ import { getCountryName } from "@/lib/countries"
 import { useTable } from "@/lib/use-table"
 import { useAdminOrganizations } from "@/hooks/use-admin"
 import type { AdminOrg } from "@/types/admin"
-import { CountryFlag } from "@/components/country-flag"
 import { TableSkeleton } from "@/components/ui/skeleton"
 import { Input } from "@/components/ui/input"
 import { OrgMembers } from "./org-members"
@@ -47,21 +46,6 @@ export default function AdminOrganizationsPage() {
     (o: Pick<AdminOrg, "city" | "state" | "country">) =>
       [o.city, o.state, getCountryName(o.country, locale)].filter(Boolean).join(", "),
     [locale],
-  )
-
-  // Renderiza a localização com bandeira + nome do país (traduzido a partir do ISO2).
-  const renderLocation = useCallback(
-    (o: Pick<AdminOrg, "city" | "state" | "country">) => {
-      const text = locationText(o)
-      if (!text) return <span className="text-muted-foreground">{t("noLocation")}</span>
-      return (
-        <span className="flex items-center gap-1.5">
-          <CountryFlag iso2={o.country} />
-          {text}
-        </span>
-      )
-    },
-    [locationText, t],
   )
 
   const fmtDate = (iso: string) => new Date(iso).toLocaleDateString(locale)
@@ -182,11 +166,14 @@ export default function AdminOrganizationsPage() {
       )}
 
       <Dialog open={!!selected} onOpenChange={(open) => !open && setSelectedId(null)}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-[660px]">
           <DialogHeader>
             <DialogTitle>{selected?.name}</DialogTitle>
-            <DialogDescription asChild>
-              <span>{selected && renderLocation(selected)}</span>
+            <DialogDescription>
+              {selected &&
+                [locationText(selected), selected.deactivatedAt ? t("deactivatedBadge") : null]
+                  .filter(Boolean)
+                  .join(" · ")}
             </DialogDescription>
           </DialogHeader>
 
