@@ -1,5 +1,7 @@
 "use client"
 
+import { ArrowLeft } from "lucide-react"
+import Link from "next/link"
 import { useLocale, useTranslations } from "next-intl"
 
 import { useMyRequests } from "@/hooks/use-catalog-request"
@@ -27,7 +29,17 @@ export function MyRequests() {
   return (
     <div className="space-y-4 px-page pb-8 pt-3.5">
       <div>
-        <h1 className="font-serif text-[28px] font-medium leading-8">{t("mineTitle")}</h1>
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
+          <Link
+            href="/app/catalogs"
+            className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap text-[13px] underline underline-offset-2 hover:text-primary"
+          >
+            <ArrowLeft className="size-4" />
+            {t("backToGlossary")}
+          </Link>
+          <span aria-hidden className="h-5 w-px bg-border" />
+          <h1 className="font-serif text-[28px] font-medium leading-8">{t("mineTitle")}</h1>
+        </div>
         <p className="mt-0.5 max-w-[820px] text-pretty text-muted-foreground">
           {t("mineSubtitle")}
         </p>

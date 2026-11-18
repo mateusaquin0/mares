@@ -1666,6 +1666,7 @@
     "opError": "Não foi possível concluir a operação",
     "rejectedDuplicate": "Já existe um item equivalente",
     "approvedNote": "Adicionado ao glossário",
-    "kindEdit": "Edição"
+    "kindEdit": "Edição",
+    "backToGlossary": "Glossário"
   }
 }
