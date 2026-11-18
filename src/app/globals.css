@@ -13,6 +13,8 @@
     --card-foreground: 140 5% 11%;
     --popover: 48 38% 97%; /* #FBFAF6 — superfície de campos, menus e diálogos */
     --popover-foreground: 140 5% 11%;
+    /* Fundo dos campos: o oposto do que está atrás (página clara → campo claro; diálogo → fundo). */
+    --field: var(--popover);
     --primary: 174 68% 18%; /* #0F4F49 */
     --primary-foreground: 0 0% 100%;
     --secondary: 43 22% 85%; /* #E1DCD0 */
@@ -46,6 +48,8 @@
     --card-foreground: 45 24% 90%;
     --popover: 135 7% 11%; /* #1A1E1B */
     --popover-foreground: 45 24% 90%;
+    /* Fundo dos campos: o oposto do que está atrás (página clara → campo claro; diálogo → fundo). */
+    --field: var(--popover);
     --primary: 170 40% 67%; /* #8ACDC2 */
     --primary-foreground: 171 48% 8%;
     --secondary: 132 7% 15%;

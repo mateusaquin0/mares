@@ -364,7 +364,7 @@ export function AnalysesTab({ animalId }: { animalId: string }) {
       {sectionsToRender.length === 0 ? (
         <p className="text-muted-foreground">{t("noMatch")}</p>
       ) : (
-        <div className="min-h-0 flex-1 space-y-4 overflow-y-auto pb-8">
+        <div className="-mx-1 min-h-0 flex-1 space-y-4 overflow-y-auto px-1 pb-8">
           {sectionsToRender.map(({ sec: section, samples }) => (
             <section key={section.research.id}>
               {/* Indivíduo compartilhado: uma seção por pesquisa. */}

@@ -180,7 +180,7 @@ export function AuditTab({ animalId }: { animalId: string }) {
     )
 
   return (
-    <div className="min-h-0 flex-1 overflow-y-auto pb-8">
+    <div className="-mx-1 min-h-0 flex-1 overflow-y-auto px-1 pb-8">
       <Table className="table-fixed">
         <colgroup>
           <col className="w-[132px]" />

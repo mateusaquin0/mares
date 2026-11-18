@@ -54,7 +54,7 @@ const DialogContent = React.forwardRef<
     <DialogPrimitive.Content
       ref={ref}
       className={cn(
-        "fixed left-[50%] top-[50%] z-50 flex max-h-[90dvh] w-full max-w-lg translate-x-[-50%] translate-y-[-50%] flex-col gap-4 overflow-hidden overscroll-contain rounded-sm border border-foreground bg-popover px-5 pb-4 pt-3.5 shadow-dialog duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%]",
+        "fixed left-[50%] top-[50%] z-50 flex max-h-[90dvh] w-full max-w-lg translate-x-[-50%] translate-y-[-50%] flex-col gap-4 overflow-hidden overscroll-contain rounded-sm border border-foreground bg-popover px-5 pb-4 pt-3.5 shadow-dialog duration-200 [--field:var(--background)] has-[[data-dialog-footer]]:pb-0 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%]",
         className,
       )}
       onInteractOutside={(e) => {
@@ -87,14 +87,24 @@ const DialogHeader = ({ className, ...props }: React.HTMLAttributes<HTMLDivEleme
 DialogHeader.displayName = "DialogHeader"
 
 // Corpo rolável do diálogo: só esta região rola, mantendo cabeçalho e rodapé sempre visíveis.
-// Usar em formulários altos, entre o DialogHeader e o DialogFooter.
+// Usar em formulários altos, entre o DialogHeader e o DialogFooter. O -m-1/p-1 dá espaço ao
+// anel de foco dos campos, que a rolagem cortaria nas bordas.
 const DialogBody = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
-  <div className={cn("min-h-0 flex-1 overflow-y-auto", className)} {...props} />
+  <div className={cn("-m-1 min-h-0 flex-1 overflow-y-auto p-1", className)} {...props} />
 )
 DialogBody.displayName = "DialogBody"
 
+// Faixa do rodapé: encosta nas bordas e no fundo do diálogo. O conteúdo tira o recuo de baixo
+// quando tem rodapé (marcado por data-dialog-footer), mesmo com o rodapé dentro de um <form>.
 const DialogFooter = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
-  <div className={cn("flex shrink-0 flex-row flex-wrap justify-end gap-2", className)} {...props} />
+  <div
+    data-dialog-footer=""
+    className={cn(
+      "-mx-5 flex shrink-0 flex-row flex-wrap items-center justify-end gap-2 border-t border-border bg-background px-5 py-2.5",
+      className,
+    )}
+    {...props}
+  />
 )
 DialogFooter.displayName = "DialogFooter"
 
