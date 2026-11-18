@@ -129,7 +129,10 @@ export function TaxonAutocomplete({
         id={id}
         autoComplete="off"
         aria-invalid={invalid || undefined}
-        className={cn("italic", className)}
+        className={cn(
+          "font-serif text-base italic placeholder:font-sans placeholder:text-sm placeholder:not-italic",
+          className,
+        )}
         value={value}
         onChange={(e) => {
           onChange(e.target.value)
@@ -163,7 +166,9 @@ export function TaxonAutocomplete({
                       onClick={() => pick(m)}
                       className="flex w-full flex-col items-start px-3 py-1.5 text-left hover:bg-accent"
                     >
-                      <span className="truncate italic">{m.scientificName}</span>
+                      <span className="truncate font-serif text-base italic">
+                        {m.scientificName}
+                      </span>
                       <span className="truncate text-xs text-muted-foreground">
                         {[m.rank, m.family, m.order].filter(Boolean).join(" · ")}
                       </span>

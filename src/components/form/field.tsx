@@ -3,17 +3,9 @@
 import type { ReactNode } from "react"
 import { useTranslations } from "next-intl"
 
-import { Label } from "@/components/ui/label"
+import { Label, RequiredMark } from "@/components/ui/label"
 
-// "*" ao lado do rótulo de campos obrigatórios.
-export function RequiredMark() {
-  const tc = useTranslations("common")
-  return (
-    <span className="text-destructive" title={tc("required")} aria-hidden>
-      *
-    </span>
-  )
-}
+export { RequiredMark }
 
 // Mensagem de erro de um campo. Traduz a chave do namespace `validation`; se não
 // for uma chave conhecida, mostra o texto como veio.
@@ -39,9 +31,9 @@ export function Field({
   children: ReactNode
 }) {
   return (
-    <div className="space-y-1">
-      <Label htmlFor={htmlFor}>
-        {label} {required && <RequiredMark />}
+    <div className="space-y-0.5">
+      <Label htmlFor={htmlFor} required={required}>
+        {label}
       </Label>
       {children}
       <FieldError msg={error} />

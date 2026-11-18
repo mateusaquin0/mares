@@ -531,10 +531,10 @@ export function CatalogManager({
             onSubmit={form.handleSubmit(onSubmit)}
             className="flex min-h-0 flex-1 flex-col gap-4"
           >
-            <DialogBody className="space-y-4">
+            <DialogBody className="space-y-2.5">
               {isPathogen && (
-                <div className="space-y-1">
-                  <Label>{t("group")}</Label>
+                <div className="space-y-0.5">
+                  <Label required>{t("group")}</Label>
                   <Select
                     value={groupId}
                     onValueChange={(v) => {
@@ -558,8 +558,10 @@ export function CatalogManager({
               )}
 
               {isPathogen && groupUsesSci ? (
-                <div className="space-y-1">
-                  <Label htmlFor="sci">{t("nameSci")}</Label>
+                <div className="space-y-0.5">
+                  <Label htmlFor="sci" required>
+                    {t("nameSci")}
+                  </Label>
                   <Controller
                     control={form.control}
                     name="sci"
@@ -602,8 +604,10 @@ export function CatalogManager({
                 </div>
               ) : (
                 <div className="space-y-3">
-                  <div className="space-y-1">
-                    <Label htmlFor="namePt">{t("namePt")}</Label>
+                  <div className="space-y-0.5">
+                    <Label htmlFor="namePt" required>
+                      {t("namePt")}
+                    </Label>
                     <Input
                       id="namePt"
                       maxLength={LIMITS.tinyText}
@@ -615,8 +619,10 @@ export function CatalogManager({
                       </p>
                     )}
                   </div>
-                  <div className="space-y-1">
-                    <Label htmlFor="nameEn">{t("nameEn")}</Label>
+                  <div className="space-y-0.5">
+                    <Label htmlFor="nameEn" required>
+                      {t("nameEn")}
+                    </Label>
                     <Input
                       id="nameEn"
                       maxLength={LIMITS.tinyText}
@@ -648,7 +654,7 @@ export function CatalogManager({
                       {hasMeasure && (
                         <div className="space-y-3">
                           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                            <div className="space-y-1">
+                            <div className="space-y-0.5">
                               <Label htmlFor="measurePt">{t("measurePt")}</Label>
                               <Input
                                 id="measurePt"
@@ -662,7 +668,7 @@ export function CatalogManager({
                                 </p>
                               )}
                             </div>
-                            <div className="space-y-1">
+                            <div className="space-y-0.5">
                               <Label htmlFor="measureEn">{t("measureEn")}</Label>
                               <Input
                                 id="measureEn"
@@ -677,7 +683,7 @@ export function CatalogManager({
                               )}
                             </div>
                           </div>
-                          <div className="space-y-1">
+                          <div className="space-y-0.5">
                             <Label htmlFor="measureUnit">{t("measureUnit")}</Label>
                             <Input
                               id="measureUnit"

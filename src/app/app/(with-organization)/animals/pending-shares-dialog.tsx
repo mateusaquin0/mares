@@ -50,13 +50,13 @@ export function PendingSharesDialog() {
       </Button>
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="sm:max-w-3xl">
+        <DialogContent className="max-w-[640px]">
           <DialogHeader>
             <DialogTitle>{t("sharesQueueTitle")}</DialogTitle>
             <DialogDescription>{t("sharesQueueDesc")}</DialogDescription>
           </DialogHeader>
           <DialogBody>
-            <ul className="divide-y">
+            <ul className="[&>li]:border-b [&>li]:border-border">
               {items.map((s) => (
                 <ShareRow
                   key={`${s.animal.id}:${s.research.id}`}
@@ -96,12 +96,12 @@ function ShareRow({ share, onDone }: { share: PendingShare; onDone: () => void }
   }
 
   return (
-    <li className="flex flex-wrap items-center gap-3 py-3">
-      <Badge variant="outline" className="shrink-0">
+    <li className="flex flex-wrap items-center gap-3 py-2.5">
+      <Badge variant="outline" className="shrink-0 text-xs font-bold uppercase tracking-[0.05em]">
         {isInvite ? t("shareInviteTag") : t("shareRequestTag")}
       </Badge>
       <div className="min-w-0 flex-1">
-        <p className="text-sm">
+        <p>
           {isInvite
             ? // "A pesquisa X ofereceu o indivíduo Y à sua pesquisa Z"
               t("shareInviteLine", {
@@ -116,10 +116,10 @@ function ShareRow({ share, onDone }: { share: PendingShare; onDone: () => void }
                 to: share.research.name,
               })}
         </p>
-        {share.message && <p className="text-xs text-muted-foreground">{share.message}</p>}
+        {share.message && <p className="text-[13px] text-muted-foreground">{share.message}</p>}
       </div>
       <div className="flex shrink-0 items-center gap-2">
-        <Button size="sm" variant="outline" onClick={() => respond(true)} disabled={busy}>
+        <Button size="sm" onClick={() => respond(true)} disabled={busy}>
           <Check className="size-4" />
           {t("shareAccept")}
         </Button>

@@ -1472,7 +1472,8 @@
     "attachTooLarge": "Image larger than {max} MB.",
     "attachLimit": "At most {max} images.",
     "removeAttachment": "Remove image",
-    "attachError": "Feedback sent, but an image failed to upload."
+    "attachError": "Feedback sent, but an image failed to upload.",
+    "chooseImages": "Choose images…"
   },
   "myFeedback": {
     "title": "My submissions",
@@ -1544,7 +1545,8 @@
     "detailAdminNote": "Administration note",
     "adminNoteVisible": "Internal — the author cannot see it",
     "moveTo": "Move to",
-    "messageCount": "{count, plural, one {# message} other {# messages}}"
+    "messageCount": "{count, plural, one {# message} other {# messages}}",
+    "chooseImages": "Choose images…"
   },
   "adminFeedback": {
     "title": "Suggestions & bugs",
@@ -1624,7 +1626,8 @@
     "editLocked": "Already in triage — the description can no longer be edited.",
     "moveTo": "Move to",
     "messageCount": "{count, plural, one {# message} other {# messages}}",
-    "count": "{count, plural, one {# ticket} other {# tickets}}"
+    "count": "{count, plural, one {# ticket} other {# tickets}}",
+    "chooseImages": "Choose images…"
   },
   "catalogRequests": {
     "title": "Glossary requests",

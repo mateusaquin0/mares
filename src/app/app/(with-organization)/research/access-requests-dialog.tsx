@@ -53,28 +53,27 @@ export function AccessRequestsDialog() {
       </Button>
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="sm:max-w-3xl">
+        <DialogContent className="max-w-[640px]">
           <DialogHeader>
             <DialogTitle>{t("accessQueueTitle")}</DialogTitle>
             <DialogDescription>{t("accessQueueDesc")}</DialogDescription>
           </DialogHeader>
           <DialogBody>
-            <ul className="divide-y">
+            <ul className="[&>li]:border-b [&>li]:border-border">
               {items.map((r) => (
-                <li key={r.id} className="flex flex-wrap items-center gap-3 py-3">
+                <li key={r.id} className="flex flex-wrap items-center gap-3 py-2.5">
                   <div className="min-w-0 flex-1">
-                    <p className="text-sm">
+                    <p>
                       {t("accessQueueLine", {
                         user: r.user.name || r.user.email,
                         research: r.research.name,
                       })}
                     </p>
-                    {r.message && <p className="text-xs text-muted-foreground">{r.message}</p>}
+                    {r.message && <p className="text-[13px] text-muted-foreground">{r.message}</p>}
                   </div>
                   <div className="flex shrink-0 items-center gap-2">
                     <Button
                       size="sm"
-                      variant="outline"
                       onClick={() => review(r.id, "approve")}
                       disabled={reviewM.isPending}
                     >

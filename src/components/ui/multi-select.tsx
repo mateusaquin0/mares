@@ -65,7 +65,7 @@ export function MultiSelect({
           role="combobox"
           aria-expanded={open}
           className={cn(
-            "h-[30px] w-full justify-between font-normal bg-popover px-2 hover:bg-popover hover:text-foreground data-[state=open]:border-primary",
+            "h-[30px] w-full justify-between font-normal bg-field px-2 hover:bg-field hover:text-foreground data-[state=open]:border-primary",
             triggerClassName,
           )}
         >

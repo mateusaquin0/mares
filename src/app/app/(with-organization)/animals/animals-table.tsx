@@ -246,7 +246,7 @@ export function AnimalsTable({
 
   return (
     <div className="flex min-h-0 flex-1 border-t border-border">
-      <aside className="flex w-[232px] shrink-0 flex-col gap-2 overflow-y-auto border-r border-border py-3 pr-4">
+      <aside className="-ml-1 flex w-[236px] shrink-0 flex-col gap-2 overflow-y-auto border-r border-border py-3 pl-1 pr-4">
         <div className="flex items-baseline justify-between gap-2">
           <h2 className="font-serif text-[17px] font-semibold">{t("filtersTitle")}</h2>
           {hasFilters && (

@@ -6,7 +6,7 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useTranslations } from "next-intl"
 import { toast } from "sonner"
-import { MoreHorizontal, Pencil, Search, ShieldCheck, User, UserPlus } from "lucide-react"
+import { Check, MoreHorizontal, Pencil, Search, ShieldCheck, User, UserPlus } from "lucide-react"
 
 import {
   addMemberSchema,
@@ -28,6 +28,7 @@ import type { Member } from "@/types/organization"
 import { LIMITS } from "@/schemas/limits"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { InputActionButton, InputWithAction } from "@/components/ui/input-action"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { TableSkeleton } from "@/components/ui/skeleton"
@@ -492,10 +493,22 @@ export function MembersManager({
             <DialogTitle>{t("addMember")}</DialogTitle>
             <DialogDescription>{t("addMemberDesc")}</DialogDescription>
           </DialogHeader>
-          <form onSubmit={addForm.handleSubmit(onAdd)} className="space-y-4">
-            <div className="space-y-1">
-              <Label htmlFor="email">{t("emailLabel")}</Label>
-              <div className="flex items-center gap-2">
+          <form onSubmit={addForm.handleSubmit(onAdd)} className="space-y-2.5">
+            <div className="space-y-0.5">
+              <Label htmlFor="email" required>
+                {t("emailLabel")}
+              </Label>
+              <InputWithAction
+                action={
+                  <InputActionButton
+                    onClick={lookupEmail}
+                    loading={lookupM.isPending}
+                    title={t("lookupTitle")}
+                  >
+                    {!lookupM.isPending && <Search />}
+                  </InputActionButton>
+                }
+              >
                 {(() => {
                   const emailReg = addForm.register("email")
                   return (
@@ -513,26 +526,20 @@ export function MembersManager({
                     />
                   )
                 })()}
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="icon"
-                  className="shrink-0"
-                  onClick={lookupEmail}
-                  loading={lookupM.isPending}
-                  title={t("lookupTitle")}
-                >
-                  {!lookupM.isPending && <Search className="size-4" />}
-                </Button>
-              </div>
+              </InputWithAction>
               {addForm.formState.errors.email && (
                 <p className="text-xs text-destructive">
                   {tval(addForm.formState.errors.email.message!)}
                 </p>
               )}
-              {lookup?.found && <p className="text-xs text-success">{t("lookupFound")}</p>}
+              {lookup?.found && (
+                <p className="flex items-center gap-1 text-[13px] font-semibold text-positive">
+                  <Check className="size-3.5 shrink-0" aria-hidden />
+                  {t("lookupFound")}
+                </p>
+              )}
             </div>
-            <div className="space-y-1">
+            <div className="space-y-0.5">
               <Label htmlFor="name">{t("nameLabel")}</Label>
               <Input
                 id="name"
@@ -553,7 +560,7 @@ export function MembersManager({
                 </p>
               )}
             </div>
-            <div className="space-y-1">
+            <div className="space-y-0.5">
               <Label>{t("roleLabel")}</Label>
               <Select
                 value={addForm.watch("role") ?? "RESEARCHER"}
@@ -586,9 +593,11 @@ export function MembersManager({
             <DialogTitle>{t("editOrg")}</DialogTitle>
             <DialogDescription>{t("editOrgDesc")}</DialogDescription>
           </DialogHeader>
-          <form onSubmit={editForm.handleSubmit(onEditOrg)} className="space-y-4">
-            <div className="space-y-1">
-              <Label htmlFor="orgName">{t("orgName")}</Label>
+          <form onSubmit={editForm.handleSubmit(onEditOrg)} className="space-y-2.5">
+            <div className="space-y-0.5">
+              <Label htmlFor="orgName" required>
+                {t("orgName")}
+              </Label>
               <Input id="orgName" maxLength={LIMITS.name} {...editForm.register("name")} />
               {editForm.formState.errors.name && (
                 <p className="text-xs text-destructive">

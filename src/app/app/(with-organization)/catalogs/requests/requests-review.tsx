@@ -4,7 +4,7 @@ import { useMemo, useState } from "react"
 import Link from "next/link"
 import { useLocale, useTranslations } from "next-intl"
 import { toast } from "sonner"
-import { ArrowLeft, Check, X } from "lucide-react"
+import { ArrowLeft } from "lucide-react"
 
 import { txt, pathogenName } from "@/lib/catalog-i18n"
 import { slugify } from "@/lib/slug"
@@ -21,7 +21,9 @@ import { catalogTypeOfRequest, requestItemName, requestNormalizedNames } from ".
 import { RequestItemName } from "../request-item-name"
 import { RequestStatusBadge } from "../request-status-badge"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
+import { Label } from "@/components/ui/label"
+import { DataRow } from "@/components/ui/section"
+import { cn } from "@/lib/utils"
 import { Textarea } from "@/components/ui/textarea"
 import { TableSkeleton } from "@/components/ui/skeleton"
 import { ReloadButton } from "@/components/ui/reload-button"
@@ -47,11 +49,6 @@ import {
 } from "@/components/ui/dialog"
 
 const STATUSES: CatalogRequestStatus[] = ["PENDING", "APPROVED", "REJECTED"]
-const statusVariant: Record<CatalogRequestStatus, "default" | "outline" | "negative"> = {
-  PENDING: "default",
-  APPROVED: "outline",
-  REJECTED: "negative",
-}
 
 export function RequestsReview({ isSystemAdmin }: { isSystemAdmin: boolean }) {
   const t = useTranslations("catalogRequests")
@@ -217,64 +214,72 @@ export function RequestsReview({ isSystemAdmin }: { isSystemAdmin: boolean }) {
       )}
 
       <Dialog open={!!selected} onOpenChange={(o) => !o && closeAll()}>
-        <DialogContent>
+        <DialogContent className="max-w-[540px]">
           {selected && (
             <>
               <DialogHeader>
-                <div className="flex flex-wrap items-center gap-2">
-                  <Badge variant="secondary">{t(`type_${selected.type}`)}</Badge>
-                  {selected.targetId && <Badge variant="highlight">{t("kindEdit")}</Badge>}
-                  <Badge variant={statusVariant[selected.status]}>
-                    {t(`status_${selected.status}`)}
-                  </Badge>
-                </div>
-                <DialogTitle className="text-lg">{requestItemName(locale, selected)}</DialogTitle>
-                <DialogDescription>{requesterLabel(selected)}</DialogDescription>
+                <DialogTitle
+                  className={cn(
+                    "[overflow-wrap:anywhere]",
+                    selected.type === "PATHOGEN" && selected.payload.scientificName && "italic",
+                  )}
+                >
+                  {requestItemName(locale, selected)}
+                </DialogTitle>
+                <DialogDescription>
+                  {[
+                    t(`type_${selected.type}`),
+                    selected.targetId ? t("kindEdit") : null,
+                    t(`status_${selected.status}`),
+                    requesterLabel(selected),
+                  ]
+                    .filter(Boolean)
+                    .join(" · ")}
+                </DialogDescription>
               </DialogHeader>
 
-              <DialogBody className="space-y-4 text-sm">
-                <Field label={t("fieldNamePt")} value={selected.payload.namePt} />
-                <Field label={t("fieldNameEn")} value={selected.payload.nameEn} />
-                {selected.type === "PATHOGEN" && (
-                  <>
-                    <Field label={t("fieldSci")} value={selected.payload.scientificName} />
-                    <Field label={t("fieldGroup")} value={groupName(selected.payload.groupId)} />
-                    {selected.payload.taxonId != null && (
+              <DialogBody className="space-y-2.5">
+                <dl>
+                  <Field label={t("fieldNamePt")} value={selected.payload.namePt} />
+                  <Field label={t("fieldNameEn")} value={selected.payload.nameEn} />
+                  {selected.type === "PATHOGEN" && (
+                    <>
                       <Field
-                        label={t("fieldTaxon")}
-                        value={`taxID ${selected.payload.taxonId} · ${[selected.payload.taxonFamily, selected.payload.taxonOrder].filter(Boolean).join(" · ") || "—"}`}
+                        label={t("fieldSci")}
+                        value={selected.payload.scientificName}
+                        scientific
                       />
-                    )}
-                  </>
-                )}
-                {selected.type === "EXAM_TYPE" && selected.payload.measurePt && (
-                  <Field
-                    label={t("fieldMeasure")}
-                    value={`${selected.payload.measurePt}${selected.payload.measureUnit ? ` (${selected.payload.measureUnit})` : ""}`}
-                  />
-                )}
+                      <Field label={t("fieldGroup")} value={groupName(selected.payload.groupId)} />
+                      {selected.payload.taxonId != null && (
+                        <Field
+                          label={t("fieldTaxon")}
+                          value={`taxID ${selected.payload.taxonId} · ${[selected.payload.taxonFamily, selected.payload.taxonOrder].filter(Boolean).join(" · ") || "—"}`}
+                        />
+                      )}
+                    </>
+                  )}
+                  {selected.type === "EXAM_TYPE" && selected.payload.measurePt && (
+                    <Field
+                      label={t("fieldMeasure")}
+                      value={`${selected.payload.measurePt}${selected.payload.measureUnit ? ` (${selected.payload.measureUnit})` : ""}`}
+                    />
+                  )}
+                  {selected.status === "REJECTED" && selected.reviewNote && (
+                    <Field label={t("fieldReviewNote")} value={selected.reviewNote} />
+                  )}
+                </dl>
 
                 {similarExisting.length > 0 && (
-                  <div className="rounded-lg border border-warning-border bg-warning-soft p-3 text-xs">
-                    <p className="font-medium text-warning">{t("similarExisting")}</p>
-                    <ul className="mt-1 list-disc space-y-0.5 pl-4 text-muted-foreground">
-                      {similarExisting.map((n, i) => (
-                        <li key={i}>{n}</li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-
-                {selected.status === "REJECTED" && selected.reviewNote && (
-                  <Field label={t("fieldReviewNote")} value={selected.reviewNote} />
+                  <p className="rounded-sm border border-warning bg-warning-subtle px-2.5 py-1.5 font-semibold text-warning">
+                    {t("similarExisting")} {similarExisting.join(", ")}
+                  </p>
                 )}
 
                 {selected.status === "PENDING" && rejecting && (
-                  <div className="space-y-1">
-                    <label className="text-xs font-medium text-muted-foreground">
-                      {t("rejectNoteLabel")}
-                    </label>
+                  <div className="space-y-0.5">
+                    <Label htmlFor="reject-note">{t("rejectNoteLabel")}</Label>
                     <Textarea
+                      id="reject-note"
                       value={note}
                       onChange={(e) => setNote(e.target.value)}
                       placeholder={t("rejectNotePlaceholder")}
@@ -296,18 +301,15 @@ export function RequestsReview({ isSystemAdmin }: { isSystemAdmin: boolean }) {
                         loading={rejectM.isPending}
                         onClick={() => reject(selected)}
                       >
-                        <X className="size-4" />
                         {t("confirmReject")}
                       </Button>
                     </>
                   ) : (
                     <>
                       <Button variant="outline" onClick={() => setRejecting(true)}>
-                        <X className="size-4" />
                         {t("reject")}
                       </Button>
                       <Button loading={approveM.isPending} onClick={() => approve(selected)}>
-                        <Check className="size-4" />
                         {t("approve")}
                       </Button>
                     </>
@@ -322,12 +324,26 @@ export function RequestsReview({ isSystemAdmin }: { isSystemAdmin: boolean }) {
   )
 }
 
-function Field({ label, value }: { label: string; value?: string | null }) {
+function Field({
+  label,
+  value,
+  scientific = false,
+}: {
+  label: string
+  value?: string | null
+  scientific?: boolean
+}) {
   if (!value) return null
   return (
-    <div>
-      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{label}</p>
-      <p className="[overflow-wrap:anywhere]">{value}</p>
-    </div>
+    <DataRow label={label}>
+      <span
+        className={cn(
+          "[overflow-wrap:anywhere]",
+          scientific ? "font-serif text-base italic" : "font-semibold",
+        )}
+      >
+        {value}
+      </span>
+    </DataRow>
   )
 }

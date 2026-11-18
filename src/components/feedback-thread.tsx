@@ -123,14 +123,23 @@ export function AttachmentChip({
   onRemove,
   removing,
   removeLabel,
+  asRow = false,
 }: {
   attachment: FeedbackAttachment
   onRemove?: () => void
   removing?: boolean
   removeLabel: string
+  // Linha de lista (coluna de detalhes do ticket) em vez de etiqueta.
+  asRow?: boolean
 }) {
   return (
-    <span className="inline-flex max-w-full items-center gap-2 rounded-lg border bg-muted/60 py-1 pl-1.5 pr-2 text-xs">
+    <span
+      className={cn(
+        asRow
+          ? "flex w-full items-center gap-2 border-b border-border py-[5px]"
+          : "inline-flex max-w-full items-center gap-2 rounded-lg border bg-muted/60 py-1 pl-1.5 pr-2 text-xs",
+      )}
+    >
       {/* A miniatura é o próprio arquivo: a URL assinada já foi gerada para o link, então
           mostrá-la não custa nada a mais no servidor. `lazy` evita baixar as imagens que
           ainda estão fora da vista — o arquivo vem em tamanho original (o Storage só
@@ -142,10 +151,18 @@ export function AttachmentChip({
           alt=""
           loading="lazy"
           decoding="async"
-          className="size-8 shrink-0 rounded bg-background/70 object-cover"
+          className={cn(
+            "shrink-0 object-cover",
+            asRow ? "size-7 border border-border bg-muted" : "size-8 rounded bg-background/70",
+          )}
         />
       ) : (
-        <span className="grid size-8 shrink-0 place-items-center rounded bg-background/70 text-muted-foreground">
+        <span
+          className={cn(
+            "grid shrink-0 place-items-center text-muted-foreground",
+            asRow ? "size-7 border border-border bg-muted" : "size-8 rounded bg-background/70",
+          )}
+        >
           <ImageIcon className="size-3.5" aria-hidden />
         </span>
       )}
@@ -155,7 +172,12 @@ export function AttachmentChip({
           target="_blank"
           rel="noopener noreferrer"
           title={attachment.filename}
-          className="min-w-0 flex-1 truncate font-medium text-foreground/80 underline-offset-4 hover:text-accent-foreground hover:underline"
+          className={cn(
+            "min-w-0 flex-1 truncate",
+            asRow
+              ? "underline underline-offset-2 hover:text-primary"
+              : "font-medium text-foreground/80 underline-offset-4 hover:text-accent-foreground hover:underline",
+          )}
         >
           {attachment.filename}
         </a>
@@ -277,17 +299,22 @@ export function FeedbackThreadPane({
   }
 
   return (
-    <div className="flex min-h-0 min-w-0 flex-col bg-card">
-      <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-5">
+    <div className="flex min-h-0 min-w-0 flex-col">
+      <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-5 py-3">
         {/* Descrição original: o relato como ele foi escrito, destacado do diálogo que veio
             depois. É o único bloco que o autor pode corrigir, e só enquanto está NEW. */}
-        <section className="rounded-xl border border-l-[3px] border-l-[hsl(var(--brand-cyan))] bg-muted/30 p-4">
-          <div className="mb-2 flex items-center justify-between gap-3">
-            <h4 className="text-[10px] font-semibold uppercase tracking-[0.09em] text-accent-foreground">
+        <section className="border border-l-2 border-border border-l-foreground px-3 pb-2.5 pt-2">
+          <div className="flex min-h-[26px] items-center justify-between gap-3">
+            <h4 className="text-xs font-bold uppercase tracking-[0.05em] text-muted-foreground">
               {t("originalDescription")}
             </h4>
             {canEdit && !edit?.active && onStartEdit && (
-              <Button variant="outline" size="sm" className="h-7 gap-1.5" onClick={onStartEdit}>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-[26px] gap-1.5"
+                onClick={onStartEdit}
+              >
                 <Pencil className="size-3" />
                 {t("edit")}
               </Button>
@@ -295,16 +322,15 @@ export function FeedbackThreadPane({
           </div>
 
           {edit?.active ? (
-            <div className="space-y-2">
+            <div className="mt-1.5 space-y-2">
               <Textarea
                 value={edit.message}
                 onChange={(e) => edit.onMessage(e.target.value)}
                 rows={5}
                 aria-label={t("messageLabel")}
-                className="bg-card"
               />
               <div className="flex flex-wrap items-center gap-2">
-                <span className="text-xs text-muted-foreground">{authorMeta}</span>
+                <span className="text-[13px] text-muted-foreground">{authorMeta}</span>
                 <div className="ml-auto flex gap-2">
                   <Button variant="ghost" size="sm" onClick={edit.cancel} disabled={edit.saving}>
                     {t("cancel")}
@@ -322,14 +348,14 @@ export function FeedbackThreadPane({
             </div>
           ) : (
             <>
-              <p className="whitespace-pre-wrap text-sm leading-relaxed [overflow-wrap:anywhere]">
+              <p className="mt-1 whitespace-pre-wrap text-pretty [overflow-wrap:anywhere]">
                 {reportMessage}
               </p>
-              <p className="mt-2 text-xs text-muted-foreground [overflow-wrap:anywhere]">
+              <p className="mt-1 text-[13px] text-muted-foreground [overflow-wrap:anywhere]">
                 {authorMeta}
               </p>
               {thread.reportAttachments.length > 0 && (
-                <div className="mt-2 flex flex-wrap gap-2">
+                <div className="mt-1.5 flex flex-wrap gap-2">
                   {thread.reportAttachments.map((a) => (
                     <AttachmentThumb
                       key={a.id}
@@ -344,8 +370,8 @@ export function FeedbackThreadPane({
                 </div>
               )}
               {editLockNote && (
-                <p className="mt-2 flex items-center gap-1.5 text-xs text-muted-foreground">
-                  <Lock className="size-3 shrink-0" aria-hidden />
+                <p className="mt-1.5 flex items-center gap-1.5 text-[13px] text-muted-foreground">
+                  <Lock className="size-3.5 shrink-0" aria-hidden />
                   {editLockNote}
                 </p>
               )}
@@ -354,25 +380,30 @@ export function FeedbackThreadPane({
         </section>
 
         {thread.messages.length === 0 ? (
-          <p className="flex items-center gap-2 py-2 text-sm text-muted-foreground">
+          <p className="mt-3 flex items-center gap-2 text-muted-foreground">
             <MessageSquare className="size-4 shrink-0" aria-hidden />
             {t("threadEmpty")}
           </p>
         ) : (
           thread.messages.map((m) => {
             const mine = m.party === thread.party
+            // Cada lado da conversa fica num lado da coluna: quem lê à direita, com o fundo de
+            // destaque; o outro lado à esquerda, com borda e fundo neutro.
             return (
-              <div key={m.id} className={cn("flex flex-col gap-1.5", mine && "items-end")}>
-                <div
+              <div
+                key={m.id}
+                className={cn("mt-3 flex flex-col gap-1", mine ? "items-end" : "items-start")}
+              >
+                <p
                   className={cn(
-                    "max-w-[78%] px-3.5 py-2.5 text-sm leading-relaxed [overflow-wrap:anywhere]",
+                    "max-w-[78%] whitespace-pre-wrap rounded-sm px-3 py-2 text-pretty [overflow-wrap:anywhere]",
                     mine
-                      ? "rounded-xl rounded-br-sm bg-accent text-accent-foreground"
-                      : "rounded-xl rounded-bl-sm border bg-muted/60",
+                      ? "bg-accent text-accent-foreground"
+                      : "border border-border bg-muted text-foreground",
                   )}
                 >
-                  <p className="whitespace-pre-wrap">{m.body}</p>
-                </div>
+                  {m.body}
+                </p>
                 {m.attachments.length > 0 && (
                   <div className={cn("flex max-w-[78%] flex-wrap gap-2", mine && "justify-end")}>
                     {m.attachments.map((a) => (
@@ -388,9 +419,12 @@ export function FeedbackThreadPane({
                     ))}
                   </div>
                 )}
-                <span className="text-[11px] text-muted-foreground [overflow-wrap:anywhere]">
-                  {partyLabel(m.party, m.createdByName, m.createdByEmail)} · {fmtDate(m.createdAt)}
-                </span>
+                <p className="flex flex-wrap items-baseline gap-x-2 text-[13px] text-muted-foreground [overflow-wrap:anywhere]">
+                  <b className="font-semibold text-foreground">
+                    {partyLabel(m.party, m.createdByName, m.createdByEmail)}
+                  </b>
+                  <span>{fmtDate(m.createdAt)}</span>
+                </p>
               </div>
             )
           })
@@ -399,21 +433,21 @@ export function FeedbackThreadPane({
         <div ref={endRef} />
       </div>
 
-      <div className="shrink-0 border-t bg-muted/30 p-4">
+      <div className="shrink-0 border-t border-foreground bg-background px-5 pb-3 pt-2.5">
         {thread.open ? (
-          <div className="space-y-2.5">
+          <div className="space-y-2">
             <Textarea
               value={body}
               onChange={(e) => setBody(e.target.value)}
               placeholder={t("messagePlaceholder")}
               maxLength={FEEDBACK_MESSAGE_BODY_MAX}
-              rows={3}
+              rows={2}
               aria-label={t("threadTitle")}
-              className="bg-card"
+              className="bg-popover"
             />
             <FeedbackImagePreviews files={files} onChange={setFiles} ns={ns} />
 
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
               <FeedbackImagePicker
                 files={files}
                 onChange={setFiles}
@@ -422,11 +456,10 @@ export function FeedbackThreadPane({
                 disabled={sendM.isPending}
               />
               <div className="ml-auto flex shrink-0 items-center gap-3">
-                <span className="font-mono text-[11px] text-muted-foreground">
+                <span className="font-mono text-xs text-muted-foreground">
                   {body.trim().length}/{FEEDBACK_MESSAGE_BODY_MAX}
                 </span>
                 <Button
-                  size="sm"
                   className="gap-1.5"
                   onClick={submit}
                   loading={sendM.isPending}
@@ -440,12 +473,12 @@ export function FeedbackThreadPane({
           </div>
         ) : (
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <p className="flex items-center gap-2 text-sm text-muted-foreground">
+            <p className="flex items-center gap-2 text-muted-foreground">
               <Lock className="size-4 shrink-0" aria-hidden />
               {t(thread.status === "RESOLVED" ? "lockedResolved" : "lockedDismissed")}
             </p>
             {onReopen && (
-              <Button variant="outline" size="sm" className="gap-1.5" onClick={onReopen}>
+              <Button variant="outline" className="gap-1.5" onClick={onReopen}>
                 <RotateCcw className="size-3.5" />
                 {t("reopen")}
               </Button>

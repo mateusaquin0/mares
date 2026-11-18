@@ -3,12 +3,23 @@
 import { useEffect, useRef, useState } from "react"
 import { useLocale, useTranslations } from "next-intl"
 import { toast } from "sonner"
-import { Bug, Check, ChevronDown, Clock, Lightbulb, Link2, Tag, User, X } from "lucide-react"
+import {
+  Bug,
+  Check,
+  ChevronDown,
+  Clock,
+  EyeOff,
+  Lightbulb,
+  Link2,
+  Tag,
+  User,
+  X,
+} from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Badge } from "@/components/ui/badge"
+import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
@@ -88,9 +99,14 @@ export type TicketAuthorActions = {
   saving: boolean
 }
 
-function SectionLabel({ children }: { children: React.ReactNode }) {
+function SectionLabel({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
-    <h3 className="text-[10px] font-semibold uppercase tracking-[0.09em] text-muted-foreground">
+    <h3
+      className={cn(
+        "border-b border-foreground pb-1 text-xs font-bold uppercase tracking-[0.05em] text-muted-foreground",
+        className,
+      )}
+    >
       {children}
     </h3>
   )
@@ -249,14 +265,14 @@ export function FeedbackTicketDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="h-[90dvh] max-w-5xl gap-0 p-0" hideClose>
+      <DialogContent className="h-[90dvh] max-h-[740px] max-w-[1020px] gap-0 p-0" hideClose>
         {/* Duas colunas: o ticket à esquerda, status e fechar à direita — as duas linhas do
             topo têm a mesma altura (`min-h-8`, a do botão) para os quatro elementos ficarem
             na mesma linha ótica. */}
-        <DialogHeader className="mx-0 shrink-0 space-y-0 border-b p-5 text-left">
+        <DialogHeader className="mx-0 shrink-0 space-y-0 px-5 pb-2.5 pt-3 text-left">
           <div className="flex items-start gap-4">
-            <div className="flex min-w-0 flex-1 flex-col gap-2">
-              <div className="flex min-h-8 flex-wrap items-center gap-2">
+            <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+              <div className="flex min-h-7 flex-wrap items-center gap-2">
                 {editing ? (
                   // No modo de edição o badge de tipo vira o seletor: tipo, título e mensagem
                   // são salvos numa tacada só.
@@ -267,11 +283,12 @@ export function FeedbackTicketDialog({
                         key={value}
                         type="button"
                         onClick={() => setDraft((d) => ({ ...d, type: value }))}
+                        aria-pressed={draft.type === value}
                         className={cn(
-                          "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs transition-colors",
+                          "inline-flex h-6 items-center gap-1.5 rounded-sm border px-2 text-[13px] transition-colors",
                           draft.type === value
-                            ? "border-primary bg-accent font-semibold text-accent-foreground"
-                            : "text-muted-foreground hover:bg-muted",
+                            ? "border-primary bg-muted font-semibold text-foreground shadow-[inset_0_-2px_0_hsl(var(--primary))]"
+                            : "border-input text-muted-foreground hover:text-foreground",
                         )}
                       >
                         <Icon className="size-3" />
@@ -280,12 +297,16 @@ export function FeedbackTicketDialog({
                     )
                   })
                 ) : (
-                  <FeedbackTypeBadge type={ticket.type} ns={ns} />
+                  <FeedbackTypeBadge
+                    type={ticket.type}
+                    ns={ns}
+                    className="border-input bg-transparent text-xs font-bold uppercase tracking-[0.05em] text-muted-foreground"
+                  />
                 )}
-                <span aria-hidden className="text-border">
+                <span aria-hidden className="text-muted-foreground">
                   ·
                 </span>
-                <span className="font-mono text-[11px] font-semibold text-muted-foreground">
+                <span className="font-mono text-xs font-semibold text-muted-foreground">
                   #{ticket.id.slice(0, 8)}
                 </span>
               </div>
@@ -303,12 +324,12 @@ export function FeedbackTicketDialog({
                   />
                 </>
               ) : (
-                <DialogTitle className="text-xl font-semibold leading-snug [overflow-wrap:anywhere]">
+                <DialogTitle className="mt-1 text-pretty [overflow-wrap:anywhere]">
                   {ticket.title}
                 </DialogTitle>
               )}
 
-              <DialogDescription className="text-xs [overflow-wrap:anywhere]">
+              <DialogDescription className="text-[13px] [overflow-wrap:anywhere]">
                 {t("openedBy", {
                   who: ticket.authorName ?? ticket.authorEmail ?? t("partyYou"),
                   date: fmtDate(ticket.createdAt),
@@ -316,12 +337,12 @@ export function FeedbackTicketDialog({
               </DialogDescription>
             </div>
 
-            <div className="flex min-h-8 shrink-0 items-center gap-2">
+            <div className="flex min-h-7 shrink-0 items-center gap-2">
               {admin ? (
                 <DropdownMenu>
                   <DropdownMenuTrigger
                     disabled={admin.busy}
-                    className="inline-flex items-center gap-1 rounded-full transition-opacity hover:opacity-80 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
+                    className="inline-flex items-center gap-1 rounded-sm transition-opacity hover:opacity-80 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
                   >
                     <FeedbackStatusBadge status={ticket.status} ns={ns} />
                     <ChevronDown className="size-3.5 text-muted-foreground" aria-hidden />
@@ -365,7 +386,7 @@ export function FeedbackTicketDialog({
               ) : (
                 <FeedbackStatusBadge status={ticket.status} ns={ns} />
               )}
-              <DialogClose className="grid size-8 shrink-0 place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+              <DialogClose className="grid size-7 shrink-0 place-items-center rounded-sm text-muted-foreground transition-colors hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring">
                 <X className="size-4" />
                 <span className="sr-only">{tc("close")}</span>
               </DialogClose>
@@ -373,16 +394,17 @@ export function FeedbackTicketDialog({
           </div>
         </DialogHeader>
 
-        <div className="grid min-h-0 flex-1 grid-rows-[auto_minmax(0,1fr)] md:grid-cols-[19rem_minmax(0,1fr)] md:grid-rows-[minmax(0,1fr)]">
-          <aside className="flex min-h-0 max-h-[40dvh] flex-col gap-6 overflow-y-auto border-b bg-muted/20 p-5 md:max-h-none md:border-b-0 md:border-r">
+        <div className="grid min-h-0 flex-1 grid-cols-[300px_minmax(0,1fr)] border-t border-foreground">
+          <aside className="flex min-h-0 flex-col gap-3.5 overflow-y-auto border-r border-border bg-background px-4 py-3">
             {/* O status é trocado pelo próprio badge do cabeçalho; aqui só sobra o que não
                 cabe num menu — a justificativa obrigatória do descarte. */}
             {admin && discarding && (
-              <section className="space-y-2.5">
+              <section>
                 <SectionLabel>{t("sectionStatus")}</SectionLabel>
-                <div className="space-y-2 rounded-lg border bg-card p-3">
-                  <p className="text-xs font-semibold">{t("discardReason")}</p>
+                <div className="mt-2 space-y-1">
+                  <Label htmlFor="discard-note">{t("discardReason")}</Label>
                   <Textarea
+                    id="discard-note"
                     value={discardNote}
                     onChange={(e) => setDiscardNote(e.target.value)}
                     placeholder={t("resolutionPlaceholder")}
@@ -391,11 +413,11 @@ export function FeedbackTicketDialog({
                     autoFocus
                   />
                   {discardTooShort && (
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-[13px] text-muted-foreground">
                       {t("resolutionMin", { min: FEEDBACK_RESOLUTION_MIN })}
                     </p>
                   )}
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 pt-1">
                     <Button
                       variant="destructive"
                       size="sm"
@@ -418,43 +440,39 @@ export function FeedbackTicketDialog({
               </section>
             )}
 
-            <section className="space-y-3">
+            <section>
               <SectionLabel>{t("sectionDetails")}</SectionLabel>
               {detailFields.map(({ key, icon: Icon, label, value }) => (
-                <div key={key} className="flex items-start gap-2.5">
-                  {/* O ícone centraliza nas DUAS primeiras linhas e fica ali: `h-9` é
-                      exatamente `leading-4` do rótulo (16px) + `leading-5` da primeira linha
-                      do valor (20px). Com `items-center` no bloco inteiro ele descia junto
-                      quando o valor quebrava — uma URL longa jogava o ícone para o meio. */}
-                  <span className="flex h-9 shrink-0 items-center">
-                    <Icon className="size-3.5 text-muted-foreground" aria-hidden />
-                  </span>
+                <div
+                  key={key}
+                  className="grid grid-cols-[18px_minmax(0,1fr)] gap-2 border-b border-border py-[5px]"
+                >
+                  <Icon className="mt-[3px] size-3.5 text-muted-foreground" aria-hidden />
                   <div className="min-w-0">
-                    <p className="text-[10px] font-semibold uppercase leading-4 tracking-[0.07em] text-muted-foreground">
-                      {label}
-                    </p>
-                    <p className="text-[13px] leading-5 [overflow-wrap:anywhere]">{value}</p>
+                    <p className="text-xs font-semibold leading-4 text-muted-foreground">{label}</p>
+                    <p className="[overflow-wrap:anywhere]">{value}</p>
                   </div>
                 </div>
               ))}
             </section>
 
-            <section className="space-y-2">
-              <div className="flex items-baseline justify-between gap-2">
-                <SectionLabel>{t("sectionAttachments")}</SectionLabel>
-                <span className="text-[11px] text-muted-foreground">
+            <section>
+              <div className="flex items-baseline justify-between gap-2 border-b border-foreground pb-1">
+                <SectionLabel className="border-0 pb-0">{t("sectionAttachments")}</SectionLabel>
+                <span className="text-[13px] text-muted-foreground">
                   {t("imageCount", { count: attachments.length })}
                 </span>
               </div>
               {threadQ.isLoading ? (
-                <Skeleton className="h-7 w-full" />
+                <Skeleton className="mt-1.5 h-7 w-full" />
               ) : attachments.length === 0 ? (
-                <p className="text-xs text-muted-foreground">{t("noAttachments")}</p>
+                <p className="py-1.5 text-[13px] text-muted-foreground">{t("noAttachments")}</p>
               ) : (
-                <div className="flex flex-col gap-1.5">
+                <div className="flex flex-col">
                   {attachments.map((a) => (
                     <AttachmentChip
                       key={a.id}
+                      asRow
                       attachment={a}
                       removeLabel={t("removeAttachment")}
                       removing={removeM.isPending}
@@ -471,12 +489,13 @@ export function FeedbackTicketDialog({
 
             {/* Anotação interna: existe só na visão da administração (o autor nunca a recebe). */}
             {ticket.adminNote && (
-              <section className="space-y-2 rounded-lg border bg-accent/40 p-3">
-                <div className="flex flex-wrap items-center gap-2">
-                  <SectionLabel>{t("detailAdminNote")}</SectionLabel>
-                  <Badge variant="faded">{t("adminNoteVisible")}</Badge>
-                </div>
-                <p className="whitespace-pre-wrap text-[13px] leading-relaxed [overflow-wrap:anywhere]">
+              <section>
+                <SectionLabel>{t("detailAdminNote")}</SectionLabel>
+                <p className="mt-1.5 flex items-center gap-1.5 text-[13px] text-muted-foreground">
+                  <EyeOff className="size-3.5 shrink-0" aria-hidden />
+                  {t("adminNoteVisible")}
+                </p>
+                <p className="mt-1 whitespace-pre-wrap text-pretty [overflow-wrap:anywhere]">
                   {ticket.adminNote}
                 </p>
               </section>
@@ -484,7 +503,7 @@ export function FeedbackTicketDialog({
           </aside>
 
           {threadQ.isLoading || !thread ? (
-            <div className="min-h-0 space-y-3 bg-card p-5">
+            <div className="min-h-0 space-y-3 px-5 py-3">
               <Skeleton className="h-20 w-full" />
               <Skeleton className="h-12 w-3/4" />
               <Skeleton className="ml-auto h-12 w-3/4" />

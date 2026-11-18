@@ -18,6 +18,22 @@ const SectionTitle = React.forwardRef<
 ))
 SectionTitle.displayName = "SectionTitle"
 
+// Título de seção dentro de formulários e diálogos: pequeno, em maiúsculas, sobre uma linha fina.
+const FormSectionTitle = React.forwardRef<
+  HTMLHeadingElement,
+  React.HTMLAttributes<HTMLHeadingElement>
+>(({ className, ...props }, ref) => (
+  <h3
+    ref={ref}
+    className={cn(
+      "mt-2.5 border-b border-border pb-[3px] text-xs font-bold uppercase leading-4 tracking-[0.05em] text-muted-foreground",
+      className,
+    )}
+    {...props}
+  />
+))
+FormSectionTitle.displayName = "FormSectionTitle"
+
 // Linha rótulo/valor separada por uma linha fina. `labelWidth` é a largura da coluna do
 // rótulo (ex.: "44%").
 function DataRow({
@@ -53,4 +69,4 @@ function DataRow({
   )
 }
 
-export { SectionTitle, DataRow }
+export { SectionTitle, FormSectionTitle, DataRow }

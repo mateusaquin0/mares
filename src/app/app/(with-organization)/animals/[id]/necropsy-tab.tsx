@@ -112,8 +112,10 @@ function ReasonDialog({
           className="flex flex-col gap-4"
         >
           <DialogBody>
-            <div className="space-y-1">
-              <Label htmlFor="not-examined-reason">{t("reasonLabel")}</Label>
+            <div className="space-y-0.5">
+              <Label htmlFor="not-examined-reason" required>
+                {t("reasonLabel")}
+              </Label>
               <Input
                 id="not-examined-reason"
                 autoFocus
@@ -513,7 +515,7 @@ export function NecropsyTab({ animalId }: { animalId: string }) {
       {/* Um único elemento rolável: a raiz fica fixa e este contêiner absorve a altura
           (accordion aberto). `contain: paint` impede que o conteúdo infle a rolagem do
           documento. */}
-      <div className="min-h-0 min-w-0 flex-1 overflow-auto overscroll-contain [contain:paint]">
+      <div className="-mx-1 min-h-0 min-w-0 flex-1 overflow-auto overscroll-contain px-1 [contain:paint]">
         {/* As três partes do laudo, uma aberta por vez: abertas todas juntas, a tabela do
             macro empurrava a histopatologia para fora da tela. O resumo à direita de cada
             título é o que a seção fechada continua dizendo. */}

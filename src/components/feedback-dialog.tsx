@@ -5,7 +5,6 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { toast } from "sonner"
-import { Lightbulb, Bug } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { useCreateFeedback } from "@/hooks/use-feedback"
@@ -81,9 +80,9 @@ export function FeedbackDialog({
     }
   }
 
-  const typeOptions: { value: FeedbackTypeValue; label: string; icon: typeof Lightbulb }[] = [
-    { value: "SUGGESTION", label: t("typeSuggestion"), icon: Lightbulb },
-    { value: "BUG", label: t("typeBug"), icon: Bug },
+  const typeOptions: { value: FeedbackTypeValue; label: string }[] = [
+    { value: "SUGGESTION", label: t("typeSuggestion") },
+    { value: "BUG", label: t("typeBug") },
   ]
 
   return (
@@ -100,32 +99,38 @@ export function FeedbackDialog({
           <DialogDescription>{t("dialogDesc")}</DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={submit} className="space-y-4">
-          <div className="space-y-2">
-            <Label>{t("typeLabel")}</Label>
-            <div className="grid grid-cols-2 gap-2">
-              {typeOptions.map(({ value, label, icon: Icon }) => (
+        <form onSubmit={submit} className="space-y-2.5">
+          <div className="space-y-0.5">
+            <Label id="feedback-type-label">{t("typeLabel")}</Label>
+            <div
+              role="group"
+              aria-labelledby="feedback-type-label"
+              className="flex w-fit rounded-sm border border-input"
+            >
+              {typeOptions.map(({ value, label }) => (
                 <button
                   key={value}
                   type="button"
+                  aria-pressed={type === value}
                   onClick={() => setType(value)}
                   className={cn(
-                    "flex items-center justify-center gap-2 rounded-lg border px-3 py-2 text-sm transition-colors",
+                    "px-3.5 py-1 text-sm ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
                     type === value
-                      ? "border-primary bg-accent font-medium text-accent-foreground"
-                      : "border-border text-foreground/70 hover:bg-muted",
+                      ? "bg-foreground font-semibold text-background"
+                      : "text-muted-foreground hover:text-foreground",
                   )}
                 >
-                  <Icon className="size-4" />
                   {label}
                 </button>
               ))}
             </div>
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-0.5">
             <div className="flex items-center justify-between">
-              <Label htmlFor="feedback-title">{t("titleLabel")}</Label>
+              <Label htmlFor="feedback-title" required>
+                {t("titleLabel")}
+              </Label>
               <span className="text-xs text-muted-foreground">
                 {title.length}/{FEEDBACK_TITLE_MAX}
               </span>
@@ -140,9 +145,11 @@ export function FeedbackDialog({
             />
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-0.5">
             <div className="flex items-center justify-between">
-              <Label htmlFor="feedback-message">{t("messageLabel")}</Label>
+              <Label htmlFor="feedback-message" required>
+                {t("messageLabel")}
+              </Label>
               <span className="text-xs text-muted-foreground">
                 {message.length}/{FEEDBACK_MESSAGE_MAX}
               </span>
@@ -158,29 +165,28 @@ export function FeedbackDialog({
             />
           </div>
 
-          <div className="space-y-2">
-            <FeedbackImagePreviews files={files} onChange={setFiles} ns="feedback" />
+          <div className="space-y-1.5">
             <FeedbackImagePicker
+              asField
               files={files}
               onChange={setFiles}
               remaining={FEEDBACK_ATTACHMENT_MAX_PER_TICKET - files.length}
               ns="feedback"
               disabled={createM.isPending}
             />
+            <FeedbackImagePreviews files={files} onChange={setFiles} ns="feedback" />
           </div>
 
           <DialogFooter>
             {/* Atalho para acompanhar o que já foi enviado (status + resposta). */}
-            <Link
-              href="/app/feedback"
-              onClick={() => onOpenChange(false)}
-              className="mr-auto self-center text-xs text-muted-foreground underline-offset-4 hover:underline"
-            >
-              {t("seeMine")}
-            </Link>
+            <Button asChild variant="outline">
+              <Link href="/app/feedback" onClick={() => onOpenChange(false)}>
+                {t("seeMine")}
+              </Link>
+            </Button>
             <Button
               type="button"
-              variant="ghost"
+              variant="outline"
               onClick={() => onOpenChange(false)}
               disabled={createM.isPending}
             >

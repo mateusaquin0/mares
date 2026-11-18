@@ -68,7 +68,7 @@ export function AnimalFormDialog({
           <DialogDescription>{t("createDesc")}</DialogDescription>
         </DialogHeader>
         <form onSubmit={f.submit} className="flex min-h-0 flex-1 flex-col gap-4">
-          <DialogBody className="space-y-4">
+          <DialogBody className="space-y-2.5">
             <IdentificationSection
               form={f.form}
               errors={f.errors}

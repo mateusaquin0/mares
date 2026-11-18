@@ -60,7 +60,7 @@ export function MultiCombobox({
           role="combobox"
           aria-expanded={open}
           disabled={disabled || loading}
-          className="w-full justify-between font-normal bg-popover px-2 hover:bg-popover hover:text-foreground data-[state=open]:border-primary"
+          className="w-full justify-between font-normal bg-field px-2 hover:bg-field hover:text-foreground data-[state=open]:border-primary"
         >
           <span className={cn("truncate", value.length === 0 && "text-muted-foreground")}>
             {value.length === 0 ? placeholder : summary(value.length)}

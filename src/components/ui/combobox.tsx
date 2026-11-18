@@ -54,7 +54,7 @@ export function Combobox({
           role="combobox"
           aria-expanded={open}
           disabled={disabled || loading}
-          className="w-full justify-between font-normal bg-popover px-2 hover:bg-popover hover:text-foreground data-[state=open]:border-primary"
+          className="w-full justify-between font-normal bg-field px-2 hover:bg-field hover:text-foreground data-[state=open]:border-primary"
         >
           <span className="flex min-w-0 items-center gap-2 truncate">
             {selected?.icon}
