@@ -14,7 +14,7 @@ const AccordionItem = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <AccordionPrimitive.Item
     ref={ref}
-    className={cn("overflow-hidden border-t-2 border-foreground", className)}
+    className={cn("border-t-2 border-foreground", className)}
     {...props}
   />
 ))
@@ -46,7 +46,9 @@ const AccordionContent = React.forwardRef<
 >(({ className, children, ...props }, ref) => (
   <AccordionPrimitive.Content
     ref={ref}
-    className="overflow-hidden text-sm data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down"
+    // O recorte (necessário para a animação) ganha 4px de folga dos lados, compensados pela
+    // margem negativa: sem isso o anel de foco dos campos encostados na borda era cortado.
+    className="-mx-1 overflow-hidden px-1 text-sm data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down"
     {...props}
   >
     <div className={cn("pb-4 pt-1", className)}>{children}</div>
