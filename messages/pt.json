@@ -292,6 +292,7 @@
   "terms": {
     "title": "Termos de Uso",
     "version": "Versão {version}",
+    "back": "Voltar",
     "intro": "Bem-vindo ao MARES. Ao solicitar acesso ou ativar sua conta, você concorda com os termos abaixo, que regem o uso da plataforma de registro e análise de dados patológicos de ocorrências de fauna marinha.",
     "acceptLabel": "Li e aceito os <link>Termos de Uso</link>",
     "data": {

@@ -292,6 +292,7 @@
   "terms": {
     "title": "Terms of Use",
     "version": "Version {version}",
+    "back": "Back",
     "intro": "Welcome to MARES. By requesting access or activating your account, you agree to the terms below, which govern the use of this platform for recording and analyzing pathological data of marine fauna occurrences.",
     "acceptLabel": "I have read and accept the <link>Terms of Use</link>",
     "data": {
