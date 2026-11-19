@@ -44,6 +44,7 @@ import {
   Table,
   TableBody,
   TableCell,
+  TableEmpty,
   TableHead,
   TableHeader,
   TableRow,
@@ -65,6 +66,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { EmptyState } from "@/components/ui/empty-state"
 
 type FormShape = {
   namePt?: string
@@ -363,7 +365,7 @@ export function CatalogManager({
       {listQ.isLoading ? (
         <TableSkeleton />
       ) : (listQ.data?.length ?? 0) === 0 ? (
-        <p className="text-muted-foreground">{t("empty")}</p>
+        <EmptyState className="border-t-2" title={t("empty")} />
       ) : (
         <div className="flex min-h-0 flex-1 flex-col">
           <div className="flex flex-wrap items-center gap-2 pb-2.5">
@@ -419,11 +421,7 @@ export function CatalogManager({
                 </TableHeader>
                 <TableBody>
                   {table.rows.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={3} className="text-center text-sm text-muted-foreground">
-                        {tc("noResults")}
-                      </TableCell>
-                    </TableRow>
+                    <TableEmpty colSpan={3}>{tc("noResults")}</TableEmpty>
                   ) : (
                     table.rows.map((r) => (
                       <TableRow key={r.id}>

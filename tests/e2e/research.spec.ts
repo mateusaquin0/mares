@@ -241,6 +241,8 @@ test.describe("Gestão da pesquisa", () => {
     // O endereço da pesquisa deixa de existir.
     expect((await page.request.get(`/api/research/${empty.id}`)).status()).toBe(404)
     await page.goto(`/app/research/${empty.id}`)
-    await expect(page.getByRole("heading", { name: "404" })).toBeVisible()
+    await expect(
+      page.getByRole("heading", { name: "Esta página foi levada pela maré" }),
+    ).toBeVisible()
   })
 })

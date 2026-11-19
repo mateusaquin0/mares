@@ -38,6 +38,7 @@ import {
   Table,
   TableBody,
   TableCell,
+  TableEmpty,
   TableHead,
   TableHeader,
   TableRow,
@@ -72,6 +73,7 @@ export function AnimalsTable({
   canDelete,
   onEdit,
   onDelete,
+  emptyText,
 }: {
   items: AnimalListItem[]
   total: number
@@ -83,6 +85,8 @@ export function AnimalsTable({
   canDelete: (a: AnimalListItem) => boolean
   onEdit: (a: AnimalListItem) => void
   onDelete: (a: AnimalListItem) => void
+  // Mensagem da lista vazia sem filtro (ex.: grupo sem pesquisa).
+  emptyText?: string
 }) {
   const t = useTranslations("animals")
   const tc = useTranslations("common")
@@ -536,11 +540,9 @@ export function AnimalsTable({
             </TableHeader>
             <TableBody>
               {items.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={9} className="text-center text-sm text-muted-foreground">
-                    {hasFilters ? tc("noResults") : t("empty")}
-                  </TableCell>
-                </TableRow>
+                <TableEmpty colSpan={9}>
+                  {hasFilters ? tc("noResults") : (emptyText ?? t("empty"))}
+                </TableEmpty>
               ) : (
                 items.map((a) => (
                   <TableRow

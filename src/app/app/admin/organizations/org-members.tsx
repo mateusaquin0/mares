@@ -28,6 +28,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Truncate } from "@/components/ui/truncate"
+import { EmptyState } from "@/components/ui/empty-state"
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
@@ -110,7 +111,7 @@ export function OrgMembers({ org }: { org: AdminOrg }) {
       <DialogBody>
         <FormSectionTitle className="mt-0">{t("membersSection")}</FormSectionTitle>
         {org.members.length === 0 ? (
-          <p className="py-2 text-muted-foreground">{t("noMembers")}</p>
+          <EmptyState bordered={false} className="py-1.5" title={t("noMembers")} />
         ) : (
           <ul>
             {org.members.map((m) => (

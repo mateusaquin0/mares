@@ -52,6 +52,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { EmptyState } from "@/components/ui/empty-state"
 
 const ALL = "__all__"
 const UNTESTED = "UNTESTED"
@@ -223,11 +224,7 @@ export function AnalysesTab({ animalId }: { animalId: string }) {
   if (loading) return <TableSkeleton rows={4} />
   if (!grid) return null
   if (grid.sections.length === 0)
-    return (
-      <div className="border-b border-t-2 border-foreground pb-6 pt-[22px]">
-        <p className="font-serif text-xl font-medium">{t("noSamples")}</p>
-      </div>
-    )
+    return <EmptyState muted className="border-t-2" title={t("noSamples")} />
 
   const multi = grid.sections.length > 1
 
@@ -362,7 +359,7 @@ export function AnalysesTab({ animalId }: { animalId: string }) {
       </div>
 
       {sectionsToRender.length === 0 ? (
-        <p className="text-muted-foreground">{t("noMatch")}</p>
+        <EmptyState className="border-t-2" title={t("noMatch")} />
       ) : (
         <div className="-mx-1 min-h-0 flex-1 space-y-4 overflow-y-auto px-1 pb-8">
           {sectionsToRender.map(({ sec: section, samples }) => (
@@ -396,7 +393,12 @@ export function AnalysesTab({ animalId }: { animalId: string }) {
                     </AccordionPrimitive.Header>
                     <AccordionContent className="mb-3 ml-[26px] pb-0 pt-0">
                       {entries.length === 0 ? (
-                        <p className="py-2 text-muted-foreground">{t("noApplicable")}</p>
+                        <EmptyState
+                          bordered={false}
+                          muted
+                          className="py-2"
+                          title={t("noApplicable")}
+                        />
                       ) : (
                         <Table density="compact" className="table-fixed">
                           <colgroup>

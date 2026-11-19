@@ -63,6 +63,7 @@ import {
   canRemoveAttachment,
 } from "@/components/feedback-thread"
 import type { FeedbackStatus, FeedbackType } from "@/types/feedback"
+import { EmptyState } from "@/components/ui/empty-state"
 
 // Status que a triagem GRAVA. `REOPENED` fica de fora: ele é o pedido do autor, e a
 // administração sai dele triando (o servidor recusa gravá-lo).
@@ -466,7 +467,7 @@ export function FeedbackTicketDialog({
               {threadQ.isLoading ? (
                 <Skeleton className="mt-1.5 h-7 w-full" />
               ) : attachments.length === 0 ? (
-                <p className="py-1.5 text-[13px] text-muted-foreground">{t("noAttachments")}</p>
+                <EmptyState bordered={false} className="py-1.5" title={t("noAttachments")} />
               ) : (
                 <div className="flex flex-col">
                   {attachments.map((a) => (

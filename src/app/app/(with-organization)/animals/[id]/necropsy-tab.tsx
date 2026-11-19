@@ -70,6 +70,7 @@ import {
 } from "@/components/necropsy-status-badge"
 import { GrossFindingDialog, HistopathologyDialog } from "./necropsy-dialogs"
 import { NecropsyScreeningSection } from "./necropsy-screening"
+import { EmptyState } from "@/components/ui/empty-state"
 
 // ── Diálogo do motivo de "não examinado" ─────────────────────────────────────
 // O motivo é obrigatório nesse estado (o schema recusa sem ele): perguntá-lo na hora da
@@ -488,7 +489,7 @@ export function NecropsyTab({ animalId }: { animalId: string }) {
     return (
       <div
         role="alert"
-        className="grid grid-cols-[20px_minmax(0,1fr)] gap-x-2.5 gap-y-1 border-b border-t-2 border-b-border border-t-destructive py-3.5"
+        className="grid grid-cols-[20px_minmax(0,1fr)] gap-x-2.5 gap-y-1 border-b border-t border-b-border border-t-destructive py-3.5"
       >
         <TriangleAlert className="mt-px size-[18px] text-destructive" />
         <b className="font-semibold">{t("loadError")}</b>
@@ -561,12 +562,11 @@ export function NecropsyTab({ animalId }: { animalId: string }) {
               )}
 
               {total === 0 ? (
-                <div className="my-2 border border-dashed border-input px-6 py-8 text-center">
-                  <p className="font-semibold text-muted-foreground">{t("noSystemsTitle")}</p>
-                  <p className="mx-auto mt-1 max-w-xl text-muted-foreground">
-                    {catalog.length === 0 ? t("catalogEmptyHint") : t("noSystemsHint")}
-                  </p>
-                </div>
+                <EmptyState
+                  className="border-t border-t-border"
+                  title={catalog.length === 0 ? t("catalogEmpty") : t("noSystemsTitle")}
+                  description={catalog.length === 0 ? t("catalogEmptyHint") : t("noSystemsHint")}
+                />
               ) : (
                 <div>
                   {rows.map((r) => {
@@ -703,7 +703,6 @@ export function NecropsyTab({ animalId }: { animalId: string }) {
                 ) : (
                   <Button
                     variant="outline"
-                    className="border-dashed"
                     onClick={() => setAdding(true)}
                     disabled={catalogQ.isLoading || available.length === 0}
                   >
@@ -736,12 +735,11 @@ export function NecropsyTab({ animalId }: { animalId: string }) {
               </div>
 
               {histopathology.length === 0 ? (
-                <div className="border-t border-foreground px-6 py-8 text-center">
-                  <p className="font-semibold text-muted-foreground">{t("microEmptyTitle")}</p>
-                  <p className="mx-auto mt-1 max-w-lg text-muted-foreground">
-                    {t("microEmptyHint")}
-                  </p>
-                </div>
+                <EmptyState
+                  className="border-t"
+                  title={t("microEmptyTitle")}
+                  description={t("microEmptyHint")}
+                />
               ) : (
                 <ul className="border-t border-foreground">
                   {histopathology.map((f) => (

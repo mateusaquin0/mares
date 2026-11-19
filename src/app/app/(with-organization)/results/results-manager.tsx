@@ -41,6 +41,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { EmptyState } from "@/components/ui/empty-state"
 
 // Um "exame" da grade = uma combinação (patógeno, tipo de exame) do protocolo. Cada exame vira
 // um conjunto de colunas (os órgãos onde ele é aplicado) na visão geral por animal.
@@ -348,9 +349,9 @@ export function ResultsManager() {
       {resultsQ.isLoading ? (
         <TableSkeleton rows={6} />
       ) : !data || data.protocol.length === 0 ? (
-        <p className="text-muted-foreground">{t("noProtocol")}</p>
+        <EmptyState muted className="border-t-2" title={t("noProtocol")} />
       ) : data.animals.length === 0 ? (
-        <p className="text-muted-foreground">{t("noAnimals")}</p>
+        <EmptyState className="border-t-2" title={t("noAnimals")} />
       ) : (
         <>
           <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3">
@@ -440,7 +441,7 @@ export function ResultsManager() {
           </div>
 
           {animals.length === 0 ? (
-            <p className="text-muted-foreground">{t("noMatch")}</p>
+            <EmptyState className="border-t-2" title={t("noMatch")} />
           ) : (
             <div className="min-h-0 flex-1 overflow-hidden border-t-2 border-foreground [&>div]:h-full">
               <Table ref={attachDrag} density="compact">

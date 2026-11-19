@@ -24,6 +24,7 @@ import { DataRow } from "@/components/ui/section"
 import { TextSuggest } from "@/components/ui/text-suggest"
 import { Skeleton, TableSkeleton } from "@/components/ui/skeleton"
 import { ConfirmDialog } from "@/components/confirm-dialog"
+import { EmptyState } from "@/components/ui/empty-state"
 
 // Linha em edição: o valor é string porque o input é livre enquanto a pessoa digita
 // (vazio = "não informado", que é diferente de zero).
@@ -278,12 +279,10 @@ export function BiometryTab({ animalId }: { animalId: string }) {
         )}
 
         {empty && (
-          <div className="border-b border-foreground pb-6 pt-[22px]">
-            <p className="font-serif text-xl font-medium">{t("emptyTitle")}</p>
-            <p className="mt-1 text-muted-foreground">
-              {canImport ? t("emptyHintSimba") : t("emptyHint")}
-            </p>
-          </div>
+          <EmptyState
+            title={t("emptyTitle")}
+            description={canImport ? t("emptyHintSimba") : t("emptyHint")}
+          />
         )}
 
         {editing && (

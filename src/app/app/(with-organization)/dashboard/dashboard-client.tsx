@@ -24,6 +24,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Combobox } from "@/components/ui/combobox"
+import { EmptyState } from "@/components/ui/empty-state"
 
 const ALL = "__all__"
 
@@ -273,7 +274,7 @@ export function DashboardClient({
             <span className={sectionNote}>{t("speciesCount")}</span>
           </SectionTitle>
           {species.length === 0 ? (
-            <p className="py-10 text-center text-muted-foreground">{t("chartSpeciesEmpty")}</p>
+            <EmptyState bordered={false} title={t("chartSpeciesEmpty")} />
           ) : (
             <ul data-chart="species">
               {species.map((s) => (
@@ -305,7 +306,7 @@ export function DashboardClient({
             <span className={sectionNote}>{t("positivityColumns")}</span>
           </SectionTitle>
           {positivity.length === 0 ? (
-            <p className="py-10 text-center text-muted-foreground">{t("chartPositivityEmpty")}</p>
+            <EmptyState bordered={false} title={t("chartPositivityEmpty")} />
           ) : (
             <ul>
               {positivity.map((r) => (
@@ -335,7 +336,7 @@ export function DashboardClient({
             <span className={sectionNote}>{t("timelineCount")}</span>
           </SectionTitle>
           {timeline.length === 0 ? (
-            <p className="py-10 text-center text-muted-foreground">{t("chartTimelineEmpty")}</p>
+            <EmptyState bordered={false} title={t("chartTimelineEmpty")} />
           ) : (
             <>
               <div
@@ -381,9 +382,7 @@ export function DashboardClient({
           </SectionTitle>
           <div className="relative mt-2 min-h-[280px] flex-1 overflow-hidden border border-border">
             {heat.length === 0 ? (
-              <div className="flex h-full items-center justify-center text-center text-muted-foreground">
-                {t("heatmapEmpty")}
-              </div>
+              <EmptyState bordered={false} className="px-3" title={t("heatmapEmpty")} />
             ) : (
               <HeatMap points={heat} />
             )}
