@@ -5,6 +5,7 @@ import { getTranslations } from "next-intl/server"
 import { TERMS_VERSION } from "@/lib/terms"
 import { Logo } from "@/components/logo"
 import { LocaleSwitcher } from "@/components/locale-switcher"
+import { ThemeToggle } from "@/components/theme-toggle"
 import { BackLink } from "./back-link"
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -28,14 +29,15 @@ export default async function TermsPage() {
           <Logo className="size-6" />
           <span className="font-serif text-[22px] font-semibold tracking-[0.04em]">MARES</span>
         </Link>
-        <div className="flex items-center gap-2">
-          <BackLink label={t("back")} />
+        <div className="flex items-center gap-1">
           <LocaleSwitcher />
+          <ThemeToggle />
         </div>
       </header>
 
-      <main className={`pb-14 pt-6 ${COLUMN}`}>
-        <h1 className="font-serif text-[40px] font-medium leading-[46px]">{t("title")}</h1>
+      <main className={`pb-14 pt-3 ${COLUMN}`}>
+        <BackLink label={t("back")} />
+        <h1 className="mt-1 font-serif text-[40px] font-medium leading-[46px]">{t("title")}</h1>
         <p className="mt-1 text-[13px] text-muted-foreground">
           {t("version", { version: TERMS_VERSION })}
         </p>

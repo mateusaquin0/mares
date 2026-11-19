@@ -39,7 +39,14 @@ export default async function Home() {
           href={authHref}
           className="inline-flex h-11 shrink-0 items-center whitespace-nowrap rounded-sm border border-foreground px-3 font-semibold transition-colors hover:bg-accent"
         >
-          {authLabel}
+          {user ? (
+            <>
+              <span className="min-[760px]:hidden">{t("goToAppShort")}</span>
+              <span className="max-[759px]:hidden">{authLabel}</span>
+            </>
+          ) : (
+            authLabel
+          )}
         </Link>
       </header>
 

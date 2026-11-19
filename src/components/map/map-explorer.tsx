@@ -8,7 +8,16 @@ import { useMemo, useState } from "react"
 import dynamic from "next/dynamic"
 import { cn } from "@/lib/utils"
 import { useTranslations, useLocale } from "next-intl"
-import { ChevronDown, Download, Globe, Lock, SlidersHorizontal, X } from "lucide-react"
+import {
+  ChevronDown,
+  Download,
+  Flame,
+  Globe,
+  Lock,
+  MapPin,
+  SlidersHorizontal,
+  X,
+} from "lucide-react"
 
 import type { MapPoint } from "@/lib/map-points"
 import type { PopupLabels } from "@/components/map/leaflet-map"
@@ -59,6 +68,10 @@ const LeafletMap = dynamic(() => import("@/components/map/leaflet-map"), {
   ssr: false,
   loading: () => <div className="h-full w-full animate-pulse bg-accent/40" />,
 })
+const HeatMap = dynamic(() => import("@/components/map/heat-map"), {
+  ssr: false,
+  loading: () => <div className="h-full w-full animate-pulse bg-accent/40" />,
+})
 
 type Props = {
   points: MapPoint[]
@@ -75,6 +88,8 @@ type Props = {
   // Mapa público: abaixo de 760px os filtros recolhem atrás do botão "Filtros" e o Exportar
   // vira só ícone, para o mapa ocupar a tela do celular.
   collapsibleFilters?: boolean
+  // Alterna entre os pontos (com popup) e a mancha de calor, sobre os mesmos filtros.
+  heatmapToggle?: boolean
 }
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
@@ -94,12 +109,14 @@ export function MapExplorer({
   heading,
   flush,
   collapsibleFilters,
+  heatmapToggle,
 }: Props) {
   const t = useTranslations("map")
   const ta = useTranslations("animals")
   const locale = useLocale()
 
   const [filtersOpen, setFiltersOpen] = useState(false)
+  const [view, setView] = useState<"points" | "heat">("points")
   const [species, setSpecies] = useState<string[]>([])
   const [pathogen, setPathogen] = useState<string[]>([])
   const [sex, setSex] = useState<string[]>([])
@@ -180,6 +197,10 @@ export function MapExplorer({
         return true
       }),
     [points, species, pathogen, sex, lifeStage, state, research, visibility, from, to],
+  )
+  const heatPoints = useMemo(
+    () => filtered.map((p) => [p.lat, p.lon] as [number, number]),
+    [filtered],
   )
 
   const labels: PopupLabels = useMemo(
@@ -452,13 +473,40 @@ export function MapExplorer({
           flush && "-mx-6",
         )}
       >
-        <LeafletMap
-          points={filtered}
-          labels={labels}
-          linkBase={linkBase}
-          linkQuery={linkQuery}
-          locale={locale}
-        />
+        {view === "heat" ? (
+          <HeatMap points={heatPoints} />
+        ) : (
+          <LeafletMap
+            points={filtered}
+            labels={labels}
+            linkBase={linkBase}
+            linkQuery={linkQuery}
+            locale={locale}
+          />
+        )}
+        {heatmapToggle && (
+          <div
+            role="group"
+            aria-label={t("viewLabel")}
+            className="absolute right-3 top-3 z-[800] flex border border-foreground bg-popover text-sm font-semibold"
+          >
+            {(["points", "heat"] as const).map((v) => (
+              <button
+                key={v}
+                type="button"
+                aria-pressed={view === v}
+                onClick={() => setView(v)}
+                className={cn(
+                  "flex h-11 items-center gap-1.5 px-3 transition-colors first:border-r first:border-foreground",
+                  view === v ? "bg-foreground text-background" : "hover:bg-accent",
+                )}
+              >
+                {v === "points" ? <MapPin className="size-4" /> : <Flame className="size-4" />}
+                {t(v === "points" ? "viewPoints" : "viewHeat")}
+              </button>
+            ))}
+          </div>
+        )}
         {showVisibility && (
           <div className="absolute right-3 top-3 z-[800] flex gap-3.5 border border-foreground bg-popover px-2.5 py-1.5 text-[13px]">
             <span className="flex items-center gap-1.5">

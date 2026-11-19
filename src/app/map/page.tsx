@@ -1,16 +1,21 @@
 import Link from "next/link"
 import { getTranslations, getLocale } from "next-intl/server"
 
+import { getAuthUser } from "@/lib/auth"
 import { publicMapPoints } from "@/lib/map-points"
 import { MapExplorer } from "@/components/map/map-explorer"
 import { Logo } from "@/components/logo"
 import { LocaleSwitcher } from "@/components/locale-switcher"
+import { ThemeToggle } from "@/components/theme-toggle"
 
 // Mapa público (Fase 4): acessível sem login (ver src/middleware / PUBLIC_PATHS).
 // Mostra apenas dados públicos (animal.isPublic AND research.isPublic); o popup não
 // linka para o detalhe (que exige autenticação).
 export default async function PublicMapPage() {
   const t = await getTranslations("map")
+  const tl = await getTranslations("landing")
+  // Com sessão, o botão do topo leva à área interna em vez do login.
+  const user = await getAuthUser()
   const locale = await getLocale()
   const points = await publicMapPoints(locale)
 
@@ -27,11 +32,19 @@ export default async function PublicMapPage() {
         </div>
         <span className="flex-1 min-[760px]:hidden" />
         <LocaleSwitcher />
+        <ThemeToggle />
         <Link
-          href="/login"
+          href={user ? "/app/dashboard" : "/login"}
           className="inline-flex h-11 shrink-0 items-center rounded-sm border border-foreground px-3 font-semibold transition-colors hover:bg-accent"
         >
-          {t("login")}
+          {user ? (
+            <>
+              <span className="min-[760px]:hidden">{tl("goToAppShort")}</span>
+              <span className="max-[759px]:hidden">{tl("goToApp")}</span>
+            </>
+          ) : (
+            t("login")
+          )}
         </Link>
       </header>
 
@@ -40,6 +53,7 @@ export default async function PublicMapPage() {
           points={points}
           flush
           collapsibleFilters
+          heatmapToggle
           heading={
             <div key="heading" className="basis-full min-[760px]:hidden">
               <h1 className="font-serif text-[22px] font-medium leading-7">{t("publicTitle")}</h1>

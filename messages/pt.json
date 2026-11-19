@@ -39,6 +39,7 @@
   "landing": {
     "signIn": "Entrar",
     "goToApp": "Ir para o painel",
+    "goToAppShort": "Painel",
     "eyebrow": "Saúde de animais marinhos · litoral brasileiro",
     "heroTitle": "Ocorrências de fauna marinha, no mapa e abertas à sociedade",
     "heroSubtitle": "O MARES reúne o que os grupos de pesquisa registram — espécie, localização e patógenos detectados — em um mapa público e navegável.",
@@ -287,7 +288,10 @@
     "popupPositive": "Positivo para",
     "popupNoPositive": "Sem resultado positivo",
     "popupViewDetails": "Ver detalhes",
-    "filters": "Filtros"
+    "filters": "Filtros",
+    "viewLabel": "Visualização",
+    "viewPoints": "Pontos",
+    "viewHeat": "Calor"
   },
   "terms": {
     "title": "Termos de Uso",

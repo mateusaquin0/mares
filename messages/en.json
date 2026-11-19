@@ -39,6 +39,7 @@
   "landing": {
     "signIn": "Sign in",
     "goToApp": "Go to dashboard",
+    "goToAppShort": "Dashboard",
     "eyebrow": "Marine animal health · Brazilian coast",
     "heroTitle": "Marine fauna occurrences, mapped and open to society",
     "heroSubtitle": "MARES brings together what research groups record — species, location and detected pathogens — in a public, browsable map.",
@@ -287,7 +288,10 @@
     "popupPositive": "Positive for",
     "popupNoPositive": "No positive result",
     "popupViewDetails": "View details",
-    "filters": "Filters"
+    "filters": "Filters",
+    "viewLabel": "View",
+    "viewPoints": "Points",
+    "viewHeat": "Heat"
   },
   "terms": {
     "title": "Terms of Use",
