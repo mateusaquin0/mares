@@ -39,9 +39,10 @@
   "landing": {
     "signIn": "Sign in",
     "goToApp": "Go to dashboard",
-    "eyebrow": "Marine fauna occurrences",
+    "goToAppShort": "Dashboard",
+    "eyebrow": "Marine animal health · Brazilian coast",
     "heroTitle": "Marine fauna occurrences, mapped and open to society",
-    "heroSubtitle": "MARES gathers records of marine animal occurrences along the Brazilian coast — species, location and detected pathogens — in a public, browsable map.",
+    "heroSubtitle": "MARES brings together what research groups record — species, location and detected pathogens — in a public, browsable map.",
     "exploreMap": "Explore the public map",
     "viewMap": "View map",
     "featuresTitle": "What you'll find here",
@@ -151,7 +152,8 @@
     "title": "Screen too narrow",
     "description": "MARES is designed for screens of at least 1024x600 pixels. Enlarge the window, zoom out in your browser (Ctrl -) or use a desktop computer to continue.",
     "current": "Your window now",
-    "required": "Minimum required"
+    "required": "Minimum required",
+    "backHome": "Go to home"
   },
   "sidebar": {
     "dashboard": "Dashboard",
@@ -286,11 +288,16 @@
     "popupResearch": "Research",
     "popupPositive": "Positive for",
     "popupNoPositive": "No positive result",
-    "popupViewDetails": "View details"
+    "popupViewDetails": "View details",
+    "filters": "Filters",
+    "viewLabel": "View",
+    "viewPoints": "Points",
+    "viewHeat": "Heat"
   },
   "terms": {
     "title": "Terms of Use",
     "version": "Version {version}",
+    "back": "Back",
     "intro": "Welcome to MARES. By requesting access or activating your account, you agree to the terms below, which govern the use of this platform for recording and analyzing pathological data of marine fauna occurrences.",
     "acceptLabel": "I have read and accept the <link>Terms of Use</link>",
     "data": {
@@ -1671,5 +1678,12 @@
     "approvedNote": "Added to the glossary",
     "kindEdit": "Edit",
     "backToGlossary": "Glossary"
+  },
+  "notFound": {
+    "metaTitle": "Page not found",
+    "eyebrow": "Error 404",
+    "title": "This page drifted away with the tide",
+    "description": "The address you opened doesn't exist or has moved somewhere else. Check the link or head back home.",
+    "goHome": "Go to home"
   }
 }

@@ -39,9 +39,10 @@
   "landing": {
     "signIn": "Entrar",
     "goToApp": "Ir para o painel",
-    "eyebrow": "Ocorrências de fauna marinha",
+    "goToAppShort": "Painel",
+    "eyebrow": "Saúde de animais marinhos · litoral brasileiro",
     "heroTitle": "Ocorrências de fauna marinha, no mapa e abertas à sociedade",
-    "heroSubtitle": "O MARES reúne registros de ocorrências de animais marinhos no litoral brasileiro — espécie, localização e patógenos detectados — em um mapa público e navegável.",
+    "heroSubtitle": "O MARES reúne o que os grupos de pesquisa registram — espécie, localização e patógenos detectados — em um mapa público e navegável.",
     "exploreMap": "Explorar o mapa público",
     "viewMap": "Ver mapa",
     "featuresTitle": "O que você encontra aqui",
@@ -151,7 +152,8 @@
     "title": "Tela muito estreita",
     "description": "O MARES foi feito para telas de pelo menos 1024x600 pixels. Aumente a janela, diminua o zoom do navegador (Ctrl -) ou use um computador para continuar.",
     "current": "Sua janela agora",
-    "required": "Mínimo necessário"
+    "required": "Mínimo necessário",
+    "backHome": "Ir para o início"
   },
   "sidebar": {
     "dashboard": "Dashboard",
@@ -286,11 +288,16 @@
     "popupResearch": "Pesquisa",
     "popupPositive": "Positivo para",
     "popupNoPositive": "Sem resultado positivo",
-    "popupViewDetails": "Ver detalhes"
+    "popupViewDetails": "Ver detalhes",
+    "filters": "Filtros",
+    "viewLabel": "Visualização",
+    "viewPoints": "Pontos",
+    "viewHeat": "Calor"
   },
   "terms": {
     "title": "Termos de Uso",
     "version": "Versão {version}",
+    "back": "Voltar",
     "intro": "Bem-vindo ao MARES. Ao solicitar acesso ou ativar sua conta, você concorda com os termos abaixo, que regem o uso da plataforma de registro e análise de dados patológicos de ocorrências de fauna marinha.",
     "acceptLabel": "Li e aceito os <link>Termos de Uso</link>",
     "data": {
@@ -1671,5 +1678,12 @@
     "approvedNote": "Adicionado ao glossário",
     "kindEdit": "Edição",
     "backToGlossary": "Glossário"
+  },
+  "notFound": {
+    "metaTitle": "Página não encontrada",
+    "eyebrow": "Erro 404",
+    "title": "Esta página foi levada pela maré",
+    "description": "O endereço que você abriu não existe ou foi movido para outro lugar. Confira o link ou volte para o início.",
+    "goHome": "Ir para o início"
   }
 }

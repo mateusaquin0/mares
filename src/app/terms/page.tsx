@@ -4,41 +4,55 @@ import { getTranslations } from "next-intl/server"
 
 import { TERMS_VERSION } from "@/lib/terms"
 import { Logo } from "@/components/logo"
+import { LocaleSwitcher } from "@/components/locale-switcher"
+import { ThemeToggle } from "@/components/theme-toggle"
+import { BackLink } from "./back-link"
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("terms")
   return { title: t("title") }
 }
 
+// Coluna de leitura de 720px; no celular só as margens mudam.
+const COLUMN = "px-[max(16px,calc(50%-360px))]"
+
 export default async function TermsPage() {
   const t = await getTranslations("terms")
   const sections = ["data", "usage", "privacy", "responsibility", "deletion", "changes"] as const
 
   return (
-    <div className="mx-auto min-h-screen max-w-3xl px-6 py-12">
-      <Link
-        href="/"
-        className="mb-8 inline-flex items-center gap-2 text-lg font-bold tracking-tight"
+    <div className="min-h-screen bg-background text-foreground">
+      <header
+        className={`flex min-h-11 items-center justify-between gap-3 border-b border-foreground py-1.5 ${COLUMN}`}
       >
-        <Logo className="size-6 text-sky-600" />
-        MARES
-      </Link>
+        <Link href="/" className="inline-flex min-h-11 items-center gap-2">
+          <Logo className="size-6" />
+          <span className="font-serif text-[22px] font-semibold tracking-[0.04em]">MARES</span>
+        </Link>
+        <div className="flex items-center gap-1">
+          <LocaleSwitcher />
+          <ThemeToggle />
+        </div>
+      </header>
 
-      <h1 className="text-3xl font-bold">{t("title")}</h1>
-      <p className="mt-1 text-sm text-muted-foreground">
-        {t("version", { version: TERMS_VERSION })}
-      </p>
+      <main className={`pb-14 pt-3 ${COLUMN}`}>
+        <BackLink label={t("back")} />
+        <h1 className="mt-1 font-serif text-[40px] font-medium leading-[46px]">{t("title")}</h1>
+        <p className="mt-1 text-[13px] text-muted-foreground">
+          {t("version", { version: TERMS_VERSION })}
+        </p>
 
-      <p className="mt-6 text-sm leading-relaxed text-foreground/90">{t("intro")}</p>
+        <p className="mt-5 text-pretty text-[15px] leading-[22px]">{t("intro")}</p>
 
-      <div className="mt-8 space-y-6">
         {sections.map((s) => (
-          <section key={s}>
-            <h2 className="text-lg font-semibold">{t(`${s}.title`)}</h2>
-            <p className="mt-2 text-sm leading-relaxed text-foreground/90">{t(`${s}.body`)}</p>
+          <section key={s} className="mt-6 border-t border-foreground pt-3">
+            <h2 className="font-serif text-xl font-semibold leading-[26px]">{t(`${s}.title`)}</h2>
+            <p className="mt-1.5 text-pretty text-[15px] leading-[22px] text-muted-foreground">
+              {t(`${s}.body`)}
+            </p>
           </section>
         ))}
-      </div>
+      </main>
     </div>
   )
 }

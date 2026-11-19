@@ -3,6 +3,9 @@ import { getTranslations } from "next-intl/server"
 
 import { AlertTriangle } from "lucide-react"
 
+import { AuthState } from "@/components/auth-state"
+import { Button } from "@/components/ui/button"
+
 import { createClient } from "@/lib/supabase/server"
 import { SetPasswordForm } from "./set-password-form"
 
@@ -18,25 +21,19 @@ export default async function SetPasswordPage() {
     const t = await getTranslations("setPassword")
     const tc = await getTranslations("common")
     return (
-      <div className="text-center">
-        <span className="mb-5 inline-flex size-16 items-center justify-center rounded-full bg-destructive/10 text-destructive">
-          <AlertTriangle className="size-8" />
-        </span>
-        <h2 className="mb-2.5 text-2xl font-semibold tracking-tight text-foreground">
-          {t("invalidTitle")}
-        </h2>
-        <p className="mx-auto mb-7 max-w-sm text-sm leading-relaxed text-muted-foreground">
-          {t("invalidDescription")}
-        </p>
-        <div className="flex flex-col items-center gap-2 text-sm font-semibold">
-          <Link href="/auth/forgot-password" className="text-accent-foreground hover:underline">
-            {t("requestNew")}
-          </Link>
-          <Link href="/login" className="text-accent-foreground hover:underline">
-            {tc("backToLogin")}
-          </Link>
-        </div>
-      </div>
+      <AuthState
+        icon={AlertTriangle}
+        tone="destructive"
+        title={t("invalidTitle")}
+        description={t("invalidDescription")}
+      >
+        <Button className="h-12 w-full text-base" asChild>
+          <Link href="/auth/forgot-password">{t("requestNew")}</Link>
+        </Button>
+        <Button variant="outline" className="h-12 w-full text-base" asChild>
+          <Link href="/login">{tc("backToLogin")}</Link>
+        </Button>
+      </AuthState>
     )
   }
 

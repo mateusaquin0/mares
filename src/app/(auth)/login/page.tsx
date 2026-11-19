@@ -7,7 +7,6 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
-import { Mail, Lock, ArrowRight } from "lucide-react"
 
 import { useTranslations } from "next-intl"
 
@@ -76,58 +75,40 @@ function LoginForm() {
 
   return (
     <div>
-      <h2 className="text-2xl font-semibold tracking-tight text-foreground">{t("title")}</h2>
-      <p className="mt-1.5 mb-7 text-sm text-muted-foreground">{t("description")}</p>
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-        <div className="space-y-2">
+      <h1 className="font-serif text-[32px] font-medium leading-[38px]">{t("title")}</h1>
+      <p className="mt-1.5 text-pretty text-muted-foreground">{t("description")}</p>
+      <form onSubmit={handleSubmit(onSubmit)} className="mt-5 grid gap-3.5">
+        <div className="grid gap-[3px]">
           <Label htmlFor="email">{tc("email")}</Label>
-          <div className="relative">
-            <Mail className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              id="email"
-              type="email"
-              autoComplete="email"
-              className="pl-9"
-              {...register("email")}
-            />
-          </div>
+          <Input id="email" type="email" autoComplete="email" {...register("email")} />
           {errors.email && (
             <p className="text-sm text-destructive">{tval(errors.email.message!)}</p>
           )}
         </div>
-        <div className="space-y-2">
+        <div className="grid gap-[3px]">
           <div className="flex items-center justify-between">
             <Label htmlFor="password">{t("password")}</Label>
             <Link
               href="/auth/forgot-password"
-              className="text-xs font-medium text-accent-foreground hover:underline"
+              className="-my-3 inline-flex min-h-11 items-center text-sm text-primary underline underline-offset-2 hover:text-foreground"
             >
               {t("forgot")}
             </Link>
           </div>
-          <div className="relative">
-            <Lock className="pointer-events-none absolute left-3 top-1/2 z-10 size-4 -translate-y-1/2 text-muted-foreground" />
-            <PasswordInput
-              id="password"
-              autoComplete="current-password"
-              className="pl-9"
-              {...register("password")}
-            />
-          </div>
+          <PasswordInput id="password" autoComplete="current-password" {...register("password")} />
           {errors.password && (
             <p className="text-sm text-destructive">{tval(errors.password.message!)}</p>
           )}
         </div>
-        <Button type="submit" className="w-full" loading={loading}>
+        <Button type="submit" className="h-12 w-full text-base" loading={loading}>
           {t("submit")}
-          {!loading && <ArrowRight className="size-4" />}
         </Button>
       </form>
-      <p className="mt-6 text-center text-sm text-muted-foreground">
+      <p className="mt-4 text-muted-foreground">
         {t("noAccount")}{" "}
         <Link
           href="/request-access"
-          className="font-semibold text-accent-foreground hover:underline"
+          className="inline-flex min-h-11 items-center text-primary underline underline-offset-2 hover:text-foreground"
         >
           {t("requestAccess")}
         </Link>

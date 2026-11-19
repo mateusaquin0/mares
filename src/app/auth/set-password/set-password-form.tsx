@@ -47,17 +47,17 @@ export function SetPasswordForm() {
 
   return (
     <div>
-      <h2 className="text-2xl font-semibold tracking-tight text-foreground">{t("title")}</h2>
-      <p className="mt-1.5 mb-7 text-sm text-muted-foreground">{t("description")}</p>
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-        <div className="space-y-2">
+      <h1 className="font-serif text-[32px] font-medium leading-[38px]">{t("title")}</h1>
+      <p className="mt-1.5 text-pretty text-muted-foreground">{t("description")}</p>
+      <form onSubmit={handleSubmit(onSubmit)} className="mt-5 grid gap-3.5">
+        <div className="grid gap-[3px]">
           <Label htmlFor="password">{t("newPassword")}</Label>
           <PasswordInput id="password" autoComplete="new-password" {...register("password")} />
           {errors.password && (
             <p className="text-sm text-destructive">{tval(errors.password.message!)}</p>
           )}
         </div>
-        <div className="space-y-2">
+        <div className="grid gap-[3px]">
           <Label htmlFor="confirm">{t("confirm")}</Label>
           <PasswordInput id="confirm" autoComplete="new-password" {...register("confirm")} />
           {errors.confirm && (
@@ -69,7 +69,7 @@ export function SetPasswordForm() {
           onCheckedChange={(v) => setValue("acceptTerms", v, { shouldValidate: true })}
           error={errors.acceptTerms ? tval(errors.acceptTerms.message!) : undefined}
         />
-        <Button type="submit" className="w-full" loading={loading}>
+        <Button type="submit" className="h-12 w-full text-base" loading={loading}>
           {t("submit")}
         </Button>
       </form>
