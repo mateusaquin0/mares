@@ -273,7 +273,7 @@ export function MapExplorer({
         {collapsibleFilters && (
           <Button
             variant="outline"
-            className="h-11 self-center min-[760px]:hidden"
+            className="h-11 self-center max-[759px]:order-1 min-[760px]:hidden"
             aria-expanded={filtersOpen}
             onClick={() => setFiltersOpen((o) => !o)}
           >
@@ -287,7 +287,7 @@ export function MapExplorer({
         <b
           className={cn(
             "whitespace-nowrap font-semibold tabular-nums",
-            collapsibleFilters && "max-[759px]:self-center",
+            collapsibleFilters && "max-[759px]:basis-full max-[759px]:text-sm",
           )}
         >
           {t("resultsCount", { count: filtered.length })}
@@ -297,14 +297,13 @@ export function MapExplorer({
           size="sm"
           className={cn(
             "self-center",
-            collapsibleFilters && "max-[759px]:ml-auto max-[759px]:size-11 max-[759px]:px-0",
+            collapsibleFilters && "max-[759px]:order-1 max-[759px]:ml-auto max-[759px]:h-11",
           )}
           onClick={exportCsv}
           disabled={filtered.length === 0}
-          title={t("exportCsv")}
         >
           <Download className="size-4" />
-          <span className={cn(collapsibleFilters && "max-[759px]:sr-only")}>{t("exportCsv")}</span>
+          {t("exportCsv")}
         </Button>
       </div>
       <div
