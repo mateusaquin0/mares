@@ -287,7 +287,7 @@ export function SamplesTab({
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <div className="flex flex-wrap items-center gap-2 pb-2.5">
-        {!loading && items.length > 0 && (
+        {!loading && (
           <>
             <div className="relative min-w-0 max-w-[360px] flex-[1_1_280px]">
               <Search className="pointer-events-none absolute left-2 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
@@ -365,10 +365,6 @@ export function SamplesTab({
 
       {loading ? (
         <TableSkeleton rows={3} />
-      ) : items.length === 0 ? (
-        <div className="border-b border-t-2 border-b-foreground border-t-foreground pb-6 pt-[22px]">
-          <p className="font-serif text-xl font-medium">{t("empty")}</p>
-        </div>
       ) : (
         <div className="min-h-0 flex-1 overflow-hidden [&>div]:h-full [&>div]:overscroll-contain">
           <Table className="min-w-[1080px]">
@@ -392,7 +388,9 @@ export function SamplesTab({
             </TableHeader>
             <TableBody>
               {filtered.length === 0 && (
-                <TableEmpty colSpan={colCount}>{tc("noResults")}</TableEmpty>
+                <TableEmpty colSpan={colCount}>
+                  {items.length === 0 ? t("empty") : tc("noResults")}
+                </TableEmpty>
               )}
               {filtered.map((s) => (
                 <TableRow key={s.id}>

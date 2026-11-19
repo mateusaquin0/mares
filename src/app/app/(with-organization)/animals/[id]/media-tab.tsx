@@ -39,6 +39,7 @@ import {
 } from "@/components/ui/select"
 import { TableSkeleton } from "@/components/ui/skeleton"
 import { ConfirmDialog } from "@/components/confirm-dialog"
+import { EmptyState } from "@/components/ui/empty-state"
 
 export function MediaTab({
   animalId,
@@ -201,7 +202,7 @@ export function MediaTab({
       {loading ? (
         <TableSkeleton rows={3} />
       ) : items.length === 0 ? (
-        <p className="font-serif text-xl font-medium">{t("empty")}</p>
+        <EmptyState className="border-t-2" title={t("empty")} />
       ) : (
         <div className="grid min-h-0 flex-1 auto-rows-min grid-cols-[repeat(auto-fill,minmax(224px,1fr))] gap-x-6 gap-y-5 overflow-y-auto pb-8">
           {items.map((m) => {

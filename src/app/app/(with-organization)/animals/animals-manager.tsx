@@ -107,17 +107,18 @@ export function AnimalsManager({ isOrgAdmin }: { isOrgAdmin: boolean }) {
         <div className="flex items-center gap-2">
           {/* Compartilhamentos aguardando resposta — só aparece quando há pendências. */}
           <PendingSharesDialog />
-          <Button onClick={() => setDialog({ mode: "create" })} disabled={noResearch}>
-            <Plus className="size-4" />
-            {t("new")}
-          </Button>
+          {/* Botão desabilitado não recebe o hover: a dica fica no embrulho. */}
+          <span title={noResearch ? t("noResearch") : undefined}>
+            <Button onClick={() => setDialog({ mode: "create" })} disabled={noResearch}>
+              <Plus className="size-4" />
+              {t("new")}
+            </Button>
+          </span>
         </div>
       </div>
 
       {firstLoad ? (
         <TableSkeleton />
-      ) : noResearch ? (
-        <p className="text-sm text-muted-foreground">{t("noResearch")}</p>
       ) : (
         <AnimalsTable
           items={items}
@@ -130,6 +131,7 @@ export function AnimalsManager({ isOrgAdmin }: { isOrgAdmin: boolean }) {
           canDelete={canDelete}
           onEdit={(a) => setDialog({ mode: "edit", id: a.id })}
           onDelete={setConfirm}
+          emptyText={noResearch ? t("noResearch") : undefined}
         />
       )}
 

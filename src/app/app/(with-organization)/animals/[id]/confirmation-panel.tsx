@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Truncate } from "@/components/ui/truncate"
 import { Combobox } from "@/components/ui/combobox"
+import { EmptyState } from "@/components/ui/empty-state"
 
 type SeqForm = { marker: string; accession: string; pctIdentity: string; platform: string }
 type FormState = {
@@ -194,7 +195,7 @@ export function ConfirmationPanel({
       )}
 
       {confirmations.length === 0 && !editing ? (
-        <p className="mt-1 text-[13px] text-muted-foreground">{t("confirmEmpty")}</p>
+        <EmptyState bordered={false} className="py-1.5" title={t("confirmEmpty")} />
       ) : (
         <ul>
           {confirmations.map((c) => {

@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { SectionTitle } from "@/components/ui/section"
 import { Skeleton } from "@/components/ui/skeleton"
+import { EmptyState } from "@/components/ui/empty-state"
 
 export function SampleTypesCard() {
   const t = useTranslations("profile.sampleTypes")
@@ -94,7 +95,7 @@ export function SampleTypesCard() {
             <Skeleton className="h-9 w-full" />
           </div>
         ) : items.length === 0 ? (
-          <p className="text-sm text-muted-foreground">{t("empty")}</p>
+          <EmptyState className="border-t" title={t("empty")} />
         ) : (
           <ul className="border-t border-foreground [&>li]:border-b [&>li]:border-border">
             {items.map((item) => (

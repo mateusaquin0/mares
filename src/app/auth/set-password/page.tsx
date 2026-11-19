@@ -4,7 +4,8 @@ import { getTranslations } from "next-intl/server"
 import { AlertTriangle } from "lucide-react"
 
 import { AuthState } from "@/components/auth-state"
-import { Button } from "@/components/ui/button"
+import { buttonVariants } from "@/components/ui/button-variants"
+import { cn } from "@/lib/utils"
 
 import { createClient } from "@/lib/supabase/server"
 import { SetPasswordForm } from "./set-password-form"
@@ -27,12 +28,19 @@ export default async function SetPasswordPage() {
         title={t("invalidTitle")}
         description={t("invalidDescription")}
       >
-        <Button className="h-12 w-full text-base" asChild>
-          <Link href="/auth/forgot-password">{t("requestNew")}</Link>
-        </Button>
-        <Button variant="outline" className="h-12 w-full text-base" asChild>
-          <Link href="/login">{tc("backToLogin")}</Link>
-        </Button>
+        {/* Server Component: links com o estilo do botão, sem o Slot do Radix (só cliente). */}
+        <Link
+          href="/auth/forgot-password"
+          className={cn(buttonVariants(), "h-12 w-full text-base")}
+        >
+          {t("requestNew")}
+        </Link>
+        <Link
+          href="/login"
+          className={cn(buttonVariants({ variant: "outline" }), "h-12 w-full text-base")}
+        >
+          {tc("backToLogin")}
+        </Link>
       </AuthState>
     )
   }

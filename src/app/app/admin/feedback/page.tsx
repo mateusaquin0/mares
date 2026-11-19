@@ -39,6 +39,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { EmptyState } from "@/components/ui/empty-state"
 
 // Abas/filtro: todos os status que um ticket pode ter.
 const STATUSES: FeedbackStatus[] = ["NEW", "REOPENED", "IN_REVIEW", "RESOLVED", "WONT_FIX"]
@@ -118,7 +119,7 @@ export default function AdminFeedbackPage() {
       {listQ.isLoading ? (
         <TableSkeleton />
       ) : all.length === 0 ? (
-        <p className="py-2.5 text-muted-foreground">{t("empty")}</p>
+        <EmptyState className="border-t-2" title={t("empty")} />
       ) : (
         <>
           <div className="flex flex-wrap items-center gap-2 py-2.5">

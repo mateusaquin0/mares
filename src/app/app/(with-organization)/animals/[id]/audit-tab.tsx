@@ -13,6 +13,7 @@ import { TableSkeleton } from "@/components/ui/skeleton"
 import {
   Table,
   TableBody,
+  TableEmpty,
   TableCell,
   TableHead,
   TableHeader,
@@ -172,12 +173,6 @@ export function AuditTab({ animalId }: { animalId: string }) {
     new Date(iso).toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" })
 
   if (loading) return <TableSkeleton rows={4} />
-  if (items.length === 0)
-    return (
-      <div className="border-b border-t-2 border-foreground pb-6 pt-[22px]">
-        <p className="font-serif text-xl font-medium">{t("empty")}</p>
-      </div>
-    )
 
   return (
     <div className="-mx-1 min-h-0 flex-1 overflow-y-auto px-1 pb-8">
@@ -199,6 +194,7 @@ export function AuditTab({ animalId }: { animalId: string }) {
           </TableRow>
         </TableHeader>
         <TableBody>
+          {items.length === 0 && <TableEmpty colSpan={4}>{t("empty")}</TableEmpty>}
           {items.map((r) => {
             const isCreated = r.field === "created"
             const context = contextOf(r)

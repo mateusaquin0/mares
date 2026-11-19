@@ -105,8 +105,15 @@ const TableEmpty = React.forwardRef<
   HTMLTableRowElement,
   React.HTMLAttributes<HTMLTableRowElement> & { colSpan: number }
 >(({ className, colSpan, children, ...props }, ref) => (
-  <tr ref={ref} className={cn("hover:bg-transparent", className)} {...props}>
-    <td colSpan={colSpan} className="px-3 py-6 text-left text-sm text-muted-foreground">
+  <tr
+    ref={ref}
+    className={cn("!border-b border-foreground hover:bg-transparent", className)}
+    {...props}
+  >
+    <td
+      colSpan={colSpan}
+      className="px-3 py-4 text-left font-serif text-[17px] leading-6 text-foreground group-data-[density=compact]/table:px-2"
+    >
       {children}
     </td>
   </tr>

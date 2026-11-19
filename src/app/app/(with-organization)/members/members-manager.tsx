@@ -68,6 +68,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { EmptyState } from "@/components/ui/empty-state"
 
 type OrgData = z.infer<typeof updateOrganizationSchema>
 
@@ -299,7 +300,7 @@ export function MembersManager({
       {loading ? (
         <TableSkeleton />
       ) : members.length === 0 ? (
-        <p className="text-muted-foreground">{t("empty")}</p>
+        <EmptyState className="border-t-2" title={t("empty")} />
       ) : (
         <div className="flex min-h-0 flex-1 flex-wrap gap-x-10 gap-y-5">
           <section className="flex min-h-0 min-w-0 flex-[1_1_600px] flex-col">
@@ -439,7 +440,7 @@ export function MembersManager({
             <section>
               <SectionTitle>{t("pendingTitle")}</SectionTitle>
               {pending.length === 0 ? (
-                <p className="py-1.5 text-muted-foreground">{t("pendingEmpty")}</p>
+                <EmptyState bordered={false} className="py-1.5" title={t("pendingEmpty")} />
               ) : (
                 <ul>
                   {pending.map((m) => (

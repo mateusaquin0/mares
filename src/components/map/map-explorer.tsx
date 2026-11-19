@@ -15,6 +15,7 @@ import {
   Globe,
   Lock,
   MapPin,
+  MapPinOff,
   SlidersHorizontal,
   X,
 } from "lucide-react"
@@ -520,7 +521,8 @@ export function MapExplorer({
           </div>
         )}
         {filtered.length === 0 && (
-          <div className="pointer-events-none absolute left-1/2 top-4 z-[1000] -translate-x-1/2 border border-foreground bg-popover px-4 py-2 text-muted-foreground">
+          <div className="pointer-events-none absolute left-1/2 top-4 z-[1000] flex w-max max-w-[calc(100%-32px)] -translate-x-1/2 items-center gap-2 border border-foreground bg-popover px-3 py-2">
+            <MapPinOff className="size-4 shrink-0 text-muted-foreground" aria-hidden />
             {t("empty")}
           </div>
         )}
