@@ -16,7 +16,7 @@ export default async function PublicMapPage() {
 
   return (
     <div className="flex h-dvh flex-col bg-background text-foreground">
-      <header className="flex items-center gap-x-3 border-b border-foreground px-4 py-1.5">
+      <header className="flex items-center gap-x-3 border-b border-foreground px-6 py-1.5">
         <Link href="/" className="flex shrink-0 items-center gap-2">
           <Logo className="size-6" />
           <span className="font-serif text-[22px] font-semibold tracking-[0.04em]">MARES</span>
