@@ -287,7 +287,8 @@ export function MapExplorer({
         <b
           className={cn(
             "whitespace-nowrap font-semibold tabular-nums",
-            collapsibleFilters && "max-[759px]:basis-full max-[759px]:text-sm",
+            collapsibleFilters &&
+              "max-[759px]:basis-full max-[759px]:text-sm min-[760px]:ml-auto min-[760px]:self-center",
           )}
         >
           {t("resultsCount", { count: filtered.length })}
