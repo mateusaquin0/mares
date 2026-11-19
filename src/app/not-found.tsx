@@ -33,10 +33,10 @@ export default async function NotFound() {
       </header>
 
       <main className={`flex flex-1 flex-col justify-center py-10 ${COLUMN}`}>
-        <div aria-hidden className="flex items-end gap-1 text-primary">
-          <Waves className="size-7 opacity-60" />
-          <Fish className="mb-3 size-9 -rotate-12" />
-          <Waves className="size-7 opacity-60" />
+        <div aria-hidden className="flex items-end gap-1 text-muted-foreground">
+          <Waves className="size-7" />
+          <Fish className="mb-3 size-9 -rotate-12 text-foreground" />
+          <Waves className="size-7" />
         </div>
         <p className="mt-4 text-[13px] font-bold uppercase tracking-[0.06em] text-muted-foreground">
           {t("eyebrow")}
@@ -45,10 +45,9 @@ export default async function NotFound() {
           {t("title")}
         </h1>
         <p className="mt-3 max-w-[560px] text-pretty text-lg leading-7">{t("description")}</p>
-        <p className="mt-2 max-w-[560px] text-pretty italic text-muted-foreground">{t("joke")}</p>
         <Link
           href="/"
-          className="mt-6 inline-flex h-12 items-center gap-2 self-start rounded-sm border border-primary bg-primary px-5 font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
+          className="mt-6 inline-flex h-11 items-center gap-2 self-start rounded-sm border border-foreground px-4 font-semibold transition-colors hover:bg-accent"
         >
           <House className="size-4" />
           {t("goHome")}

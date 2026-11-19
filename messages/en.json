@@ -153,7 +153,7 @@
     "description": "MARES is designed for screens of at least 1024x600 pixels. Enlarge the window, zoom out in your browser (Ctrl -) or use a desktop computer to continue.",
     "current": "Your window now",
     "required": "Minimum required",
-    "backHome": "Back to home"
+    "backHome": "Go to home"
   },
   "sidebar": {
     "dashboard": "Dashboard",
@@ -1684,7 +1684,6 @@
     "eyebrow": "Error 404",
     "title": "This page drifted away with the tide",
     "description": "The address you opened doesn't exist or has moved somewhere else. Check the link or head back home.",
-    "joke": "We walked the whole monitored shoreline and found no record of it.",
     "goHome": "Go to home"
   }
 }

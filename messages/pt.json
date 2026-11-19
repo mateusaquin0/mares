@@ -153,7 +153,7 @@
     "description": "O MARES foi feito para telas de pelo menos 1024x600 pixels. Aumente a janela, diminua o zoom do navegador (Ctrl -) ou use um computador para continuar.",
     "current": "Sua janela agora",
     "required": "Mínimo necessário",
-    "backHome": "Voltar para o início"
+    "backHome": "Ir para o início"
   },
   "sidebar": {
     "dashboard": "Dashboard",
@@ -1684,7 +1684,6 @@
     "eyebrow": "Erro 404",
     "title": "Esta página foi levada pela maré",
     "description": "O endereço que você abriu não existe ou foi movido para outro lugar. Confira o link ou volte para o início.",
-    "joke": "Percorremos toda a faixa de praia monitorada e não encontramos nenhum registro dela.",
     "goHome": "Ir para o início"
   }
 }

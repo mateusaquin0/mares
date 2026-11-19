@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { useTranslations } from "next-intl"
 import Link from "next/link"
-import { ArrowLeft, MonitorSmartphone } from "lucide-react"
+import { House, MonitorSmartphone } from "lucide-react"
 
 import { Logo } from "@/components/logo"
 
@@ -91,7 +91,7 @@ export function MinWidthGate({ children }: { children: React.ReactNode }) {
           href="/"
           className="mt-6 inline-flex h-11 items-center gap-2 self-start rounded-sm border border-foreground px-4 font-semibold transition-colors hover:bg-accent"
         >
-          <ArrowLeft className="size-4" />
+          <House className="size-4" />
           {t("backHome")}
         </Link>
       </div>
