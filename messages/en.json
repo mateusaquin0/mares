@@ -152,7 +152,8 @@
     "title": "Screen too narrow",
     "description": "MARES is designed for screens of at least 1024x600 pixels. Enlarge the window, zoom out in your browser (Ctrl -) or use a desktop computer to continue.",
     "current": "Your window now",
-    "required": "Minimum required"
+    "required": "Minimum required",
+    "backHome": "Back to home"
   },
   "sidebar": {
     "dashboard": "Dashboard",

@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react"
 import { useTranslations } from "next-intl"
-import { MonitorSmartphone } from "lucide-react"
+import Link from "next/link"
+import { ArrowLeft, MonitorSmartphone } from "lucide-react"
 
 import { Logo } from "@/components/logo"
 
@@ -63,9 +64,11 @@ export function MinWidthGate({ children }: { children: React.ReactNode }) {
     <div
       className={`flex min-h-screen w-full flex-col bg-background p-6 text-base text-foreground ${measuring ? CSS_SMALL : ""}`}
     >
-      <div className="flex items-center gap-2 border-b border-foreground pb-3">
-        <Logo className="size-[22px]" />
-        <span className="font-serif text-xl font-semibold tracking-[.04em]">MARES</span>
+      <div className="border-b border-foreground pb-3">
+        <Link href="/" className="inline-flex items-center gap-2">
+          <Logo className="size-[22px]" />
+          <span className="font-serif text-xl font-semibold tracking-[.04em]">MARES</span>
+        </Link>
       </div>
       <div className="flex max-w-[460px] flex-1 flex-col justify-center py-6">
         <MonitorSmartphone className="size-7 text-muted-foreground" />
@@ -83,6 +86,14 @@ export function MinWidthGate({ children }: { children: React.ReactNode }) {
             <dd className="font-semibold">1024 × 600</dd>
           </div>
         </dl>
+        {/* As páginas públicas (início, mapa) funcionam no celular. */}
+        <Link
+          href="/"
+          className="mt-6 inline-flex h-11 items-center gap-2 self-start rounded-sm border border-foreground px-4 font-semibold transition-colors hover:bg-accent"
+        >
+          <ArrowLeft className="size-4" />
+          {t("backHome")}
+        </Link>
       </div>
     </div>
   )

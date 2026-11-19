@@ -152,7 +152,8 @@
     "title": "Tela muito estreita",
     "description": "O MARES foi feito para telas de pelo menos 1024x600 pixels. Aumente a janela, diminua o zoom do navegador (Ctrl -) ou use um computador para continuar.",
     "current": "Sua janela agora",
-    "required": "Mínimo necessário"
+    "required": "Mínimo necessário",
+    "backHome": "Voltar para o início"
   },
   "sidebar": {
     "dashboard": "Dashboard",
