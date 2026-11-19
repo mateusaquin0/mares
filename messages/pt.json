@@ -1678,5 +1678,13 @@
     "approvedNote": "Adicionado ao glossário",
     "kindEdit": "Edição",
     "backToGlossary": "Glossário"
+  },
+  "notFound": {
+    "metaTitle": "Página não encontrada",
+    "eyebrow": "Erro 404",
+    "title": "Esta página foi levada pela maré",
+    "description": "O endereço que você abriu não existe ou foi movido para outro lugar. Confira o link ou volte para o início.",
+    "joke": "Percorremos toda a faixa de praia monitorada e não encontramos nenhum registro dela.",
+    "goHome": "Ir para o início"
   }
 }

@@ -1678,5 +1678,13 @@
     "approvedNote": "Added to the glossary",
     "kindEdit": "Edit",
     "backToGlossary": "Glossary"
+  },
+  "notFound": {
+    "metaTitle": "Page not found",
+    "eyebrow": "Error 404",
+    "title": "This page drifted away with the tide",
+    "description": "The address you opened doesn't exist or has moved somewhere else. Check the link or head back home.",
+    "joke": "We walked the whole monitored shoreline and found no record of it.",
+    "goHome": "Go to home"
   }
 }
