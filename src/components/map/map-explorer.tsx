@@ -263,7 +263,12 @@ export function MapExplorer({
 
   return (
     <div className="flex h-full flex-col" data-testid="map-explorer">
-      <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+      <div
+        className={cn(
+          "flex flex-wrap items-baseline gap-x-3 gap-y-1",
+          collapsibleFilters && !filtersOpen && "max-[759px]:pb-2",
+        )}
+      >
         {heading}
         {collapsibleFilters && (
           <Button
